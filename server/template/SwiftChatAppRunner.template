@@ -244,7 +244,7 @@
           "AutoDeploymentsEnabled": false,
           "ImageRepository": {
             "ImageConfiguration": {
-              "Port": "8000",
+              "Port": "8080",
               "RuntimeEnvironmentVariables": [
                 {
                   "Name": "API_KEY_NAME",
@@ -291,7 +291,7 @@
   },
   "Outputs": {
     "APIURL": {
-      "Description": "SwiftChat API URL",
+      "Description": "API URL for SwiftChat App",
       "Value": {
         "Fn::Join": [
           "",
