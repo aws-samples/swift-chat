@@ -9,7 +9,7 @@ set -o pipefail # exit on any error in a pipeline
 
 # Define variables
 TAG="latest"
-ARCHS=("arm64" "amd64")
+ARCHS=("amd64")
 AWS_REGIONS=("us-east-1") # List of AWS region, use below list if you don't enable ECR repository replication
 # AWS_REGIONS=("us-east-1" "us-west-2" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" "eu-central-1" "eu-west-3") # List of supported AWS regions
 
@@ -39,7 +39,6 @@ build_and_push_images() {
 
         # Create repository URI
         REPOSITORY_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${IMAGE_NAME}"
-        echo REPOSITORY_URI
 
         # Create ECR repository if it doesn't exist
         aws ecr create-repository --repository-name "${IMAGE_NAME}" --region $REGION || true
