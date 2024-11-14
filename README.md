@@ -52,9 +52,7 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 2. Click **Next**.
 3. On the "Specify stack details" page, provide the following information:
     - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
-    - For App Runner, choose an `InstanceTypeParam` based on your needs: select lower Memory/CPU for cost savings, or
-      higher for better
-      performance.
+    - For App Runner, choose an `InstanceTypeParam` based on your needs.
 4. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 5. Click **Next**, In the "Review and create" Review your configuration.
