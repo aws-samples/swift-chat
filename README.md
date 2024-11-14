@@ -49,21 +49,19 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
       [![Launch Stack](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
-2. Click **Next**.
-3. On the "Specify stack details" page, provide the following information:
+2. Click **Next**, On the "Specify stack details" page, provide the following information:
     - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
     - For App Runner, choose an `InstanceTypeParam` based on your needs.
-4. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
+3. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
-5. Click **Next**, In the "Review and create" Review your configuration.
-6. Click **Submit**.
+4. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
 
 Wait about 3-5 minutes for the deployment to finish.
 
-For App Runner, click the CloudFormation stack and go to Outputs tab, you can find the **API URL**
+**For using App Runner**, click the CloudFormation stack and go to Outputs tab, you can find the **API URL**
 (which looks like `https://xxx.xxx.awsapprunner.com`)
 
-For Lambda, follow these steps to get your **API URL** by enabling Lambda Function URL manually:
+**For using Lambda**, follow these steps to get your **API URL** by enabling Lambda Function URL manually:
 
 1. Click the CloudFormation stack and go to **Resources** tab
 2. Expand APIHandler under Physical ID, click the Lambda link to open Lambda page
