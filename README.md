@@ -1,7 +1,7 @@
-# SwiftChat - A Sample Cross-platform AI Chat App
+# SwiftChat - A Cross-platform AI Chat App
 
-SwiftChat is a fast and responsive AI chat application built with React Native and Amazon Bedrock. Featuring a
-minimalist design philosophy and strong privacy protection, it offers real-time streaming conversations and AI image
+SwiftChat is a fast and responsive AI chat application built with React Native and powered by Amazon Bedrock. Featuring
+a minimalist design philosophy and strong privacy protection, it offers real-time streaming conversations and AI image
 generation across Android, iOS, and macOS platforms.
 
 ![](images/promo.png)
@@ -63,7 +63,7 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 Wait about 3-5 minutes for the deployment to finish.
 
 For App Runner, click the CloudFormation stack and go to Outputs tab, you can find the **API URL**
-(which looks like https://xxx.xxx.awsapprunner.com)
+(which looks like `https://xxx.xxx.awsapprunner.com`)
 
 For Lambda, follow these steps to get your **API URL** by enabling Lambda Function URL manually:
 
