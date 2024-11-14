@@ -1,6 +1,5 @@
 import base64
 from typing import List
-
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import StreamingResponse, PlainTextResponse
@@ -12,11 +11,18 @@ import re
 from pydantic import BaseModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
+from urllib.request import urlopen, Request
+import time
 
 app = FastAPI()
 security = HTTPBearer()
 
 auth_token = ''
+CACHE_DURATION = 120000
+cache = {
+    "latest_version": "",
+    "last_check": 0
+}
 
 
 class ImageRequest(BaseModel):
@@ -60,11 +66,6 @@ def verify_api_key(credentials: Annotated[HTTPAuthorizationCredentials, Depends(
     if credentials.credentials != get_api_key_from_ssm():
         raise HTTPException(status_code=401, detail="Invalid token")
     return credentials.credentials
-
-
-@app.get("/hello/{name}")
-async def hello(name: str):
-    return f"Hello {name}!"
 
 
 @app.post("/api/converse")
@@ -177,7 +178,7 @@ async def upgrade(request: UpgradeRequest):
     global auth_token
     auth_token = ''
     get_api_key_from_ssm()
-    new_version = os.getenv("APP_VERSION", "0.0.0")
+    new_version = get_latest_version()
     total_number = calculate_version_total(request.version)
     need_upgrade = False
     url = ''
@@ -196,8 +197,30 @@ def calculate_version_total(version: str) -> int:
     versions = version.split(".")
     total_number = 0
     if len(versions) == 3:
-        total_number = int(versions[0]) * 100 + int(versions[1]) * 10 + int(versions[2])
+        total_number = int(versions[0]) * 10000 + int(versions[1]) * 100 + int(versions[2])
     return total_number
+
+
+def get_latest_version() -> str:
+    timestamp = int(time.time() * 1000)
+    if cache["last_check"] > 0 and timestamp - cache["last_check"] < CACHE_DURATION:
+        return cache["latest_version"]
+    req = Request(
+        f"https://api.github.com/repos/awslabs/clickstream-swift/tags",
+        headers={
+            'User-Agent': 'Mozilla/5.0'
+        }
+    )
+    try:
+        with urlopen(req) as response:
+            content = response.read().decode('utf-8')
+            latest_version = json.loads(content)[0]['name']
+            cache["latest_version"] = latest_version
+            cache["last_check"] = timestamp
+            return json.loads(content)[0]['name']
+    except Exception as error:
+        print(f"Error occurred when get github tag: {error}")
+    return '0.0.0'
 
 
 def get_image(client, model_id, prompt, width, height):
