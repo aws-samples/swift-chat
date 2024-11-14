@@ -2,7 +2,8 @@
   "Parameters": {
     "ApiKeyParam": {
       "Type": "String",
-      "Description": "API Key Parameter name for authentication"
+      "Description": "API Key Parameter name for authentication",
+      "MinLength": 1
     },
     "InstanceTypeParam": {
       "Type": "String",
