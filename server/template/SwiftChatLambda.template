@@ -101,7 +101,7 @@
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Architectures": [
-          "arm64"
+          "x86_64"
         ],
         "Code": {
           "ImageUri": {
