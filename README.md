@@ -2,22 +2,23 @@
 
 # SwiftChat - A Cross-platform AI Chat App
 
-SwiftChat is a fast and responsive AI chat application built with React Native and powered by Amazon Bedrock. Featuring
-a minimalist design philosophy and strong privacy protection, it offers real-time streaming conversations and AI image
-generation across Android, iOS, and macOS platforms.
+SwiftChat is a fast and responsive AI chat application built with [React Native](https://reactnative.dev/) and powered
+by [Amazon Bedrock](https://aws.amazon.com/bedrock/). Featuring a minimalist design philosophy and strong privacy
+protection, it offers real-time streaming conversations and AI image generation across Android, iOS, and macOS
+platforms.
 
 ![](images/promo.png)
 
 **Key Features:**
 
 - Real-time streaming chat with AI
-- AI image generation
+- AI image generation with progress
+- Multi-modal support (camera, photos & documents)
+- Conversation history list view and management
 - Cross-platform support (Android, iOS, macOS)
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
 - Multiple AI model support and switching
-- Built with React Native
-- Powered by Amazon Bedrock
 
 ## Architecture
 

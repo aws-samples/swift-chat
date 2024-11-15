@@ -2,15 +2,18 @@
 
 # SwiftChat - 跨平台 AI 聊天应用
 
-SwiftChat是一个使用 React Native 构建并由 Amazon Bedrock 提供支持的快速响应式AI聊天应用。它采用极简设计理念和强大的隐私保护，提供实时流式对话和AI图像生成功能，支持
-Android、iOS 和 macOS 等多个平台。
+SwiftChat是一个使用 [React Native](https://reactnative.dev/) 构建并由 [Amazon Bedrock](https://aws.amazon.com/bedrock/)
+提供支持的快速响应式AI聊天应用。它采用极简设计理念和强大的隐私保护，提供实时流式对话和AI图像生成功能，支持 Android、iOS 和
+macOS 等多个平台。
 
 ![](images/promo.png)
 
 **主要特点:**
 
 - 与 AI 进行实时流式聊天
-- AI 图像生成
+- 带进度的 AI 图像生成
+- 多模态支持（相机拍照、图片选择和文档上传）
+- 对话历史记录列表查看和管理
 - 跨平台支持（Android、iOS、macOS）
 - 针对 iPad 和 Android 平板电脑优化
 - 快速启动和响应性能
