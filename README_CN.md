@@ -143,18 +143,18 @@ Android、iOS 和 macOS 等多个平台。
 ### 构建 Android
 
 ```bash
-npm run start && npm run android
+npm start && npm run android
 ```
 
 ## 构建 iOS
 
 ```bash
-npm run start && npm run ios
+npm start && npm run ios
 ```
 
 ### 构建 macOS
 
-1. 在 `/src/App.tsx` 中将 `isMac` 修改为 `true` 并执行 `npm run start`。
+1. 在 `/src/App.tsx` 中将 `isMac` 修改为 `true` 并执行 `npm start`。
 2. 双击 `ios/SwiftChat.xcworkspace` 在 Xcode 中打开项目。
 3. 将构建目标更改为 `My Mac (Mac Catalyst)` 然后点击 ▶ 运行按钮。
 

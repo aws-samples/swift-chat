@@ -9,9 +9,10 @@ set -o pipefail # exit on any error in a pipeline
 
 # Define variables
 TAG="latest"
-ARCHS=("amd64")
+ARCHS=("amd64" "arm64")
 AWS_REGIONS=("us-east-1") # List of AWS region, use below list if you don't enable ECR repository replication
-# AWS_REGIONS=("us-east-1" "us-west-2" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" "eu-central-1" "eu-west-3") # List of supported AWS regions
+# AWS_REGIONS=("us-west-2" "us-east-1" "ap-south-1" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" "ca-central-1"
+# "eu-central-1" "eu-west-2" "eu-west-3" "sa-east-1") # List of supported AWS regions
 
 build_and_push_images() {
     local IMAGE_NAME=$1
@@ -73,4 +74,4 @@ build_and_push_images() {
     done
 }
 
-build_and_push_images "swift-chat-api" "$TAG" "false" "../src/Dockerfile"
+build_and_push_images "swift-chat-api" "$TAG" "true" "../src/Dockerfile"

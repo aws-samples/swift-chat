@@ -149,18 +149,18 @@ Firstly, clone this repo and run `npm i` to download the dependencies.
 ### Build for Android
 
 ```bash
-npm run start && npm run android
+npm start && npm run android
 ```
 
 ### Build for iOS
 
 ```bash
-npm run start && npm run ios
+npm start && npm run ios
 ```
 
 ### Build for macOS
 
-1. Modify as `isMac = true` in `/src/App.tsx` and execute `npm run start`.
+1. Modify as `isMac = true` in `/src/App.tsx` and execute `npm start`.
 2. Double click `ios/SwiftChat.xcworkspace` to open the project in your Xcode.
 3. Change the build destination to `My Mac (Mac Catalyst)` then click the ▶ Run button.
 
