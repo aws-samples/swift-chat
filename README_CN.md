@@ -50,7 +50,7 @@ Android、iOS 和 macOS 等多个平台。
 
     - Lambda (需要手动设置无认证的 Function URL)
 
-      [![启动堆栈](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![启动堆栈](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. 点击**下一步**，在"指定堆栈详细信息"页面中提供以下信息:
     - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。

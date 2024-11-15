@@ -54,7 +54,7 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
     - Lambda (Requires manual setup of Function URL with NONE auth)
 
-      [![Launch Stack](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![Launch Stack](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. Click **Next**, On the "Specify stack details" page, provide the following information:
     - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
