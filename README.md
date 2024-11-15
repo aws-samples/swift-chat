@@ -21,15 +21,18 @@ generation across Android, iOS, and macOS platforms.
 
 ![](/images/architecture.png)
 
-App Runner can provide lower latency for API responses, while you can also replace App Runner with Lambda and Lambda
-Function URL to further reduce costs. For details, please refer to
+By default, we use AWS App Runner, which is commonly used to host Python FastAPI servers, offering high performance,
+scalability and low latency.
+
+Alternatively, we provide the option to replace App Runner with AWS Lambda using Function URLs for a more cost-effective
+solution, as shown in
 this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming).
 
 ## Getting Started
 
 ### Step 1: Set up your API Key
 
-1. Click [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) to open your AWS Console.
+1. Click <a href="https://console.aws.amazon.com/systems-manager/parameters/" target="_blank">Parameter Store</a> to open your AWS Console.
 2. Check whether you are in the [supported region](#supported-region), then click on the "Create parameter" button.
 3. Name: Enter a descriptive name for your parameter (e.g., "SwiftChatAPIKey").
 4. Tier: Select **Standard**.
