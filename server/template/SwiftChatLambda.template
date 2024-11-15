@@ -2,9 +2,12 @@
   "Parameters": {
     "ApiKeyParam": {
       "Type": "String",
+      "AllowedPattern": ".+",
+      "ConstraintDescription": "ApiKeyParam cannot be empty",
       "Description": "API Key Parameter name for authentication",
-      "MinLength": 1
-    }
+      "MinLength": 1,
+      "NoEcho": false
+    },
   },
   "Resources": {
     "LambdaExecutionRoleD5C26073": {
@@ -116,7 +119,7 @@
                 {
                   "Ref": "AWS::URLSuffix"
                 },
-                "/swift-chat-api:latest"
+                "/swift-chat-api:latest-arm64"
               ]
             ]
           }
