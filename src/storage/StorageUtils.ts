@@ -180,8 +180,8 @@ export function getTextModel(): Model {
 export function getDefaultTextModels() {
   return [
     {
-      modelName: 'Claude 3.5 Sonnet v2',
-      modelId: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+      modelName: 'Claude 3.5 Sonnet',
+      modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
     },
   ] as Model[];
 }

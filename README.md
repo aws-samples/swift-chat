@@ -1,3 +1,5 @@
+[中文](/README_CN.md)
+
 # SwiftChat - A Cross-platform AI Chat App
 
 SwiftChat is a fast and responsive AI chat application built with React Native and powered by Amazon Bedrock. Featuring
@@ -24,7 +26,7 @@ generation across Android, iOS, and macOS platforms.
 By default, we use AWS App Runner, which is commonly used to host Python FastAPI servers, offering high performance,
 scalability and low latency.
 
-Alternatively, we provide the option to replace App Runner with AWS Lambda using Function URLs for a more cost-effective
+Alternatively, we provide the option to replace App Runner with AWS Lambda using Function URL for a more cost-effective
 solution, as shown in
 this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming).
 
@@ -32,14 +34,16 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 ### Step 1: Set up your API Key
 
-1. Click <a href="https://console.aws.amazon.com/systems-manager/parameters/" target="_blank">Parameter Store</a> to open your AWS Console.
+1. Right-click [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) to open your AWS Console in
+   new window.
 2. Check whether you are in the [supported region](#supported-region), then click on the "Create parameter" button.
-3. Name: Enter a descriptive name for your parameter (e.g., "SwiftChatAPIKey").
+3. Name: Enter a descriptive name for your parameter (e.g., "SwiftChatAPIKey", this is `ApiKeyParam` you will fill
+   in [Step2](#step-2-deploy-stack-and-get-your-api-url)).
 4. Tier: Select **Standard**.
 5. Type: Select **SecureString**.
-6. Value: Any string without spaces (This value is your API Key which should fill in your App's Settings page).
+6. Value: Any string without spaces (This is the API Key you'll need to configure your App
+   in [Step 3](#step-3-download-the-app-and-setup-with-api-url-and-api-key)).
 7. Click "Create parameter".
-8. Make a note of the parameter name you used (e.g., "SwiftChatAPIKey"). You'll need this in the next step.
 
 ### Step 2: Deploy stack and get your API URL
 
@@ -48,7 +52,7 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
       [![Launch Stack](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
-    - Lambda (You need to config your Lambda Function URL manually)
+    - Lambda (Requires manual setup of Function URL with NONE auth)
 
       [![Launch Stack](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
@@ -59,33 +63,36 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 4. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
 
-Wait about 3-5 minutes for the deployment to finish.
+Wait about 3-5 minutes for the deployment to finish, and get your API URL:
 
-**For using App Runner**, click the CloudFormation stack and go to Outputs tab, you can find the **API URL**
+**For App Runner**, click the CloudFormation stack and go to **Outputs** tab, you can find the **API URL**
 (which looks like `https://xxx.xxx.awsapprunner.com`)
 
-**For using Lambda**, follow these steps to get your **API URL** by enabling Lambda Function URL manually:
+**For Lambda**, follow these steps to get your **API URL**:
 
-1. Click the CloudFormation stack and go to **Resources** tab
-2. Expand APIHandler under Physical ID, click the Lambda link to open Lambda page
-3. In Lambda page, go to **Configuration** -> **Function URL** to enable Lambda Function URL with **RESPONSE_STREAM**
-   invoke mode
-4. You'll find your Lambda Function URL like `https://xxx.lambda-url.xxx.on.aws` - use this as your **API URL**
+1. Find your Lambda function in CloudFormation -> **Resources** -> APIHandler
+2. Click to open the Lambda function (`SwiftChatLambda-xxx`)
+3. Set up Function URL:
+    - Go to **Configuration** -> **Function URL**, Click **Create function URL**
+    - Select: **Auth type**: `NONE`
+    - Enable: **Invoke mode**: `RESPONSE_STREAM` under Additional settings
+4. Click Save to get your API URL (`https://xxx.lambda-url.xxx.on.aws`)
+5. Note: We use Bearer Token for API security verification. You can upgrade to `AWS_IAM` Auth type manually.
 
 ### Step 3: Download the app and setup with API URL and API Key
 
 1. Download the App
-    - Android App [Download](https://github.com/aws-samples/swift-chat/releases/download/v1.5.0/SwiftChat.apk)
-    - macOS App [Download](https://github.com/aws-samples/swift-chat/releases/download/v1.5.0/SwiftChat.dmg)
+    - Android App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/v1.5.0/SwiftChat.apk)
+    - macOS App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/v1.5.0/SwiftChat.dmg)
     - iOS (Currently we do not provide the iOS version, you can build it locally with Xcode)
 
-2. Launch your App, Click the menu button in the top left to open the drawer page, click **Settings** in the bottom of
-   the drawer.
-3. Paste the API URL and API Key then select the Region.
-4. You can change the default text and image model, and **make sure you have enabled these models in your AWS console**.
+2. Launch your App, click the left menu button to open the drawer page, click **Settings** in the bottom of the drawer.
+3. Paste the `API URL` and `API Key` then select the Region.
+4. You can change the default text and image model, and **make sure these models are enabled in the corresponding Region
+   in the AWS Console**.
 5. Click the top right finish icon to save your configuration and start your chat.
 
-Congratulations! Your SwiftChat App is ready to use 🎉
+Congratulations 🎉 Your SwiftChat App is ready to use!
 
 ### Supported Region
 
@@ -101,7 +108,30 @@ Congratulations! Your SwiftChat App is ready to use 🎉
 - Europe (Paris): eu-west-3
 - South America (São Paulo): sa-east-1
 
-## Why Swift?
+## What Makes SwiftChat Really "Swift"?
+
+🚀 **Fast Launch Speed**
+
+- Thanks to the **AOT** (Ahead of Time) compilation of RN Hermes engine
+- Added **lazy loading** of complex components
+- App can start and be ready for input **within 1 second**
+
+🌐 **Fast Request Speed**
+
+- Speed up end-to-end API requests through **image compression**
+- Deploying APIs in the **same region** as Bedrock provides lower latency
+- Minimal response payload with **zero parsing** needed for direct display
+
+📱 **Fast Render Speed**
+
+- Using `useMemo` and custom caching to creates secondary cache for session content
+- Reduce unnecessary re-renders and speed up streaming messages display
+- All UI components are rendered as **native components**
+
+📦 **Fast Storage Speed**
+
+- By using **react-native-mmkv** Messages can be read, stored, and updated **10x faster** than AsyncStorage
+- Optimized session content and session list storage structure to accelerates history list display
 
 ## App Privacy & Security
 
