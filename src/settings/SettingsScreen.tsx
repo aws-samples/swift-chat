@@ -122,7 +122,6 @@ function SettingsScreen(): React.JSX.Element {
         <CustomHeaderRightButton
           onPress={async () => {
             saveKeys(apiUrl.trim(), apiKey.trim());
-            fetchAndSetModelNames().then();
             navigation.navigate('Bedrock', {
               sessionId: -1,
               tapIndex: -1,

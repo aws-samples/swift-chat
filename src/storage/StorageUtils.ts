@@ -40,10 +40,6 @@ let currentRegion: string | undefined;
 let currentImageModel: Model | undefined;
 let currentTextModel: Model | undefined;
 
-export function clearAllStorage() {
-  storage.clearAll();
-}
-
 export function saveMessages(sessionId: number, messages: IMessage[]) {
   storage.set(sessionIdPrefix + sessionId, JSON.stringify(messages));
 }
@@ -103,6 +99,9 @@ export function getSessionId() {
 
 export function saveKeys(apiUrl: string, apiKey: string) {
   if (apiUrl.length > 0 && apiKey.length > 0) {
+    if (apiUrl.endsWith('/')) {
+      apiUrl = apiUrl.slice(0, -1);
+    }
     saveApiUrl(apiUrl);
     saveApiKey(apiKey);
     currentApiKey = apiKey;
