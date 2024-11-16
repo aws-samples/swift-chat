@@ -7,7 +7,7 @@ by [Amazon Bedrock](https://aws.amazon.com/bedrock/). Featuring a minimalist des
 protection, it offers real-time streaming conversations and AI image generation across Android, iOS, and macOS
 platforms.
 
-![](images/promo.png)
+![](assets/promo.png)
 
 **Key Features:**
 
@@ -22,7 +22,7 @@ platforms.
 
 ## Architecture
 
-![](/images/architecture.png)
+![](/assets/architecture.png)
 
 By default, we use AWS App Runner, which is commonly used to host Python FastAPI servers, offering high performance,
 scalability and low latency.
@@ -51,11 +51,11 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 1. Click the following button to launch the CloudFormation Stack in the same region with your API Key just created.
     - App Runner
 
-      [![Launch Stack](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
     - Lambda (Requires manual setup of Function URL with NONE auth)
 
-      [![Launch Stack](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. Click **Next**, On the "Specify stack details" page, provide the following information:
     - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
@@ -143,7 +143,7 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 - No data collection
 - Privacy-first approach
 
-## Build and development
+## App Build and development
 
 Firstly, clone this repo and run `npm i` to download the dependencies.
 

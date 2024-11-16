@@ -13,6 +13,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run build ios
         run: |
-          npm i
+          cd react-native && npm i
           cd ios && pod install && cd ..
           npm run build:ios

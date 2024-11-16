@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run package install
-        run: npm i
+        run: cd react-native && npm i
       - name: Run code format
-        run: npm run format
+        run: cd react-native && npm run format
       - name: Run code lint
-        run: npm run lint
+        run: cd react-native && npm run lint

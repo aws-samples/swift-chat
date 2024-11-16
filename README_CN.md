@@ -6,7 +6,7 @@ SwiftChat是一个使用 [React Native](https://reactnative.dev/) 构建并由 [
 提供支持的快速响应式AI聊天应用。它采用极简设计理念和强大的隐私保护，提供实时流式对话和AI图像生成功能，支持 Android、iOS 和
 macOS 等多个平台。
 
-![](images/promo.png)
+![](assets/promo.png)
 
 **主要特点:**
 
@@ -21,7 +21,7 @@ macOS 等多个平台。
 
 ## 架构
 
-![](/images/architecture.png)
+![](/assets/architecture.png)
 
 默认情况下，我们使用 AWS App Runner（通常用于托管 Python FastAPI 服务器），提供高性能、可扩展性和低延迟。
 
@@ -47,11 +47,11 @@ macOS 等多个平台。
 1. 点击以下按钮在与刚才创建的 API Key 相同的区域启动 CloudFormation 堆栈。
     - App Runner
 
-      [![启动堆栈](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
     - Lambda (需要手动设置无认证的 Function URL)
 
-      [![启动堆栈](images/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. 点击**下一步**，在"指定堆栈详细信息"页面中提供以下信息:
     - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。
