@@ -18,8 +18,6 @@ macOS 等多个平台。
 - 针对 iPad 和 Android 平板电脑优化
 - 快速启动和响应性能
 - 支持多种 AI 模型及切换
-- 使用 React Native 构建
-- 由 Amazon Bedrock 提供支持
 
 ## 架构
 
