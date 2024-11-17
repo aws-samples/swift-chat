@@ -2,10 +2,10 @@
 
 # SwiftChat - A Cross-platform AI Chat App
 
-SwiftChat is a fast and responsive AI chat application built with [React Native](https://reactnative.dev/) and powered
-by [Amazon Bedrock](https://aws.amazon.com/bedrock/). Featuring a minimalist design philosophy and strong privacy
-protection, it offers real-time streaming conversations and AI image generation across Android, iOS, and macOS
-platforms.
+SwiftChat is a fast and responsive AI chat application developed with [React Native](https://reactnative.dev/) and
+powered by [Amazon Bedrock](https://aws.amazon.com/bedrock/). With its minimalist design philosophy and robust privacy
+protection, it delivers real-time streaming conversations and AI image generation capabilities across Android, iOS, and
+macOS platforms.
 
 ![](assets/promo.png)
 
@@ -13,7 +13,7 @@ platforms.
 
 - Real-time streaming chat with AI
 - AI image generation with progress
-- Multi-modal support (camera, photos & documents)
+- Multimodal support (camera, photos & documents)
 - Conversation history list view and management
 - Cross-platform support (Android, iOS, macOS)
 - Tablet-optimized for iPad and Android tablets
@@ -138,14 +138,17 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 - Encrypted API key storage
 - Minimal permission requirements
-- Local data storage only
+- Local-only data storage
 - No user behavior tracking
 - No data collection
 - Privacy-first approach
 
 ## App Build and development
 
-Firstly, clone this repo and run `npm i` to download the dependencies.
+First, clone this repository. All app code is located in the `react-native` folder. Before proceeding, execute the
+following command to download dependencies.
+
+> cd react-native && npm i
 
 ### Build for Android
 
@@ -164,6 +167,85 @@ npm start && npm run ios
 1. Modify as `isMac = true` in `/src/App.tsx` and execute `npm start`.
 2. Double click `ios/SwiftChat.xcworkspace` to open the project in your Xcode.
 3. Change the build destination to `My Mac (Mac Catalyst)` then click the ▶ Run button.
+
+## API Reference
+
+### API Schema
+
+First, please configure you `API URL` and `API Key` like:
+
+```bash
+export API_URL=<API URL>
+export API_KEY=<API Key>
+```
+
+1. `/api/converse`
+   ```bash
+   curl -N "${API_URL}/api/converse" \
+   --header 'Content-Type: application/json' \
+   --header "Authorization: Bearer ${API_KEY}" \
+   --data '{
+     "messages": [
+       {
+         "role": "user",
+         "content": [
+           {
+             "text": "Hi"
+           }
+         ]
+       }
+     ],
+     "modelId": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+     "region": "us-west-2"
+   }'
+   ```
+   This API is used to implement streaming conversations, and it only returns the text required for
+   display.The `messages` under body fully complies with the messages structure specification in Amazon
+   Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
+   API. You can also add `image` or `document` according to the specification to support multimodal conversations.
+
+2. `/api/image`
+   ```bash
+   curl "${API_URL}/api/image" \
+   --header 'Content-Type: application/json' \
+   --header "Authorization: Bearer ${API_KEY}" \
+   --data '{
+     "prompt": "Beautiful countryside",
+     "modelId": "stability.stable-image-core-v1:0",
+     "region": "us-west-2",
+     "width": "1024",
+     "height": "1024"
+   }'
+   ```
+   This API is used to generate images and returns a base64 encoded string of the image.
+
+3. `/api/models`
+   ```bash
+   curl "${API_URL}/api/models" \
+   --header 'Content-Type: application/json' \
+   --header 'accept: application/json' \
+   --header "Authorization: Bearer ${API_KEY}" \
+   --data '{
+     "region": "us-west-2"
+   }'
+   ```
+   This API is used to get a list of all streaming-supported text models and image generation models in the specified
+   region.
+
+4. `/api/upgrade`
+   ```bash
+   curl "${API_URL}/api/upgrade" \
+   --header 'Content-Type: application/json' \
+   --header 'accept: application/json' \
+   --header "Authorization: Bearer ${API_KEY}"
+   ```
+   This API is used to get the new version of SwiftChat for Android and macOS App updates.
+
+### API Code Reference
+
+- Client code: [bedrock-api.ts](/react-native/src/api/bedrock-api.ts)
+
+- Server code: [main.py](server/src/main.py)
 
 ## Security
 

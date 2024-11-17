@@ -132,14 +132,16 @@ macOS 等多个平台。
 
 - 加密 API Key 的存储
 - 最小权限要求
-- 仅本地数据存储
+- 数据仅本地存储
 - 无用户行为跟踪
 - 无数据收集
 - 隐私优先策略
 
 ## 构建和开发
 
-首先，克隆此仓库并运行`npm i`下载依赖项。
+首先，克隆此仓库。所有 App 代码位于 react-native 文件夹中。在继续之前，请执行以下命令来下载依赖项。
+
+> cd react-native && npm i
 
 ### 构建 Android
 
@@ -158,6 +160,81 @@ npm start && npm run ios
 1. 在 `/src/App.tsx` 中将 `isMac` 修改为 `true` 并执行 `npm start`。
 2. 双击 `ios/SwiftChat.xcworkspace` 在 Xcode 中打开项目。
 3. 将构建目标更改为 `My Mac (Mac Catalyst)` 然后点击 ▶ 运行按钮。
+
+## API 参考
+
+### API 格式
+
+首先，请配置您的 `API URL` 和 `API Key`:
+
+```bash
+export API_URL=<API URL>
+export API_KEY=<API Key>
+```
+
+1. `/api/converse`
+   ```bash
+   curl -N "${API_URL}/api/converse" \
+   --header 'Content-Type: application/json' \
+   --header "Authorization: Bearer ${API_KEY}" \
+   --data '{
+     "messages": [
+       {
+         "role": "user",
+         "content": [
+           {
+             "text": "Hi"
+           }
+         ]
+       }
+     ],
+     "modelId": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+     "region": "us-west-2"
+   }'
+   ```
+   此 API 用于实现流式对话，它仅返回显示所需的文本。body 中的 `messages` 完全符合 Amazon Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html) API 中的消息结构规范。您还可以根据规范添加 `image` 或 `document` 以支持多模态对话。
+
+2. `/api/image`
+   ```bash
+   curl "${API_URL}/api/image" \
+   --header 'Content-Type: application/json' \
+   --header "Authorization: Bearer ${API_KEY}" \
+   --data '{
+     "prompt": "Beautiful countryside",
+     "modelId": "stability.stable-image-core-v1:0",
+     "region": "us-west-2", 
+     "width": "1024",
+     "height": "1024"
+   }'
+   ```
+   此 API 用于生成图像并返回图像的 base64 编码字符串。
+
+3. `/api/models`
+   ```bash
+   curl "${API_URL}/api/models" \
+   --header 'Content-Type: application/json' \
+   --header 'accept: application/json' \
+   --header "Authorization: Bearer ${API_KEY}" \
+   --data '{
+     "region": "us-west-2"
+   }'
+   ```
+   此 API 用于获取指定区域中所有支持流式传输的文本模型和图像生成模型的列表。
+
+4. `/api/upgrade`
+   ```bash
+   curl "${API_URL}/api/upgrade" \
+   --header 'Content-Type: application/json' \
+   --header 'accept: application/json' \
+   --header "Authorization: Bearer ${API_KEY}"
+   ```
+   此 API 用于获取 SwiftChat 新版本，以支持 Android 和 macOS App 更新功能。
+
+### API 代码参考
+
+- 客户端代码: [bedrock-api.ts](/react-native/src/api/bedrock-api.ts)
+
+- 服务器代码: [main.py](server/src/main.py)
 
 ## 安全
 
