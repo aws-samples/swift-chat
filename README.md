@@ -33,6 +33,19 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 ## Getting Started
 
+### Prerequisites
+
+Please ensure you have access to Amazon Bedrock foundation models.
+You can follow
+the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to enable
+the models.
+
+SwiftChat comes with the following default settings:
+
+* Region: `us-west-2`
+* Text Model: `Claude 3.5 Sonnet`
+* Image Model: `Stable Image Core 1.0`
+
 ### Step 1: Set up your API Key
 
 1. Right-click [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) to open your AWS Console in

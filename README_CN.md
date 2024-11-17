@@ -31,6 +31,17 @@ macOS 等多个平台。
 
 ## 入门指南
 
+### 前置条件
+
+请确保您有权限访问 Amazon Bedrock 基础模型。
+您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) 来启用模型。
+
+SwiftChat 包含以下默认设置：
+
+* 区域: `us-west-2`
+* 文本模型: `Claude 3.5 Sonnet`
+* 图像模型: `Stable Image Core 1.0`
+
 ### 第1步: 设置API Key
 
 1. 右键点击 [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) 在新窗口中打开 AWS 控制台。

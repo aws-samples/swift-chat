@@ -87,6 +87,7 @@ function SettingsScreen(): React.JSX.Element {
     setImageModels(allModel.imageModel);
     setSelectedImageModel(imageModel.modelId);
     if (apiUrl.length > 0 && apiKey.length > 0) {
+      saveKeys(apiUrl, apiKey);
       fetchAndSetModelNames().then();
       fetchUpgradeInfo().then();
     }
@@ -123,7 +124,6 @@ function SettingsScreen(): React.JSX.Element {
         <CustomHeaderRightButton
           onPress={async () => {
             if (apiUrl.length > 0 && apiKey.length > 0) {
-              saveKeys(apiUrl.trim(), apiKey.trim());
               navigation.navigate('Bedrock', {
                 sessionId: -1,
                 tapIndex: -1,
