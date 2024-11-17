@@ -91,7 +91,7 @@ function SettingsScreen(): React.JSX.Element {
       fetchAndSetModelNames().then();
       fetchUpgradeInfo().then();
     }
-  }, [apiUrl.length, apiKey.length]);
+  }, [apiUrl, apiKey]);
 
   const fetchAndSetModelNames = async () => {
     const response = await requestAllModels();
