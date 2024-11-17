@@ -157,6 +157,7 @@ export const requestUpgradeInfo = async (
     headers: {
       accept: 'application/json',
       'content-type': 'application/json',
+      Authorization: 'Bearer ' + getApiKey(),
     },
     body: JSON.stringify({
       os: os,
@@ -250,7 +251,7 @@ export const genImage = async (
 
 function getApiPrefix(): string {
   if (isDev) {
-    return 'http://localhost:8000/api';
+    return 'http://localhost:8080/api';
   } else {
     return getApiUrl() + '/api';
   }

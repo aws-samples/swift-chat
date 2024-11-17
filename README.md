@@ -91,7 +91,7 @@ Wait about 3-5 minutes for the deployment to finish, and get your API URL:
 3. Paste the `API URL` and `API Key` then select the Region.
 4. You can change the default text and image model, and **make sure these models are enabled in the corresponding Region
    in the AWS Console**.
-5. Click the top right finish icon to save your configuration and start your chat.
+5. Click the top right ✓ icon to save your configuration and start your chat.
 
 Congratulations 🎉 Your SwiftChat App is ready to use!
 
@@ -200,7 +200,8 @@ export API_KEY=<API Key>
    }'
    ```
    This API is used to implement streaming conversations, and it only returns the text required for
-   display.The `messages` under body fully complies with the messages structure specification in Amazon
+   display.
+   The `messages` under body fully complies with the messages structure specification in Amazon
    Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
    API. You can also add `image` or `document` according to the specification to support multimodal conversations.
 

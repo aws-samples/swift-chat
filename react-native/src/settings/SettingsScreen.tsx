@@ -42,6 +42,7 @@ import { ChatMode, DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
 import CustomDropdown from './DropdownComponent.tsx';
+import Toast from 'react-native-toast-message';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -121,12 +122,19 @@ function SettingsScreen(): React.JSX.Element {
       headerRight: () => (
         <CustomHeaderRightButton
           onPress={async () => {
-            saveKeys(apiUrl.trim(), apiKey.trim());
-            navigation.navigate('Bedrock', {
-              sessionId: -1,
-              tapIndex: -1,
-              mode: ChatMode.Text,
-            });
+            if (apiUrl.length > 0 && apiKey.length > 0) {
+              saveKeys(apiUrl.trim(), apiKey.trim());
+              navigation.navigate('Bedrock', {
+                sessionId: -1,
+                tapIndex: -1,
+                mode: ChatMode.Text,
+              });
+            } else {
+              Toast.show({
+                type: 'info',
+                text1: 'Please input your API URL and API Key',
+              });
+            }
           }}
           imageSource={require('../assets/done.png')}
         />

@@ -48,9 +48,9 @@ class UpgradeRequest(BaseModel):
     version: str
 
 
-def get_api_key_from_ssm():
+def get_api_key_from_ssm(use_cache_token: bool):
     global auth_token
-    if auth_token != '':
+    if use_cache_token and auth_token != '':
         return auth_token
     ssm_client = boto3.client('ssm')
     api_key_name = os.environ['API_KEY_NAME']
@@ -62,10 +62,15 @@ def get_api_key_from_ssm():
     return auth_token
 
 
-def verify_api_key(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
-    if credentials.credentials != get_api_key_from_ssm():
+def verify_api_key(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+                   use_cache_token: bool = True):
+    if credentials.credentials != get_api_key_from_ssm(use_cache_token):
         raise HTTPException(status_code=401, detail="Invalid token")
     return credentials.credentials
+
+
+def verify_and_refresh_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
+    return verify_api_key(credentials, use_cache_token=False)
 
 
 @app.post("/api/converse")
@@ -173,11 +178,8 @@ async def get_models(request: ModelsRequest,
 
 
 @app.post("/api/upgrade")
-async def upgrade(request: UpgradeRequest):
-    # update auth token when app start
-    global auth_token
-    auth_token = ''
-    get_api_key_from_ssm()
+async def upgrade(request: UpgradeRequest,
+                  _: Annotated[str, Depends(verify_and_refresh_token)]):
     new_version = get_latest_version()
     total_number = calculate_version_total(request.version)
     need_upgrade = False

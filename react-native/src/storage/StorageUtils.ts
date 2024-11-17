@@ -98,15 +98,13 @@ export function getSessionId() {
 }
 
 export function saveKeys(apiUrl: string, apiKey: string) {
-  if (apiUrl.length > 0 && apiKey.length > 0) {
-    if (apiUrl.endsWith('/')) {
-      apiUrl = apiUrl.slice(0, -1);
-    }
-    saveApiUrl(apiUrl);
-    saveApiKey(apiKey);
-    currentApiKey = apiKey;
-    currentApiUrl = apiUrl;
+  if (apiUrl.endsWith('/')) {
+    apiUrl = apiUrl.slice(0, -1);
   }
+  saveApiUrl(apiUrl);
+  saveApiKey(apiKey);
+  currentApiKey = apiKey;
+  currentApiUrl = apiUrl;
 }
 
 export function getApiUrl(): string {

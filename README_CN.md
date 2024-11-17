@@ -33,14 +33,14 @@ macOS 等多个平台。
 
 ### 第1步: 设置API Key
 
-1. 右键点击 [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) 在新窗口中打开AWS控制台。
-2. 检查您是否在 [支持的区域](#支持的区域)，然后点击"创建参数"按钮。
+1. 右键点击 [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) 在新窗口中打开 AWS 控制台。
+2. 检查您是否在 [支持的区域](#支持的区域)，然后点击**创建参数**按钮。
 3. 名称:为您的参数输入描述性名称(例如"SwiftChatAPIKey"，这是您将在 [第2步](#第2步-部署堆栈并获取api-url)
    中填写的`ApiKeyParam`)。
 4. 层级:选择 **标准**。
 5. 类型:选择 **SecureString**。
 6. 值:任何不含空格的字符串（这是您需要在 [第3步](#第3步-下载应用并设置-api-url-和-api-key) 中配置 App 的 API Key）。
-7. 点击"创建参数"。
+7. 点击**创建参数**。
 
 ### 第2步: 部署堆栈并获取API URL
 
@@ -85,7 +85,7 @@ macOS 等多个平台。
 2. 启动应用，点击左侧菜单按钮打开抽屉页面，点击抽屉底部的**Settings**。
 3. 粘贴`API URL`和`API Key`然后选择 Region。
 4. 您可以更改默认的文本和图像模型，并**确保已在 AWS 控制台的对应 Region 中启用了这些模型**。
-5. 点击右上角对勾图标保存配置并开始聊天。
+5. 点击右上角✓图标保存配置并开始聊天。
 
 恭喜🎉 您的 SwiftChat 应用已准备就绪!
 
@@ -192,7 +192,10 @@ export API_KEY=<API Key>
      "region": "us-west-2"
    }'
    ```
-   此 API 用于实现流式对话，它仅返回显示所需的文本。body 中的 `messages` 完全符合 Amazon Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html) API 中的消息结构规范。您还可以根据规范添加 `image` 或 `document` 以支持多模态对话。
+   此 API 用于实现流式对话，它仅返回显示所需的文本。
+   Body 中的 `messages` 完全符合 Amazon
+   Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
+   API 中的消息结构规范。您还可以根据规范添加 `image` 或 `document` 以支持多模态对话。
 
 2. `/api/image`
    ```bash
