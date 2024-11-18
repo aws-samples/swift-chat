@@ -66,7 +66,7 @@ SwiftChat comes with the following default settings:
 
       [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
-    - Lambda (Requires manual setup of Function URL with NONE auth)
+    - Lambda (Note: Make sure your AWS account allows public Lambda Function URL)
 
       [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
@@ -77,21 +77,8 @@ SwiftChat comes with the following default settings:
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 4. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
 
-Wait about 3-5 minutes for the deployment to finish, and get your API URL:
-
-**For App Runner**, click the CloudFormation stack and go to **Outputs** tab, you can find the **API URL**
-(which looks like `https://xxx.xxx.awsapprunner.com`)
-
-**For Lambda**, follow these steps to get your **API URL**:
-
-1. Find your Lambda function in CloudFormation -> **Resources** -> APIHandler
-2. Click to open the Lambda function (`SwiftChatLambda-xxx`)
-3. Set up Function URL:
-    - Go to **Configuration** -> **Function URL**, Click **Create function URL**
-    - Select: **Auth type**: `NONE`
-    - Enable: **Invoke mode**: `RESPONSE_STREAM` under Additional settings
-4. Click Save to get your API URL (`https://xxx.lambda-url.xxx.on.aws`)
-5. Note: We use Bearer Token for API security verification. You can upgrade to `AWS_IAM` Auth type manually.
+Wait about 3-5 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
+can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or `https://xxx.lambda-url.xxx.on.aws`
 
 ### Step 3: Download the app and setup with API URL and API Key
 
@@ -214,6 +201,7 @@ export API_KEY=<API Key>
    ```
    This API is used to implement streaming conversations, and it only returns the text required for
    display.
+
    The `messages` under body fully complies with the messages structure specification in Amazon
    Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
    API. You can also add `image` or `document` according to the specification to support multimodal conversations.

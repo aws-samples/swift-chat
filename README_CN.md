@@ -34,7 +34,8 @@ macOS 等多个平台。
 ### 前置条件
 
 请确保您有权限访问 Amazon Bedrock 基础模型。
-您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) 来启用模型。
+您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
+来启用模型。
 
 SwiftChat 包含以下默认设置：
 
@@ -60,7 +61,7 @@ SwiftChat 包含以下默认设置：
 
       [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
-    - Lambda (需要手动设置无认证的 Function URL)
+    - Lambda (提示：请确保你的 AWS 账户允许公开 Lambda Function URL)
 
       [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
@@ -70,21 +71,8 @@ SwiftChat 包含以下默认设置：
 3. 点击**下一步**，保持"配置堆栈选项"页面默认设置，阅读功能并勾选底部的"我确认，AWS CloudFormation可能会创建 IAM 资源"复选框。
 4. 点击**下一步**，在"审核并创建"中检查配置并点击**提交**。
 
-等待约3-5分钟部署完成，然后获取 API URL:
-
-**对于使用 App Runner**，点击CloudFormation堆栈并转到**输出**选项卡，您可以找到**API URL**(
-类似`https://xxx.xxx.awsapprunner.com`)
-
-**对于使用 Lambda**，按照以下步骤获取**API URL**:
-
-1. 在 CloudFormation -> **资源** -> APIHandler中找到您的Lambda函数
-2. 点击打开 Lambda 函数(`SwiftChatLambda-xxx`)
-3. 设置 Function URL:
-    - 转到 **配置** -> **函数 URL**，点击**创建函数 URL**
-    - 选择: **授权类型**: `NONE`
-    - 启用: **调用模式**: 在其他设置下选择`RESPONSE_STREAM`
-4. 点击保存获取API URL(`https://xxx.lambda-url.xxx.on.aws`)
-5. 注意: 我们默认使用 Bearer Token 进行 API 安全验证。您可以手动升级到`AWS_IAM`认证类型。
+等待约3-5分钟部署完成，然后点击CloudFormation堆栈并转到**输出**选项卡，您可以找到**API URL**
+类似`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws`。
 
 ### 第3步: 下载应用并设置 API URL 和 API Key
 
@@ -204,6 +192,7 @@ export API_KEY=<API Key>
    }'
    ```
    此 API 用于实现流式对话，它仅返回显示所需的文本。
+
    Body 中的 `messages` 完全符合 Amazon
    Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
    API 中的消息结构规范。您还可以根据规范添加 `image` 或 `document` 以支持多模态对话。

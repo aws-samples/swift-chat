@@ -150,15 +150,59 @@
         "aws:cdk:path": "SwiftChatAPILambda/APIHandler/Resource"
       }
     },
+    "APIHandlerFunctionUrlD2500C9A": {
+      "Type": "AWS::Lambda::Url",
+      "Properties": {
+        "AuthType": "NONE",
+        "InvokeMode": "RESPONSE_STREAM",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "APIHandler68F11976",
+            "Arn"
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "SwiftChatAPILambda/APIHandler/FunctionUrl/Resource"
+      }
+    },
+    "APIHandlerinvokefunctionurl0B3BB28F": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "APIHandler68F11976",
+            "Arn"
+          ]
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*"
+      },
+      "Metadata": {
+        "aws:cdk:path": "SwiftChatAPILambda/APIHandler/invoke-function-url"
+      }
+    },
     "CDKMetadata": {
       "Type": "AWS::CDK::Metadata",
       "Properties": {
-        "Analytics": "v2:deflate64:H4sIAAAAAAAA/02MwQqCQBRFv6X9+FIjaJ0RtBP7gHiOr3jqzIuZMZHBfw+VoNU5i3NvDtkxg3SHo0900yU91xDvAXWniqct0aGhQE7h6B+RtIOK3uI5iJvO6EkxGoiV9LTkK0vpWU/rerVZ9WjqBiFeRHfkbgZfdB2sDix2yX4+z6oiL4PT29mfF2IbXhtlpSFo/f6TnSBP4bBrPXPiBhvYEFQbv6y3L9bWAAAA"
+        "Analytics": "v2:deflate64:H4sIAAAAAAAA/02Ny2rDQAxFvyX7sRInFLJuSiGrGJeuizJWi+KZUZBmGoLxvxdPH3R1Dpcr3S20Dy1sVnizxg9jE/gM00tGP7rDe+pQMVImdXizt4m8Qk9XMc6i90c0cowRpl4CLfXKTgL7e72uNruA8TwgTE/iR9JjxA96LslnlrTU/vxXXjUs+Q860shmLGmeXU8mRX1dO5V8Lbnu/ksPkgZevswuyUBwsfVnu4ftBnarizE3WlLmSNB/8wutZ8HgAQEAAA=="
       },
       "Metadata": {
         "aws:cdk:path": "SwiftChatAPILambda/CDKMetadata/Default"
       },
       "Condition": "CDKMetadataAvailable"
+    }
+  },
+  "Outputs": {
+    "API URL": {
+      "Description": "API URL for SwiftChat App",
+      "Value": {
+        "Fn::GetAtt": [
+          "APIHandlerFunctionUrlD2500C9A",
+          "FunctionUrl"
+        ]
+      }
     }
   },
   "Conditions": {
