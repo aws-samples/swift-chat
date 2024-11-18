@@ -195,7 +195,7 @@
     }
   },
   "Outputs": {
-    "API URL": {
+    "APIURL": {
       "Description": "API URL for SwiftChat App",
       "Value": {
         "Fn::GetAtt": [
