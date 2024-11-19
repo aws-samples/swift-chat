@@ -12,6 +12,7 @@ import { RouteParamList } from './types/RouteTypes.ts';
 import { AppProvider } from './history/AppProvider.tsx';
 import SettingsScreen from './settings/SettingsScreen.tsx';
 import Toast from 'react-native-toast-message';
+import TokenUsageScreen from './settings/TokenUsageScreen.tsx';
 
 export const isMac = false;
 
@@ -43,6 +44,13 @@ const App = () => {
             drawerContent={renderCustomDrawerContent}>
             <Drawer.Screen name="Bedrock" component={ChatScreen} />
             <Drawer.Screen name="Settings" component={SettingsScreen} />
+            <Drawer.Screen
+              name="TokenUsage"
+              component={TokenUsageScreen}
+              options={{
+                title: 'Token Usage',
+              }}
+            />
           </Drawer.Navigator>
         </NavigationContainer>
       </AppProvider>

@@ -25,8 +25,16 @@ import {
   getTextModel,
   saveMessageList,
   saveMessages,
+  updateTotalUsage,
 } from '../storage/StorageUtils.ts';
-import { ChatMode, ChatStatus, FileInfo, FileType } from '../types/Chat.ts';
+import {
+  ChatMode,
+  ChatStatus,
+  FileInfo,
+  FileType,
+  IMessageWithToken,
+  Usage,
+} from '../types/Chat.ts';
 import { useAppContext } from '../history/AppProvider.tsx';
 import { CustomHeaderRightButton } from './component/CustomHeaderRightButton.tsx';
 import CustomSendComponent from './component/CustomSendComponent.tsx';
@@ -77,7 +85,7 @@ function ChatScreen(): React.JSX.Element {
     Dimensions.get('window')
   );
   const [chatStatus, setChatStatus] = useState<ChatStatus>(ChatStatus.Init);
-
+  const [usage, setUsage] = useState<Usage>();
   const chatStatusRef = useRef(chatStatus);
   const messagesRef = useRef(messages);
   const bedrockMessages = useRef<BedrockMessage[]>([]);
@@ -91,12 +99,14 @@ function ChatScreen(): React.JSX.Element {
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
   const selectedFilesRef = useRef(selectedFiles);
+  const usageRef = useRef(usage);
 
   // update refs value with state
   useEffect(() => {
     messagesRef.current = messages;
     chatStatusRef.current = chatStatus;
-  }, [chatStatus, messages]);
+    usageRef.current = usage;
+  }, [chatStatus, messages, usage]);
 
   useEffect(() => {
     selectedFilesRef.current = selectedFiles;
@@ -121,6 +131,7 @@ function ChatScreen(): React.JSX.Element {
       headerTitle: () => (
         <HeaderTitle
           title={mode === ChatMode.Text ? 'Chat' : 'Image'}
+          usage={usage}
           onDoubleTap={scrollToTop}
         />
       ),
@@ -130,6 +141,7 @@ function ChatScreen(): React.JSX.Element {
           onPress={() => {
             //clear input content and selected files
             textInputRef?.current?.clear();
+            setUsage(undefined);
             setSelectedFiles([]);
             if (
               messagesRef.current.length > 0 &&
@@ -143,7 +155,7 @@ function ChatScreen(): React.JSX.Element {
       ),
     };
     navigation.setOptions(headerOptions);
-  }, [navigation, mode]);
+  }, [usage, navigation, mode]);
 
   // sessionId changes (start new chat or click another session)
   useEffect(() => {
@@ -171,6 +183,7 @@ function ChatScreen(): React.JSX.Element {
       }
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
+      setUsage((msg[0] as IMessageWithToken).usage);
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
@@ -273,7 +286,7 @@ function ChatScreen(): React.JSX.Element {
       return;
     }
     const currentSessionId = getSessionId();
-    saveMessages(sessionIdRef.current, messagesRef.current);
+    saveMessages(sessionIdRef.current, messagesRef.current, usageRef.current!);
     if (sessionIdRef.current > currentSessionId) {
       saveMessageList(
         sessionIdRef.current,
@@ -332,7 +345,12 @@ function ChatScreen(): React.JSX.Element {
         modeRef.current,
         () => isCanceled.current,
         controllerRef.current,
-        (msg: string, complete: boolean, needStop: boolean) => {
+        (
+          msg: string,
+          complete: boolean,
+          needStop: boolean,
+          usageInfo?: Usage
+        ) => {
           if (chatStatusRef.current !== ChatStatus.Running) {
             return;
           }
@@ -347,15 +365,28 @@ function ChatScreen(): React.JSX.Element {
             });
           };
           const setComplete = () => {
-            if (complete) {
-              trigger(HapticFeedbackTypes.notificationSuccess);
-              setChatStatus(ChatStatus.Complete);
+            trigger(HapticFeedbackTypes.notificationSuccess);
+            if (usageInfo) {
+              setUsage(prevUsage => ({
+                modelName: usageInfo.modelName,
+                inputTokens:
+                  (prevUsage?.inputTokens || 0) + usageInfo.inputTokens,
+                outputTokens:
+                  (prevUsage?.outputTokens || 0) + usageInfo.outputTokens,
+                totalTokens:
+                  (prevUsage?.totalTokens || 0) + usageInfo.totalTokens,
+              }));
+              updateTotalUsage(usageInfo);
             }
+            setChatStatus(ChatStatus.Complete);
           };
           if (modeRef.current === ChatMode.Text) {
             trigger(HapticFeedbackTypes.selection);
-            updateMessage();
-            setComplete();
+            if (!complete) {
+              updateMessage();
+            } else {
+              setComplete();
+            }
           } else {
             if (needStop) {
               sendEventRef.current('onImageStop');

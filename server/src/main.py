@@ -110,6 +110,8 @@ async def converse(request: ConverseRequest,
                         text = item["contentBlockDelta"].get("delta", {}).get("text", "")
                         if text:
                             yield text
+                    elif "metadata" in item:
+                        yield "\n" + json.dumps(item["metadata"]["usage"])
             except Exception as err:
                 yield f"Error: {str(err)}"
 

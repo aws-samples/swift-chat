@@ -1,8 +1,11 @@
+import { IMessage } from 'react-native-gifted-chat';
+
 export type Chat = {
   id: number;
   title: string;
   mode: string;
   timestamp: number;
+  token: number[];
 };
 
 export enum ChatStatus {
@@ -14,10 +17,6 @@ export enum ChatStatus {
 export interface EventData {
   id: number;
 }
-
-export type BedrockContent = {
-  text: string;
-};
 
 export type Model = {
   modelId: string;
@@ -70,3 +69,14 @@ export type FileInfo = {
   width?: number;
   height?: number;
 };
+
+export type Usage = {
+  modelName: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+};
+
+export interface IMessageWithToken extends IMessage {
+  usage?: Usage;
+}

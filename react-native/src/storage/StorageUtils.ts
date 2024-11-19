@@ -1,6 +1,13 @@
 import { IMessage } from 'react-native-gifted-chat';
 import { MMKV } from 'react-native-mmkv';
-import { AllModel, Chat, ChatMode, Model } from '../types/Chat.ts';
+import {
+  AllModel,
+  Chat,
+  ChatMode,
+  IMessageWithToken,
+  Model,
+  Usage,
+} from '../types/Chat.ts';
 import uuid from 'uuid';
 
 export const storage = new MMKV();
@@ -10,7 +17,6 @@ const initializeStorage = () => {
   let encryptionKey = storage.getString(key);
   if (!encryptionKey) {
     encryptionKey = uuid.v4();
-    console.log('new encryption_key', encryptionKey);
     storage.set(key, encryptionKey);
   }
 
@@ -33,6 +39,7 @@ const textModelKey = keyPrefix + 'textModelKey';
 const imageModelKey = keyPrefix + 'imageModelKey';
 const allModelKey = keyPrefix + 'allModelKey';
 const imageSizeKey = keyPrefix + 'imageSizeKey';
+const modelUsageKey = keyPrefix + 'modelUsageKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -40,7 +47,12 @@ let currentRegion: string | undefined;
 let currentImageModel: Model | undefined;
 let currentTextModel: Model | undefined;
 
-export function saveMessages(sessionId: number, messages: IMessage[]) {
+export function saveMessages(
+  sessionId: number,
+  messages: IMessage[],
+  usage: Usage
+) {
+  (messages[0] as IMessageWithToken).usage = usage;
   storage.set(sessionIdPrefix + sessionId, JSON.stringify(messages));
 }
 
@@ -263,4 +275,33 @@ export function saveImageSize(size: string) {
 
 export function getImageSize() {
   return storage.getString(imageSizeKey) ?? getAllImageSize()[1];
+}
+
+export function getModelUsage(): Usage[] {
+  const usage = storage.getString(modelUsageKey);
+  return usage ? JSON.parse(usage) : [];
+}
+
+export function updateTotalUsage(usage: Usage) {
+  const currentUsage = getModelUsage();
+  const modelIndex = currentUsage.findIndex(
+    m => m.modelName === usage.modelName
+  );
+  if (modelIndex >= 0) {
+    currentUsage[modelIndex].inputTokens += usage.inputTokens;
+    currentUsage[modelIndex].outputTokens += usage.outputTokens;
+  } else {
+    currentUsage.push(usage);
+  }
+  storage.set(modelUsageKey, JSON.stringify(currentUsage));
+}
+
+export function getTotalInputToken() {
+  const usage = getModelUsage();
+  return usage.reduce((sum, model) => sum + model.inputTokens, 0);
+}
+
+export function getTotalOutputToken() {
+  const usage = getModelUsage();
+  return usage.reduce((sum, model) => sum + model.outputTokens, 0);
 }

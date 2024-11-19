@@ -1,4 +1,10 @@
-import { AllModel, ChatMode, ImageRes, UpgradeInfo } from '../types/Chat.ts';
+import {
+  AllModel,
+  ChatMode,
+  ImageRes,
+  UpgradeInfo,
+  Usage,
+} from '../types/Chat.ts';
 import {
   getApiKey,
   getApiUrl,
@@ -16,7 +22,8 @@ import {
 type CallbackFunction = (
   result: string,
   complete: boolean,
-  needStop: boolean
+  needStop: boolean,
+  usage?: Usage
 ) => void;
 const isDev = false;
 export const invokeBedrockWithCallBack = async (
@@ -65,11 +72,17 @@ export const invokeBedrockWithCallBack = async (
         const decoder = new TextDecoder();
         while (true) {
           const { done, value } = await reader.read();
-          const chunk = decoder.decode(value, { stream: true });
-          completeMessage += chunk;
-          callback(completeMessage, done, false);
           if (done) {
             break;
+          }
+          const chunk = decoder.decode(value, { stream: true });
+          if (chunk[0] === '\n' && chunk[1] === '{') {
+            const usage: Usage = JSON.parse(chunk.slice(1));
+            usage.modelName = getTextModel().modelName;
+            callback(completeMessage, true, false, usage);
+          } else {
+            completeMessage += chunk;
+            callback(completeMessage, false, false);
           }
         }
       })

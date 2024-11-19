@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import {
+  Image,
   Linking,
   Platform,
   SafeAreaView,
@@ -16,23 +17,25 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { setHapticFeedbackEnabled, trigger } from '../chat/util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src';
 import {
-  getHapticEnabled,
-  getImageModel,
-  getTextModel,
-  saveKeys,
-  saveImageModel,
-  saveTextModel,
-  saveAllModels,
+  getAllImageSize,
   getAllModels,
   getAllRegions,
-  getAllImageSize,
-  getImageSize,
-  saveImageSize,
-  getRegion,
-  saveRegion,
-  isNewStabilityImageModel,
-  getApiUrl,
   getApiKey,
+  getApiUrl,
+  getHapticEnabled,
+  getImageModel,
+  getImageSize,
+  getRegion,
+  getTextModel,
+  getTotalInputToken,
+  getTotalOutputToken,
+  isNewStabilityImageModel,
+  saveAllModels,
+  saveImageModel,
+  saveImageSize,
+  saveKeys,
+  saveRegion,
+  saveTextModel,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -62,6 +65,20 @@ function SettingsScreen(): React.JSX.Element {
   const [imageModels, setImageModels] = useState<Model[]>([]);
   const [selectedImageModel, setSelectedImageModel] = useState<string>('');
   const [upgradeInfo, setUpgradeInfo] = useState<UpgradeInfo>(initUpgradeInfo);
+  const [tokens, setTokens] = useState({
+    input: 0,
+    output: 0,
+  });
+
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      setTokens({
+        input: getTotalInputToken(),
+        output: getTotalOutputToken(),
+      });
+    });
+  }, [navigation]);
+
   const toggleHapticFeedback = (value: boolean) => {
     setHapticEnabled(value);
     setHapticFeedbackEnabled(value);
@@ -242,6 +259,21 @@ function SettingsScreen(): React.JSX.Element {
           }}
           placeholder="Select image size"
         />
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.tokenContainer}
+          onPress={() => navigation.navigate('TokenUsage', {})}>
+          <Text style={styles.label}>Token Usage</Text>
+          <View style={styles.tokenArrowContainer}>
+            <Text style={styles.text}>
+              {`Input:${tokens.input}  Output:${tokens.output}`}
+            </Text>
+            <Image
+              style={styles.tokenArrow}
+              source={require('../assets/back.png')}
+            />
+          </View>
+        </TouchableOpacity>
         {!isMac && (
           <View style={styles.switchContainer}>
             <Text style={styles.label}>Haptic Feedback</Text>
@@ -251,13 +283,12 @@ function SettingsScreen(): React.JSX.Element {
             />
           </View>
         )}
-
         <TouchableOpacity
           style={styles.versionContainer}
           activeOpacity={1}
           onPress={handleCheckUpgrade}>
           <Text style={styles.label}>App Version</Text>
-          <Text style={styles.version}>
+          <Text style={styles.text}>
             {packageJson.version +
               (upgradeInfo.needUpgrade ? ' (' + upgradeInfo.version + ')' : '')}
           </Text>
@@ -281,7 +312,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'black',
   },
-  version: {
+  text: {
     fontSize: 14,
     fontWeight: '500',
     color: 'grey',
@@ -306,6 +337,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginVertical: 10,
+  },
+  tokenContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+  },
+  tokenArrowContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  tokenArrow: {
+    width: 16,
+    height: 16,
+    transform: [{ scaleX: -1 }],
+    opacity: 0.4,
   },
   versionContainer: {
     flexDirection: 'row',
