@@ -55,17 +55,19 @@ function TokenUsageScreen(): React.JSX.Element {
 
   return (
     <Animated.View
-      style={{
-        flex: 1,
-        transform: [
-          {
-            translateX: slideAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [300, 0],
-            }),
-          },
-        ],
-      }}>
+      style={[
+        styles.animatedContainer,
+        {
+          transform: [
+            {
+              translateX: slideAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [300, 0],
+              }),
+            },
+          ],
+        },
+      ]}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.container}>
           {modelUsage.map((usage, index) => (
@@ -109,6 +111,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   headerImage: { width: 20, height: 20 },
+  animatedContainer: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: 'white',
