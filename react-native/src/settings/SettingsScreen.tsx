@@ -53,6 +53,8 @@ const initUpgradeInfo: UpgradeInfo = {
   url: '',
 };
 
+const GITHUB_LINK = 'https://github.com/aws-samples/swift-chat';
+
 function SettingsScreen(): React.JSX.Element {
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
@@ -284,6 +286,26 @@ function SettingsScreen(): React.JSX.Element {
           </View>
         )}
         <TouchableOpacity
+          activeOpacity={1}
+          style={styles.tokenContainer}
+          onPress={() => Linking.openURL(GITHUB_LINK)}>
+          <Text style={styles.label}>User Manual</Text>
+          <Image
+            style={styles.tokenArrow}
+            source={require('../assets/back.png')}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.tokenContainer}
+          onPress={() => Linking.openURL(GITHUB_LINK + '/issues/new')}>
+          <Text style={styles.label}>Submit Feedback</Text>
+          <Image
+            style={styles.tokenArrow}
+            source={require('../assets/back.png')}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
           style={styles.versionContainer}
           activeOpacity={1}
           onPress={handleCheckUpgrade}>
@@ -314,7 +336,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '400',
     color: 'grey',
   },
   input: {
