@@ -26,6 +26,7 @@ type CallbackFunction = (
   usage?: Usage
 ) => void;
 const isDev = false;
+const USAGE_START = '\n{"inputTokens":';
 export const invokeBedrockWithCallBack = async (
   messages: BedrockMessage[],
   chatMode: ChatMode,
@@ -76,8 +77,20 @@ export const invokeBedrockWithCallBack = async (
             break;
           }
           const chunk = decoder.decode(value, { stream: true });
-          if (chunk[0] === '\n' && chunk[1] === '{') {
-            const usage: Usage = JSON.parse(chunk.slice(1));
+          if (
+            chunk[chunk.length - 1] === '}' &&
+            chunk.includes('\n') &&
+            chunk.indexOf(USAGE_START) != -1
+          ) {
+            const index = chunk.indexOf(USAGE_START);
+            let usage: Usage;
+            if (index > 0) {
+              usage = JSON.parse(chunk.slice(index + 1));
+              completeMessage += chunk.substring(0, index);
+              callback(completeMessage, false, false);
+            } else {
+              usage = JSON.parse(chunk.slice(1));
+            }
             usage.modelName = getTextModel().modelName;
             callback(completeMessage, true, false, usage);
           } else {
