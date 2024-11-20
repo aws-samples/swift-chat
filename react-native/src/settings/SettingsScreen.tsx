@@ -93,6 +93,8 @@ function SettingsScreen(): React.JSX.Element {
     if (isMac || Platform.OS === 'android') {
       if (upgradeInfo.needUpgrade) {
         await Linking.openURL(upgradeInfo.url);
+      } else {
+        await Linking.openURL(GITHUB_LINK + '/releases');
       }
     }
   };
@@ -266,7 +268,7 @@ function SettingsScreen(): React.JSX.Element {
           style={styles.tokenContainer}
           onPress={() => navigation.navigate('TokenUsage', {})}>
           <Text style={styles.label}>Token Usage</Text>
-          <View style={styles.tokenArrowContainer}>
+          <View style={styles.arrowContainer}>
             <Text style={styles.text}>
               {`Input:${tokens.input}  Output:${tokens.output}`}
             </Text>
@@ -310,10 +312,18 @@ function SettingsScreen(): React.JSX.Element {
           activeOpacity={1}
           onPress={handleCheckUpgrade}>
           <Text style={styles.label}>App Version</Text>
-          <Text style={styles.text}>
-            {packageJson.version +
-              (upgradeInfo.needUpgrade ? ' (' + upgradeInfo.version + ')' : '')}
-          </Text>
+          <View style={styles.arrowContainer}>
+            <Text style={styles.text}>
+              {packageJson.version +
+                (upgradeInfo.needUpgrade
+                  ? ' (' + upgradeInfo.version + ')'
+                  : '')}
+            </Text>
+            <Image
+              style={styles.tokenArrow}
+              source={require('../assets/back.png')}
+            />
+          </View>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -366,7 +376,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginVertical: 10,
   },
-  tokenArrowContainer: {
+  arrowContainer: {
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -375,6 +385,7 @@ const styles = StyleSheet.create({
     height: 16,
     transform: [{ scaleX: -1 }],
     opacity: 0.4,
+    marginLeft: 4,
   },
   versionContainer: {
     flexDirection: 'row',
