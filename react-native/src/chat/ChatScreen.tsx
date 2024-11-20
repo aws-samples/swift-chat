@@ -177,6 +177,7 @@ function ChatScreen(): React.JSX.Element {
       modeRef.current = mode;
       setChatStatus(ChatStatus.Init);
       sendEventRef.current('');
+      setUsage(undefined);
       if (initialSessionId === 0 || initialSessionId === -1) {
         startNewChat.current();
         return;

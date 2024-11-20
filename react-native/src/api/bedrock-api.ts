@@ -73,9 +73,6 @@ export const invokeBedrockWithCallBack = async (
         const decoder = new TextDecoder();
         while (true) {
           const { done, value } = await reader.read();
-          if (done) {
-            break;
-          }
           const chunk = decoder.decode(value, { stream: true });
           if (
             chunk[chunk.length - 1] === '}' &&
@@ -95,7 +92,10 @@ export const invokeBedrockWithCallBack = async (
             callback(completeMessage, true, false, usage);
           } else {
             completeMessage += chunk;
-            callback(completeMessage, false, false);
+            callback(completeMessage, done, false);
+          }
+          if (done) {
+            break;
           }
         }
       })
