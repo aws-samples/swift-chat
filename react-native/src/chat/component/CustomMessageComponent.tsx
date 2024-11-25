@@ -16,6 +16,7 @@ import {
 } from './CustomFileListComponent.tsx';
 import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
+import { CustomTokenizer } from './CustomTokenizer.ts';
 
 const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
   currentMessage,
@@ -57,6 +58,8 @@ const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
     () => new CustomMarkdownRenderer(handleImagePress),
     [handleImagePress]
   );
+
+  const customTokenizer = useMemo(() => new CustomTokenizer(), []);
   const handleCopy = () => {
     Clipboard.setString(currentMessage?.text ?? '');
     setCopied(true);
@@ -101,6 +104,7 @@ const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
           }}
           styles={customMarkedStyles}
           renderer={customMarkdownRenderer}
+          tokenizer={customTokenizer}
         />
         {currentMessage.image && (
           <CustomFileListComponent

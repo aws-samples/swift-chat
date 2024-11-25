@@ -77,7 +77,7 @@ export const invokeBedrockWithCallBack = async (
           if (
             chunk[chunk.length - 1] === '}' &&
             chunk.includes('\n') &&
-            chunk.indexOf(USAGE_START) != -1
+            chunk.indexOf(USAGE_START) !== -1
           ) {
             const index = chunk.indexOf(USAGE_START);
             let usage: Usage;

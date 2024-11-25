@@ -5,6 +5,7 @@ import {
   getHapticEnabled,
   saveHapticEnabled,
 } from '../../storage/StorageUtils.ts';
+import { isMac } from '../../App.tsx';
 
 let hapticFeedbackEnabled = getHapticEnabled();
 
@@ -19,7 +20,7 @@ export function setHapticFeedbackEnabled(isEnabled: boolean) {
 }
 
 export function trigger(method: HapticFeedbackTypes) {
-  if (!hapticFeedbackEnabled) {
+  if (isMac || !hapticFeedbackEnabled) {
     return;
   }
   if (method === HapticFeedbackTypes.selection && Platform.OS === 'android') {

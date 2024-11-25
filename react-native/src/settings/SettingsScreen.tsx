@@ -84,7 +84,7 @@ function SettingsScreen(): React.JSX.Element {
   const toggleHapticFeedback = (value: boolean) => {
     setHapticEnabled(value);
     setHapticFeedbackEnabled(value);
-    if (value) {
+    if (value && Platform.OS === 'android') {
       trigger(HapticFeedbackTypes.impactMedium);
     }
   };

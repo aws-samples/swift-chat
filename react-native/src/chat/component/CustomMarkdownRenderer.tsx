@@ -32,6 +32,9 @@ import MDImage from 'react-native-marked/src/components/MDImage.tsx';
 import ProgressBar from './ProgressBar.tsx';
 import { PressMode } from '../../types/Chat.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
+import MarkedList from '@jsamr/react-native-li';
+import Decimal from '@jsamr/counter-style/lib/es/presets/decimal';
+import Disc from '@jsamr/counter-style/lib/es/presets/disc';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
 const cachedNode: { [key: string]: React.ReactNode } = {};
@@ -409,6 +412,26 @@ export class CustomMarkdownRenderer
           })}
         </Table>
       </ScrollView>
+    );
+  }
+
+  list(
+    ordered: boolean,
+    li: ReactNode[],
+    listStyle?: ViewStyle,
+    textStyle?: TextStyle,
+    startIndex?: number
+  ): ReactNode {
+    return (
+      <MarkedList
+        counterRenderer={ordered ? Decimal : Disc}
+        markerTextStyle={textStyle}
+        markerBoxStyle={listStyle}
+        enableMarkerClipping={true}
+        key={this.getKey()}
+        startIndex={startIndex}>
+        {li.map(node => node)}
+      </MarkedList>
     );
   }
 }
