@@ -48,7 +48,7 @@ const App = () => {
               name="TokenUsage"
               component={TokenUsageScreen}
               options={{
-                title: 'Token Usage',
+                title: 'Usage',
               }}
             />
           </Drawer.Navigator>

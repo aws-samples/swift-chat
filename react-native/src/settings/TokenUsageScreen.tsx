@@ -69,17 +69,25 @@ function TokenUsageScreen(): React.JSX.Element {
         },
       ]}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
           {modelUsage.map((usage, index) => (
             <View key={index} style={styles.usageItem}>
               <Text style={styles.modelName}>{usage.modelName}</Text>
               <View style={styles.tokenInfo}>
-                <Text style={styles.tokenText}>
-                  Input: {usage.inputTokens.toLocaleString()}
-                </Text>
-                <Text style={styles.tokenText}>
-                  Output: {usage.outputTokens.toLocaleString()}
-                </Text>
+                {usage.imageCount ? (
+                  <Text style={styles.tokenText}>
+                    Images Generated: {usage.imageCount.toLocaleString()}
+                  </Text>
+                ) : (
+                  <>
+                    <Text style={styles.tokenText}>
+                      Input: {usage.inputTokens.toLocaleString()}
+                    </Text>
+                    <Text style={styles.tokenText}>
+                      Output: {usage.outputTokens.toLocaleString()}
+                    </Text>
+                  </>
+                )}
               </View>
             </View>
           ))}
@@ -99,6 +107,12 @@ function TokenUsageScreen(): React.JSX.Element {
                   .toLocaleString()}
               </Text>
             </View>
+            <Text style={[styles.totalText, { paddingTop: 8 }]}>
+              Images Generated:{' '}
+              {modelUsage
+                .reduce((sum, model) => sum + (model.imageCount ?? 0), 0)
+                .toLocaleString()}
+            </Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -119,9 +133,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   container: {
-    flex: 1,
-    paddingVertical: 8,
+    paddingTop: 8,
     paddingHorizontal: 16,
+    paddingBottom: 60,
   },
   usageItem: {
     paddingVertical: 12,

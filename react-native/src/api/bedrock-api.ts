@@ -125,8 +125,15 @@ export const invokeBedrockWithCallBack = async (
     const imageRes = await genImage(prompt, controller);
     if (imageRes.image.length > 0) {
       const localFilePath = await saveImageToLocal(imageRes.image);
+      const usage: Usage = {
+        modelName: getImageModel().modelName,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        imageCount: 1,
+      };
       if (localFilePath) {
-        callback(`![](${localFilePath})`, true, false);
+        callback(`![](${localFilePath})`, true, false, usage);
       }
     } else {
       if (imageRes.error.endsWith('AbortError: Aborted')) {

@@ -288,8 +288,12 @@ export function updateTotalUsage(usage: Usage) {
     m => m.modelName === usage.modelName
   );
   if (modelIndex >= 0) {
-    currentUsage[modelIndex].inputTokens += usage.inputTokens;
-    currentUsage[modelIndex].outputTokens += usage.outputTokens;
+    if (usage.imageCount) {
+      currentUsage[modelIndex].imageCount! += usage.imageCount;
+    } else {
+      currentUsage[modelIndex].inputTokens += usage.inputTokens;
+      currentUsage[modelIndex].outputTokens += usage.outputTokens;
+    }
   } else {
     currentUsage.push(usage);
   }

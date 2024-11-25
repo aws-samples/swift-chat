@@ -75,6 +75,7 @@ export type Usage = {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
+  imageCount?: number;
 };
 
 export interface IMessageWithToken extends IMessage {
