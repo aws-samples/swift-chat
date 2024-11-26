@@ -89,7 +89,7 @@ export const invokeBedrockWithCallBack = async (
               usage = JSON.parse(chunk.slice(1));
             }
             usage.modelName = getTextModel().modelName;
-            callback(completeMessage, true, false, usage);
+            callback(completeMessage, false, false, usage);
           } else {
             completeMessage += chunk;
             callback(completeMessage, done, false);

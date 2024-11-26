@@ -357,6 +357,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 8,
     paddingHorizontal: 10,
+    color: 'black',
   },
   regionAutoSwitchContainer: {
     flexDirection: 'row',

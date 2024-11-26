@@ -356,17 +356,6 @@ function ChatScreen(): React.JSX.Element {
             return;
           }
           const updateMessage = () => {
-            setMessages(prevMessages => {
-              const newMessages = [...prevMessages];
-              newMessages[0] = {
-                ...prevMessages[0],
-                text: msg,
-              };
-              return newMessages;
-            });
-          };
-          const setComplete = () => {
-            trigger(HapticFeedbackTypes.notificationSuccess);
             if (usageInfo) {
               setUsage(prevUsage => ({
                 modelName: usageInfo.modelName,
@@ -379,13 +368,23 @@ function ChatScreen(): React.JSX.Element {
               }));
               updateTotalUsage(usageInfo);
             }
+            setMessages(prevMessages => {
+              const newMessages = [...prevMessages];
+              newMessages[0] = {
+                ...prevMessages[0],
+                text: msg,
+              };
+              return newMessages;
+            });
+          };
+          const setComplete = () => {
+            trigger(HapticFeedbackTypes.notificationSuccess);
             setChatStatus(ChatStatus.Complete);
           };
           if (modeRef.current === ChatMode.Text) {
             trigger(HapticFeedbackTypes.selection);
-            if (!complete) {
-              updateMessage();
-            } else {
+            updateMessage();
+            if (complete) {
               setComplete();
             }
           } else {
@@ -513,6 +512,7 @@ function ChatScreen(): React.JSX.Element {
           ...styles.textInputStyle,
           ...{
             fontWeight: isMac ? '300' : 'normal',
+            color: 'black',
           },
         }}
         maxComposerHeight={isMac ? 320 : 200}

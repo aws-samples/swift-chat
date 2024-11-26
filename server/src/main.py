@@ -65,7 +65,7 @@ def get_api_key_from_ssm(use_cache_token: bool):
 def verify_api_key(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
                    use_cache_token: bool = True):
     if credentials.credentials != get_api_key_from_ssm(use_cache_token):
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid API Key")
     return credentials.credentials
 
 
