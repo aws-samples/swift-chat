@@ -115,7 +115,7 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 - Thanks to the **AOT** (Ahead of Time) compilation of RN Hermes engine
 - Added **lazy loading** of complex components
-- App can start and be ready for input **within 1 second**
+- App launches instantly and is immediately ready for input
 
 🌐 **Fast Request Speed**
 
