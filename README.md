@@ -50,14 +50,14 @@ SwiftChat comes with the following default settings:
 
 1. Right-click [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) to open your AWS Console in
    new window.
-2. Check whether you are in the [supported region](#supported-region), then click on the "Create parameter" button.
-3. Name: Enter a descriptive name for your parameter (e.g., "SwiftChatAPIKey", this is `ApiKeyParam` you will fill
+2. Check whether you are in the [supported region](#supported-region), then click on the **Create parameter** button.
+3. **Name**: Enter a descriptive name for your parameter (e.g., "SwiftChatAPIKey", this is `ApiKeyParam` you will fill
    in [Step2](#step-2-deploy-stack-and-get-your-api-url)).
-4. Tier: Select **Standard**.
-5. Type: Select **SecureString**.
-6. Value: Any string without spaces (This is the API Key you'll need to configure your App
+4. **Tier**: Select `Standard`.
+5. **Type**: Select `SecureString`.
+6. **Value**: Any string without spaces (This is the API Key you'll need to configure your App
    in [Step 3](#step-3-download-the-app-and-setup-with-api-url-and-api-key)).
-7. Click "Create parameter".
+7. Click **Create parameter**.
 
 ### Step 2: Deploy stack and get your API URL
 

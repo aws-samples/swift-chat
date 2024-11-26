@@ -46,13 +46,13 @@ SwiftChat 包含以下默认设置：
 ### 第1步: 设置API Key
 
 1. 右键点击 [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) 在新窗口中打开 AWS 控制台。
-2. 检查您是否在 [支持的区域](#支持的区域)，然后点击**创建参数**按钮。
-3. 名称:为您的参数输入描述性名称(例如"SwiftChatAPIKey"，这是您将在 [第2步](#第2步-部署堆栈并获取api-url)
+2. 检查您是否在 [支持的区域](#支持的区域)，然后点击 **创建参数** 按钮。
+3. **名称**：为您的参数输入描述性名称(例如"SwiftChatAPIKey"，这是您将在 [第2步](#第2步-部署堆栈并获取api-url)
    中填写的`ApiKeyParam`)。
-4. 层级:选择 **标准**。
-5. 类型:选择 **SecureString**。
-6. 值:任何不含空格的字符串（这是您需要在 [第3步](#第3步-下载应用并设置-api-url-和-api-key) 中配置 App 的 API Key）。
-7. 点击**创建参数**。
+4. **层级**：选择 `标准`。
+5. **类型**：选择 `SecureString`。
+6. **值**：任何不含空格的字符串（这是您需要在 [第3步](#第3步-下载应用并设置-api-url-和-api-key) 中配置 App 的 API Key）。
+7. 点击 **创建参数**。
 
 ### 第2步: 部署堆栈并获取API URL
 
@@ -65,13 +65,14 @@ SwiftChat 包含以下默认设置：
 
       [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
-2. 点击**下一步**，在"指定堆栈详细信息"页面中提供以下信息:
+2. 点击 **下一步**，在"指定堆栈详细信息"页面中提供以下信息:
     - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。
     - 对于App Runner，根据您的需求选择`InstanceTypeParam`。
-3. 点击**下一步**，保持"配置堆栈选项"页面默认设置，阅读功能并勾选底部的"我确认，AWS CloudFormation可能会创建 IAM 资源"复选框。
-4. 点击**下一步**，在"审核并创建"中检查配置并点击**提交**。
+3. 点击 **下一步**，保持 "配置堆栈选项" 页面默认设置，阅读功能并勾选底部的 "我确认，AWS CloudFormation可能会创建 IAM 资源"
+   复选框。
+4. 点击 **下一步**，在 "审核并创建" 中检查配置并点击 **提交**。
 
-等待约3-5分钟部署完成，然后点击CloudFormation堆栈并转到**输出**选项卡，您可以找到**API URL**
+等待约3-5分钟部署完成，然后点击CloudFormation堆栈并转到 **输出** 选项卡，您可以找到 **API URL**
 类似`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws`。
 
 ### 第3步: 下载应用并设置 API URL 和 API Key
@@ -81,9 +82,9 @@ SwiftChat 包含以下默认设置：
     - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.5.0/SwiftChat.dmg)
     - iOS (目前不提供 iOS 版本，您可以使用 Xcode 在本地构建)
 
-2. 启动应用，点击左侧菜单按钮打开抽屉页面，点击抽屉底部的**Settings**。
+2. 启动应用，点击左侧菜单按钮打开抽屉页面，点击抽屉底部的 **Settings**。
 3. 粘贴`API URL`和`API Key`然后选择 Region。
-4. 您可以更改默认的文本和图像模型，并**确保已在 AWS 控制台的对应 Region 中启用了这些模型**。
+4. 您可以更改默认的文本和图像模型，**并确保已在 AWS 控制台的对应 Region 中启用了这些模型**。
 5. 点击右上角✓图标保存配置并开始聊天。
 
 恭喜🎉 您的 SwiftChat 应用已准备就绪!
