@@ -148,7 +148,9 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 First, clone this repository. All app code is located in the `react-native` folder. Before proceeding, execute the
 following command to download dependencies.
 
-> cd react-native && npm i
+```bash
+cd react-native && npm i
+``` 
 
 ### Build for Android
 

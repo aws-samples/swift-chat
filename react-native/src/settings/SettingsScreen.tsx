@@ -265,7 +265,7 @@ function SettingsScreen(): React.JSX.Element {
         />
         <TouchableOpacity
           activeOpacity={1}
-          style={styles.tokenContainer}
+          style={styles.itemContainer}
           onPress={() => navigation.navigate('TokenUsage', {})}>
           <Text style={styles.label}>Token Usage</Text>
           <View style={styles.arrowContainer}>
@@ -273,7 +273,7 @@ function SettingsScreen(): React.JSX.Element {
               {`Input:${tokens.input}  Output:${tokens.output}`}
             </Text>
             <Image
-              style={styles.tokenArrow}
+              style={styles.arrowImage}
               source={require('../assets/back.png')}
             />
           </View>
@@ -289,21 +289,33 @@ function SettingsScreen(): React.JSX.Element {
         )}
         <TouchableOpacity
           activeOpacity={1}
-          style={styles.tokenContainer}
+          style={styles.itemContainer}
           onPress={() => Linking.openURL(GITHUB_LINK)}>
-          <Text style={styles.label}>User Manual</Text>
+          <Text style={styles.label}>Setup Guide</Text>
           <Image
-            style={styles.tokenArrow}
+            style={styles.arrowImage}
             source={require('../assets/back.png')}
           />
         </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={1}
-          style={styles.tokenContainer}
-          onPress={() => Linking.openURL(GITHUB_LINK + '/issues/new')}>
+          style={styles.itemContainer}
+          onPress={() =>
+            Linking.openURL(GITHUB_LINK + '/discussions/new?category=general')
+          }>
           <Text style={styles.label}>Submit Feedback</Text>
           <Image
-            style={styles.tokenArrow}
+            style={styles.arrowImage}
+            source={require('../assets/back.png')}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.itemContainer}
+          onPress={() => Linking.openURL(GITHUB_LINK + '/issues/new')}>
+          <Text style={styles.label}>Report bugs</Text>
+          <Image
+            style={styles.arrowImage}
             source={require('../assets/back.png')}
           />
         </TouchableOpacity>
@@ -320,7 +332,7 @@ function SettingsScreen(): React.JSX.Element {
                   : '')}
             </Text>
             <Image
-              style={styles.tokenArrow}
+              style={styles.arrowImage}
               source={require('../assets/back.png')}
             />
           </View>
@@ -371,7 +383,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginVertical: 10,
   },
-  tokenContainer: {
+  itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -381,7 +393,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
-  tokenArrow: {
+  arrowImage: {
     width: 16,
     height: 16,
     transform: [{ scaleX: -1 }],
