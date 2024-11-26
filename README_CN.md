@@ -77,8 +77,8 @@ SwiftChat 包含以下默认设置：
 ### 第3步: 下载应用并设置 API URL 和 API Key
 
 1. 下载应用
-    - Android 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/v1.5.0/SwiftChat.apk)
-    - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/v1.5.0/SwiftChat.dmg)
+    - Android 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.5.0/SwiftChat.apk)
+    - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.5.0/SwiftChat.dmg)
     - iOS (目前不提供 iOS 版本，您可以使用 Xcode 在本地构建)
 
 2. 启动应用，点击左侧菜单按钮打开抽屉页面，点击抽屉底部的**Settings**。
