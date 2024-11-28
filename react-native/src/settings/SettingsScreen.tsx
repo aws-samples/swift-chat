@@ -310,7 +310,11 @@ function SettingsScreen(): React.JSX.Element {
         <TouchableOpacity
           activeOpacity={1}
           style={styles.itemContainer}
-          onPress={() => Linking.openURL(GITHUB_LINK + '/issues/new')}>
+          onPress={() =>
+            Linking.openURL(
+              GITHUB_LINK + '/issues/new?template=bug_report.yaml'
+            )
+          }>
           <Text style={styles.label}>Report an Issue</Text>
           <Image
             style={styles.arrowImage}
