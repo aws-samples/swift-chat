@@ -109,6 +109,38 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 - Europe (Paris): eu-west-3
 - South America (São Paulo): sa-east-1
 
+## Detailed Features
+
+### Message Handling
+- [x] Text copy support:
+   * Copy button in message header
+   * Copy button in code blocks
+   * Direct Select and copy code on macOS (double click or long click on iOS)
+   * Long press text to copy entire sentence (Right-click on macOS)
+- [x] Text selection mode by tapping message title or double-clicking text
+- [x] Message timeline view in history
+- [x] Delete messages through long press in history
+- [x] Click to preview for uploaded documents and images
+- [x] Support Markdown format for both questions and answers
+- [x] Support table display and code syntax highlighting
+- [x] Maximum 20 images and 5 documents per conversation
+
+### Image Features
+- [x] Support image generation with Chinese prompts
+- [x] View and zoom generated images
+- [x] Long press images to save or share
+- [x] Automatic image compression to optimize token usage
+
+### User Experience
+- [x] Haptic feedback for Android and iOS (can be disabled in Settings)
+- [x] Support landscape mode on Android/iOS devices
+- [x] Double tap title bar to scroll to top
+- [x] Click bottom arrow to view latest messages
+- [x] View current session token usage by tapping Chat title
+- [x] Check detailed token usage and image generation count in Settings
+- [x] In-app upgrade notifications (Android & macOS)
+
+
 ## What Makes SwiftChat Really "Swift"?
 
 🚀 **Fast Launch Speed**
@@ -201,8 +233,7 @@ export API_KEY=<API Key>
      "region": "us-west-2"
    }'
    ```
-   This API is used to implement streaming conversations, and it only returns the text required for
-   display.
+   This API is used to implement streaming conversations, and it only returns the text and token usage for display.
 
    The `messages` under body fully complies with the messages structure specification in Amazon
    Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
@@ -250,6 +281,24 @@ export API_KEY=<API Key>
 - Client code: [bedrock-api.ts](/react-native/src/api/bedrock-api.ts)
 
 - Server code: [main.py](server/src/main.py)
+
+## How to upgrade?
+
+### Upgrade App
+
+- **Android** and **macOS**: Navigate to **Settings** Page, if there is a new version, you will find it at the bottom
+  of this page, then click the app version to download and install it.
+- **iOS**: If a new version is released in the [Release page](https://github.com/aws-samples/swift-chat/releases),
+  update your local code, rebuild and install your app in Xcode.
+
+**Note**: After downloading a new version, please check the [release notes](https://github.com/aws-samples/swift-chat/releases) to see if an API version update is required.
+
+### Upgrade API
+
+- **For AppRunner**: Click and open [App Runner Services](https://console.aws.amazon.com/apprunner/home#/services) page,
+  find and open `swiftchat-api`, click top right **Deploy** button.
+- **For Lambda**: Click and open [Lambda Services](https://console.aws.amazon.com/lambda/home#/functions), find and open
+  your Lambda which start with `SwiftChatLambda-xxx`, click the **Deploy new image** button and click Save.
 
 ## Security
 

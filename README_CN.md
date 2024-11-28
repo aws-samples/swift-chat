@@ -103,6 +103,37 @@ SwiftChat 包含以下默认设置：
 - 欧洲(巴黎):eu-west-3
 - 南美洲(圣保罗):sa-east-1
 
+## 详细功能
+
+### 消息处理
+- [x] 文本复制支持：
+   * 点击消息标题栏右侧的复制按钮
+   * 点击代码块右上角的复制按钮
+   * 在 macOS 上可直接选择并复制代码（iOS 上双击或长按）
+   * 长按文本复制整句（macOS 上点击右键）
+- [x] 通过点击消息标题或双击文本启用文本选择模式
+- [x] 历史消息按时间线展示
+- [x] 在历史记录中长按可删除消息
+- [x] 点击预览上传的文档和图片
+- [x] 同时支持问题和回答的 Markdown 格式显示
+- [x] 支持表格显示和代码语法高亮
+- [x] 每个会话最多支持上传 20 张图片和 5 个文档
+
+### 图片功能
+- [x] 支持使用中文生成图片
+- [x] 支持点击查看和缩放生成的图片
+- [x] 长按图片可保存或分享
+- [x] 自动压缩上传图片以优化 token 使用
+
+### 用户体验
+- [x] Android 和 iOS 设备支持触感反馈（可在设置中关闭）
+- [x] 支持 Android/iOS 设备横屏模式
+- [x] 双击标题栏回到顶部
+- [x] 点击底部箭头查看最新消息
+- [x] 点击聊天标题查看当前会话的 token 使用情况
+- [x] 在设置中查看详细的 token 使用情况和图片生成数量
+- [x] 应用内升级提示（Android 和 macOS）
+
 ## 是什么让 SwiftChat 如此"迅速"?
 
 🚀 **快速启动速度**
@@ -194,7 +225,7 @@ export API_KEY=<API Key>
      "region": "us-west-2"
    }'
    ```
-   此 API 用于实现流式对话，它仅返回显示所需的文本。
+   此 API 用于实现流式对话，它仅返回显示所需的文本和 Token 用量。
 
    Body 中的 `messages` 完全符合 Amazon
    Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
@@ -241,6 +272,23 @@ export API_KEY=<API Key>
 - 客户端代码: [bedrock-api.ts](/react-native/src/api/bedrock-api.ts)
 
 - 服务器代码: [main.py](server/src/main.py)
+
+## 如何升级？
+
+### 升级应用程序
+
+- **Android** 和 **macOS**：导航到 **Settings** 页面，如果有新版本，您将在页面底部找到它，然后点击应用版本号进行下载和安装。
+- **iOS**：如果在 [Release页面](https://github.com/aws-samples/swift-chat/releases) 上发布了新版本，
+  请更新您的本地代码，在 Xcode 中重新构建并安装您的应用程序。
+
+**提示**：下载新版本后，请查看版本发布说明，确认是否需要同步更新 API 版本。
+
+### 升级 API
+
+- **对于 AppRunner**：点击并打开 [App Runner Services](https://console.aws.amazon.com/apprunner/home#/services) 页面，
+  找到并打开 `swiftchat-api`，点击右上角的 **部署** 按钮。
+- **对于 Lambda**：点击并打开 [Lambda Services](https://console.aws.amazon.com/lambda/home#/functions) 页面，找到并打开
+  以 `SwiftChatLambda-xxx` 开头的 Lambda 函数，点击 **部署新镜像** 按钮并点击保存。
 
 ## 安全
 
