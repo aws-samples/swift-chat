@@ -287,7 +287,7 @@ export API_KEY=<API Key>
 - **Android** and **macOS**: Navigate to **Settings** Page, if there is a new version, you will find it at the bottom
   of this page, then click the app version to download and install it.
 - **iOS**: If a new version is released in the [Release page](https://github.com/aws-samples/swift-chat/releases),
-  update your local code, rebuild and install your app in Xcode.
+  update your local code, rebuild and install your app by Xcode.
 
 **Note**: After downloading a new version, please check
 the [release notes](https://github.com/aws-samples/swift-chat/releases) to see if an API version update is required.
