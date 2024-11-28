@@ -90,12 +90,10 @@ function SettingsScreen(): React.JSX.Element {
   };
 
   const handleCheckUpgrade = async () => {
-    if (isMac || Platform.OS === 'android') {
-      if (upgradeInfo.needUpgrade) {
-        await Linking.openURL(upgradeInfo.url);
-      } else {
-        await Linking.openURL(GITHUB_LINK + '/releases');
-      }
+    if ((isMac || Platform.OS === 'android') && upgradeInfo.needUpgrade) {
+      await Linking.openURL(upgradeInfo.url);
+    } else {
+      await Linking.openURL(GITHUB_LINK + '/releases');
     }
   };
 
@@ -291,7 +289,7 @@ function SettingsScreen(): React.JSX.Element {
           activeOpacity={1}
           style={styles.itemContainer}
           onPress={() => Linking.openURL(GITHUB_LINK)}>
-          <Text style={styles.label}>Setup Guide</Text>
+          <Text style={styles.label}>Configuration Guide</Text>
           <Image
             style={styles.arrowImage}
             source={require('../assets/back.png')}
@@ -313,7 +311,7 @@ function SettingsScreen(): React.JSX.Element {
           activeOpacity={1}
           style={styles.itemContainer}
           onPress={() => Linking.openURL(GITHUB_LINK + '/issues/new')}>
-          <Text style={styles.label}>Report bugs</Text>
+          <Text style={styles.label}>Report an Issue</Text>
           <Image
             style={styles.arrowImage}
             source={require('../assets/back.png')}

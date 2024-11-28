@@ -1,5 +1,19 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  View,
+  StyleSheet,
+  Text,
+  Image,
+  TouchableOpacity,
+  TextInput,
+  Platform,
+} from 'react-native';
 import Share from 'react-native-share';
 import Markdown from 'react-native-marked';
 import { IMessage, MessageProps } from 'react-native-gifted-chat';
@@ -17,6 +31,7 @@ import {
 import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
 import { CustomTokenizer } from './CustomTokenizer.ts';
+import { State, TapGestureHandler } from 'react-native-gesture-handler';
 
 const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
   currentMessage,
@@ -24,6 +39,8 @@ const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
   const [visible, setIsVisible] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const inputHeightRef = useRef(0);
   const userName =
     currentMessage?.user._id === 1
       ? 'You'
@@ -61,8 +78,20 @@ const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
   const handleCopy = () => {
+    if (isEdit) {
+      setIsEdit(false);
+      return;
+    }
     Clipboard.setString(currentMessage?.text ?? '');
     setCopied(true);
+  };
+
+  const handleEdit = () => {
+    setIsEdit(!isEdit);
+  };
+
+  const onDoubleTap = () => {
+    setIsEdit(true);
   };
 
   useEffect(() => {
@@ -84,28 +113,64 @@ const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
       <TouchableOpacity
         style={styles.header}
         activeOpacity={1}
-        onPress={handleCopy}>
+        onPress={handleEdit}>
         <Image source={imgSource} style={styles.avatar} />
         <Text style={styles.name}>{userName}</Text>
-        <Image
-          source={
-            copied
-              ? require('../../assets/done.png')
-              : require('../../assets/copy_grey.png')
-          }
-          style={styles.copy}
-        />
+        <TouchableOpacity onPress={handleCopy} style={styles.copyContainer}>
+          <Image
+            source={
+              isEdit
+                ? require('../../assets/select.png')
+                : copied
+                ? require('../../assets/done.png')
+                : require('../../assets/copy_grey.png')
+            }
+            style={styles.copy}
+          />
+        </TouchableOpacity>
       </TouchableOpacity>
       <View style={styles.marked_box}>
-        <Markdown
-          value={currentMessage.text}
-          flatListProps={{
-            initialNumToRender: 8,
-          }}
-          styles={customMarkedStyles}
-          renderer={customMarkdownRenderer}
-          tokenizer={customTokenizer}
-        />
+        {!isEdit && (
+          <TapGestureHandler
+            numberOfTaps={2}
+            onHandlerStateChange={({ nativeEvent }) => {
+              if (nativeEvent.state === State.ACTIVE) {
+                onDoubleTap();
+              }
+            }}>
+            <View
+              onLayout={event => {
+                inputHeightRef.current = event.nativeEvent.layout.height;
+              }}>
+              <Markdown
+                value={currentMessage.text}
+                flatListProps={{
+                  initialNumToRender: 8,
+                }}
+                styles={customMarkedStyles}
+                renderer={customMarkdownRenderer}
+                tokenizer={customTokenizer}
+              />
+            </View>
+          </TapGestureHandler>
+        )}
+        {isEdit && (
+          <TextInput
+            editable={Platform.OS === 'android'}
+            multiline
+            style={[
+              styles.inputText,
+              // eslint-disable-next-line react-native/no-inline-styles
+              {
+                height: inputHeightRef.current - 1,
+                fontWeight: isMac ? '300' : 'normal',
+                lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
+                paddingTop: Platform.OS === 'android' ? 7 : 5,
+              },
+            ]}>
+            {currentMessage.text}
+          </TextInput>
+        )}
         {currentMessage.image && (
           <CustomFileListComponent
             files={JSON.parse(currentMessage.image)}
@@ -138,11 +203,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 0,
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   avatar: {
     width: 22,
     height: 22,
     borderRadius: 11,
     marginRight: 6,
+  },
+  copyContainer: {
+    padding: 4,
   },
   copy: {
     width: 18,
@@ -151,9 +223,20 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   name: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '500',
     color: 'black',
+  },
+  inputText: {
+    fontSize: 16,
+    lineHeight: 26,
+    textAlignVertical: 'top',
+    marginTop: 1,
+    padding: 0,
+    fontWeight: '300',
+    color: '#333333',
+    letterSpacing: 0,
   },
 });
 

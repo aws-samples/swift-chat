@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import {
   Animated,
   Image,
+  Linking,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -107,6 +108,7 @@ function TokenUsageScreen(): React.JSX.Element {
                   .toLocaleString()}
               </Text>
             </View>
+            {/* eslint-disable-next-line react-native/no-inline-styles */}
             <Text style={[styles.totalText, { paddingTop: 8 }]}>
               Images Generated:{' '}
               {modelUsage
@@ -114,6 +116,13 @@ function TokenUsageScreen(): React.JSX.Element {
                 .toLocaleString()}
             </Text>
           </View>
+          <Text
+            style={styles.priceLink}
+            onPress={() =>
+              Linking.openURL('https://aws.amazon.com/bedrock/pricing/')
+            }>
+            View model pricing on Amazon Bedrock
+          </Text>
         </ScrollView>
       </SafeAreaView>
     </Animated.View>
@@ -174,6 +183,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: 'black',
+  },
+  priceLink: {
+    fontSize: 12,
+    color: 'grey',
+    marginLeft: 4,
+    paddingVertical: 8,
+    textAlign: 'left',
+    textDecorationLine: 'underline',
+    marginVertical: 16,
   },
 });
 
