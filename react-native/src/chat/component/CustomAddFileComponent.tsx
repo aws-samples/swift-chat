@@ -19,7 +19,11 @@ interface CustomRenderActionsProps {
 }
 
 const DefaultIcon = () => (
-  <Image style={styles.imageButton} source={require('../../assets/add.png')} />
+  <Image
+    style={styles.imageButton}
+    resizeMode="contain"
+    source={require('../../assets/add.png')}
+  />
 );
 
 const ListIcon = () => <Text style={styles.addIcon}>+</Text>;
