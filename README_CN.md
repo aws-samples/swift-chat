@@ -33,26 +33,26 @@ macOS 等多个平台。
 
 ### 前置条件
 
-请确保您有权限访问 Amazon Bedrock 基础模型。
-您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
-来启用模型。
-
-SwiftChat 包含以下默认设置：
+请确保您有权限访问 Amazon Bedrock 基础模型，SwiftChat 默认设置如下：
 
 * 区域: `us-west-2`
 * 文本模型: `Claude 3.5 Sonnet`
 * 图像模型: `Stable Image Core 1.0`
 
+您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
+来启用你的模型。
+
 ### 第1步: 设置API Key
 
 1. 右键点击 [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) 在新窗口中打开 AWS 控制台。
 2. 检查您是否在 [支持的区域](#支持的区域)，然后点击 **创建参数** 按钮。
-3. **名称**：为您的参数输入描述性名称(例如"SwiftChatAPIKey"，这是您将在 [第2步](#第2步-部署堆栈并获取api-url)
-   中填写的`ApiKeyParam`)。
-4. **层级**：选择 `标准`。
-5. **类型**：选择 `SecureString`。
-6. **值**：任何不含空格的字符串（这是您需要在 [第3步](#第3步-下载应用并设置-api-url-和-api-key) 中配置 App 的 API Key）。
-7. 点击 **创建参数**。
+3. 完成以下参数填写，其他选项保持默认：
+    * **名称**：为您的参数输入描述性名称(例如 "SwiftChatAPIKey"，这是您将在 [第2步](#第2步-部署堆栈并获取api-url)
+      中填写的`ApiKeyParam`)。
+    * **类型**：选择 `SecureString`。
+    * **值**：任何不含空格的字符串（这是您需要在 [第3步](#第3步-下载应用并设置-api-url-和-api-key) 中配置 App
+      的 `API Key`）。
+4. 点击 **创建参数**。
 
 ### 第2步: 部署堆栈并获取API URL
 
@@ -82,10 +82,9 @@ SwiftChat 包含以下默认设置：
     - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.5.0/SwiftChat.dmg)
     - iOS (目前不提供 iOS 版本，您可以使用 Xcode 在本地构建)
 
-2. 启动应用，点击左侧菜单按钮打开抽屉页面，点击抽屉底部的 **Settings**。
+2. 启动应用，点击左侧菜单按钮，并点击底部的 **Settings**。
 3. 粘贴`API URL`和`API Key`然后选择 Region。
-4. 您可以更改默认的文本和图像模型，**并确保已在 AWS 控制台的对应 Region 中启用了这些模型**。
-5. 点击右上角✓图标保存配置并开始聊天。
+4. 点击右上角✓图标保存配置并开始聊天。
 
 恭喜🎉 您的 SwiftChat 应用已准备就绪!
 
@@ -106,11 +105,12 @@ SwiftChat 包含以下默认设置：
 ## 详细功能
 
 ### 消息处理
+
 - [x] 文本复制支持：
-   * 点击消息标题栏右侧的复制按钮
-   * 点击代码块右上角的复制按钮
-   * 在 macOS 上可直接选择并复制代码（iOS 上双击或长按）
-   * 长按文本复制整句（macOS 上点击右键）
+    * 点击消息标题栏右侧的复制按钮
+    * 点击代码块右上角的复制按钮
+    * 在 macOS 上可直接选择并复制代码（iOS 上双击或长按）
+    * 长按文本复制整句（macOS 上点击右键）
 - [x] 通过点击消息标题或双击文本启用文本选择模式
 - [x] 历史消息按时间线展示
 - [x] 在历史记录中长按可删除消息
@@ -120,12 +120,14 @@ SwiftChat 包含以下默认设置：
 - [x] 每个会话最多支持上传 20 张图片和 5 个文档
 
 ### 图片功能
+
 - [x] 支持使用中文生成图片
 - [x] 支持点击查看和缩放生成的图片
 - [x] 长按图片可保存或分享
 - [x] 自动压缩上传图片以优化 token 使用
 
 ### 用户体验
+
 - [x] Android 和 iOS 设备支持触感反馈（可在设置中关闭）
 - [x] 支持 Android/iOS 设备横屏模式
 - [x] 双击标题栏回到顶部

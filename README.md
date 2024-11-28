@@ -35,29 +35,27 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 ### Prerequisites
 
-Please ensure you have access to Amazon Bedrock foundation models.
-You can follow
-the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to enable
-the models.
-
-SwiftChat comes with the following default settings:
+Ensure you have access to Amazon Bedrock foundation models. SwiftChat default settings are:
 
 * Region: `us-west-2`
 * Text Model: `Claude 3.5 Sonnet`
 * Image Model: `Stable Image Core 1.0`
+
+Follow the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to
+enable your models.
 
 ### Step 1: Set up your API Key
 
 1. Right-click [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) to open your AWS Console in
    new window.
 2. Check whether you are in the [supported region](#supported-region), then click on the **Create parameter** button.
-3. **Name**: Enter a descriptive name for your parameter (e.g., "SwiftChatAPIKey", this is `ApiKeyParam` you will fill
-   in [Step2](#step-2-deploy-stack-and-get-your-api-url)).
-4. **Tier**: Select `Standard`.
-5. **Type**: Select `SecureString`.
-6. **Value**: Any string without spaces (This is the API Key you'll need to configure your App
-   in [Step 3](#step-3-download-the-app-and-setup-with-api-url-and-api-key)).
-7. Click **Create parameter**.
+3. Fill the parameters below, leaving other options as default.
+    * **Name**: Enter a name for your parameter (e.g., "SwiftChatAPIKey", this is `ApiKeyParam` you will fill
+      in [Step2](#step-2-deploy-stack-and-get-your-api-url)).
+    * **Type**: Select `SecureString`.
+    * **Value**: Any string without spaces (This is the `API Key` you'll need to configure your App
+      in [Step 3](#step-3-download-the-app-and-setup-with-api-url-and-api-key)).
+4. Click **Create parameter**.
 
 ### Step 2: Deploy stack and get your API URL
 
@@ -87,11 +85,9 @@ can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or
     - macOS App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.5.0/SwiftChat.dmg)
     - iOS (Currently we do not provide the iOS version, you can build it locally with Xcode)
 
-2. Launch your App, click the left menu button to open the drawer page, click **Settings** in the bottom of the drawer.
+2. Launch the App, open the drawer menu, and tap **Settings**.
 3. Paste the `API URL` and `API Key` then select the Region.
-4. You can change the default text and image model, and **make sure these models are enabled in the corresponding Region
-   in the AWS Console**.
-5. Click the top right ✓ icon to save your configuration and start your chat.
+4. Click the top right ✓ icon to save your configuration and start your chat.
 
 Congratulations 🎉 Your SwiftChat App is ready to use!
 
@@ -112,11 +108,12 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 ## Detailed Features
 
 ### Message Handling
+
 - [x] Text copy support:
-   * Copy button in message header
-   * Copy button in code blocks
-   * Direct Select and copy code on macOS (double click or long click on iOS)
-   * Long press text to copy entire sentence (Right-click on macOS)
+    * Copy button in message header
+    * Copy button in code blocks
+    * Direct Select and copy code on macOS (double click or long click on iOS)
+    * Long press text to copy entire sentence (Right-click on macOS)
 - [x] Text selection mode by tapping message title or double-clicking text
 - [x] Message timeline view in history
 - [x] Delete messages through long press in history
@@ -126,12 +123,14 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 - [x] Maximum 20 images and 5 documents per conversation
 
 ### Image Features
+
 - [x] Support image generation with Chinese prompts
 - [x] View and zoom generated images
 - [x] Long press images to save or share
 - [x] Automatic image compression to optimize token usage
 
 ### User Experience
+
 - [x] Haptic feedback for Android and iOS (can be disabled in Settings)
 - [x] Support landscape mode on Android/iOS devices
 - [x] Double tap title bar to scroll to top
@@ -139,7 +138,6 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 - [x] View current session token usage by tapping Chat title
 - [x] Check detailed token usage and image generation count in Settings
 - [x] In-app upgrade notifications (Android & macOS)
-
 
 ## What Makes SwiftChat Really "Swift"?
 
@@ -291,7 +289,8 @@ export API_KEY=<API Key>
 - **iOS**: If a new version is released in the [Release page](https://github.com/aws-samples/swift-chat/releases),
   update your local code, rebuild and install your app in Xcode.
 
-**Note**: After downloading a new version, please check the [release notes](https://github.com/aws-samples/swift-chat/releases) to see if an API version update is required.
+**Note**: After downloading a new version, please check
+the [release notes](https://github.com/aws-samples/swift-chat/releases) to see if an API version update is required.
 
 ### Upgrade API
 
