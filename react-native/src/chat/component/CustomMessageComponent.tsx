@@ -158,6 +158,7 @@ const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
           <TextInput
             editable={Platform.OS === 'android'}
             multiline
+            showSoftInputOnFocus={false}
             style={[
               styles.inputText,
               // eslint-disable-next-line react-native/no-inline-styles
