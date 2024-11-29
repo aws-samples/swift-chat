@@ -1,0 +1,88 @@
+name: Bug Report
+description: Create a report to help us improve
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps To Reproduce
+      description: How do you trigger this bug? Please walk us through it step by step.
+      value: |
+        Steps to reproduce the behavior:
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+      render: typescript
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: input
+    id: swiftchat-version
+    attributes:
+      label: App Version
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: react-native-version
+    attributes:
+      label: React Native version
+      placeholder: e.g. 0.73.5
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: The platform of the bug
+      placeholder: |
+        - e.g. Android/iOS/Mac/All
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: >-
+        Include any relevant log output
+      value: |
+        <details>
+        <summary>Log Messages</summary>
+
+        ```
+        INSERT LOG MESSAGES HERE
+        ```
+        </details>
+      render: shell
+  - type: dropdown
+    id: regression
+    attributes:
+      label: Is this a regression?
+      multiple: false
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+  - type: textarea
+    id: regression-info
+    attributes:
+      label: Regression additional context
+      placeholder: If it was a regression provide the versions used before and after the upgrade.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.

@@ -1,0 +1,19 @@
+name: Code Lint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  code-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run package install
+        run: cd react-native && npm i
+      - name: Run code format
+        run: cd react-native && npm run format
+      - name: Run code lint
+        run: cd react-native && npm run lint
