@@ -121,7 +121,11 @@ function TokenUsageScreen(): React.JSX.Element {
             onPress={() =>
               Linking.openURL('https://aws.amazon.com/bedrock/pricing/')
             }>
-            View model pricing on Amazon Bedrock
+            View{' '}
+            <Text style={[styles.priceLink, styles.underline]}>
+              model pricing
+            </Text>{' '}
+            on Amazon Bedrock
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -190,8 +194,10 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     paddingVertical: 8,
     textAlign: 'left',
-    textDecorationLine: 'underline',
     marginVertical: 16,
+  },
+  underline: {
+    textDecorationLine: 'underline',
   },
 });
 
