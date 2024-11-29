@@ -450,6 +450,7 @@ function ChatScreen(): React.JSX.Element {
       <GiftedChat
         messageContainerRef={flatListRef}
         textInputRef={textInputRef}
+        keyboardShouldPersistTaps="never"
         bottomOffset={
           Platform.OS === 'android'
             ? 0
