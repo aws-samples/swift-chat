@@ -14,6 +14,7 @@ import { ImageSource } from 'react-native-image-viewing/dist/@types';
 import Share from 'react-native-share';
 import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
+import { getFullFileUrl } from '../util/FileUtils.ts';
 
 interface CustomFileProps {
   files: FileInfo[];
@@ -55,6 +56,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
 
   const renderFileItem = (file: FileInfo, fileIndex: number) => {
     const isImage = file.type === FileType.image;
+    const fullFileUrl = getFullFileUrl(file.url);
     const itemKey = `file-${fileIndex}-${file.url}`;
     return (
       <View
@@ -81,7 +83,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
             try {
               const options = {
                 type: 'text/plain',
-                url: file.url,
+                url: fullFileUrl,
                 showAppsToView: true,
               };
               Share.open(options).then();
@@ -91,13 +93,13 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
           }}
           onPress={() => {
             if (isMac || file.type === FileType.document) {
-              openInFileViewer(file.url);
+              openInFileViewer(fullFileUrl);
             } else {
               const images = files
                 .filter(item => item.type === FileType.image)
-                .map(item => ({ uri: item.url }));
+                .map(item => ({ uri: getFullFileUrl(item.url) }));
               const currentIndex = images.findIndex(
-                img => img.uri === file.url
+                img => img.uri === fullFileUrl
               );
               setImageUrls(images);
               setIndex(currentIndex);
@@ -106,7 +108,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
           }}>
           {isImage ? (
             <Image
-              source={{ uri: file.url }}
+              source={{ uri: fullFileUrl }}
               style={styles.thumbnail}
               resizeMode="cover"
             />

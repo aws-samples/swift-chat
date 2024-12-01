@@ -20,7 +20,7 @@ import { IMessage, MessageProps } from 'react-native-gifted-chat';
 import { CustomMarkdownRenderer } from './CustomMarkdownRenderer.tsx';
 import { MarkedStyles } from 'react-native-marked/src/theme/types.ts';
 import ImageView from 'react-native-image-viewing';
-import { PressMode } from '../../types/Chat.ts';
+import { ChatStatus, PressMode } from '../../types/Chat.ts';
 import { trigger } from '../util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -33,8 +33,13 @@ import { isMac } from '../../App.tsx';
 import { CustomTokenizer } from './CustomTokenizer.ts';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
 
-const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
+interface CustomMessageProps extends MessageProps<IMessage> {
+  chatStatus: ChatStatus;
+}
+
+const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   currentMessage,
+  chatStatus,
 }) => {
   const [visible, setIsVisible] = useState(false);
   const [imgUrl, setImgUrl] = useState('');
@@ -79,7 +84,7 @@ const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
   const handleCopy = () => {
     if (isEdit) {
-      setIsEdit(false);
+      setIsEditValue(false);
       return;
     }
     Clipboard.setString(currentMessage?.text ?? '');
@@ -87,11 +92,17 @@ const CustomMessageComponent: React.FC<MessageProps<IMessage>> = ({
   };
 
   const handleEdit = () => {
-    setIsEdit(!isEdit);
+    setIsEditValue(!isEdit);
   };
 
   const onDoubleTap = () => {
-    setIsEdit(true);
+    setIsEditValue(true);
+  };
+
+  const setIsEditValue = (value: boolean) => {
+    if (chatStatus !== ChatStatus.Running) {
+      setIsEdit(value);
+    }
   };
 
   useEffect(() => {
