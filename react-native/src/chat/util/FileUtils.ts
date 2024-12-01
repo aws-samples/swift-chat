@@ -24,11 +24,12 @@ export const saveFile = async (sourceUrl: string, fileName: string) => {
     if (!filesDirExists) {
       await RNFS.mkdir(filesDir);
     }
-    const destinationPath = await getUniqueFileName(filesDir, fileName);
+    const uniqueFileName = await getUniqueFileName(filesDir, fileName);
+    const destinationPath = `${filesDir}/${uniqueFileName}`;
     await RNFS.copyFile(sourceUrl, destinationPath);
     return Platform.OS === 'android'
       ? `file://${destinationPath}`
-      : destinationPath;
+      : `files/${uniqueFileName}`;
   } catch (error) {
     console.warn('Error saving file:', error);
   }
@@ -37,7 +38,8 @@ export const saveFile = async (sourceUrl: string, fileName: string) => {
 
 export const getFileBytes = async (fileUrl: string) => {
   try {
-    return await RNFS.readFile(fileUrl, 'base64');
+    const fullFileUrl = getFullFileUrl(fileUrl);
+    return await RNFS.readFile(fullFileUrl, 'base64');
   } catch (error) {
     console.warn('Error reading image file:', fileUrl, error);
     throw error;
@@ -61,7 +63,21 @@ const getUniqueFileName = async (
     finalFileName = `${nameWithoutExt}(${counter})${extension}`;
     finalPath = `${basePath}/${finalFileName}`;
   }
-  return finalPath;
+  return finalFileName;
+};
+
+export const getFullFileUrl = (url: string) => {
+  if (Platform.OS === 'android') {
+    return url;
+  } else if (url.startsWith('files/')) {
+    return `${RNFS.DocumentDirectoryPath}/${url}`;
+  } else {
+    return (
+      RNFS.DocumentDirectoryPath +
+      '/files' +
+      url.substring(url.lastIndexOf('/'))
+    );
+  }
 };
 
 const MAX_IMAGES = 20;

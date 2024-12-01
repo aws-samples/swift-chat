@@ -201,6 +201,8 @@ function ChatScreen(): React.JSX.Element {
       const { id } = event.params;
       if (sessionIdRef.current === id) {
         sessionIdRef.current = getSessionId() + 1;
+        setUsage(undefined);
+        bedrockMessages.current = [];
         clearCachedNode();
         setMessages([]);
       }
@@ -501,7 +503,9 @@ function ChatScreen(): React.JSX.Element {
             />
           )
         }
-        renderMessage={props => <CustomMessageComponent {...props} />}
+        renderMessage={props => (
+          <CustomMessageComponent {...props} chatStatus={chatStatus} />
+        )}
         listViewProps={{
           contentContainerStyle: styles.contentContainer,
           contentInset: { top: 2 },
