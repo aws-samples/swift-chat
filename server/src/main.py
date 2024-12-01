@@ -189,7 +189,7 @@ async def upgrade(request: UpgradeRequest,
     if total_number > 0:
         need_upgrade = total_number < calculate_version_total(new_version)
         if need_upgrade:
-            download_prefix = "https://github.com/aws-samples/swift-chat/releases/download/v"
+            download_prefix = "https://github.com/aws-samples/swift-chat/releases/download/"
             if request.os == 'android':
                 url = download_prefix + new_version + "/SwiftChat.apk"
             elif request.os == 'mac':
@@ -210,7 +210,7 @@ def get_latest_version() -> str:
     if cache["last_check"] > 0 and timestamp - cache["last_check"] < CACHE_DURATION:
         return cache["latest_version"]
     req = Request(
-        f"https://api.github.com/repos/awslabs/clickstream-swift/tags",
+        f"https://api.github.com/repos/aws-samples/swift-chat/tags",
         headers={
             'User-Agent': 'Mozilla/5.0'
         }
