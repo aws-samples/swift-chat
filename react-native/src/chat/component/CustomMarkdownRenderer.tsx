@@ -363,8 +363,8 @@ export class CustomMarkdownRenderer
     const widthArr = getTableWidthArr(header.length, this.width, this.height);
     const { borderWidth, borderColor, ...tableStyleRest } = tableStyle || {};
 
-    const headerCellStyle = {
-      ...cellStyle,
+    const headerTableStyle = {
+      ...rowStyle,
       backgroundColor: '#f5f5f5',
     };
 
@@ -373,7 +373,7 @@ export class CustomMarkdownRenderer
         <Table
           borderStyle={{ borderWidth, borderColor }}
           style={tableStyleRest}>
-          <TableWrapper style={rowStyle}>
+          <TableWrapper style={headerTableStyle}>
             {header.map((headerCol, index) => {
               if (React.isValidElement(headerCol[0])) {
                 headerCol[0] = React.cloneElement(
@@ -389,8 +389,9 @@ export class CustomMarkdownRenderer
               return (
                 <Cell
                   width={widthArr[index]}
+                  style={customStyles.cell}
                   key={`${index}`}
-                  data={<View style={headerCellStyle}>{headerCol}</View>}
+                  data={<View style={cellStyle}>{headerCol}</View>}
                 />
               );
             })}
@@ -402,6 +403,7 @@ export class CustomMarkdownRenderer
                   return (
                     <Cell
                       width={widthArr[cellIndex]}
+                      style={customStyles.cell}
                       key={`${cellIndex}`}
                       data={<View style={cellStyle}>{cellData}</View>}
                     />
@@ -511,5 +513,8 @@ const customStyles = StyleSheet.create({
   },
   loading: {
     padding: 12,
+  },
+  cell: {
+    minHeight: 32,
   },
 });
