@@ -24,7 +24,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   const { text } = props;
   if (
     chatMode !== ChatMode.Text ||
-    !getTextModel().modelId.includes('claude-3') ||
+    !isMultiModalModel() ||
     (text && text!.length > 0) ||
     selectedFiles.length > 0 ||
     chatStatus === ChatStatus.Running
@@ -72,6 +72,15 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       />
     );
   }
+};
+
+const isMultiModalModel = (): boolean => {
+  const textModelId = getTextModel().modelId;
+  return (
+    textModelId.includes('claude-3') ||
+    textModelId.includes('nova-pro') ||
+    textModelId.includes('nova-lite')
+  );
 };
 
 const styles = StyleSheet.create({

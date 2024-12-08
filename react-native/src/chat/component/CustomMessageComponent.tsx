@@ -255,6 +255,10 @@ const styles = StyleSheet.create({
 const customMarkedStyles: MarkedStyles = {
   table: { marginVertical: 4 },
   li: { paddingVertical: 4 },
+  h1: { fontSize: 28 },
+  h2: { fontSize: 24 },
+  h3: { fontSize: 20 },
+  h4: { fontSize: 18 },
 };
 
 export default CustomMessageComponent;

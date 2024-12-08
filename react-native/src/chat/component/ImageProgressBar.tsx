@@ -47,7 +47,7 @@ const ProgressCircle = ({ progressAnim }: { progressAnim: Animated.Value }) => {
   );
 };
 
-const ProgressBar = () => {
+const ImageProgressBar = () => {
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showFinishImage, setShowFinishImage] = useState(false);
@@ -127,4 +127,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProgressBar;
+export default ImageProgressBar;

@@ -21,10 +21,21 @@ export async function getBedrockMessage(
     const files = JSON.parse(message.image) as FileInfo[];
     for (const file of files) {
       try {
-        const fileBytes = await getFileBytes(file.url);
+        const fileUrl =
+          file.type === FileType.video ? file.videoUrl! : file.url;
+        const fileBytes = await getFileBytes(fileUrl);
         if (file.type === FileType.image) {
           content.push({
             image: {
+              format: file.format.toLowerCase(),
+              source: {
+                bytes: fileBytes,
+              },
+            },
+          });
+        } else if (file.type === FileType.video) {
+          content.push({
+            video: {
               format: file.format.toLowerCase(),
               source: {
                 bytes: fileBytes,
@@ -88,6 +99,15 @@ export interface ImageContent {
   };
 }
 
+export interface VideoContent {
+  video: {
+    format: string;
+    source: {
+      bytes: string;
+    };
+  };
+}
+
 export interface DocumentContent {
   document: {
     format: string;
@@ -98,7 +118,11 @@ export interface DocumentContent {
   };
 }
 
-export type MessageContent = TextContent | ImageContent | DocumentContent;
+export type MessageContent =
+  | TextContent
+  | ImageContent
+  | VideoContent
+  | DocumentContent;
 
 export type BedrockMessage = {
   role: string;

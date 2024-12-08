@@ -57,12 +57,15 @@ export type UpgradeInfo = {
 export enum FileType {
   document = 'document',
   image = 'image',
+  video = 'video',
   unSupported = 'unSupported',
 }
 
 export type FileInfo = {
   fileName: string;
   url: string;
+  videoUrl?: string;
+  videoThumbnailUrl?: string;
   fileSize: number;
   format: string;
   type: FileType;

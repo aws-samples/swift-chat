@@ -5,20 +5,17 @@ import { CustomFileListComponent } from './CustomFileListComponent.tsx';
 
 interface CustomComposerProps {
   files: FileInfo[];
-  onFileSelected: (files: FileInfo[], isDelete?: boolean) => void;
+  onFileUpdated: (files: FileInfo[], isUpdate?: boolean) => void;
 }
 
 export const CustomChatFooter: React.FC<CustomComposerProps> = ({
   files,
-  onFileSelected,
+  onFileUpdated,
 }) => {
   return (
     <View style={styles.container}>
       {files.length > 0 && (
-        <CustomFileListComponent
-          files={files}
-          onFileSelected={onFileSelected}
-        />
+        <CustomFileListComponent files={files} onFileUpdated={onFileUpdated} />
       )}
     </View>
   );

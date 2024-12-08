@@ -2,6 +2,7 @@ import RNFS from 'react-native-fs';
 import { Platform } from 'react-native';
 import { FileInfo, FileType } from '../../types/Chat.ts';
 import Toast from 'react-native-toast-message';
+import { getTextModel } from '../../storage/StorageUtils.ts';
 
 export const saveImageToLocal = async (
   base64ImageData: string
@@ -82,6 +83,8 @@ export const getFullFileUrl = (url: string) => {
 
 const MAX_IMAGES = 20;
 const MAX_DOCUMENTS = 5;
+const MAX_NOVA_FILES = 5;
+const MAX_NOVA_VIDEOS = 1;
 
 export const checkFileNumberLimit = (
   prevFiles: FileInfo[],
@@ -101,6 +104,34 @@ export const checkFileNumberLimit = (
   let processedNewDocs = newDocs;
   let showWarning = false;
 
+  if (isNova()) {
+    if (prevFiles.length + newFiles.length > MAX_NOVA_FILES) {
+      showInfo(`Maximum ${MAX_NOVA_FILES} files allowed`);
+    }
+    if (prevFiles.length >= MAX_NOVA_FILES) {
+      return prevFiles;
+    }
+    const existingVideos = prevFiles.filter(
+      file => file.type === FileType.video
+    ).length;
+    const newVideos = newFiles.filter(file => file.type === FileType.video);
+
+    if (existingVideos + newVideos.length > MAX_NOVA_VIDEOS) {
+      showInfo(`Maximum ${MAX_NOVA_VIDEOS} video allowed`);
+    }
+
+    const filteredNewFiles =
+      existingVideos >= MAX_NOVA_VIDEOS
+        ? newFiles.filter(file => file.type !== FileType.video)
+        : newFiles.filter(
+            file =>
+              file.type !== FileType.video ||
+              newVideos.indexOf(file) < MAX_NOVA_VIDEOS - existingVideos
+          );
+
+    return [...prevFiles, ...filteredNewFiles].slice(0, MAX_NOVA_FILES);
+  }
+
   if (totalImages > MAX_IMAGES) {
     const remainingSlots = Math.max(0, MAX_IMAGES - existingImages.length);
     processedNewImages = newImages.slice(0, remainingSlots);
@@ -115,17 +146,52 @@ export const checkFileNumberLimit = (
 
   if (showWarning) {
     if (totalImages > MAX_IMAGES) {
-      Toast.show({
-        type: 'info',
-        text1: `Image limit exceeded, maximum ${MAX_IMAGES} images allowed`,
-      });
+      showInfo(`Image limit exceeded, maximum ${MAX_IMAGES} images allowed`);
     }
     if (totalDocs > MAX_DOCUMENTS) {
-      Toast.show({
-        type: 'info',
-        text1: `Document limit exceeded, maximum ${MAX_DOCUMENTS} files allowed`,
-      });
+      showInfo(
+        `Document limit exceeded, maximum ${MAX_DOCUMENTS} files allowed`
+      );
     }
   }
   return [...prevFiles, ...processedNewImages, ...processedNewDocs];
+};
+
+const isNova = (): boolean => {
+  const textModelId = getTextModel().modelId;
+  return textModelId.includes('nova-pro') || textModelId.includes('nova-lite');
+};
+
+export const isAllFileReady = (files: FileInfo[]) => {
+  const videos = files.filter(file => file.type === FileType.video);
+  if (videos.length > 0) {
+    return videos.filter(video => video.videoUrl === undefined).length === 0;
+  } else {
+    return true;
+  }
+};
+
+const showInfo = (msg: string) => {
+  Toast.show({
+    type: 'info',
+    text1: msg,
+  });
+};
+
+export const getFileTypeSummary = (files: FileInfo[]) => {
+  if (files.length === 1) {
+    return 'Summarize this';
+  }
+
+  const imgCount = files.filter(file => file.type === FileType.image).length;
+  const docCount = files.filter(file => file.type === FileType.document).length;
+  const videoCount = files.filter(file => file.type === FileType.video).length;
+
+  const types = [
+    imgCount && `${imgCount > 1 ? 'images' : 'image'}`,
+    docCount && `${docCount > 1 ? 'docs' : 'doc'}`,
+    videoCount && `${videoCount > 1 ? 'videos' : 'video'}`,
+  ].filter(Boolean);
+
+  return `Summarize these ${types.join(' and ')}`;
 };

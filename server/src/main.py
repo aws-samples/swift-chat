@@ -93,9 +93,12 @@ async def converse(request: ConverseRequest,
                     if 'image' in content:
                         image_bytes = base64.b64decode(content['image']['source']['bytes'])
                         content['image']['source']['bytes'] = image_bytes
+                    if 'video' in content:
+                        video_bytes = base64.b64decode(content['video']['source']['bytes'])
+                        content['video']['source']['bytes'] = video_bytes
                     if 'document' in content:
-                        image_bytes = base64.b64decode(content['document']['source']['bytes'])
-                        content['document']['source']['bytes'] = image_bytes
+                        document_bytes = base64.b64decode(content['document']['source']['bytes'])
+                        content['document']['source']['bytes'] = document_bytes
         command = {
             "inferenceConfig": {"maxTokens": max_tokens},
             "messages": request.messages,
