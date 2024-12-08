@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -14,11 +14,14 @@ import { ImageSource } from 'react-native-image-viewing/dist/@types';
 import Share from 'react-native-share';
 import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
-import { getFullFileUrl } from '../util/FileUtils.ts';
+import { getFullFileUrl, saveFile } from '../util/FileUtils.ts';
+import { getVideoMetaData, Video } from 'react-native-compressor';
+import * as Progress from 'react-native-progress';
+import Toast from 'react-native-toast-message';
 
 interface CustomFileProps {
   files: FileInfo[];
-  onFileSelected?: (files: FileInfo[], isDelete?: boolean) => void;
+  onFileUpdated?: (files: FileInfo[], isUpdate?: boolean) => void;
   mode?: DisplayMode;
 }
 
@@ -26,6 +29,8 @@ export enum DisplayMode {
   Edit = 'edit',
   Display = 'display',
 }
+
+const MAX_VIDEO_SIZE = 8;
 
 const openInFileViewer = (url: string) => {
   FileViewer.open(url)
@@ -35,9 +40,22 @@ const openInFileViewer = (url: string) => {
     });
 };
 
+const CircularProgress = ({ progress }: { progress: number }) => {
+  return (
+    <View style={styles.progressContainer}>
+      <Progress.Pie
+        size={32}
+        color="rgba(180, 180, 180, 1)"
+        borderColor="rgba(180, 180, 180, 1)"
+        progress={progress}
+      />
+    </View>
+  );
+};
+
 export const CustomFileListComponent: React.FC<CustomFileProps> = ({
   files,
-  onFileSelected,
+  onFileUpdated,
   mode = DisplayMode.Edit,
 }) => {
   const [visible, setIsVisible] = useState(false);
@@ -45,8 +63,13 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
   const [imageUrls, setImageUrls] = useState<ImageSource[]>([]);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const [compressionProgress, setCompressionProgress] = useState<number>(0);
+  const compressingFiles = useRef<string>('');
+  const filesRef = useRef(files);
+  const isCompressing = useRef(false);
 
   useEffect(() => {
+    filesRef.current = files;
     if (scrollViewRef.current && mode !== DisplayMode.Display) {
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -54,27 +77,114 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
     }
   }, [files, mode]);
 
+  const handleCompression = useCallback(async () => {
+    for (const file of filesRef.current) {
+      if (
+        !isCompressing.current &&
+        file.type === FileType.video &&
+        !file.videoUrl &&
+        compressingFiles.current !== file.url
+      ) {
+        compressingFiles.current = file.url;
+        try {
+          isCompressing.current = true;
+          const uri = await Video.compress(
+            file.url,
+            { progressDivider: 1, maxSize: 960 },
+            progress => {
+              setCompressionProgress(progress);
+            }
+          );
+          const metaData = await getVideoMetaData(uri);
+          console.log('metaData', metaData);
+          isCompressing.current = false;
+          compressingFiles.current = '';
+          const currentSize = metaData.size / 1024 / 1024;
+          if (currentSize < MAX_VIDEO_SIZE) {
+            // save video to files and update video url
+            const localFileUrl = await saveFile(
+              uri,
+              file.fileName + '.' + metaData.extension
+            );
+            if (localFileUrl) {
+              const updatedFiles = filesRef.current.map(f =>
+                f.url === file.url
+                  ? { ...f, videoUrl: localFileUrl, format: metaData.extension }
+                  : f
+              );
+              onFileUpdated!(updatedFiles, true);
+            }
+          } else {
+            // remove the video
+            const newFiles = filesRef.current.filter(f => f.url !== file.url);
+            onFileUpdated!(newFiles, true);
+            Toast.show({
+              type: 'info',
+              text1: `Video too large: ${currentSize.toFixed(
+                1
+              )}MB (max ${MAX_VIDEO_SIZE}MB)`,
+            });
+          }
+        } catch (error) {
+          Toast.show({
+            type: 'info',
+            text1: 'Video process failed',
+          });
+          compressingFiles.current = '';
+          isCompressing.current = false;
+          // remove the failed video
+          const newFiles = filesRef.current.filter(f => f.url !== file.url);
+          onFileUpdated!(newFiles, true);
+        }
+      }
+    }
+  }, [onFileUpdated]);
+
+  useEffect(() => {
+    const checkAndCompressVideos = async () => {
+      await handleCompression();
+    };
+    checkAndCompressVideos().then();
+  }, [files, handleCompression]);
+
   const renderFileItem = (file: FileInfo, fileIndex: number) => {
     const isImage = file.type === FileType.image;
-    const fullFileUrl = getFullFileUrl(file.url);
+    const isDocument = file.type === FileType.document;
+    const isVideo = file.type === FileType.video;
+    const fullFileUrl =
+      isVideo && !file.videoUrl
+        ? file.url
+        : getFullFileUrl(file.videoUrl || file.url);
     const itemKey = `file-${fileIndex}-${file.url}`;
+
+    const isFileCompressing = compressingFiles.current === file.url;
+    let ratio = 1;
+    if (file.width && file.height) {
+      ratio = file.width / file.height;
+      ratio = ratio < 1 ? 1 : ratio;
+    }
     return (
       <View
         key={itemKey}
         style={{
           ...styles.fileItem,
-          ...(!isImage && {
+          ...(isDocument && {
             width: 158,
           }),
+          ...(isVideo && {
+            width: 72 * ratio,
+          }),
         }}>
-        {mode === DisplayMode.Edit && (
+        {mode === DisplayMode.Edit && !isFileCompressing && (
           <TouchableOpacity
-            style={styles.deleteButton}
+            style={styles.deleteTouchable}
             onPress={() => {
               const newFiles = files.filter(f => f.url !== file.url);
-              onFileSelected!(newFiles, true);
+              onFileUpdated!(newFiles, true);
             }}>
-            <Text style={styles.deleteIcon}>×</Text>
+            <View style={styles.deleteLayout}>
+              <Text style={styles.deleteText}>×</Text>
+            </View>
           </TouchableOpacity>
         )}
 
@@ -92,7 +202,14 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
             }
           }}
           onPress={() => {
-            if (isMac || file.type === FileType.document) {
+            if (isVideo && isFileCompressing) {
+              return;
+            }
+            if (
+              isMac ||
+              file.type === FileType.document ||
+              file.type === FileType.video
+            ) {
               openInFileViewer(fullFileUrl);
             } else {
               const images = files
@@ -106,12 +223,27 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
               setIsVisible(true);
             }
           }}>
-          {isImage ? (
-            <Image
-              source={{ uri: fullFileUrl }}
-              style={styles.thumbnail}
-              resizeMode="cover"
-            />
+          {isImage || isVideo ? (
+            <View style={styles.thumbnailContainer}>
+              <Image
+                source={{
+                  uri: isVideo
+                    ? getFullFileUrl(file.videoThumbnailUrl!)
+                    : fullFileUrl,
+                }}
+                style={styles.thumbnail}
+                resizeMode="cover"
+              />
+              {isVideo && !isFileCompressing && (
+                <Image
+                  source={require('../../assets/play.png')}
+                  style={styles.playIcon}
+                />
+              )}
+              {isVideo && isFileCompressing && (
+                <CircularProgress progress={compressionProgress} />
+              )}
+            </View>
           ) : (
             <View style={styles.filePreview}>
               <Text numberOfLines={2} style={styles.fileName}>
@@ -156,10 +288,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
 
       {mode === DisplayMode.Edit && (
         <TouchableOpacity key="add-button" style={styles.addButton}>
-          <CustomAddFileComponent
-            onFileSelected={onFileSelected!}
-            mode="list"
-          />
+          <CustomAddFileComponent onFileSelected={onFileUpdated!} mode="list" />
         </TouchableOpacity>
       )}
       <ImageView
@@ -188,30 +317,47 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-  deleteButton: {
+  deleteTouchable: {
     position: 'absolute',
     right: 0,
     top: 0,
     zIndex: 1,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteLayout: {
     width: 20,
     height: 20,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    marginTop: 2,
-    marginRight: 2,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteIcon: {
+  deleteText: {
     color: '#fff',
     fontSize: 16,
-    marginTop: -1.5,
-    marginLeft: 0.6,
+    marginTop: -2,
     fontWeight: 'normal',
+  },
+  thumbnailContainer: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
   },
   thumbnail: {
     width: '100%',
     height: '100%',
+  },
+  playIcon: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -16,
+    marginLeft: -16,
+    width: 32,
+    height: 32,
   },
   filePreview: {
     width: '100%',
@@ -248,6 +394,17 @@ const styles = StyleSheet.create({
     height: 72,
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -16,
+    marginLeft: -16,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },

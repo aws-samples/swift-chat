@@ -31,7 +31,6 @@ import {
   ChatMode,
   ChatStatus,
   FileInfo,
-  FileType,
   IMessageWithToken,
   Usage,
 } from '../types/Chat.ts';
@@ -48,9 +47,14 @@ import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
 import { clearCachedNode } from './component/CustomMarkdownRenderer.tsx';
 import { isMac } from '../App.tsx';
 import { CustomChatFooter } from './component/CustomChatFooter.tsx';
-import { checkFileNumberLimit } from './util/FileUtils.ts';
+import {
+  checkFileNumberLimit,
+  getFileTypeSummary,
+  isAllFileReady,
+} from './util/FileUtils.ts';
 import HeaderTitle from './component/HeaderTitle.tsx';
 import { HeaderOptions } from '@react-navigation/elements/src/types.tsx';
+import Toast from 'react-native-toast-message';
 
 const BOT_ID = 2;
 
@@ -411,18 +415,16 @@ function ChatScreen(): React.JSX.Element {
   // handle onSend
   const onSend = useCallback((message: IMessage[] = []) => {
     const files = selectedFilesRef.current;
+    if (!isAllFileReady(files)) {
+      Toast.show({
+        type: 'info',
+        text1: 'please wait for all videos to be ready',
+      });
+      return;
+    }
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
-        const hasImages = files.some(file => file.type === FileType.image);
-        const hasDocs = files.some(file => file.type === FileType.document);
-        message[0].text =
-          files.length === 1
-            ? 'Summarize this'
-            : hasImages && hasDocs
-            ? 'Summarize these docs and images'
-            : hasImages
-            ? 'Summarize these images'
-            : 'Summarize these docs';
+        message[0].text = getFileTypeSummary(files);
       }
       if (selectedFilesRef.current.length > 0) {
         message[0].image = JSON.stringify(selectedFilesRef.current);
@@ -493,10 +495,11 @@ function ChatScreen(): React.JSX.Element {
           selectedFiles.length > 0 && (
             <CustomChatFooter
               files={selectedFiles}
-              onFileSelected={(files, isDelete) => {
-                if (isDelete) {
+              onFileUpdated={(files, isUpdate) => {
+                if (isUpdate) {
                   setSelectedFiles(files);
                 } else {
+                  console.log('handleNewFileSelected');
                   handleNewFileSelected(files);
                 }
               }}

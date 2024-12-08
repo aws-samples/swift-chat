@@ -938,7 +938,7 @@ PODS:
   - React-Mapbuffer (0.74.1):
     - glog
     - React-debug
-  - react-native-compressor (1.9.0):
+  - react-native-compressor (1.10.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -982,7 +982,7 @@ PODS:
     - Yoga
   - react-native-get-random-values (1.11.0):
     - React-Core
-  - react-native-image-picker (7.1.2):
+  - react-native-image-picker (7.2.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1330,7 +1330,7 @@ PODS:
     - Yoga
   - RNShare (10.2.1):
     - React-Core
-  - RNSVG (15.4.0):
+  - RNSVG (15.10.1):
     - React-Core
   - SocketRocket (0.7.0)
   - Yoga (0.0.0)
@@ -1588,10 +1588,10 @@ SPEC CHECKSUMS:
   React-jsitracing: 233d1a798fe0ff33b8e630b8f00f62c4a8115fbc
   React-logger: 7e7403a2b14c97f847d90763af76b84b152b6fce
   React-Mapbuffer: 11029dcd47c5c9e057a4092ab9c2a8d10a496a33
-  react-native-compressor: 6e5044b1c065421bcc2bfb89579ab30f51803e9a
+  react-native-compressor: 2ae9013718fb351264fcfcdf232eccbbf3d280a2
   react-native-document-picker: c4f197741c327270453aa9840932098e0064fd52
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
-  react-native-image-picker: c3afe5472ef870d98a4b28415fc0b928161ee5f7
+  react-native-image-picker: dd85e2530d366acf77745830b053294afed66339
   react-native-mmkv: 8c9a677e64a1ac89b0c6cf240feea528318b3074
   react-native-safe-area-context: b7daa1a8df36095a032dff095a1ea8963cb48371
   React-nativeconfig: b0073a590774e8b35192fead188a36d1dca23dec
@@ -1625,7 +1625,7 @@ SPEC CHECKSUMS:
   RNReanimated: f4ff116e33e0afc3d127f70efe928847c7c66355
   RNScreens: 5aeecbb09aa7285379b6e9f3c8a3c859bb16401c
   RNShare: 0fad69ae2d71de9d1f7b9a43acf876886a6cb99c
-  RNSVG: cb24fb322de8c1ebf59904e7aca0447bb8dbed5a
+  RNSVG: 7ff26379b2d1871b8571e6f9bc9630de6baf9bdf
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Yoga: 348f8b538c3ed4423eb58a8e5730feec50bce372
 

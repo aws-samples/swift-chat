@@ -34,7 +34,9 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Support take camera and summarize it</string>
+	<string>Support take photos and summarize it</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Support record videos and summarize it</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Support choose pictures and summarize it</string>
 	<key>UILaunchStoryboardName</key>
