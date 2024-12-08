@@ -338,7 +338,8 @@ const styles = StyleSheet.create({
   deleteText: {
     color: '#fff',
     fontSize: 16,
-    marginTop: -2,
+    marginTop: -1.5,
+    marginRight: -0.5,
     fontWeight: 'normal',
   },
   thumbnailContainer: {

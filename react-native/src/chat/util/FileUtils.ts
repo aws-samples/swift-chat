@@ -105,28 +105,31 @@ export const checkFileNumberLimit = (
   let showWarning = false;
 
   if (isNova()) {
-    const remainingSlots = MAX_NOVA_FILES - prevFiles.length;
-
-    if (remainingSlots <= 0) {
-      showInfo(
-        `File limit exceeded, maximum ${MAX_NOVA_FILES} file allowed for Nova`
-      );
+    if (prevFiles.length + newFiles.length > MAX_NOVA_FILES) {
+      showInfo(`Maximum ${MAX_NOVA_FILES} files allowed`);
+    }
+    if (prevFiles.length >= MAX_NOVA_FILES) {
       return prevFiles;
     }
-    const newVideo = newFiles.filter(file => file.type === FileType.video);
-    if (newVideo.length > MAX_NOVA_VIDEOS) {
-      showInfo(`Video limit exceeded, maximum ${MAX_NOVA_VIDEOS} video`);
-      newFiles = newFiles.filter(
-        file =>
-          file.type !== FileType.video ||
-          newVideo.indexOf(file) < MAX_NOVA_VIDEOS
-      );
-    }
-    if (prevFiles.length + newFiles.length > MAX_NOVA_FILES) {
-      showInfo(`File limit exceeded, maximum ${MAX_NOVA_FILES} file allowed`);
+    const existingVideos = prevFiles.filter(
+      file => file.type === FileType.video
+    ).length;
+    const newVideos = newFiles.filter(file => file.type === FileType.video);
+
+    if (existingVideos + newVideos.length > MAX_NOVA_VIDEOS) {
+      showInfo(`Maximum ${MAX_NOVA_VIDEOS} video allowed`);
     }
 
-    return [...prevFiles, ...newFiles.slice(0, remainingSlots)];
+    const filteredNewFiles =
+      existingVideos >= MAX_NOVA_VIDEOS
+        ? newFiles.filter(file => file.type !== FileType.video)
+        : newFiles.filter(
+            file =>
+              file.type !== FileType.video ||
+              newVideos.indexOf(file) < MAX_NOVA_VIDEOS - existingVideos
+          );
+
+    return [...prevFiles, ...filteredNewFiles].slice(0, MAX_NOVA_FILES);
   }
 
   if (totalImages > MAX_IMAGES) {
