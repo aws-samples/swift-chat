@@ -168,7 +168,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
             saveToPhotos: false,
             mediaType: isVideoSupported() ? 'mixed' : 'photo',
             videoQuality: 'high',
-            durationLimit: 300,
+            durationLimit: 60,
             includeBase64: false,
             includeExtra: true,
             presentationStyle: 'fullScreen',
