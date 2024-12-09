@@ -185,6 +185,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
             mediaType: isVideoSupported() ? 'mixed' : 'photo',
             includeBase64: false,
             includeExtra: true,
+            assetRepresentationMode: 'current',
           }).then(async res => {
             const files = await getFiles(res);
             if (files.length > 0) {
