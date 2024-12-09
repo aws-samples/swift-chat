@@ -13,12 +13,19 @@ macOS platforms.
 
 - Real-time streaming chat with AI
 - AI image generation with progress
-- Multimodal support (camera, photos & documents)
+- Multimodal support (images, videos & documents)
 - Conversation history list view and management
 - Cross-platform support (Android, iOS, macOS)
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
 - Multiple AI model support and switching
+
+**New Features For Amazon Nova 🎉🎉🎉**
+
+- Stream conversations with Amazon Nova Micro, Lite and Pro
+- Understand images, documents and videos with Nova Lite and Pro
+- Record 30-second videos directly on Android and iOS for Nova analysis
+- Upload large videos (1080p/4K) beyond 8MB with auto compression
 
 ## Architecture
 

@@ -19,6 +19,13 @@ macOS 等多个平台。
 - 快速启动和响应性能
 - 支持多种 AI 模型及切换
 
+**Amazon Nova 新功能 🎉🎉🎉**
+
+- 支持与 Amazon Nova Micro、Lite 和 Pro 进行流式对话
+- 支持 Nova Lite 和 Pro 对图片、文档及视频内容的理解
+- 支持直接在安卓和 iOS 设备上录制最长 30 秒的视频供 Nova 分析
+- 支持自动压缩上传超过8MB的高清视频（1080p/4K）
+
 ## 架构
 
 ![](/assets/architecture.png)
