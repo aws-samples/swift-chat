@@ -163,6 +163,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
       ratio = file.width / file.height;
       ratio = ratio < 1 ? 1 : ratio;
     }
+    const isHideDelete = file.type === FileType.video && !file.videoUrl;
     return (
       <View
         key={itemKey}
@@ -175,7 +176,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
             width: 72 * ratio,
           }),
         }}>
-        {mode === DisplayMode.Edit && !isFileCompressing && (
+        {mode === DisplayMode.Edit && !isHideDelete && (
           <TouchableOpacity
             style={styles.deleteTouchable}
             onPress={() => {
