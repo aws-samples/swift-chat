@@ -6,20 +6,19 @@ import React, {
   useState,
 } from 'react';
 import {
-  View,
+  Image,
+  Platform,
   StyleSheet,
   Text,
-  Image,
-  TouchableOpacity,
   TextInput,
-  Platform,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Share from 'react-native-share';
 import Markdown from 'react-native-marked';
 import { IMessage, MessageProps } from 'react-native-gifted-chat';
 import { CustomMarkdownRenderer } from './CustomMarkdownRenderer.tsx';
 import { MarkedStyles } from 'react-native-marked/src/theme/types.ts';
-import ImageView from 'react-native-image-viewing';
 import { ChatStatus, PressMode } from '../../types/Chat.ts';
 import { trigger } from '../util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
@@ -41,8 +40,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   currentMessage,
   chatStatus,
 }) => {
-  const [visible, setIsVisible] = useState(false);
-  const [imgUrl, setImgUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const inputHeightRef = useRef(0);
@@ -58,16 +55,11 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const handleImagePress = useCallback((pressMode: PressMode, url: string) => {
     if (pressMode === PressMode.Click) {
-      if (isMac) {
-        FileViewer.open(url)
-          .then(() => {})
-          .catch(error => {
-            console.log(error);
-          });
-      } else {
-        setIsVisible(true);
-        setImgUrl(url);
-      }
+      FileViewer.open(url)
+        .then(() => {})
+        .catch(error => {
+          console.log(error);
+        });
     } else if (pressMode === PressMode.LongPress) {
       trigger(HapticFeedbackTypes.notificationSuccess);
       const shareOptions = { url: url, type: 'image/png', title: 'AI Image' };
@@ -190,12 +182,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           />
         )}
       </View>
-      <ImageView
-        images={[{ uri: imgUrl }]}
-        imageIndex={0}
-        visible={visible}
-        onRequestClose={() => setIsVisible(false)}
-      />
     </View>
   );
 };

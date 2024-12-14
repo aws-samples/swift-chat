@@ -17,6 +17,16 @@ import { useNavigation } from '@react-navigation/native';
 import { HeaderOptions } from '@react-navigation/elements/src/types.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
+import {
+  getTotalCost,
+  getTotalImageCount,
+  getTotalImagePrice,
+  getTotalInputPrice,
+  getTotalInputTokens,
+  getTotalOutputPrice,
+  getTotalOutputTokens,
+  getUsagePrice,
+} from './ModelPrice.ts';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
@@ -71,61 +81,133 @@ function TokenUsageScreen(): React.JSX.Element {
       ]}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.container}>
-          {modelUsage.map((usage, index) => (
-            <View key={index} style={styles.usageItem}>
-              <Text style={styles.modelName}>{usage.modelName}</Text>
-              <View style={styles.tokenInfo}>
-                {usage.imageCount ? (
-                  <Text style={styles.tokenText}>
-                    Images Generated: {usage.imageCount.toLocaleString()}
-                  </Text>
-                ) : (
-                  <>
-                    <Text style={styles.tokenText}>
-                      Input: {usage.inputTokens.toLocaleString()}
+          {modelUsage
+            .sort(
+              (a, b) =>
+                getUsagePrice(b).totalPrice - getUsagePrice(a).totalPrice
+            )
+            .map((usage, index) => {
+              const usagePrice = getUsagePrice(usage);
+              const isImageModel =
+                usage.imageCount ||
+                usage.smallImageCount ||
+                usage.largeImageCount;
+              if (isImageModel) {
+                console.log(usage);
+              }
+
+              return (
+                <View key={index} style={styles.usageItem}>
+                  <View style={styles.modelHeader}>
+                    <Text style={styles.modelName}>{usage.modelName}</Text>
+                    <Text style={styles.totalPrice}>
+                      USD{' '}
+                      {usagePrice.totalPrice === 0
+                        ? '0.00'
+                        : usagePrice.totalPrice}
                     </Text>
-                    <Text style={styles.tokenText}>
-                      Output: {usage.outputTokens.toLocaleString()}
-                    </Text>
-                  </>
-                )}
-              </View>
-            </View>
-          ))}
+                  </View>
+
+                  {isImageModel ? (
+                    <>
+                      {usage.smallImageCount && (
+                        <View style={styles.tokenInfo}>
+                          <Text style={styles.tokenText}>
+                            Small Images:{' '}
+                            {usage.smallImageCount.toLocaleString()}
+                          </Text>
+                          <Text style={styles.tokenText}>
+                            USD {usagePrice.smallImagePrice}
+                          </Text>
+                        </View>
+                      )}
+                      {usage.imageCount && (
+                        <View style={styles.tokenInfo}>
+                          <Text style={styles.tokenText}>
+                            Medium Images: {usage.imageCount.toLocaleString()}
+                          </Text>
+                          <Text style={styles.tokenText}>
+                            USD {usagePrice.mediumImagePrice}
+                          </Text>
+                        </View>
+                      )}
+                      {usage.largeImageCount && (
+                        <View style={styles.tokenInfo}>
+                          <Text style={styles.tokenText}>
+                            Large Images:{' '}
+                            {usage.largeImageCount.toLocaleString()}
+                          </Text>
+                          <Text style={styles.tokenText}>
+                            USD {usagePrice.largeImagePrice}
+                          </Text>
+                        </View>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <View style={styles.tokenInfo}>
+                        <Text style={styles.tokenText}>
+                          Input: {usage.inputTokens.toLocaleString()}
+                        </Text>
+                        <Text style={styles.tokenText}>
+                          USD {usagePrice.inputPrice}
+                        </Text>
+                      </View>
+                      <View style={styles.tokenInfo}>
+                        <Text style={styles.tokenText}>
+                          Output: {usage.outputTokens.toLocaleString()}
+                        </Text>
+                        <Text style={styles.tokenText}>
+                          USD {usagePrice.outputPrice}
+                        </Text>
+                      </View>
+                    </>
+                  )}
+                </View>
+              );
+            })}
           <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Total Usage</Text>
-            <View style={styles.tokenInfo}>
-              <Text style={styles.totalText}>
-                Input:{' '}
-                {modelUsage
-                  .reduce((sum, model) => sum + model.inputTokens, 0)
-                  .toLocaleString()}
-              </Text>
-              <Text style={styles.totalText}>
-                Output:{' '}
-                {modelUsage
-                  .reduce((sum, model) => sum + model.outputTokens, 0)
-                  .toLocaleString()}
+            <View style={styles.totalHeader}>
+              <Text style={styles.totalLabel}>Total Usage</Text>
+              <Text style={styles.totalPrice}>
+                USD {getTotalCost(modelUsage)}
               </Text>
             </View>
-            {/* eslint-disable-next-line react-native/no-inline-styles */}
-            <Text style={[styles.totalText, { paddingTop: 8 }]}>
-              Images Generated:{' '}
-              {modelUsage
-                .reduce((sum, model) => sum + (model.imageCount ?? 0), 0)
-                .toLocaleString()}
-            </Text>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalText}>
+                Input Tokens: {getTotalInputTokens(modelUsage)}
+              </Text>
+              <Text style={styles.totalText}>
+                USD {getTotalInputPrice(modelUsage)}
+              </Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalText}>
+                Output Tokens: {getTotalOutputTokens(modelUsage)}
+              </Text>
+              <Text style={styles.totalText}>
+                USD {getTotalOutputPrice(modelUsage)}
+              </Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalText}>
+                Images: {getTotalImageCount(modelUsage)}
+              </Text>
+              <Text style={styles.totalText}>
+                USD {getTotalImagePrice(modelUsage)}
+              </Text>
+            </View>
           </View>
           <Text
             style={styles.priceLink}
             onPress={() =>
               Linking.openURL('https://aws.amazon.com/bedrock/pricing/')
             }>
-            View{' '}
+            * Estimated costs based on US region pricing. Actual charges may
+            vary by region. For accurate pricing, please refer to{' '}
             <Text style={[styles.priceLink, styles.underline]}>
-              model pricing
-            </Text>{' '}
-            on Amazon Bedrock
+              Amazon Bedrock Pricing
+            </Text>
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -160,11 +242,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'black',
-    marginBottom: 14,
   },
   tokenInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 4,
   },
   tokenText: {
     fontSize: 14,
@@ -181,20 +263,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'black',
-    marginBottom: 16,
   },
   totalText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: 'black',
+    color: 'grey',
+  },
+  modelHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  totalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  totalPrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  pricingContainer: {
+    marginTop: 16,
   },
   priceLink: {
+    marginTop: 16,
     fontSize: 12,
     color: 'grey',
-    marginLeft: 4,
     paddingVertical: 8,
     textAlign: 'left',
-    marginVertical: 16,
   },
   underline: {
     textDecorationLine: 'underline',

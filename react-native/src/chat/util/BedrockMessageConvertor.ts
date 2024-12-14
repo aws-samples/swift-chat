@@ -91,11 +91,13 @@ export interface TextContent {
 }
 
 export interface ImageContent {
-  image: {
-    format: string;
-    source: {
-      bytes: string;
-    };
+  image: ImageInfo;
+}
+
+export interface ImageInfo {
+  format: string;
+  source: {
+    bytes: string;
   };
 }
 

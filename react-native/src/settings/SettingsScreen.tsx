@@ -25,10 +25,9 @@ import {
   getHapticEnabled,
   getImageModel,
   getImageSize,
+  getModelUsage,
   getRegion,
   getTextModel,
-  getTotalInputToken,
-  getTotalOutputToken,
   isNewStabilityImageModel,
   saveAllModels,
   saveImageModel,
@@ -40,12 +39,13 @@ import {
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';
-import { ChatMode, DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
+import { DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
 
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
 import CustomDropdown from './DropdownComponent.tsx';
 import Toast from 'react-native-toast-message';
+import { getTotalCost } from './ModelPrice.ts';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -67,17 +67,11 @@ function SettingsScreen(): React.JSX.Element {
   const [imageModels, setImageModels] = useState<Model[]>([]);
   const [selectedImageModel, setSelectedImageModel] = useState<string>('');
   const [upgradeInfo, setUpgradeInfo] = useState<UpgradeInfo>(initUpgradeInfo);
-  const [tokens, setTokens] = useState({
-    input: 0,
-    output: 0,
-  });
+  const [cost, setCost] = useState('0.00');
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
-      setTokens({
-        input: getTotalInputToken(),
-        output: getTotalOutputToken(),
-      });
+      setCost(getTotalCost(getModelUsage()));
     });
   }, [navigation]);
 
@@ -146,7 +140,6 @@ function SettingsScreen(): React.JSX.Element {
               navigation.navigate('Bedrock', {
                 sessionId: -1,
                 tapIndex: -1,
-                mode: ChatMode.Text,
               });
             } else {
               Toast.show({
@@ -265,11 +258,9 @@ function SettingsScreen(): React.JSX.Element {
           activeOpacity={1}
           style={styles.itemContainer}
           onPress={() => navigation.navigate('TokenUsage', {})}>
-          <Text style={styles.label}>Token Usage</Text>
+          <Text style={styles.label}>Usage</Text>
           <View style={styles.arrowContainer}>
-            <Text style={styles.text}>
-              {`Input:${tokens.input}  Output:${tokens.output}`}
-            </Text>
+            <Text style={styles.text}>{`USD ${cost}`}</Text>
             <Image
               style={styles.arrowImage}
               source={require('../assets/back.png')}

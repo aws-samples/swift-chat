@@ -75,13 +75,14 @@ const createBotMessage = (mode: string) => {
 const imagePlaceholder = '![](bedrock://imgProgress)';
 const textPlaceholder = '...';
 type ChatScreenRouteProp = RouteProp<RouteParamList, 'Bedrock'>;
+let currentMode = ChatMode.Text;
 
 function ChatScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const route = useRoute<ChatScreenRouteProp>();
   const initialSessionId = route.params?.sessionId;
   const tapIndex = route.params?.tapIndex;
-  const mode = route.params?.mode ?? ChatMode.Text;
+  const mode = route.params?.mode ?? currentMode;
   const modeRef = useRef(mode);
 
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -130,6 +131,7 @@ function ChatScreen(): React.JSX.Element {
 
   // header text and right button click
   React.useLayoutEffect(() => {
+    currentMode = mode;
     const headerOptions: HeaderOptions = {
       // eslint-disable-next-line react/no-unstable-nested-components
       headerTitle: () => (
@@ -499,10 +501,10 @@ function ChatScreen(): React.JSX.Element {
                 if (isUpdate) {
                   setSelectedFiles(files);
                 } else {
-                  console.log('handleNewFileSelected');
                   handleNewFileSelected(files);
                 }
               }}
+              chatMode={modeRef.current}
             />
           )
         }

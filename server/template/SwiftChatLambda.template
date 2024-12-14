@@ -7,7 +7,7 @@
       "Description": "API Key Parameter name for authentication",
       "MinLength": 1,
       "NoEcho": false
-    },
+    }
   },
   "Resources": {
     "LambdaExecutionRoleD5C26073": {

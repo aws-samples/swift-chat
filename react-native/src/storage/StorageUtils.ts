@@ -258,6 +258,9 @@ export function getAllImageSize(imageModelId: string = '') {
   if (isNewStabilityImageModel(imageModelId)) {
     return ['1024 x 1024'];
   }
+  if (isNovaCanvas(imageModelId)) {
+    return ['1024 x 1024', '2048 x 2048'];
+  }
   return ['512 x 512', '1024 x 1024'];
 }
 
@@ -267,6 +270,10 @@ export function isNewStabilityImageModel(modelId: string) {
     modelId === 'stability.stable-image-ultra-v1:0' ||
     modelId === 'stability.stable-image-core-v1:0'
   );
+}
+
+export function isNovaCanvas(modelId: string) {
+  return modelId.includes('nova-canvas');
 }
 
 export function saveImageSize(size: string) {
@@ -290,6 +297,10 @@ export function updateTotalUsage(usage: Usage) {
   if (modelIndex >= 0) {
     if (usage.imageCount) {
       currentUsage[modelIndex].imageCount! += usage.imageCount;
+    } else if (usage.smallImageCount) {
+      currentUsage[modelIndex].smallImageCount! += usage.smallImageCount;
+    } else if (usage.largeImageCount) {
+      currentUsage[modelIndex].largeImageCount! += usage.largeImageCount;
     } else {
       currentUsage[modelIndex].inputTokens += usage.inputTokens;
       currentUsage[modelIndex].outputTokens += usage.outputTokens;
@@ -298,14 +309,4 @@ export function updateTotalUsage(usage: Usage) {
     currentUsage.push(usage);
   }
   storage.set(modelUsageKey, JSON.stringify(currentUsage));
-}
-
-export function getTotalInputToken() {
-  const usage = getModelUsage();
-  return usage.reduce((sum, model) => sum + model.inputTokens, 0);
-}
-
-export function getTotalOutputToken() {
-  const usage = getModelUsage();
-  return usage.reduce((sum, model) => sum + model.outputTokens, 0);
 }

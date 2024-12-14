@@ -1,12 +1,12 @@
 import { Actions } from 'react-native-gifted-chat';
 import { Image, Platform, StyleSheet, Text } from 'react-native';
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   ImagePickerResponse,
   launchCamera,
   launchImageLibrary,
 } from 'react-native-image-picker';
-import { FileInfo, FileType } from '../../types/Chat.ts';
+import { ChatMode, FileInfo, FileType } from '../../types/Chat.ts';
 import { pick, types } from 'react-native-document-picker';
 import Toast from 'react-native-toast-message';
 import { saveFile } from '../util/FileUtils.ts';
@@ -22,6 +22,7 @@ import { getTextModel } from '../../storage/StorageUtils.ts';
 interface CustomRenderActionsProps {
   onFileSelected: (files: FileInfo[]) => void;
   mode?: 'default' | 'list';
+  chatMode?: ChatMode;
 }
 
 const DefaultIcon = () => (
@@ -36,25 +37,34 @@ const ListIcon = () => <Text style={styles.addIcon}>+</Text>;
 export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
   onFileSelected,
   mode = 'default',
+  chatMode = ChatMode.Text,
 }) => {
+  const chatModeRef = useRef(chatMode);
+  chatModeRef.current = chatMode;
   const handleChooseFiles = async () => {
+    let chooseType = [];
+    const isImageMode = chatModeRef.current === ChatMode.Image;
     try {
-      const chooseType = [
-        types.images,
-        types.pdf,
-        types.csv,
-        types.doc,
-        types.docx,
-        types.xls,
-        types.xlsx,
-        types.plainText,
-        'public.html',
-      ];
-      if (isVideoSupported()) {
-        chooseType.push(types.video);
+      if (isImageMode) {
+        chooseType = [types.images];
+      } else {
+        chooseType = [
+          types.images,
+          types.pdf,
+          types.csv,
+          types.doc,
+          types.docx,
+          types.xls,
+          types.xlsx,
+          types.plainText,
+          'public.html',
+        ];
+        if (isVideoSupported()) {
+          chooseType.push(types.video);
+        }
       }
       const pickResults = await pick({
-        allowMultiSelection: true,
+        allowMultiSelection: !isImageMode,
         type: chooseType,
       });
       const files: FileInfo[] = [];
@@ -79,12 +89,16 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
               return;
             }
             let localFileUrl: string | null;
+            let width = 0;
+            let height = 0;
             if (fileType === FileType.image) {
               pickResult.uri = decodeURI(pickResult.uri);
               if (format === 'png' || format === 'jpg' || format === 'jpeg') {
                 pickResult.uri = await Img.compress(pickResult.uri);
                 const metaData = await getImageMetaData(pickResult.uri);
                 format = metaData.extension;
+                width = metaData.ImageWidth;
+                height = metaData.ImageHeight;
               }
               localFileUrl = await saveFile(pickResult.uri, pickResult.name);
             } else if (fileType === FileType.video) {
@@ -97,8 +111,6 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
             }
 
             let thumbnailUrl;
-            let width = 0;
-            let height = 0;
             if (fileType === FileType.video) {
               if (Platform.OS === 'android') {
                 localFileUrl = await saveFile(pickResult.uri, fileName);
@@ -166,7 +178,10 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
         'Take Camera': () => {
           launchCamera({
             saveToPhotos: false,
-            mediaType: isVideoSupported() ? 'mixed' : 'photo',
+            mediaType:
+              chatModeRef.current === ChatMode.Text && isVideoSupported()
+                ? 'mixed'
+                : 'photo',
             videoQuality: 'high',
             durationLimit: 30,
             includeBase64: false,
@@ -181,8 +196,11 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
         },
         'Choose From Photos': () => {
           launchImageLibrary({
-            selectionLimit: 0,
-            mediaType: isVideoSupported() ? 'mixed' : 'photo',
+            selectionLimit: chatModeRef.current === ChatMode.Text ? 0 : 1,
+            mediaType:
+              chatModeRef.current === ChatMode.Text && isVideoSupported()
+                ? 'mixed'
+                : 'photo',
             includeBase64: false,
             includeExtra: true,
             assetRepresentationMode: 'current',
@@ -270,10 +288,14 @@ const getFiles = async (res: ImagePickerResponse) => {
           showInfo(msg);
           return;
         }
+        let width = media.width;
+        let height = media.height;
         if (format === 'png' || format === 'jpg' || format === 'jpeg') {
           media.uri = await Img.compress(media.uri);
           const metaData = await getImageMetaData(media.uri);
           format = metaData.extension;
+          width = metaData.ImageWidth;
+          height = metaData.ImageHeight;
         }
         let thumbnailUrl;
         if (fileType === FileType.video) {
@@ -296,8 +318,8 @@ const getFiles = async (res: ImagePickerResponse) => {
             fileSize: media.fileSize ?? 0,
             type: fileType,
             format: format === 'jpg' ? 'jpeg' : format,
-            width: media.width,
-            height: media.height,
+            width: width,
+            height: height,
           });
         }
       }

@@ -16,6 +16,8 @@ import {
 import { saveImageToLocal } from '../chat/util/FileUtils.ts';
 import {
   BedrockMessage,
+  ImageContent,
+  ImageInfo,
   TextContent,
 } from '../chat/util/BedrockMessageConvertor.ts';
 
@@ -59,7 +61,7 @@ export const invokeBedrockWithCallBack = async (
     const url = getApiPrefix() + '/converse';
     let intervalId: ReturnType<typeof setInterval>;
     let completeMessage = '';
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     fetch(url!, options)
       .then(response => {
         return response.body;
@@ -111,7 +113,7 @@ export const invokeBedrockWithCallBack = async (
           if (errorMsg.endsWith('AbortError: Aborted')) {
             errorMsg = 'Timed out';
           }
-          if (errorMsg.indexOf('Unable to resolve host')) {
+          if (errorMsg.indexOf('http') >= 0) {
             errorMsg = 'Unable to resolve host';
           }
           const errorInfo = 'Request error: ' + errorMsg;
@@ -122,16 +124,31 @@ export const invokeBedrockWithCallBack = async (
   } else {
     const prompt = (messages[messages.length - 1].content[0] as TextContent)
       .text;
-    const imageRes = await genImage(prompt, controller);
+    let image: ImageInfo | undefined;
+    if (messages[messages.length - 1].content[1]) {
+      image = (messages[messages.length - 1].content[1] as ImageContent).image;
+    }
+
+    const imageRes = await genImage(prompt, controller, image);
     if (imageRes.image.length > 0) {
       const localFilePath = await saveImageToLocal(imageRes.image);
+      const imageSize = getImageSize().split('x')[0].trim();
       const usage: Usage = {
         modelName: getImageModel().modelName,
         inputTokens: 0,
         outputTokens: 0,
         totalTokens: 0,
-        imageCount: 1,
+        smallImageCount: 0,
+        imageCount: 0,
+        largeImageCount: 0,
       };
+      if (imageSize === '512') {
+        usage.smallImageCount = 1;
+      } else if (imageSize === '1024') {
+        usage.imageCount = 1;
+      } else if (imageSize === '2048') {
+        usage.largeImageCount = 1;
+      }
       if (localFilePath) {
         callback(`![](${localFilePath})`, true, false, usage);
       }
@@ -143,7 +160,7 @@ export const invokeBedrockWithCallBack = async (
           imageRes.error = 'Request timed out';
         }
       }
-      if (imageRes.error.indexOf('Unable to resolve host')) {
+      if (imageRes.error.indexOf('http') >= 0) {
         imageRes.error = 'Request error: Unable to resolve host';
       }
       callback(imageRes.error, true, true);
@@ -210,7 +227,8 @@ export const requestUpgradeInfo = async (
 
 export const genImage = async (
   prompt: string,
-  controller: AbortController
+  controller: AbortController,
+  image?: ImageInfo
 ): Promise<ImageRes> => {
   if (!isConfigured()) {
     return {
@@ -224,6 +242,7 @@ export const genImage = async (
   const height = imageSize[1].trim();
   const bodyObject = {
     prompt: prompt,
+    refImages: image ? [image] : undefined,
     modelId: getImageModel().modelId,
     region: getRegion(),
     width: width,
@@ -242,7 +261,7 @@ export const genImage = async (
   };
 
   try {
-    const timeoutMs = parseInt(width, 10) >= 1024 ? 90000 : 60000;
+    const timeoutMs = parseInt(width, 10) >= 1024 ? 120000 : 90000;
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const response = await fetch(url, options);
     if (!response.ok) {

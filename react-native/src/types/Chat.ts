@@ -79,6 +79,18 @@ export type Usage = {
   outputTokens: number;
   totalTokens: number;
   imageCount?: number;
+  smallImageCount?: number;
+  largeImageCount?: number;
+};
+
+export type UsagePrice = {
+  modelName: string;
+  inputPrice: number;
+  outputPrice: number;
+  totalPrice: number;
+  smallImagePrice: number;
+  mediumImagePrice: number;
+  largeImagePrice: number;
 };
 
 export interface IMessageWithToken extends IMessage {

@@ -3,7 +3,7 @@ import React from 'react';
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ChatMode, ChatStatus, FileInfo } from '../../types/Chat.ts';
 import { CustomAddFileComponent } from './CustomAddFileComponent.tsx';
-import { getTextModel } from '../../storage/StorageUtils.ts';
+import { getImageModel, getTextModel } from '../../storage/StorageUtils.ts';
 
 interface CustomSendComponentProps extends SendProps<IMessage> {
   chatStatus: ChatStatus;
@@ -22,13 +22,20 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   ...props
 }) => {
   const { text } = props;
-  if (
-    chatMode !== ChatMode.Text ||
-    !isMultiModalModel() ||
-    (text && text!.length > 0) ||
-    selectedFiles.length > 0 ||
-    chatStatus === ChatStatus.Running
-  ) {
+  let isShowSending = false;
+  if (chatMode === ChatMode.Image) {
+    isShowSending =
+      !isNovaCanvas(chatMode) ||
+      (text && text!.length > 0) ||
+      chatStatus === ChatStatus.Running;
+  } else if (chatMode === ChatMode.Text) {
+    isShowSending =
+      !isMultiModalModel() ||
+      (text && text!.length > 0) ||
+      selectedFiles.length > 0 ||
+      chatStatus === ChatStatus.Running;
+  }
+  if (isShowSending) {
     return (
       <Send
         {...props}
@@ -69,6 +76,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
         onFileSelected={files => {
           onFileSelected(files);
         }}
+        chatMode={chatMode}
       />
     );
   }
@@ -80,6 +88,13 @@ const isMultiModalModel = (): boolean => {
     textModelId.includes('claude-3') ||
     textModelId.includes('nova-pro') ||
     textModelId.includes('nova-lite')
+  );
+};
+
+const isNovaCanvas = (chatMode: ChatMode): boolean => {
+  return (
+    chatMode === ChatMode.Image &&
+    getImageModel().modelId.includes('nova-canvas')
   );
 };
 

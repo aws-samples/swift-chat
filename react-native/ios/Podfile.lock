@@ -982,7 +982,7 @@ PODS:
     - Yoga
   - react-native-get-random-values (1.11.0):
     - React-Core
-  - react-native-image-picker (7.2.2):
+  - react-native-image-picker (7.2.3):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1591,7 +1591,7 @@ SPEC CHECKSUMS:
   react-native-compressor: 2ae9013718fb351264fcfcdf232eccbbf3d280a2
   react-native-document-picker: c4f197741c327270453aa9840932098e0064fd52
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
-  react-native-image-picker: dd85e2530d366acf77745830b053294afed66339
+  react-native-image-picker: fb0c2b3adc3eff6caa3cd6a507a34b9dcc9238dd
   react-native-mmkv: 8c9a677e64a1ac89b0c6cf240feea528318b3074
   react-native-safe-area-context: b7daa1a8df36095a032dff095a1ea8963cb48371
   React-nativeconfig: b0073a590774e8b35192fead188a36d1dca23dec
