@@ -5,7 +5,6 @@ export type Chat = {
   title: string;
   mode: string;
   timestamp: number;
-  token: number[];
 };
 
 export enum ChatStatus {
