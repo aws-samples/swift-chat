@@ -25,6 +25,7 @@ macOS 等多个平台。
 - 支持 Nova Lite 和 Pro 对图片、文档及视频内容的理解
 - 支持直接在安卓和 iOS 设备上录制最长 30 秒的视频供 Nova 分析
 - 支持自动压缩上传超过8MB的高清视频（1080p/4K）
+- 支持通过自然语言让 Nova Canvas 生成图片，去除背景，替换背景，以及生成类似风格的图片。
 
 ## 架构
 
@@ -83,8 +84,8 @@ macOS 等多个平台。
 ### 第3步: 下载应用并设置 API URL 和 API Key
 
 1. 下载应用
-    - Android 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.6.0/SwiftChat.apk)
-    - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.6.0/SwiftChat.dmg)
+    - Android 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.7.0/SwiftChat.apk)
+    - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.7.0/SwiftChat.dmg)
     - iOS (目前不提供 iOS 版本，您可以使用 Xcode 在本地构建)
 
 2. 启动应用，点击左侧菜单按钮，并点击底部的 **Settings**。
