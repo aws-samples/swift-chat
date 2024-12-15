@@ -530,9 +530,9 @@ function ChatScreen(): React.JSX.Element {
           if (
             isMac &&
             inputTexRef.current.length > 0 &&
+            text[text.length - 1] === '\n' &&
+            text[text.length - 2] !== ' ' &&
             text.length - inputTexRef.current.length === 1 &&
-            !text.endsWith(' \n') &&
-            text.endsWith('\n') &&
             chatStatusRef.current !== ChatStatus.Running
           ) {
             setTimeout(() => {
