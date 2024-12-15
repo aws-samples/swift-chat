@@ -286,57 +286,71 @@ type ImageModelPrices = {
 };
 
 export function getTotalCost(usage: Usage[]) {
-  return usage
-    .reduce((sum, model) => sum + getUsagePrice(model).totalPrice, 0)
-    .toFixed(2);
+  return Number(
+    usage
+      .reduce((sum, model) => sum + getUsagePrice(model).totalPrice, 0)
+      .toFixed(2)
+  );
 }
 
 export function getTotalInputTokens(usage: Usage[]) {
-  return usage
-    .reduce((sum, model) => sum + (model.inputTokens || 0), 0)
-    .toLocaleString();
+  return Number(
+    usage
+      .reduce((sum, model) => sum + (model.inputTokens || 0), 0)
+      .toLocaleString()
+  );
 }
 
 export function getTotalInputPrice(usage: Usage[]) {
-  return usage
-    .reduce((sum, model) => sum + getUsagePrice(model).inputPrice, 0)
-    .toFixed(6);
+  return Number(
+    usage
+      .reduce((sum, model) => sum + getUsagePrice(model).inputPrice, 0)
+      .toFixed(6)
+  );
 }
 
 export function getTotalOutputTokens(usage: Usage[]) {
-  return usage
-    .reduce((sum, model) => sum + (model.outputTokens || 0), 0)
-    .toLocaleString();
+  return Number(
+    usage
+      .reduce((sum, model) => sum + (model.outputTokens || 0), 0)
+      .toLocaleString()
+  );
 }
 
 export function getTotalOutputPrice(usage: Usage[]) {
-  return usage
-    .reduce((sum, model) => sum + getUsagePrice(model).outputPrice, 0)
-    .toFixed(6);
+  return Number(
+    usage
+      .reduce((sum, model) => sum + getUsagePrice(model).outputPrice, 0)
+      .toFixed(6)
+  );
 }
 
 export function getTotalImageCount(usage: Usage[]) {
-  return usage
-    .reduce(
-      (sum, model) =>
-        sum +
-        (model.smallImageCount || 0) +
-        (model.imageCount || 0) +
-        (model.largeImageCount || 0),
-      0
-    )
-    .toLocaleString();
+  return Number(
+    usage
+      .reduce(
+        (sum, model) =>
+          sum +
+          (model.smallImageCount || 0) +
+          (model.imageCount || 0) +
+          (model.largeImageCount || 0),
+        0
+      )
+      .toLocaleString()
+  );
 }
 
 export function getTotalImagePrice(usage: Usage[]) {
-  return usage
-    .reduce(
-      (sum, model) =>
-        sum +
-        (getUsagePrice(model).smallImagePrice || 0) +
-        (getUsagePrice(model).mediumImagePrice || 0) +
-        (getUsagePrice(model).largeImagePrice || 0),
-      0
-    )
-    .toFixed(6);
+  return Number(
+    usage
+      .reduce(
+        (sum, model) =>
+          sum +
+          (getUsagePrice(model).smallImagePrice || 0) +
+          (getUsagePrice(model).mediumImagePrice || 0) +
+          (getUsagePrice(model).largeImagePrice || 0),
+        0
+      )
+      .toFixed(6)
+  );
 }

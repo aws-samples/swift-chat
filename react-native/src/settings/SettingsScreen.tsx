@@ -71,7 +71,8 @@ function SettingsScreen(): React.JSX.Element {
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
-      setCost(getTotalCost(getModelUsage()));
+      setCost(getTotalCost(getModelUsage()).toString());
+      fetchAndSetModelNames().then();
     });
   }, [navigation]);
 

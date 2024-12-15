@@ -92,9 +92,6 @@ function TokenUsageScreen(): React.JSX.Element {
                 usage.imageCount ||
                 usage.smallImageCount ||
                 usage.largeImageCount;
-              if (isImageModel) {
-                console.log(usage);
-              }
 
               return (
                 <View key={index} style={styles.usageItem}>
@@ -110,7 +107,7 @@ function TokenUsageScreen(): React.JSX.Element {
 
                   {isImageModel ? (
                     <>
-                      {usage.smallImageCount && (
+                      {usage.smallImageCount ? (
                         <View style={styles.tokenInfo}>
                           <Text style={styles.tokenText}>
                             512-Standard:{' '}
@@ -120,8 +117,8 @@ function TokenUsageScreen(): React.JSX.Element {
                             USD {usagePrice.smallImagePrice}
                           </Text>
                         </View>
-                      )}
-                      {usage.imageCount && (
+                      ) : null}
+                      {usage.imageCount ? (
                         <View style={styles.tokenInfo}>
                           <Text style={styles.tokenText}>
                             1024-Standard: {usage.imageCount.toLocaleString()}
@@ -130,8 +127,8 @@ function TokenUsageScreen(): React.JSX.Element {
                             USD {usagePrice.mediumImagePrice}
                           </Text>
                         </View>
-                      )}
-                      {usage.largeImageCount && (
+                      ) : null}
+                      {usage.largeImageCount ? (
                         <View style={styles.tokenInfo}>
                           <Text style={styles.tokenText}>
                             2048-Standard:{' '}
@@ -141,7 +138,7 @@ function TokenUsageScreen(): React.JSX.Element {
                             USD {usagePrice.largeImagePrice}
                           </Text>
                         </View>
-                      )}
+                      ) : null}
                     </>
                   ) : (
                     <>
