@@ -136,7 +136,6 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
                     sessionId: item.id,
                     tapIndex: tapIndexRef.current,
                     mode: item.mode,
-                    token: item.token,
                   });
                   tapIndexRef.current += 1;
                 }}
