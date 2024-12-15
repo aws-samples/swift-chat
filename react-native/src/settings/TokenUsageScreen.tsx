@@ -167,31 +167,32 @@ function TokenUsageScreen(): React.JSX.Element {
             <View style={styles.totalHeader}>
               <Text style={styles.totalLabel}>Total Usage</Text>
               <Text style={styles.totalPrice}>
-                USD {getTotalCost(modelUsage)}
+                USD {getTotalCost(modelUsage).toString()}
               </Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={styles.totalText}>
-                Input Tokens: {getTotalInputTokens(modelUsage)}
+                Input Tokens: {getTotalInputTokens(modelUsage).toLocaleString()}
               </Text>
               <Text style={styles.totalText}>
-                USD {getTotalInputPrice(modelUsage)}
-              </Text>
-            </View>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalText}>
-                Output Tokens: {getTotalOutputTokens(modelUsage)}
-              </Text>
-              <Text style={styles.totalText}>
-                USD {getTotalOutputPrice(modelUsage)}
+                USD {getTotalInputPrice(modelUsage).toString()}
               </Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={styles.totalText}>
-                Images: {getTotalImageCount(modelUsage)}
+                Output Tokens:{' '}
+                {getTotalOutputTokens(modelUsage).toLocaleString()}
               </Text>
               <Text style={styles.totalText}>
-                USD {getTotalImagePrice(modelUsage)}
+                USD {getTotalOutputPrice(modelUsage).toString()}
+              </Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalText}>
+                Images: {getTotalImageCount(modelUsage).toLocaleString()}
+              </Text>
+              <Text style={styles.totalText}>
+                USD {getTotalImagePrice(modelUsage).toString()}
               </Text>
             </View>
           </View>

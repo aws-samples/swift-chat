@@ -294,11 +294,7 @@ export function getTotalCost(usage: Usage[]) {
 }
 
 export function getTotalInputTokens(usage: Usage[]) {
-  return Number(
-    usage
-      .reduce((sum, model) => sum + (model.inputTokens || 0), 0)
-      .toLocaleString()
-  );
+  return usage.reduce((sum, model) => sum + (model.inputTokens || 0), 0);
 }
 
 export function getTotalInputPrice(usage: Usage[]) {
@@ -310,11 +306,7 @@ export function getTotalInputPrice(usage: Usage[]) {
 }
 
 export function getTotalOutputTokens(usage: Usage[]) {
-  return Number(
-    usage
-      .reduce((sum, model) => sum + (model.outputTokens || 0), 0)
-      .toLocaleString()
-  );
+  return usage.reduce((sum, model) => sum + (model.outputTokens || 0), 0);
 }
 
 export function getTotalOutputPrice(usage: Usage[]) {
