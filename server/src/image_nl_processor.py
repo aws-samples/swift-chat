@@ -4,9 +4,7 @@ from fastapi import HTTPException
 
 
 def get_native_request_with_ref_image(client, prompt, ref_images, width, height):
-    # send prompt and ref_image to nova-lite and generate taskType and maskImage
     result = get_analyse_result(client, prompt)
-    print(result)
     try:
         result_objet = json.loads(result)
         seed = random.randint(0, 2147483647)
@@ -128,8 +126,6 @@ def get_analyse_result(client, prompt):
                 text = item["contentBlockDelta"].get("delta", {}).get("text", "")
                 if text:
                     complete_res += text
-            elif "metadata" in item:
-                print(json.dumps(item["metadata"]["usage"]))
         return complete_res
     except Exception as error:
         print(f"Error get image analyse by nova-lite: {error}")

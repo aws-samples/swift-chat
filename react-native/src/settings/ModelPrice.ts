@@ -12,21 +12,30 @@ export const getUsagePrice = (usage: Usage): UsagePrice => {
   };
   if (usage.imageCount || usage.smallImageCount || usage.largeImageCount) {
     if (usage.smallImageCount) {
-      usagePrice.smallImagePrice =
-        usage.smallImageCount *
-        getImagePrice(usage.modelName as keyof ImageModelPrices, 'small');
+      usagePrice.smallImagePrice = Number(
+        (
+          usage.smallImageCount *
+          getImagePrice(usage.modelName as keyof ImageModelPrices, 'small')
+        ).toFixed(2)
+      );
     }
 
     if (usage.imageCount) {
-      usagePrice.mediumImagePrice =
-        usage.imageCount *
-        getImagePrice(usage.modelName as keyof ImageModelPrices, 'medium');
+      usagePrice.mediumImagePrice = Number(
+        (
+          usage.imageCount *
+          getImagePrice(usage.modelName as keyof ImageModelPrices, 'medium')
+        ).toFixed(2)
+      );
     }
 
     if (usage.largeImageCount) {
-      usagePrice.largeImagePrice =
-        usage.largeImageCount *
-        getImagePrice(usage.modelName as keyof ImageModelPrices, 'large');
+      usagePrice.largeImagePrice = Number(
+        (
+          usage.largeImageCount *
+          getImagePrice(usage.modelName as keyof ImageModelPrices, 'large')
+        ).toFixed(2)
+      );
     }
     usagePrice.totalPrice = Number(
       (

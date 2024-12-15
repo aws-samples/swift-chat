@@ -113,7 +113,7 @@ function TokenUsageScreen(): React.JSX.Element {
                       {usage.smallImageCount && (
                         <View style={styles.tokenInfo}>
                           <Text style={styles.tokenText}>
-                            Small Images:{' '}
+                            512-Standard:{' '}
                             {usage.smallImageCount.toLocaleString()}
                           </Text>
                           <Text style={styles.tokenText}>
@@ -124,7 +124,7 @@ function TokenUsageScreen(): React.JSX.Element {
                       {usage.imageCount && (
                         <View style={styles.tokenInfo}>
                           <Text style={styles.tokenText}>
-                            Medium Images: {usage.imageCount.toLocaleString()}
+                            1024-Standard: {usage.imageCount.toLocaleString()}
                           </Text>
                           <Text style={styles.tokenText}>
                             USD {usagePrice.mediumImagePrice}
@@ -134,7 +134,7 @@ function TokenUsageScreen(): React.JSX.Element {
                       {usage.largeImageCount && (
                         <View style={styles.tokenInfo}>
                           <Text style={styles.tokenText}>
-                            Large Images:{' '}
+                            2048-Standard:{' '}
                             {usage.largeImageCount.toLocaleString()}
                           </Text>
                           <Text style={styles.tokenText}>

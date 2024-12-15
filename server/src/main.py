@@ -13,6 +13,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
 from urllib.request import urlopen, Request
 import time
+from image_nl_processor import get_native_request_with_ref_image
 
 app = FastAPI()
 security = HTTPBearer()
@@ -27,6 +28,7 @@ cache = {
 
 class ImageRequest(BaseModel):
     prompt: str
+    refImages: List[dict] | None = None
     modelId: str
     region: str
     width: int
@@ -129,14 +131,15 @@ async def gen_image(request: ImageRequest,
                     _: Annotated[str, Depends(verify_api_key)]):
     model_id = request.modelId
     prompt = request.prompt
+    ref_images = request.refImages
     width = request.width
     height = request.height
     region = request.region
     client = boto3.client("bedrock-runtime",
                           region_name=region)
-    if contains_chinese(prompt):
+    if ref_images is None and contains_chinese(prompt):
         prompt = get_english_prompt(client, prompt)
-    return get_image(client, model_id, prompt, width, height)
+    return get_image(client, model_id, prompt, ref_images, width, height)
 
 
 @app.post("/api/models")
@@ -230,23 +233,27 @@ def get_latest_version() -> str:
     return '0.0.0'
 
 
-def get_image(client, model_id, prompt, width, height):
+def get_image(client, model_id, prompt, ref_image, width, height):
     try:
         seed = random.randint(0, 2147483647)
         native_request = {}
         if model_id.startswith("amazon"):
-            native_request = {
-                "taskType": "TEXT_IMAGE",
-                "textToImageParams": {"text": prompt},
-                "imageGenerationConfig": {
-                    "numberOfImages": 1,
-                    "quality": "standard",
-                    "cfgScale": 8.0,
-                    "height": height,
-                    "width": width,
-                    "seed": seed,
-                },
-            }
+            if ref_image is None:
+                native_request = {
+                    "taskType": "TEXT_IMAGE",
+                    "textToImageParams": {"text": prompt},
+                    "imageGenerationConfig": {
+                        "numberOfImages": 1,
+                        "quality": "standard",
+                        "cfgScale": 8.0,
+                        "height": height,
+                        "width": width,
+                        "seed": seed,
+                    },
+                }
+            else:
+                native_request = get_native_request_with_ref_image(client, prompt, ref_image, width, height)
+
         elif model_id.startswith("stability.stable-diffusion-xl-v1"):
             native_request = {
                 "text_prompts": [{"text": prompt}],
