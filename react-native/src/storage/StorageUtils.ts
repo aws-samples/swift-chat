@@ -189,8 +189,8 @@ export function getTextModel(): Model {
 export function getDefaultTextModels() {
   return [
     {
-      modelName: 'Claude 3.5 Sonnet',
-      modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+      modelName: 'Nova Pro',
+      modelId: 'us.amazon.nova-pro-v1:0',
     },
   ] as Model[];
 }

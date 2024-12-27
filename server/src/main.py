@@ -13,7 +13,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
 from urllib.request import urlopen, Request
 import time
-from image_nl_processor import get_native_request_with_ref_image
+from image_nl_processor import get_native_request_with_ref_image, get_analyse_result
 
 app = FastAPI()
 security = HTTPBearer()
@@ -56,12 +56,16 @@ def get_api_key_from_ssm(use_cache_token: bool):
         return auth_token
     ssm_client = boto3.client('ssm')
     api_key_name = os.environ['API_KEY_NAME']
-    response = ssm_client.get_parameter(
-        Name=api_key_name,
-        WithDecryption=True
-    )
-    auth_token = response['Parameter']['Value']
-    return auth_token
+    try:
+        response = ssm_client.get_parameter(
+            Name=api_key_name,
+            WithDecryption=True
+        )
+        auth_token = response['Parameter']['Value']
+        return auth_token
+    except Exception as error:
+        raise HTTPException(status_code=401,
+                            detail=f"Error: Please create your API Key in Parameter Store, {str(error)}")
 
 
 def verify_api_key(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
@@ -288,25 +292,8 @@ def get_image(client, model_id, prompt, ref_image, width, height):
 
 
 def get_english_prompt(client, prompt):
-    new_prompt = f"Translate to English image prompt, output only translation:\n[{prompt}]"
-    try:
-        native_request = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 256,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [{"type": "text", "text": new_prompt}],
-                }
-            ],
-        }
-        request = json.dumps(native_request)
-        response = client.invoke_model(modelId="anthropic.claude-3-haiku-20240307-v1:0", body=request)
-        model_response = json.loads(response["body"].read())
-        return model_response["content"][0]["text"]
-    except Exception as error:
-        print(f"Error translate prompt to english: {error}")
-        raise HTTPException(status_code=400, detail=f"Error: translate failed, {error}")
+    global_prompt = f"Translate to English image prompt, output only English translation."
+    return get_analyse_result(client, prompt, global_prompt)
 
 
 def contains_chinese(text):

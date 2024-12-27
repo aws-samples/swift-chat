@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 
 def get_native_request_with_ref_image(client, prompt, ref_images, width, height):
-    result = get_analyse_result(client, prompt)
+    result = get_analyse_result(client, prompt, get_prompt())
     try:
         result_objet = json.loads(result)
         seed = random.randint(0, 2147483647)
@@ -98,8 +98,7 @@ def get_native_request_with_ref_image(client, prompt, ref_images, width, height)
         raise HTTPException(status_code=400, detail=f"Error: image analyse failed, {error}")
 
 
-def get_analyse_result(client, prompt):
-    global_prompt = get_prompt()
+def get_analyse_result(client, prompt, global_prompt):
     try:
         messages = [
             {
@@ -117,7 +116,7 @@ def get_analyse_result(client, prompt):
             "system": [
                 {"text": global_prompt}
             ],
-            "modelId": 'amazon.nova-lite-v1:0'
+            "modelId": 'us.amazon.nova-lite-v1:0'
         }
         response = client.converse_stream(**command)
         complete_res = ''
@@ -128,8 +127,8 @@ def get_analyse_result(client, prompt):
                     complete_res += text
         return complete_res
     except Exception as error:
-        print(f"Error get image analyse by nova-lite: {error}")
-        raise HTTPException(status_code=400, detail=f"Error: image analyse failed, {error}")
+        print(f"Error analyse by nova-lite: {error}")
+        raise HTTPException(status_code=400, detail=f"Error: analyse failed, {error}")
 
 
 def get_prompt():

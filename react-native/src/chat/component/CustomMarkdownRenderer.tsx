@@ -35,6 +35,9 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import MarkedList from '@jsamr/react-native-li';
 import Decimal from '@jsamr/counter-style/lib/es/presets/decimal';
 import Disc from '@jsamr/counter-style/lib/es/presets/disc';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import MathView from 'react-native-math-view';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
 const cachedNode: { [key: string]: React.ReactNode } = {};
@@ -436,6 +439,36 @@ export class CustomMarkdownRenderer
       </MarkedList>
     );
   }
+
+  custom(
+    identifier: string,
+    _raw: string,
+    _children?: ReactNode[],
+    args?: Record<string, unknown>
+  ): ReactNode {
+    if (identifier === 'latex') {
+      const text = args?.text as string;
+      const isDisplayMode = args?.displayMode as boolean;
+      return (
+        <View
+          key={this.getKey()}
+          style={
+            isDisplayMode ? customStyles.displayMath : customStyles.inlineMath
+          }>
+          <MathView
+            math={text}
+            key={this.getKey()}
+            style={
+              isDisplayMode
+                ? customStyles.displayMathView
+                : customStyles.inlineMathView
+            }
+          />
+        </View>
+      );
+    }
+    return null;
+  }
 }
 
 const getTableWidthArr = (
@@ -517,4 +550,17 @@ const customStyles = StyleSheet.create({
   cell: {
     minHeight: 32,
   },
+  displayMath: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    width: '100%',
+  },
+  inlineMath: {
+    marginTop: 2,
+  },
+  displayMathView: {
+    marginVertical: 0,
+    alignSelf: 'center',
+  },
+  inlineMathView: {},
 });
