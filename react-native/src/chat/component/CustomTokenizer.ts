@@ -26,7 +26,6 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
     if (inlineMatch || displayMatch) {
       const match = inlineMatch || displayMatch;
       if (match && match.length > 1) {
-        console.log(match[0], match[1].trim());
         const text = match[1].trim();
         const isDisplayMode = !!displayMatch;
 

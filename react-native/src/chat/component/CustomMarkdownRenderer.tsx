@@ -449,21 +449,34 @@ export class CustomMarkdownRenderer
     if (identifier === 'latex') {
       const text = args?.text as string;
       const isDisplayMode = args?.displayMode as boolean;
+      const mathView = (
+        <MathView
+          key={this.getKey()}
+          math={text}
+          style={
+            isDisplayMode
+              ? customStyles.displayMathView
+              : customStyles.inlineMathView
+          }
+        />
+      );
+
       return (
         <View
           key={this.getKey()}
           style={
             isDisplayMode ? customStyles.displayMath : customStyles.inlineMath
           }>
-          <MathView
-            math={text}
-            key={this.getKey()}
-            style={
-              isDisplayMode
-                ? customStyles.displayMathView
-                : customStyles.inlineMathView
-            }
-          />
+          {isDisplayMode ? (
+            <ScrollView
+              key={this.getKey()}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}>
+              {mathView}
+            </ScrollView>
+          ) : (
+            mathView
+          )}
         </View>
       );
     }
