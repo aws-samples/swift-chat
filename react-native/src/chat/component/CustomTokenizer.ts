@@ -21,8 +21,8 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
 
   processLatex(src: string): { token: CustomToken | null; raw: string } | null {
     // match \(...\) and \[...\]
-    const inlineMatch = src.match(/^\\?\(([\s\S]+?)\\?\)/);
-    const displayMatch = src.match(/^\\?\[([\s\S]+?)\\?\]/);
+    const inlineMatch = src.match(/^\\\(([\s\S]+?)\\\)/);
+    const displayMatch = src.match(/^\\\[([\s\S]+?)\\]/);
     if (inlineMatch || displayMatch) {
       const match = inlineMatch || displayMatch;
       if (match && match.length > 1) {
