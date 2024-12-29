@@ -1,0 +1,61 @@
+name: Release Next Version
+#on:
+#  workflow_dispatch:
+#    inputs:
+#      release_tag:
+#        description: 'Release Tag'
+#        required: true
+#        type: string
+#      release_code:
+#        description: 'Release Code'
+#        required: true
+#        type: string
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+env:
+#  NEW_VERSION: ${{ github.event.inputs.release_tag }}
+#  NEW_VERSION_CODE: ${{ github.event.inputs.release_code }}
+  NEW_VERSION: 1.8.0
+  NEW_VERSION_CODE: 13
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: latex
+          fetch-depth: 0
+          token: ${{ secrets.PROJECT_TOKEN }}
+      - name: Modify for next release
+        run: |
+          cd react-native
+          npm i
+          chmod +x release.sh
+          ./release.sh ${{ env.NEW_VERSION }} ${{ env.NEW_VERSION_CODE }}
+          git diff
+          git config user.name '${{ vars.USER_NAME }}'
+          git config user.email '${{ vars.USER_EMAIL }}'
+          git add .
+          git commit -m 'release: SwiftChat v${{ env.NEW_VERSION }}'
+          git push
+          git tag ${{ env.NEW_VERSION }}
+          git push origin ${{ env.NEW_VERSION }}
+      - name: Prepare release file
+        run: |
+          cd react-native/android
+          ls
+          ./gradlew assembleRelease
+          cd app/build/outputs/apk/release
+          ls
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "SwiftChat v${{ env.NEW_VERSION }}"
+          files: |
+            *.apk
+          tag_name: "${{ env.NEW_VERSION }}"
+          prerelease: false
+          generate_release_notes: true

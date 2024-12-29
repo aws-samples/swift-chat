@@ -105,6 +105,15 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            applicationVariants.all { variant ->
+                variant.outputs.each { output ->
+                    def outputFile = output.outputFile
+                    if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                        def fileName = "SwiftChat.apk"
+                        output.outputFileName = fileName
+                    }
+                }
+            }
         }
     }
 }
