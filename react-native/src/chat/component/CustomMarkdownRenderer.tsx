@@ -45,9 +45,15 @@ let currentNodeType = '';
 let currentCacheKey = '';
 let currentText = '';
 let currentNode: React.ReactNode;
+let mathViewIndex = 0;
 
 export function clearCachedNode() {
   Object.keys(cachedNode).forEach(key => delete cachedNode[key]);
+}
+
+function getMathKey() {
+  mathViewIndex++;
+  return 'math-' + mathViewIndex;
 }
 
 interface CopyButtonProps {
@@ -451,7 +457,7 @@ export class CustomMarkdownRenderer
       const isDisplayMode = args?.displayMode as boolean;
       const mathView = (
         <MathView
-          key={this.getKey()}
+          key={getMathKey()}
           math={text}
           style={
             isDisplayMode
@@ -463,13 +469,13 @@ export class CustomMarkdownRenderer
 
       return (
         <View
-          key={this.getKey()}
+          key={getMathKey()}
           style={
             isDisplayMode ? customStyles.displayMath : customStyles.inlineMath
           }>
           {isDisplayMode ? (
             <ScrollView
-              key={this.getKey()}
+              key={getMathKey()}
               horizontal={true}
               showsHorizontalScrollIndicator={false}>
               {mathView}
