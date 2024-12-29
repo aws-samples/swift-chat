@@ -12,6 +12,7 @@ macOS platforms.
 **Key Features:**
 
 - Real-time streaming chat with AI
+- Rich Markdown Support: Tables, Code Blocks, LaTeX and More
 - AI image generation with progress
 - Multimodal support (images, videos & documents)
 - Conversation history list view and management
@@ -28,6 +29,7 @@ macOS platforms.
 - Upload large videos (1080p/4K) beyond 8MB with auto compression
 - Support using natural language to make Nova Canvas generate images, remove backgrounds, replace backgrounds, and
   create images in similar styles.
+- Support LaTeX formula rendering for Amazon Nova.
 
 ## Architecture
 
@@ -47,11 +49,12 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 Ensure you have access to Amazon Bedrock foundation models. SwiftChat default settings are:
 
-* Region: `us-west-2`
-* Text Model: `Claude 3.5 Sonnet`
-* Image Model: `Stable Image Core 1.0`
+- Region: `us-west-2`
+- Text Model: `Amazon Nova Pro`
+- Image Model: `Stable Image Core 1.0`
 
-Follow the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to
+If you are using the image generation feature, please make sure you have enabled access to the `Amazon Nova Lite` model.
+Please follow the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to
 enable your models.
 
 ### Step 1: Set up your API Key
@@ -61,11 +64,11 @@ enable your models.
 2. Check whether you are in the [supported region](#supported-region), then click on the **Create parameter** button.
 3. Fill in the parameters below, leaving other options as default:
 
-    * **Name**: Enter a parameter name (e.g., "SwiftChatAPIKey", will be used as `ApiKeyParam` in Step 2).
+   - **Name**: Enter a parameter name (e.g., "SwiftChatAPIKey", will be used as `ApiKeyParam` in Step 2).
 
-    * **Type**: Select `SecureString`
+   - **Type**: Select `SecureString`
 
-    * **Value**: Enter any string without spaces.(this will be your `API Key` in Step 3)
+   - **Value**: Enter any string without spaces.(this will be your `API Key` in Step 3)
 
 4. Click **Create parameter**.
 
@@ -73,17 +76,18 @@ enable your models.
 
 1. Click one of the following buttons to launch the CloudFormation Stack in the same region where your API Key was
    created.
-    - **App Runner**
 
-      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+   - **App Runner**
 
-    - **Lambda** (Note: For AWS customer use only)
+     [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
-      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+   - **Lambda** (Note: For AWS customer use only)
+
+     [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. Click **Next**, On the "Specify stack details" page, provide the following information:
-    - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
-    - For App Runner, choose an `InstanceTypeParam` based on your needs.
+   - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
+   - For App Runner, choose an `InstanceTypeParam` based on your needs.
 3. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 4. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
@@ -94,9 +98,10 @@ can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or
 ### Step 3: Download the app and setup with API URL and API Key
 
 1. Download the App
-    - Android App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.7.0/SwiftChat.apk)
-    - macOS App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.7.0/SwiftChat.dmg)
-    - iOS (Currently we do not provide the iOS version, you can build it locally with Xcode)
+
+   - Android App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.7.0/SwiftChat.apk)
+   - macOS App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.7.0/SwiftChat.dmg)
+   - iOS (Currently we do not provide the iOS version, you can build it locally with Xcode)
 
 2. Launch the App, open the drawer menu, and tap **Settings**.
 3. Paste the `API URL` and `API Key` then select the Region.
@@ -123,24 +128,23 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 ### Message Handling
 
 - [x] Text copy support:
-    * Copy button in message header
-    * Copy button in code blocks
-    * Direct Select and copy code on macOS (double click or long click on iOS)
-    * Long press text to copy entire sentence (Right-click on macOS)
+  - Copy button in message header
+  - Copy button in code blocks
+  - Direct Select and copy code on macOS (double click or long click on iOS)
+  - Long press text to copy entire sentence (Right-click on macOS)
 - [x] Text selection mode by tapping message title or double-clicking text
 - [x] Message timeline view in history
 - [x] Delete messages through long press in history
 - [x] Click to preview for uploaded documents and images
 - [x] Support Markdown format for both questions and answers
-- [x] Support table display and code syntax highlighting
 - [x] Maximum 20 images and 5 documents per conversation
 
 ### Image Features
 
-- [x] Support image generation with Chinese prompts(Make sure `Claude 3 Haiku` is enabled in your selected region)
+- [x] Support image generation with Chinese prompts(Make sure `Amazon Nova Lite` is enabled in your selected region)
 - [x] View and zoom generated images
 - [x] Long press images to save or share
-- [x] Automatic image compression to optimize token usage
+- [x] Automatic image compression to improve response speed
 
 ### User Experience
 
@@ -193,7 +197,7 @@ following command to download dependencies.
 
 ```bash
 cd react-native && npm i
-``` 
+```
 
 ### Build for Android
 
@@ -215,83 +219,7 @@ npm start && npm run ios
 
 ## API Reference
 
-### API Schema
-
-First, please configure you `API URL` and `API Key` like:
-
-```bash
-export API_URL=<API URL>
-export API_KEY=<API Key>
-```
-
-1. `/api/converse`
-   ```bash
-   curl -N "${API_URL}/api/converse" \
-   --header 'Content-Type: application/json' \
-   --header "Authorization: Bearer ${API_KEY}" \
-   --data '{
-     "messages": [
-       {
-         "role": "user",
-         "content": [
-           {
-             "text": "Hi"
-           }
-         ]
-       }
-     ],
-     "modelId": "anthropic.claude-3-5-sonnet-20240620-v1:0",
-     "region": "us-west-2"
-   }'
-   ```
-   This API is used to implement streaming conversations, and it only returns the text and token usage for display.
-
-   The `messages` under body fully complies with the messages structure specification in Amazon
-   Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
-   API. You can also add `image` or `document` according to the specification to support multimodal conversations.
-
-2. `/api/image`
-   ```bash
-   curl "${API_URL}/api/image" \
-   --header 'Content-Type: application/json' \
-   --header "Authorization: Bearer ${API_KEY}" \
-   --data '{
-     "prompt": "Beautiful countryside",
-     "modelId": "stability.stable-image-core-v1:0",
-     "region": "us-west-2",
-     "width": "1024",
-     "height": "1024"
-   }'
-   ```
-   This API is used to generate images and returns a base64 encoded string of the image.
-
-3. `/api/models`
-   ```bash
-   curl "${API_URL}/api/models" \
-   --header 'Content-Type: application/json' \
-   --header 'accept: application/json' \
-   --header "Authorization: Bearer ${API_KEY}" \
-   --data '{
-     "region": "us-west-2"
-   }'
-   ```
-   This API is used to get a list of all streaming-supported text models and image generation models in the specified
-   region.
-
-4. `/api/upgrade`
-   ```bash
-   curl "${API_URL}/api/upgrade" \
-   --header 'Content-Type: application/json' \
-   --header 'accept: application/json' \
-   --header "Authorization: Bearer ${API_KEY}"
-   ```
-   This API is used to get the new version of SwiftChat for Android and macOS App updates.
-
-### API Code Reference
-
-- Client code: [bedrock-api.ts](/react-native/src/api/bedrock-api.ts)
-
-- Server code: [main.py](server/src/main.py)
+Please refer [API Reference](server/README.md)
 
 ## How to upgrade?
 
@@ -319,4 +247,3 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the MIT-0 License. See the [LICENSE](LICENSE) file.
-
