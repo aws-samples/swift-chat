@@ -31,6 +31,13 @@ macOS platforms.
   create images in similar styles.
 - Support LaTeX formula rendering for Amazon Nova.
 
+The image below demonstrates SwiftChat rich markdown content support. We redesigned the UI with optimized font sizes and
+line spacing for a more elegant and clean presentation.
+
+![](assets/markdown.png)
+
+All of these features are seamlessly displayed across all supported platforms with native UI.
+
 ## Architecture
 
 ![](/assets/architecture.png)
@@ -125,6 +132,10 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 ## Detailed Features
 
+We feature streamlined chat History, Settings pages, and intuitive Usage statistics:
+
+![](assets/history_settings.png)
+
 ### Message Handling
 
 - [x] Text copy support:
@@ -155,6 +166,12 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 - [x] View current session token usage by tapping Chat title
 - [x] Check detailed token usage and image generation count in Settings
 - [x] In-app upgrade notifications (Android & macOS)
+
+We have optimized the layout for landscape mode. As shown below, you can comfortably view table and code contents in 
+landscape orientation.
+
+![](assets/landscape.png)
+![](assets/landscape_code.png)
 
 ## What Makes SwiftChat Really "Swift"?
 

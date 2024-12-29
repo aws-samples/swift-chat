@@ -29,6 +29,12 @@ macOS 等多个平台。
 - 支持通过自然语言让 Nova Canvas 生成图片，去除背景，替换背景，以及生成类似风格的图片
 - 支持 Amazon Nova 系列渲染 LaTeX 公式
 
+下图展示了 SwiftChat 支持丰富的 Markdown 内容渲染，其中我们从头设计了 UI，例如字号，行间距。使其展示更加美观简洁。
+
+![](assets/markdown.png)
+
+你所看到的这些内容都可以在所有支持的平台上以原生 UI 的形式很好的呈现。
+
 ## 架构
 
 ![](/assets/architecture.png)
@@ -114,6 +120,10 @@ macOS 等多个平台。
 
 ## 详细功能
 
+我们拥有简洁的历史记录，设置页面，和直观的 Usage 统计页面：
+
+![](assets/history_settings_zh.png)
+
 ### 消息处理
 
 - [x] 文本复制支持：
@@ -145,6 +155,10 @@ macOS 等多个平台。
 - [x] 点击聊天标题查看当前会话的 token 使用情况
 - [x] 在设置中查看详细的 token 使用情况和图片生成数量
 - [x] 应用内升级提示（Android 和 macOS）
+
+我们针对横屏做了相应优化，下图展示了通过横屏模式您可以很好的阅读代码及表格内容。
+![](assets/landscape_zh.png)
+![](assets/landscape_code_zh.png)
 
 ## 是什么让 SwiftChat 如此"迅速"?
 
