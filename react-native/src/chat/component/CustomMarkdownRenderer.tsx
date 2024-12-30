@@ -575,7 +575,8 @@ const customStyles = StyleSheet.create({
     width: '100%',
   },
   inlineMath: {
-    marginTop: 2,
+    marginTop: Platform.OS === 'android' ? 0 : 2,
+    maxHeight: 24,
   },
   displayMathView: {
     marginVertical: 0,

@@ -1,4 +1,5 @@
 import { CustomToken, MarkedLexer, MarkedTokenizer } from 'react-native-marked';
+import { Platform } from 'react-native';
 
 export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
   list(this: MarkedTokenizer<CustomToken>, src: string) {
@@ -27,8 +28,12 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
       const match = inlineMatch || displayMatch;
       if (match && match.length > 1) {
         const text = match[1].trim();
-        const isDisplayMode = !!displayMatch;
-
+        let isDisplayMode = !!displayMatch;
+        if (isDisplayMode && Platform.OS === 'android') {
+          if (!src.includes('\n\n') && src.includes('\n')) {
+            isDisplayMode = false;
+          }
+        }
         const token: CustomToken = {
           type: 'custom',
           raw: match[0],
