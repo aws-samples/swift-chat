@@ -29,10 +29,10 @@ macOS platforms.
 - Upload large videos (1080p/4K) beyond 8MB with auto compression
 - Support using natural language to make Nova Canvas generate images, remove backgrounds, replace backgrounds, and
   create images in similar styles.
-- Support LaTeX formula rendering for Amazon Nova.
+- Support LaTeX formula rendering (inline and display modes) for Amazon Nova.
 
-The image below demonstrates SwiftChat rich markdown content support. We redesigned the UI with optimized font sizes and
-line spacing for a more elegant and clean presentation.
+We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation. The image 
+below demonstrates SwiftChat rich markdown content support (Paragraph, Code Blocks, Tables, LaTeX and more)
 
 ![](assets/markdown.png)
 
@@ -167,11 +167,10 @@ We feature streamlined chat History, Settings pages, and intuitive Usage statist
 - [x] Check detailed token usage and image generation count in Settings
 - [x] In-app upgrade notifications (Android & macOS)
 
-We have optimized the layout for landscape mode. As shown below, you can comfortably view table and code contents in 
-landscape orientation.
+We have optimized the layout for landscape mode. As shown below, you can comfortably view table contents in landscape
+orientation.
 
 ![](assets/landscape.png)
-![](assets/landscape_code.png)
 
 ## What Makes SwiftChat Really "Swift"?
 
