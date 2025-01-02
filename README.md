@@ -24,9 +24,9 @@ macOS platforms.
 Comprehensive Multimodal Analysis Features Powered by Amazon Nova Pro
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/image_summary.avif" width=32%>
-<img src="assets/avif/doc_summary.avif" width=32%>
-<img src="assets/avif/video_summary.avif" width=32%>
+<img src="assets/avif/image_summary.avif" width=33%>
+<img src="assets/avif/doc_summary.avif" width=33%>
+<img src="assets/avif/video_summary.avif" width=33%>
 </div>
 
 **New Features For Amazon Nova 🎉🎉🎉**
@@ -152,9 +152,9 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 **Quick Access Tools**: Code Copy, Selection Mode, Scroll Controls and Token Counter
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/copy_code.avif" width=30%>
-<img src="assets/avif/select_mode.avif" width=30%>
-<img src="assets/avif/scroll_token.avif" width=30%>
+<img src="assets/avif/copy_code.avif" width=33%>
+<img src="assets/avif/select_mode.avif" width=33%>
+<img src="assets/avif/scroll_token.avif" width=33%>
 </div>
 
 We feature streamlined chat History, Settings pages, and intuitive Usage statistics:
