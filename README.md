@@ -42,10 +42,10 @@ Comprehensive Multimodal Analysis Features Powered by Amazon Nova Pro
 Creative Image Generation & Editing Tools by Amazon Nova Canvas
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/gen_image.avif" width=25%>
-<img src="assets/avif/remove_background.avif" width=25%>
-<img src="assets/avif/replace_background.avif" width=25%>
-<img src="assets/avif/similar_style.avif" width=25%>
+<img src="assets/avif/gen_image.avif" width=24%>
+<img src="assets/avif/remove_background.avif" width=24%>
+<img src="assets/avif/replace_background.avif" width=24%>
+<img src="assets/avif/similar_style.avif" width=24%>
 </div>
 
 We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation. The image 
