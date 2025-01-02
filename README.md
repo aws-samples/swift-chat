@@ -21,6 +21,14 @@ macOS platforms.
 - Fast launch and responsive performance
 - Multiple AI model support and switching
 
+Comprehensive Multimodal Analysis Features Powered by Amazon Nova Pro
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/image_summary.avif" width=30%>
+<img src="assets/avif/doc_summary.avif" width=30%>
+<img src="assets/avif/video_summary.avif" width=30%>
+</div>
+
 **New Features For Amazon Nova 🎉🎉🎉**
 
 - Stream conversations with Amazon Nova Micro, Lite and Pro
@@ -30,6 +38,15 @@ macOS platforms.
 - Support using natural language to make Nova Canvas generate images, remove backgrounds, replace backgrounds, and
   create images in similar styles.
 - Support LaTeX formula rendering (inline and display modes) for Amazon Nova.
+
+Creative Image Generation & Editing Tools by Amazon Nova Canvas
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/gen_image.avif" width=25%>
+<img src="assets/avif/remove_background.avif" width=25%>
+<img src="assets/avif/replace_background.avif" width=25%>
+<img src="assets/avif/similar_style.avif" width=25%>
+</div>
 
 We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation. The image 
 below demonstrates SwiftChat rich markdown content support (Paragraph, Code Blocks, Tables, LaTeX and more)
@@ -132,6 +149,14 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 ## Detailed Features
 
+**Quick Access Tools**: Code Copy, Selection Mode, Scroll Controls and Token Counter
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/copy_code.avif" width=30%>
+<img src="assets/avif/select_mode.avif" width=30%>
+<img src="assets/avif/scroll_token.avif" width=30%>
+</div>
+
 We feature streamlined chat History, Settings pages, and intuitive Usage statistics:
 
 ![](assets/history_settings.png)
@@ -171,6 +196,9 @@ We have optimized the layout for landscape mode. As shown below, you can comfort
 orientation.
 
 ![](assets/landscape.png)
+
+Similarly, for code that requires horizontal scrolling, rotate to landscape mode for better viewing.
+![](assets/avif/landscape.avif)
 
 ## What Makes SwiftChat Really "Swift"?
 
