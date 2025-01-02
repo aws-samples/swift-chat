@@ -24,9 +24,9 @@ macOS platforms.
 Comprehensive Multimodal Analysis Features Powered by Amazon Nova Pro
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/image_summary.avif" width=30%>
-<img src="assets/avif/doc_summary.avif" width=30%>
-<img src="assets/avif/video_summary.avif" width=30%>
+<img src="assets/avif/image_summary.avif" width=32%>
+<img src="assets/avif/doc_summary.avif" width=32%>
+<img src="assets/avif/video_summary.avif" width=32%>
 </div>
 
 **New Features For Amazon Nova 🎉🎉🎉**
