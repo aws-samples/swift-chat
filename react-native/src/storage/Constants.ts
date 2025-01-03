@@ -16,10 +16,24 @@ const RegionList = [
 
 export const DefaultRegion = 'us-west-2';
 
-const DefaultTextModel = {
-  modelName: 'Nova Pro',
-  modelId: 'us.amazon.nova-pro-v1:0',
-};
+const DefaultTextModel = [
+  {
+    modelName: 'Nova Pro',
+    modelId: 'us.amazon.nova-pro-v1:0',
+  },
+  {
+    modelName: 'DeepSeek v3',
+    modelId: 'deepseek-chat',
+  },
+  {
+    modelName: 'GPT-4o',
+    modelId: 'gpt-4o',
+  },
+  {
+    modelName: 'GPT-4o mini',
+    modelId: 'gpt-4o-mini',
+  },
+];
 
 const DefaultImageModel = {
   modelName: 'Stable Diffusion 3.5 Large',
@@ -62,7 +76,7 @@ export function getAllRegions() {
 }
 
 export function getDefaultTextModels() {
-  return [DefaultTextModel] as Model[];
+  return DefaultTextModel as Model[];
 }
 
 export function getDefaultImageModels() {

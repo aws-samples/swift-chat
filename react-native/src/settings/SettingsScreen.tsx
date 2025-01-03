@@ -21,17 +21,21 @@ import {
   getAllModels,
   getApiKey,
   getApiUrl,
+  getDeepSeekApiKey,
   getHapticEnabled,
   getImageModel,
   getImageSize,
   getModelUsage,
+  getOpenAIApiKey,
   getRegion,
   getTextModel,
   isNewStabilityImageModel,
   saveAllModels,
+  saveDeepSeekApiKey,
   saveImageModel,
   saveImageSize,
   saveKeys,
+  saveOpenAIApiKey,
   saveRegion,
   saveTextModel,
 } from '../storage/StorageUtils.ts';
@@ -58,6 +62,8 @@ const GITHUB_LINK = 'https://github.com/aws-samples/swift-chat';
 function SettingsScreen(): React.JSX.Element {
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
+  const [deepSeekApiKey, setDeepSeekApiKey] = useState(getDeepSeekApiKey);
+  const [openAIApiKey, setOpenAIApiKey] = useState(getOpenAIApiKey);
   const [region, setRegion] = useState(getRegion);
   const [imageSize, setImageSize] = useState(getImageSize);
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
@@ -107,6 +113,14 @@ function SettingsScreen(): React.JSX.Element {
     }
   }, [apiUrl, apiKey]);
 
+  useEffect(() => {
+    saveDeepSeekApiKey(deepSeekApiKey);
+  }, [deepSeekApiKey]);
+
+  useEffect(() => {
+    saveOpenAIApiKey(openAIApiKey);
+  }, [openAIApiKey]);
+
   const fetchAndSetModelNames = async () => {
     const response = await requestAllModels();
     if (response.imageModel.length > 0) {
@@ -124,6 +138,21 @@ function SettingsScreen(): React.JSX.Element {
       }
     }
     if (response.textModel.length > 0) {
+      response.textModel = [
+        {
+          modelName: 'DeepSeek v3',
+          modelId: 'deepseek-chat',
+        },
+        {
+          modelName: 'GPT-4o',
+          modelId: 'gpt-4o',
+        },
+        {
+          modelName: 'GPT-4o mini',
+          modelId: 'gpt-4o-mini',
+        },
+        ...response.textModel,
+      ];
       setTextModels(response.textModel);
       const textModel = getTextModel();
       const targetModels = response.textModel.filter(
@@ -214,6 +243,22 @@ function SettingsScreen(): React.JSX.Element {
           value={apiKey}
           onChangeText={setApiKey}
           placeholder="Enter API Key"
+          secureTextEntry={true}
+        />
+        <Text style={styles.label}>DeepSeek API Key</Text>
+        <TextInput
+          style={styles.input}
+          value={deepSeekApiKey}
+          onChangeText={setDeepSeekApiKey}
+          placeholder="Enter Deep Seek API Key"
+          secureTextEntry={true}
+        />
+        <Text style={styles.label}>OpenAI API Key</Text>
+        <TextInput
+          style={styles.input}
+          value={openAIApiKey}
+          onChangeText={setOpenAIApiKey}
+          placeholder="Enter OpenAI API Key"
           secureTextEntry={true}
         />
         <CustomDropdown

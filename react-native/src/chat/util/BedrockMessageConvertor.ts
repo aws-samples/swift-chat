@@ -130,3 +130,8 @@ export type BedrockMessage = {
   role: string;
   content: MessageContent[];
 };
+
+export type OpenAIMessage = {
+  role: string;
+  content: string;
+};

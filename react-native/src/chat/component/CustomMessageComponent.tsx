@@ -48,10 +48,18 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       ? 'You'
       : currentMessage?.user.name ?? 'Bedrock';
 
+  const isDeepSeek = userName.includes('DeepSeek');
+  const isOpenAI = userName.includes('GPT');
+  const modelIcon = isDeepSeek
+    ? require('../../assets/deepseek.png')
+    : isOpenAI
+    ? require('../../assets/openai.png')
+    : require('../../assets/bedrock.png');
+
   const imgSource =
     currentMessage?.user._id === 1
       ? require('../../assets/user.png')
-      : require('../../assets/bedrock.png');
+      : modelIcon;
 
   const handleImagePress = useCallback((pressMode: PressMode, url: string) => {
     if (pressMode === PressMode.Click) {

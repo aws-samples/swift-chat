@@ -9,8 +9,10 @@ import {
 import {
   getApiKey,
   getApiUrl,
+  getDeepSeekApiKey,
   getImageModel,
   getImageSize,
+  getOpenAIApiKey,
   getRegion,
   getTextModel,
 } from '../storage/StorageUtils.ts';
@@ -21,6 +23,7 @@ import {
   ImageInfo,
   TextContent,
 } from '../chat/util/BedrockMessageConvertor.ts';
+import { invokeOpenAIWithCallBack } from './open-api.ts';
 
 type CallbackFunction = (
   result: string,
@@ -38,6 +41,26 @@ export const invokeBedrockWithCallBack = async (
   controller: AbortController,
   callback: CallbackFunction
 ) => {
+  const isDeepSeek = getTextModel().modelId.includes('deepseek');
+  const isOpenAI = getTextModel().modelId.includes('gpt');
+  if (chatMode === ChatMode.Text && (isDeepSeek || isOpenAI)) {
+    if (isDeepSeek && getDeepSeekApiKey().length === 0) {
+      callback('Please configure your DeepSeek API Key', true, true);
+      return;
+    }
+    if (isOpenAI && getOpenAIApiKey().length === 0) {
+      callback('Please configure your OpenAI API Key', true, true);
+      return;
+    }
+    await invokeOpenAIWithCallBack(
+      messages,
+      prompt,
+      shouldStop,
+      controller,
+      callback
+    );
+    return;
+  }
   if (!isConfigured()) {
     callback('Please configure your API URL and API Key', true, true);
     return;

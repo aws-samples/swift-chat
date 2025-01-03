@@ -10,6 +10,7 @@ import { ChatMode } from '../../types/Chat.ts';
 import { useNavigation } from '@react-navigation/native';
 import { RouteParamList } from '../../types/RouteTypes.ts';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { getTextModel } from '../../storage/StorageUtils.ts';
 
 const isAndroid = Platform.OS === 'android';
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
@@ -22,10 +23,15 @@ export const EmptyChatComponent = ({
   chatMode,
 }: EmptyChatComponentProps): React.ReactElement => {
   const navigation = useNavigation<NavigationProp>();
+  const isDeepSeek = getTextModel().modelId.includes('deepseek');
+  const isOpenAI = getTextModel().modelId.includes('gpt');
+  const modelIcon = isDeepSeek
+    ? require('../../assets/deepseek.png')
+    : isOpenAI
+    ? require('../../assets/openai.png')
+    : require('../../assets/bedrock.png');
   const source =
-    chatMode === ChatMode.Text
-      ? require('../../assets/bedrock.png')
-      : require('../../assets/image.png');
+    chatMode === ChatMode.Text ? modelIcon : require('../../assets/image.png');
   return (
     <View style={styles.emptyChatContainer}>
       <TouchableOpacity

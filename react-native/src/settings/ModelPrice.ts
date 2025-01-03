@@ -81,6 +81,18 @@ function getImagePrice(
 
 export const ModelPrice: ModelPriceType = {
   textModelPrices: {
+    'DeepSeek v3': {
+      inputTokenPrice: 0.00014,
+      outputTokenPrice: 0.00028,
+    },
+    'GPT-4o': {
+      inputTokenPrice: 0.0025,
+      outputTokenPrice: 0.01,
+    },
+    'GPT-4o mini': {
+      inputTokenPrice: 0.00015,
+      outputTokenPrice: 0.0006,
+    },
     'Titan Text G1 - Lite': {
       inputTokenPrice: 0.00015,
       outputTokenPrice: 0.0002,

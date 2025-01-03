@@ -41,6 +41,8 @@ const currentSessionIdKey = keyPrefix + 'currentSessionId';
 const hapticEnabledKey = keyPrefix + 'hapticEnabled';
 const apiUrlKey = keyPrefix + 'apiUrlKey';
 const apiKeyTag = keyPrefix + 'apiKeyTag';
+const deepSeekApiKeyTag = keyPrefix + 'deepSeekApiKeyTag';
+const openAIApiKeyTag = keyPrefix + 'openAIApiKeyTag';
 const regionKey = keyPrefix + 'regionKey';
 const textModelKey = keyPrefix + 'textModelKey';
 const imageModelKey = keyPrefix + 'imageModelKey';
@@ -53,6 +55,8 @@ const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
+let currentDeepSeekApiKey: string | undefined;
+let currentOpenAIApiKey: string | undefined;
 let currentRegion: string | undefined;
 let currentImageModel: Model | undefined;
 let currentTextModel: Model | undefined;
@@ -148,6 +152,24 @@ export function getApiKey(): string {
   }
 }
 
+export function getDeepSeekApiKey(): string {
+  if (currentDeepSeekApiKey) {
+    return currentDeepSeekApiKey;
+  } else {
+    currentDeepSeekApiKey = encryptStorage.getString(deepSeekApiKeyTag) ?? '';
+    return currentDeepSeekApiKey;
+  }
+}
+
+export function getOpenAIApiKey(): string {
+  if (currentOpenAIApiKey) {
+    return currentOpenAIApiKey;
+  } else {
+    currentOpenAIApiKey = encryptStorage.getString(openAIApiKeyTag) ?? '';
+    return currentOpenAIApiKey;
+  }
+}
+
 export function saveHapticEnabled(enabled: boolean) {
   storage.set(hapticEnabledKey, enabled);
 }
@@ -162,6 +184,16 @@ export function saveApiUrl(apiUrl: string) {
 
 export function saveApiKey(apiKey: string) {
   encryptStorage.set(apiKeyTag, apiKey);
+}
+
+export function saveDeepSeekApiKey(apiKey: string) {
+  currentDeepSeekApiKey = apiKey;
+  encryptStorage.set(deepSeekApiKeyTag, apiKey);
+}
+
+export function saveOpenAIApiKey(apiKey: string) {
+  currentOpenAIApiKey = apiKey;
+  encryptStorage.set(openAIApiKeyTag, apiKey);
 }
 
 export function saveRegion(region: string) {
