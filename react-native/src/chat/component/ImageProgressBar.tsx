@@ -77,7 +77,6 @@ const ImageProgressBar = () => {
         useNativeDriver: true,
       }).start();
     } else if (event?.event === 'onImageStop') {
-      console.log('onImageStop');
       startProgressAnimation(100, 200).start();
     } else if (event?.event === 'onImageStart') {
       Animated.sequence([

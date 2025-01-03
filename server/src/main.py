@@ -141,7 +141,7 @@ async def gen_image(request: ImageRequest,
     region = request.region
     client = boto3.client("bedrock-runtime",
                           region_name=region)
-    if ref_images is None and contains_chinese(prompt):
+    if (ref_images is None or model_id.startswith("stability.")) and contains_chinese(prompt):
         prompt = get_english_prompt(client, prompt)
     return get_image(client, model_id, prompt, ref_images, width, height)
 
