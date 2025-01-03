@@ -241,6 +241,9 @@ export const ModelPrice: ModelPriceType = {
     'SD3 Large 1.0': {
       medium: 0.08,
     },
+    'Stable Diffusion 3.5 Large': {
+      medium: 0.08,
+    },
     'Stable Image Core 1.0': {
       medium: 0.04,
     },
@@ -275,6 +278,9 @@ type ImageModelPrices = {
     medium: number;
   };
   'SD3 Large 1.0': {
+    medium: number;
+  };
+  'Stable Diffusion 3.5 Large': {
     medium: number;
   };
   'Stable Image Core 1.0': {
