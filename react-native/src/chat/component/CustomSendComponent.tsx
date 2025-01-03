@@ -25,7 +25,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   let isShowSending = false;
   if (chatMode === ChatMode.Image) {
     isShowSending =
-      !isNovaCanvas(chatMode) ||
+      !isModelSupportUploadImages(chatMode) ||
       (text && text!.length > 0) ||
       chatStatus === ChatStatus.Running;
   } else if (chatMode === ChatMode.Text) {
@@ -91,10 +91,11 @@ const isMultiModalModel = (): boolean => {
   );
 };
 
-const isNovaCanvas = (chatMode: ChatMode): boolean => {
+const isModelSupportUploadImages = (chatMode: ChatMode): boolean => {
   return (
     chatMode === ChatMode.Image &&
-    getImageModel().modelId.includes('nova-canvas')
+    (getImageModel().modelId.includes('nova-canvas') ||
+      getImageModel().modelId.includes('stability.sd3'))
   );
 };
 

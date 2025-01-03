@@ -257,33 +257,22 @@ def get_image(client, model_id, prompt, ref_image, width, height):
                 }
             else:
                 native_request = get_native_request_with_ref_image(client, prompt, ref_image, width, height)
-
-        elif model_id.startswith("stability.stable-diffusion-xl-v1"):
-            native_request = {
-                "text_prompts": [{"text": prompt}],
-                "style_preset": "photographic",
-                "seed": seed,
-                "cfg_scale": 10,
-                "steps": 50,
-                "height": height,
-                "width": width,
-            }
-        elif (model_id.startswith("stability.sd3-large-v1:0") or
-              model_id.startswith("stability.stable-image-ultra-v1:0") or
-              model_id.startswith("stability.stable-image-core-v1:0")):
+        elif model_id.startswith("stability."):
             native_request = {
                 "prompt": prompt,
-                "aspect_ratio": "1:1",
-                "output_format": "png",
+                "output_format": "jpeg",
                 "mode": "text-to-image",
             }
+            if ref_image:
+                native_request['mode'] = 'image-to-image'
+                native_request['image'] = ref_image[0]['source']['bytes']
+                native_request['strength'] = 0.5
+            else:
+                native_request['aspect_ratio'] = "1:1"
         request = json.dumps(native_request)
         response = client.invoke_model(modelId=model_id, body=request)
         model_response = json.loads(response["body"].read())
-        if model_id.startswith("stability.stable-diffusion-xl-v1"):
-            base64_image_data = model_response["artifacts"][0]["base64"]
-        else:
-            base64_image_data = model_response["images"][0]
+        base64_image_data = model_response["images"][0]
         return {"image": base64_image_data}
     except Exception as error:
         error_msg = str(error)

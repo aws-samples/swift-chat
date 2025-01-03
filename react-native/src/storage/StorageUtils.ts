@@ -198,8 +198,8 @@ export function getDefaultTextModels() {
 export function getDefaultImageModels() {
   return [
     {
-      modelName: 'Stable Image Core 1.0',
-      modelId: 'stability.stable-image-core-v1:0',
+      modelName: 'Stable Diffusion 3.5 Large',
+      modelId: 'stability.sd3-5-large-v1:0',
     },
   ] as Model[];
 }
