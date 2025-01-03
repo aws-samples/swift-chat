@@ -21,14 +21,6 @@ macOS platforms.
 - Fast launch and responsive performance
 - Multiple AI model support and switching
 
-Comprehensive Multimodal Analysis Features Powered by Amazon Nova Pro
-
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/image_summary.avif" width=32%>
-<img src="assets/avif/doc_summary.avif" width=32%>
-<img src="assets/avif/video_summary.avif" width=32%>
-</div>
-
 **New Features For Amazon Nova 🎉🎉🎉**
 
 - Stream conversations with Amazon Nova Micro, Lite and Pro
@@ -39,21 +31,33 @@ Comprehensive Multimodal Analysis Features Powered by Amazon Nova Pro
   create images in similar styles.
 - Support LaTeX formula rendering (inline and display modes) for Amazon Nova.
 
-Creative Image Generation & Editing Tools by Amazon Nova Canvas
+
+### Feature Showcase
+
+**Comprehensive Multimodal Analysis**: Text, Image, Document and Video
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/text_streaming.avif" width=24%>
+<img src="assets/avif/image_summary.avif" width=24%>
+<img src="assets/avif/doc_summary.avif" width=24%>
+<img src="assets/avif/video_summary.avif" width=24%>
+</div>
+
+**Creative Image Suite**: Generation, Style Replication, Background Removal & Replacement
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/avif/gen_image.avif" width=24%>
+<img src="assets/avif/similar_style.avif" width=24%>
 <img src="assets/avif/remove_background.avif" width=24%>
 <img src="assets/avif/replace_background.avif" width=24%>
-<img src="assets/avif/similar_style.avif" width=24%>
 </div>
 
-We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation. The image 
-below demonstrates SwiftChat rich markdown content support (Paragraph, Code Blocks, Tables, LaTeX and more)
+**Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX and More
 
 ![](assets/markdown.png)
 
-All of these features are seamlessly displayed across all supported platforms with native UI.
+We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation.
+All of these features are also seamlessly displayed on Android and macOS with native UI
 
 ## Architecture
 
@@ -198,6 +202,7 @@ orientation.
 ![](assets/landscape.png)
 
 Similarly, for code that requires horizontal scrolling, rotate to landscape mode for better viewing.
+
 ![](assets/avif/landscape.avif)
 
 ## What Makes SwiftChat Really "Swift"?

@@ -29,12 +29,31 @@ macOS 等多个平台。
 - 支持通过自然语言让 Nova Canvas 生成图片，去除背景，替换背景，以及生成类似风格的图片
 - 支持 Amazon Nova 系列 LaTeX 公式渲染（行内混排和单独显示模式）
 
-其中我们从新设计了 UI，例如字号行间距等，使其展示更加美观简洁。下图展示了 SwiftChat 支持丰富的 Markdown 内容渲染（段落、代码块、表格、LaTeX
-公式等）。
+### 功能展示
+
+**多模态分析**：文本、图像、文档和视频
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/text_streaming.avif" width=24%>
+<img src="assets/avif/image_summary.avif" width=24%>
+<img src="assets/avif/doc_summary.avif" width=24%>
+<img src="assets/avif/video_summary.avif" width=24%>
+</div>
+
+**图像创作助手**：图像生成、风格复制、背景移除与替换
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/gen_image.avif" width=24%>
+<img src="assets/avif/similar_style.avif" width=24%>
+<img src="assets/avif/remove_background.avif" width=24%>
+<img src="assets/avif/replace_background.avif" width=24%>
+</div>
+
+**丰富的 Markdown 支持**: 段落、代码块、表格、LaTeX 等
 
 ![](assets/markdown_zh.png)
 
-你所看到的这些内容都可以在所有支持的平台上以原生 UI 的形式很好地呈现。
+我们重新设计了用户界面，优化了字体大小和行间距，呈现出更优雅、清爽的视觉效果。这些功能也都完美适配了 Android 和 macOS 的原生界面，确保了流畅的使用体验。
 
 ## 架构
 
@@ -121,7 +140,15 @@ macOS 等多个平台。
 
 ## 详细功能
 
-我们拥有简洁的历史记录，设置页面，和直观的 Usage 统计页面：
+**快捷工具**：代码复制、选择模式、页面滚动和 Token 使用统计
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/copy_code.avif" width=32%>
+<img src="assets/avif/select_mode.avif" width=32%>
+<img src="assets/avif/scroll_token.avif" width=32%>
+</div>
+
+我们还拥有简洁的历史记录，设置页面，和直观的 Usage 统计页面：
 
 ![](assets/history_settings_zh.png)
 
@@ -158,7 +185,12 @@ macOS 等多个平台。
 - [x] 应用内升级提示（Android 和 macOS）
 
 我们针对横屏做了相应优化，下图展示了通过横屏模式您可以很好地阅读表格内容。
+
 ![](assets/landscape_zh.png)
+
+同样，对于需要横向滚动的代码，可以旋转至横屏模式以获得更好的查看体验。
+
+![](assets/avif/landscape.avif)
 
 ## 是什么让 SwiftChat 如此"迅速"?
 
