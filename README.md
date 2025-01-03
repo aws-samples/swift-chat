@@ -59,6 +59,9 @@ macOS platforms.
 We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation.
 All of these features are also seamlessly displayed on Android and macOS with native UI
 
+> Note: Some animated images have been sped up for demonstration. If you experience lag, please view on Chrome, Firefox, 
+> or Edge browser on your computer.
+
 ## Architecture
 
 ![](/assets/architecture.png)
