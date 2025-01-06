@@ -111,9 +111,36 @@ function SettingsScreen(): React.JSX.Element {
     const response = await requestAllModels();
     if (response.imageModel.length > 0) {
       setImageModels(response.imageModel);
+      const imageModel = getImageModel();
+      const targetModels = response.imageModel.filter(
+        model => model.modelName === imageModel.modelName
+      );
+      if (targetModels && targetModels.length === 1) {
+        setSelectedImageModel(targetModels[0].modelId);
+        saveImageModel(targetModels[0]);
+      } else {
+        setSelectedImageModel(response.imageModel[0].modelId);
+        saveImageModel(response.imageModel[0]);
+      }
     }
     if (response.textModel.length > 0) {
       setTextModels(response.textModel);
+      const textModel = getTextModel();
+      const targetModels = response.textModel.filter(
+        model => model.modelName === textModel.modelName
+      );
+      if (targetModels && targetModels.length === 1) {
+        setSelectedTextModel(targetModels[0].modelId);
+        saveTextModel(targetModels[0]);
+      } else {
+        const defaultMissMatchModel = response.textModel.filter(
+          model => model.modelName === 'Claude 3 Sonnet'
+        );
+        if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
+          setSelectedTextModel(defaultMissMatchModel[0].modelId);
+          saveTextModel(defaultMissMatchModel[0]);
+        }
+      }
     }
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
       saveAllModels(response);
@@ -210,6 +237,7 @@ function SettingsScreen(): React.JSX.Element {
           data={textModelsData}
           value={selectedTextModel}
           onChange={(item: DropdownItem) => {
+            console.log(item);
             if (item.value !== '') {
               setSelectedTextModel(item.value);
               const selectedModel = textModels.find(
