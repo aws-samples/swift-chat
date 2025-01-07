@@ -220,7 +220,7 @@ function SettingsScreen(): React.JSX.Element {
           secureTextEntry={true}
         />
         <CustomDropdown
-          label="Select Region"
+          label="Region"
           data={regionsData}
           value={region}
           onChange={(item: DropdownItem) => {
@@ -233,7 +233,7 @@ function SettingsScreen(): React.JSX.Element {
           placeholder="Select a region"
         />
         <CustomDropdown
-          label="Select Text Model"
+          label="Text Model"
           data={textModelsData}
           value={selectedTextModel}
           onChange={(item: DropdownItem) => {
@@ -251,7 +251,7 @@ function SettingsScreen(): React.JSX.Element {
           placeholder="Select a model"
         />
         <CustomDropdown
-          label="Select Image Model"
+          label="Image Model"
           data={imageModelsData}
           value={selectedImageModel}
           onChange={(item: DropdownItem) => {
@@ -272,7 +272,7 @@ function SettingsScreen(): React.JSX.Element {
           placeholder="Select a model"
         />
         <CustomDropdown
-          label="Select Image Size"
+          label="Image Size"
           data={imageSizesData}
           value={imageSize}
           onChange={(item: DropdownItem) => {
