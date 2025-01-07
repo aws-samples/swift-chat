@@ -95,3 +95,8 @@ export type UsagePrice = {
 export interface IMessageWithToken extends IMessage {
   usage?: Usage;
 }
+
+export interface SystemPrompt {
+  name: string;
+  prompt: string;
+}

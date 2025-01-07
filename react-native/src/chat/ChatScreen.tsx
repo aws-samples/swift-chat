@@ -19,10 +19,12 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import uuid from 'uuid';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import {
+  getCurrentSystemPrompt,
   getImageModel,
   getMessagesBySessionId,
   getSessionId,
   getTextModel,
+  saveCurrentSystemPrompt,
   saveMessageList,
   saveMessages,
   updateTotalUsage,
@@ -32,6 +34,7 @@ import {
   ChatStatus,
   FileInfo,
   IMessageWithToken,
+  SystemPrompt,
   Usage,
 } from '../types/Chat.ts';
 import { useAppContext } from '../history/AppProvider.tsx';
@@ -86,6 +89,10 @@ function ChatScreen(): React.JSX.Element {
   const modeRef = useRef(mode);
 
   const [messages, setMessages] = useState<IMessage[]>([]);
+  const [systemPrompt, setSystemPrompt] = useState<SystemPrompt | null>(
+    getCurrentSystemPrompt
+  );
+  const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(true);
   const [screenDimensions, setScreenDimensions] = useState(
     Dimensions.get('window')
   );
@@ -111,10 +118,14 @@ function ChatScreen(): React.JSX.Element {
     messagesRef.current = messages;
     chatStatusRef.current = chatStatus;
     usageRef.current = usage;
+    setShowSystemPrompt(messages.length === 0);
   }, [chatStatus, messages, usage]);
 
   useEffect(() => {
     selectedFilesRef.current = selectedFiles;
+    if (selectedFiles.length > 0) {
+      setShowSystemPrompt(false);
+    }
   }, [selectedFiles]);
 
   // start new chat
@@ -136,9 +147,17 @@ function ChatScreen(): React.JSX.Element {
       // eslint-disable-next-line react/no-unstable-nested-components
       headerTitle: () => (
         <HeaderTitle
-          title={mode === ChatMode.Text ? 'Chat' : 'Image'}
+          title={
+            mode === ChatMode.Text
+              ? systemPrompt
+                ? systemPrompt.name
+                : 'Chat'
+              : 'Image'
+          }
           usage={usage}
           onDoubleTap={scrollToTop}
+          onShowSystemPrompt={() => setShowSystemPrompt(true)}
+          isShowSystemPrompt={showSystemPrompt}
         />
       ),
       // eslint-disable-next-line react/no-unstable-nested-components
@@ -161,7 +180,7 @@ function ChatScreen(): React.JSX.Element {
       ),
     };
     navigation.setOptions(headerOptions);
-  }, [usage, navigation, mode]);
+  }, [usage, navigation, mode, systemPrompt, showSystemPrompt]);
 
   // sessionId changes (start new chat or click another session)
   useEffect(() => {
@@ -493,21 +512,24 @@ function ChatScreen(): React.JSX.Element {
             }}
           />
         )}
-        renderChatFooter={() =>
-          selectedFiles.length > 0 && (
-            <CustomChatFooter
-              files={selectedFiles}
-              onFileUpdated={(files, isUpdate) => {
-                if (isUpdate) {
-                  setSelectedFiles(files);
-                } else {
-                  handleNewFileSelected(files);
-                }
-              }}
-              chatMode={modeRef.current}
-            />
-          )
-        }
+        renderChatFooter={() => (
+          <CustomChatFooter
+            files={selectedFiles}
+            onFileUpdated={(files, isUpdate) => {
+              if (isUpdate) {
+                setSelectedFiles(files);
+              } else {
+                handleNewFileSelected(files);
+              }
+            }}
+            onSystemPromptUpdated={prompt => {
+              setSystemPrompt(prompt);
+              saveCurrentSystemPrompt(prompt);
+            }}
+            chatMode={modeRef.current}
+            isShowSystemPrompt={showSystemPrompt}
+          />
+        )}
         renderMessage={props => (
           <CustomMessageComponent {...props} chatStatus={chatStatus} />
         )}

@@ -19,7 +19,6 @@ import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src';
 import {
   getAllImageSize,
   getAllModels,
-  getAllRegions,
   getApiKey,
   getApiUrl,
   getHapticEnabled,
@@ -46,6 +45,7 @@ import { isMac } from '../App.tsx';
 import CustomDropdown from './DropdownComponent.tsx';
 import Toast from 'react-native-toast-message';
 import { getTotalCost } from './ModelPrice.ts';
+import { getAllRegions } from '../storage/Constants.ts';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -237,7 +237,6 @@ function SettingsScreen(): React.JSX.Element {
           data={textModelsData}
           value={selectedTextModel}
           onChange={(item: DropdownItem) => {
-            console.log(item);
             if (item.value !== '') {
               setSelectedTextModel(item.value);
               const selectedModel = textModels.find(

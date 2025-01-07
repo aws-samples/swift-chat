@@ -7,18 +7,26 @@ interface HeaderTitleProps {
   title: string;
   usage?: Usage;
   onDoubleTap: () => void;
+  onShowSystemPrompt: () => void;
+  isShowSystemPrompt: boolean;
 }
 
 const HeaderTitle: React.FC<HeaderTitleProps> = ({
   title,
   usage,
   onDoubleTap,
+  onShowSystemPrompt,
+  isShowSystemPrompt,
 }) => {
   const [showUsage, setShowUsage] = useState(false);
   const doubleTapRef = useRef();
 
   const handleSingleTap = () => {
-    setShowUsage(!showUsage);
+    if (!isShowSystemPrompt && !showUsage) {
+      onShowSystemPrompt();
+    } else {
+      setShowUsage(!showUsage);
+    }
   };
 
   return (
@@ -40,7 +48,7 @@ const HeaderTitle: React.FC<HeaderTitleProps> = ({
         waitFor={doubleTapRef}>
         <View style={styles.container}>
           <Text style={styles.headerTitleStyle}>{title}</Text>
-          {showUsage && title === 'Chat' && (
+          {showUsage && title !== 'Image' && (
             <Text style={styles.usageText}>{`Input: ${
               usage?.inputTokens ?? 0
             }   Output: ${usage?.outputTokens ?? 0}`}</Text>

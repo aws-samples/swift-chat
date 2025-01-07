@@ -6,9 +6,16 @@ import {
   ChatMode,
   IMessageWithToken,
   Model,
+  SystemPrompt,
   Usage,
 } from '../types/Chat.ts';
 import uuid from 'uuid';
+import {
+  DefaultRegion,
+  getDefaultImageModels,
+  getDefaultSystemPrompts,
+  getDefaultTextModels,
+} from './Constants.ts';
 
 export const storage = new MMKV();
 
@@ -40,12 +47,15 @@ const imageModelKey = keyPrefix + 'imageModelKey';
 const allModelKey = keyPrefix + 'allModelKey';
 const imageSizeKey = keyPrefix + 'imageSizeKey';
 const modelUsageKey = keyPrefix + 'modelUsageKey';
+const systemPromptsKey = keyPrefix + 'systemPromptsKey';
+const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
 let currentRegion: string | undefined;
 let currentImageModel: Model | undefined;
 let currentTextModel: Model | undefined;
+let currentSystemPrompts: SystemPrompt[] | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -162,7 +172,7 @@ export function getRegion() {
   if (currentRegion) {
     return currentRegion;
   } else {
-    currentRegion = storage.getString(regionKey) ?? 'us-west-2';
+    currentRegion = storage.getString(regionKey) ?? DefaultRegion;
     return currentRegion;
   }
 }
@@ -184,24 +194,6 @@ export function getTextModel(): Model {
     }
     return currentTextModel;
   }
-}
-
-export function getDefaultTextModels() {
-  return [
-    {
-      modelName: 'Nova Pro',
-      modelId: 'us.amazon.nova-pro-v1:0',
-    },
-  ] as Model[];
-}
-
-export function getDefaultImageModels() {
-  return [
-    {
-      modelName: 'Stable Diffusion 3.5 Large',
-      modelId: 'stability.sd3-5-large-v1:0',
-    },
-  ] as Model[];
 }
 
 export function saveImageModel(model: Model) {
@@ -236,22 +228,6 @@ export function getAllModels() {
     imageModel: getDefaultImageModels(),
     textModel: getDefaultTextModels(),
   };
-}
-
-export function getAllRegions() {
-  return [
-    'us-west-2',
-    'us-east-1',
-    'ap-south-1',
-    'ap-southeast-1',
-    'ap-southeast-2',
-    'ap-northeast-1',
-    'ca-central-1',
-    'eu-central-1',
-    'eu-west-2',
-    'eu-west-3',
-    'sa-east-1',
-  ];
 }
 
 export function getAllImageSize(imageModelId: string = '') {
@@ -309,4 +285,34 @@ export function updateTotalUsage(usage: Usage) {
     currentUsage.push(usage);
   }
   storage.set(modelUsageKey, JSON.stringify(currentUsage));
+}
+
+export function saveCurrentSystemPrompt(prompts: SystemPrompt | null) {
+  storage.set(currentSystemPromptKey, prompts ? JSON.stringify(prompts) : '');
+}
+
+export function getCurrentSystemPrompt(): SystemPrompt | null {
+  const promptString = storage.getString(currentSystemPromptKey) ?? '';
+  if (promptString.length > 0) {
+    return JSON.parse(promptString) as SystemPrompt;
+  }
+  return null;
+}
+
+export function saveSystemPrompts(prompts: SystemPrompt[]) {
+  currentSystemPrompts = prompts;
+  storage.set(systemPromptsKey, JSON.stringify(prompts));
+}
+
+export function getSystemPrompts(): SystemPrompt[] {
+  if (currentSystemPrompts) {
+    return currentSystemPrompts;
+  }
+  const promptsString = storage.getString(systemPromptsKey) ?? '';
+  if (promptsString.length > 0) {
+    currentSystemPrompts = JSON.parse(promptsString) as SystemPrompt[];
+  } else {
+    currentSystemPrompts = getDefaultSystemPrompts();
+  }
+  return currentSystemPrompts;
 }
