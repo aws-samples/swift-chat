@@ -8,4 +8,5 @@ export type RouteParamList = {
   };
   Settings: NonNullable<unknown>;
   TokenUsage: NonNullable<unknown>;
+  Prompt: NonNullable<unknown>;
 };

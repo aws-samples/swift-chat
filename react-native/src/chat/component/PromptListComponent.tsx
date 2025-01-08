@@ -45,19 +45,13 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
     if (isEditMode) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
-      navigation.navigate('EditPrompt', {
+      navigation.navigate('Prompt', {
         prompt,
         onUpdate: (updatedPrompt: SystemPrompt) => {
           const newPrompts = prompts.map(p =>
             p.name === updatedPrompt.name ? updatedPrompt : p
           );
           setPrompts(newPrompts);
-          storage.set(STORAGE_KEY, JSON.stringify(newPrompts));
-        },
-        onDelete: (promptName: string) => {
-          const newPrompts = prompts.filter(p => p.name !== promptName);
-          setPrompts(newPrompts);
-          storage.set(STORAGE_KEY, JSON.stringify(newPrompts));
         },
       });
     } else {
@@ -70,7 +64,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   const handleAddPrompt = () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    navigation.navigate('AddPrompt', {
+    navigation.navigate('Prompt', {
       onAdd: (newPrompt: SystemPrompt) => {
         const newPrompts = [...prompts, newPrompt];
         setPrompts(newPrompts);
@@ -172,6 +166,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flex: 1,
+    marginLeft: 4,
   },
   promptButton: {
     height: 36,
