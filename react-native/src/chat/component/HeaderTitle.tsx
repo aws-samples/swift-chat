@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 8,
     paddingVertical: 8,
   },
   headerTitleStyle: {

@@ -1,24 +1,41 @@
 import React, { useState } from 'react';
 import {
+  Image,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
-  View,
+  Text,
   TextInput,
   TouchableOpacity,
-  Text,
-  Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../types/RouteTypes.ts';
 // @ts-ignore
 import { HeaderOptions } from '@react-navigation/elements/src/types.tsx';
+import { SystemPrompt } from '../types/Chat.ts';
+import { showInfo } from '../chat/util/ToastUtils.ts';
+import { useAppContext } from '../history/AppProvider.tsx';
+import { getPromptId } from '../storage/StorageUtils.ts';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
+type PromptScreenRouteProp = RouteProp<RouteParamList, 'Prompt'>;
+const MAX_NAME_LENGTH = 20;
 
 function PromptScreen(): React.JSX.Element {
-  const [name, setName] = useState('');
-  const [content, setContent] = useState('');
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<PromptScreenRouteProp>();
+  const isAddMode = route.params.prompt == undefined;
+  const [currentPrompt, setCurrentPrompt] = useState<SystemPrompt>(
+    isAddMode
+      ? {
+          id: getPromptId() + 1,
+          name: '',
+          prompt: '',
+        }
+      : route.params.prompt
+  );
+  const { sendEvent } = useAppContext();
 
   React.useLayoutEffect(() => {
     const headerOption: HeaderOptions = {
@@ -37,38 +54,67 @@ function PromptScreen(): React.JSX.Element {
   }, [navigation]);
 
   const handleSave = () => {
-    const newPrompt = {
-      id: Date.now().toString(),
-      name,
-      content,
-    };
-    // route.params.onAdd(newPrompt);
+    if (currentPrompt.name.trim().length === 0) {
+      showInfo('Please enter prompt name');
+      return;
+    }
+    if (calculateTextLength(currentPrompt.name) > MAX_NAME_LENGTH) {
+      showInfo(`Please keep your text under ${MAX_NAME_LENGTH} characters`);
+      return;
+    }
+    if (currentPrompt.prompt.trim().length === 0) {
+      showInfo('Please enter system prompt');
+      return;
+    }
+
+    sendEvent(isAddMode ? 'onPromptAdd' : 'onPromptUpdate', {
+      prompt: currentPrompt,
+    });
     navigation.goBack();
   };
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Prompt name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={[styles.input, styles.contentInput]}
-        placeholder="Systrem prompt"
-        value={content}
-        onChangeText={setContent}
-        multiline
-      />
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Create</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container}>
+        <TextInput
+          style={styles.input}
+          placeholder="Prompt name"
+          value={currentPrompt.name}
+          onChangeText={text => {
+            setCurrentPrompt({ ...currentPrompt, name: text });
+          }}
+        />
+        <TextInput
+          style={[styles.input, styles.contentInput]}
+          placeholder="Systrem prompt"
+          value={currentPrompt.prompt}
+          multiline
+          onChangeText={text => {
+            setCurrentPrompt({ ...currentPrompt, prompt: text });
+          }}
+        />
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveButtonText}>
+            {isAddMode ? 'Create' : 'Update'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
+function calculateTextLength(str: string) {
+  const chineseRegex = /[\u4e00-\u9fa5]/g;
+  const chineseCount = (str.match(chineseRegex) || []).length;
+  const nonChineseCount = str.length - chineseCount;
+  return chineseCount * 2 + nonChineseCount;
+}
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
   headerContainer: {
     marginLeft: -10,
     paddingRight: 16,
@@ -88,8 +134,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   contentInput: {
-    height: 150,
+    minHeight: 180,
+    maxHeight: 560,
     textAlignVertical: 'top',
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'black',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 10,
   },
   saveButton: {
     backgroundColor: '#007AFF',
@@ -100,6 +158,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '500',
   },
 });
 

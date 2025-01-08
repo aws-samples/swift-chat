@@ -56,8 +56,9 @@ import {
   isAllFileReady,
 } from './util/FileUtils.ts';
 import HeaderTitle from './component/HeaderTitle.tsx';
+// @ts-ignore
 import { HeaderOptions } from '@react-navigation/elements/src/types.tsx';
-import Toast from 'react-native-toast-message';
+import { showInfo } from "./util/ToastUtils.ts";
 
 const BOT_ID = 2;
 
@@ -371,6 +372,7 @@ function ChatScreen(): React.JSX.Element {
       invokeBedrockWithCallBack(
         bedrockMessages.current,
         modeRef.current,
+        systemPrompt,
         () => isCanceled.current,
         controllerRef.current,
         (
@@ -437,10 +439,7 @@ function ChatScreen(): React.JSX.Element {
   const onSend = useCallback((message: IMessage[] = []) => {
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
-      Toast.show({
-        type: 'info',
-        text1: 'please wait for all videos to be ready',
-      });
+      showInfo('please wait for all videos to be ready')
       return;
     }
     if (message[0]?.text || files.length > 0) {

@@ -18,6 +18,7 @@ import {
 } from 'react-native-compressor';
 import { isMac } from '../../App.tsx';
 import { getTextModel } from '../../storage/StorageUtils.ts';
+import { showInfo } from "../util/ToastUtils.ts";
 
 interface CustomRenderActionsProps {
   onFileSelected: (files: FileInfo[]) => void;
@@ -217,13 +218,6 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
       optionTintColor="black"
     />
   );
-};
-
-const showInfo = (msg: string) => {
-  Toast.show({
-    type: 'info',
-    text1: msg,
-  });
 };
 
 const MAX_FILE_SIZE = 4.5 * 1024 * 1024;

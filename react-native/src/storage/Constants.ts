@@ -27,9 +27,24 @@ const DefaultImageModel = {
 };
 
 const DefaultSystemPrompts = [
-  { name: 'Translate', prompt: 'You are a professional translator.' },
-  { name: 'Write', prompt: 'You are a professional writer.' },
-  { name: 'Format', prompt: 'You are a helpful JSON formater.' },
+  {
+    id: -1,
+    name: 'Translate',
+    prompt:
+      'You are a professional translator. \n' +
+      'Language 1: Chinese\n' +
+      'Language 2: English\n' +
+      '\n' +
+      'Your role is to:\n' +
+      '1. Provide accurate, direct, and fluent translations in the target language\n' +
+      '2. Ensure translations are culturally appropriate and maintain linguistic elegance\n' +
+      '3. If the input is in Language 1, please translate it to Language 2 and output\n' +
+      '4. If the input is in Language 2, please translate it to Language 1 and output\n' +
+      '\n' +
+      'Only output translation result, Do not provide any other output.',
+  },
+  { id: -2, name: 'Write', prompt: 'You are a professional writer.' },
+  { id: -3, name: 'Format', prompt: 'You are a helpful JSON formater.' },
 ];
 
 export function getAllRegions() {

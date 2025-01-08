@@ -1,8 +1,8 @@
 import RNFS from 'react-native-fs';
 import { Platform } from 'react-native';
 import { FileInfo, FileType } from '../../types/Chat.ts';
-import Toast from 'react-native-toast-message';
 import { getTextModel } from '../../storage/StorageUtils.ts';
+import { showInfo } from "./ToastUtils.ts";
 
 export const saveImageToLocal = async (
   base64ImageData: string
@@ -169,13 +169,6 @@ export const isAllFileReady = (files: FileInfo[]) => {
   } else {
     return true;
   }
-};
-
-const showInfo = (msg: string) => {
-  Toast.show({
-    type: 'info',
-    text1: msg,
-  });
 };
 
 export const getFileTypeSummary = (files: FileInfo[]) => {

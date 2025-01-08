@@ -17,7 +17,7 @@ import { isMac } from '../../App.tsx';
 import { getFullFileUrl, saveFile } from '../util/FileUtils.ts';
 import { getVideoMetaData, Video } from 'react-native-compressor';
 import * as Progress from 'react-native-progress';
-import Toast from 'react-native-toast-message';
+import { showInfo } from '../util/ToastUtils.ts';
 
 interface CustomFileProps {
   files: FileInfo[];
@@ -119,18 +119,14 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
             // remove the video
             const newFiles = filesRef.current.filter(f => f.url !== file.url);
             onFileUpdated!(newFiles, true);
-            Toast.show({
-              type: 'info',
-              text1: `Video too large: ${currentSize.toFixed(
+            showInfo(
+              `Video too large: ${currentSize.toFixed(
                 1
-              )}MB (max ${MAX_VIDEO_SIZE}MB)`,
-            });
+              )}MB (max ${MAX_VIDEO_SIZE}MB)`
+            );
           }
         } catch (error) {
-          Toast.show({
-            type: 'info',
-            text1: 'Video process failed',
-          });
+          showInfo('Video process failed');
           compressingFiles.current = '';
           isCompressing.current = false;
           // remove the failed video

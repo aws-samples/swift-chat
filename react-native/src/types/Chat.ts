@@ -14,7 +14,8 @@ export enum ChatStatus {
 }
 
 export interface EventData {
-  id: number;
+  id?: number;
+  prompt?: SystemPrompt;
 }
 
 export type Model = {
@@ -97,6 +98,7 @@ export interface IMessageWithToken extends IMessage {
 }
 
 export interface SystemPrompt {
+  id: number;
   name: string;
   prompt: string;
 }

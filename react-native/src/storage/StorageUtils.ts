@@ -49,6 +49,7 @@ const imageSizeKey = keyPrefix + 'imageSizeKey';
 const modelUsageKey = keyPrefix + 'modelUsageKey';
 const systemPromptsKey = keyPrefix + 'systemPromptsKey';
 const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
+const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -315,4 +316,12 @@ export function getSystemPrompts(): SystemPrompt[] {
     currentSystemPrompts = getDefaultSystemPrompts();
   }
   return currentSystemPrompts;
+}
+
+export function getPromptId() {
+  return storage.getNumber(currentPromptIdKey) ?? 0;
+}
+
+export function savePromptId(promptId: number) {
+  storage.set(currentPromptIdKey, promptId);
 }

@@ -2,6 +2,7 @@ import {
   AllModel,
   ChatMode,
   ImageRes,
+  SystemPrompt,
   UpgradeInfo,
   Usage,
 } from '../types/Chat.ts';
@@ -32,6 +33,7 @@ const USAGE_START = '\n{"inputTokens":';
 export const invokeBedrockWithCallBack = async (
   messages: BedrockMessage[],
   chatMode: ChatMode,
+  prompt: SystemPrompt | null,
   shouldStop: () => boolean,
   controller: AbortController,
   callback: CallbackFunction
@@ -45,7 +47,11 @@ export const invokeBedrockWithCallBack = async (
       messages: messages,
       modelId: getTextModel().modelId,
       region: getRegion(),
+      system: prompt ? [{ text: prompt?.prompt }] : undefined,
     };
+    if (prompt) {
+      bodyObject['messages'] = messages.slice(-1);
+    }
 
     const options = {
       method: 'POST',

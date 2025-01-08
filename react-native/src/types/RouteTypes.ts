@@ -1,4 +1,4 @@
-import { ChatMode } from './Chat.ts';
+import { ChatMode, SystemPrompt } from './Chat.ts';
 
 export type RouteParamList = {
   Bedrock: {
@@ -8,5 +8,7 @@ export type RouteParamList = {
   };
   Settings: NonNullable<unknown>;
   TokenUsage: NonNullable<unknown>;
-  Prompt: NonNullable<unknown>;
+  Prompt: {
+    prompt?: SystemPrompt;
+  };
 };

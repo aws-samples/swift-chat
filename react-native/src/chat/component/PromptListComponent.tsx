@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  FlatList,
   Image,
   Pressable,
   StyleSheet,
@@ -7,70 +8,81 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { MMKV } from 'react-native-mmkv';
 import { useNavigation } from '@react-navigation/native';
 import { SystemPrompt } from '../../types/Chat.ts';
 import {
   getCurrentSystemPrompt,
   getSystemPrompts,
+  savePromptId,
   saveSystemPrompts,
 } from '../../storage/StorageUtils.ts';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
 } from '@bwjohns4/react-native-draggable-flatlist';
-
-const storage = new MMKV();
-const STORAGE_KEY = 'system_prompts';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { RouteParamList } from '../../types/RouteTypes.ts';
+import { useAppContext } from '../../history/AppProvider.tsx';
 
 interface PromptListProps {
   onSelectPrompt: (prompt: SystemPrompt | null) => void;
 }
 
+type NavigationProp = DrawerNavigationProp<RouteParamList>;
 export const PromptListComponent: React.FC<PromptListProps> = ({
   onSelectPrompt,
 }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<SystemPrompt | null>(
     getCurrentSystemPrompt
   );
   const [prompts, setPrompts] = useState<SystemPrompt[]>(getSystemPrompts);
-
+  const rawListRef = useRef<FlatList<SystemPrompt>>(null);
+  const { event, sendEvent } = useAppContext();
   const handleLongPress = () => {
     setIsEditMode(true);
+    scrollToEnd();
   };
+
+  const scrollToEnd = () => {
+    setTimeout(() => {
+      rawListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  useEffect(() => {
+    const newPrompt = event?.params?.prompt;
+    if (newPrompt) {
+      if (event?.event === 'onPromptUpdate') {
+        const newPrompts = prompts.map(prompt =>
+          prompt.id === newPrompt.id ? newPrompt : prompt
+        );
+        setPrompts(newPrompts);
+        saveSystemPrompts(newPrompts);
+      } else if (event?.event === 'onPromptAdd') {
+        const newPrompts = [...prompts, newPrompt];
+        setPrompts(newPrompts);
+        saveSystemPrompts(newPrompts);
+        savePromptId(newPrompt.id);
+        scrollToEnd();
+      }
+      sendEvent('');
+    }
+  }, [event]);
 
   const handlePromptSelect = (prompt: SystemPrompt) => {
     if (isEditMode) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      navigation.navigate('Prompt', {
-        prompt,
-        onUpdate: (updatedPrompt: SystemPrompt) => {
-          const newPrompts = prompts.map(p =>
-            p.name === updatedPrompt.name ? updatedPrompt : p
-          );
-          setPrompts(newPrompts);
-        },
-      });
+      navigation.navigate('Prompt', { prompt });
     } else {
-      const newPrompt = selectedPrompt?.name === prompt.name ? null : prompt;
+      const newPrompt = selectedPrompt?.id === prompt.id ? null : prompt;
       setSelectedPrompt(newPrompt);
       onSelectPrompt(newPrompt);
     }
   };
 
   const handleAddPrompt = () => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    navigation.navigate('Prompt', {
-      onAdd: (newPrompt: SystemPrompt) => {
-        const newPrompts = [...prompts, newPrompt];
-        setPrompts(newPrompts);
-        storage.set(STORAGE_KEY, JSON.stringify(newPrompts));
-      },
-    });
+    navigation.navigate('Prompt', {});
   };
 
   const renderItem = ({
@@ -86,13 +98,17 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
             onPress={() => handlePromptSelect(item)}
             style={[
               styles.promptButton,
-              selectedPrompt?.name === item.name && styles.selectedPromptButton,
+              selectedPrompt?.id === item.id && styles.selectedPromptButton,
               isActive && styles.draggingPrompt,
+              !isEditMode && prompts[0] === item && styles.firstButton,
+              !isEditMode &&
+                prompts[prompts.length - 1] === item &&
+                styles.lastButton,
             ]}>
             <Text
               style={[
                 styles.promptText,
-                selectedPrompt?.name === item.name && styles.selectedPromptText,
+                selectedPrompt?.id === item.id && styles.selectedPromptText,
               ]}>
               {item.name}
             </Text>
@@ -101,8 +117,10 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
             <TouchableOpacity
               style={styles.deleteTouchable}
               onPress={() => {
-                const newPrompts = prompts.filter(p => p.name !== item.name);
-                if (selectedPrompt?.name === item.name) {
+                const newPrompts = prompts.filter(
+                  prompt => prompt.id !== item.id
+                );
+                if (selectedPrompt?.id === item.id) {
                   onSelectPrompt(null);
                 }
                 setPrompts(newPrompts);
@@ -120,13 +138,18 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
 
   return (
     <View style={styles.container}>
-      <DraggableFlatList
+      <DraggableFlatList<SystemPrompt>
+        ref={ref => {
+          if (ref) {
+            (rawListRef as any).current = ref;
+          }
+        }}
         data={prompts}
         horizontal
         renderItem={renderItem}
         keyboardShouldPersistTaps="always"
         alwaysBounceHorizontal={true}
-        keyExtractor={item => item.name}
+        keyExtractor={item => item.id.toString()}
         onDragEnd={({ data }) => {
           setPrompts(data);
           saveSystemPrompts(data);
@@ -166,7 +189,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flex: 1,
-    marginLeft: 4,
   },
   promptButton: {
     height: 36,
@@ -177,6 +199,12 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     borderWidth: 1.2,
     borderColor: '#E8E8E8',
+  },
+  firstButton: {
+    marginLeft: 10,
+  },
+  lastButton: {
+    marginRight: 10,
   },
   selectedPromptButton: {
     backgroundColor: '#E8E8E8',

@@ -39,6 +39,7 @@ class ConverseRequest(BaseModel):
     messages: List[dict] = []
     modelId: str
     region: str
+    system: List[dict] | None = None
 
 
 class ModelsRequest(BaseModel):
@@ -110,6 +111,8 @@ async def converse(request: ConverseRequest,
             "messages": request.messages,
             "modelId": model_id
         }
+        if request.system is not None:
+            command["system"] = request.system
 
         def event_generator():
             try:

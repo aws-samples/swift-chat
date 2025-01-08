@@ -43,9 +43,9 @@ import { DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
 import CustomDropdown from './DropdownComponent.tsx';
-import Toast from 'react-native-toast-message';
 import { getTotalCost } from './ModelPrice.ts';
 import { getAllRegions } from '../storage/Constants.ts';
+import { showInfo } from '../chat/util/ToastUtils.ts';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -170,10 +170,7 @@ function SettingsScreen(): React.JSX.Element {
                 tapIndex: -1,
               });
             } else {
-              Toast.show({
-                type: 'info',
-                text1: 'Please input your API URL and API Key',
-              });
+              showInfo('Please input your API URL and API Key');
             }
           }}
           imageSource={require('../assets/done.png')}
