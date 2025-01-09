@@ -56,9 +56,8 @@ import {
   isAllFileReady,
 } from './util/FileUtils.ts';
 import HeaderTitle from './component/HeaderTitle.tsx';
-// @ts-ignore
-import { HeaderOptions } from '@react-navigation/elements/src/types.tsx';
-import { showInfo } from "./util/ToastUtils.ts";
+import { showInfo } from './util/ToastUtils.ts';
+import { HeaderOptions } from '@react-navigation/elements';
 
 const BOT_ID = 2;
 
@@ -113,6 +112,7 @@ function ChatScreen(): React.JSX.Element {
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
   const selectedFilesRef = useRef(selectedFiles);
   const usageRef = useRef(usage);
+  const systemPromptRef = useRef(systemPrompt);
 
   // update refs value with state
   useEffect(() => {
@@ -144,6 +144,7 @@ function ChatScreen(): React.JSX.Element {
   // header text and right button click
   React.useLayoutEffect(() => {
     currentMode = mode;
+    systemPromptRef.current = systemPrompt;
     const headerOptions: HeaderOptions = {
       // eslint-disable-next-line react/no-unstable-nested-components
       headerTitle: () => (
@@ -372,7 +373,7 @@ function ChatScreen(): React.JSX.Element {
       invokeBedrockWithCallBack(
         bedrockMessages.current,
         modeRef.current,
-        systemPrompt,
+        systemPromptRef.current,
         () => isCanceled.current,
         controllerRef.current,
         (
@@ -439,7 +440,7 @@ function ChatScreen(): React.JSX.Element {
   const onSend = useCallback((message: IMessage[] = []) => {
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
-      showInfo('please wait for all videos to be ready')
+      showInfo('please wait for all videos to be ready');
       return;
     }
     if (message[0]?.text || files.length > 0) {

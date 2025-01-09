@@ -1,4 +1,4 @@
-import Toast from "react-native-toast-message";
+import Toast from 'react-native-toast-message';
 
 export const showInfo = (msg: string) => {
   Toast.show({

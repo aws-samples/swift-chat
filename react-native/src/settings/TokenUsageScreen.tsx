@@ -1,21 +1,17 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Animated,
-  Image,
   Linking,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { getModelUsage } from '../storage/StorageUtils';
 import { Usage } from '../types/Chat.ts';
 import { useNavigation } from '@react-navigation/native';
-// @ts-ignore
-import { HeaderOptions } from '@react-navigation/elements/src/types.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import {
@@ -28,27 +24,24 @@ import {
   getTotalOutputTokens,
   getUsagePrice,
 } from './ModelPrice.ts';
+import { HeaderLeftView } from '../prompt/HeaderLeftView.tsx';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
 function TokenUsageScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp>();
   const [modelUsage, setModelUsage] = React.useState<Usage[]>([]);
+
+  const headerLeft = useCallback(
+    () => HeaderLeftView(navigation),
+    [navigation]
+  );
   React.useLayoutEffect(() => {
-    const headerOption: HeaderOptions = {
-      headerLeft: () => (
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.headerContainer}>
-          <Image
-            source={require('../assets/back.png')}
-            style={styles.headerImage}
-          />
-        </TouchableOpacity>
-      ),
+    const headerOption = {
+      headerLeft,
     };
     navigation.setOptions(headerOption);
-  }, [navigation]);
+  }, [navigation, headerLeft]);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -196,12 +189,6 @@ function TokenUsageScreen(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    marginLeft: -10,
-    paddingRight: 16,
-    padding: 10,
-  },
-  headerImage: { width: 20, height: 20 },
   safeArea: {
     flex: 1,
     backgroundColor: 'white',

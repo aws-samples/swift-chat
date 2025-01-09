@@ -40,6 +40,8 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   const [prompts, setPrompts] = useState<SystemPrompt[]>(getSystemPrompts);
   const rawListRef = useRef<FlatList<SystemPrompt>>(null);
   const { event, sendEvent } = useAppContext();
+  const sendEventRef = useRef(sendEvent);
+
   const handleLongPress = () => {
     setIsEditMode(true);
     scrollToEnd();
@@ -67,9 +69,9 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
         savePromptId(newPrompt.id);
         scrollToEnd();
       }
-      sendEvent('');
+      sendEventRef.current('');
     }
-  }, [event]);
+  }, [event, prompts]);
 
   const handlePromptSelect = (prompt: SystemPrompt) => {
     if (isEditMode) {
@@ -141,7 +143,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
       <DraggableFlatList<SystemPrompt>
         ref={ref => {
           if (ref) {
-            (rawListRef as any).current = ref;
+            (rawListRef.current as FlatList<SystemPrompt>) = ref;
           }
         }}
         data={prompts}

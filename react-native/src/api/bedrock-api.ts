@@ -50,7 +50,7 @@ export const invokeBedrockWithCallBack = async (
       system: prompt ? [{ text: prompt?.prompt }] : undefined,
     };
     if (prompt) {
-      bodyObject['messages'] = messages.slice(-1);
+      bodyObject.messages = messages.slice(-1);
     }
 
     const options = {
@@ -128,14 +128,15 @@ export const invokeBedrockWithCallBack = async (
         }
       });
   } else {
-    const prompt = (messages[messages.length - 1].content[0] as TextContent)
-      .text;
+    const imagePrompt = (
+      messages[messages.length - 1].content[0] as TextContent
+    ).text;
     let image: ImageInfo | undefined;
     if (messages[messages.length - 1].content[1]) {
       image = (messages[messages.length - 1].content[1] as ImageContent).image;
     }
 
-    const imageRes = await genImage(prompt, controller, image);
+    const imageRes = await genImage(imagePrompt, controller, image);
     if (imageRes.image.length > 0) {
       const localFilePath = await saveImageToLocal(imageRes.image);
       const imageSize = getImageSize().split('x')[0].trim();
@@ -232,7 +233,7 @@ export const requestUpgradeInfo = async (
 };
 
 export const genImage = async (
-  prompt: string,
+  imagePrompt: string,
   controller: AbortController,
   image?: ImageInfo
 ): Promise<ImageRes> => {
@@ -247,7 +248,7 @@ export const genImage = async (
   const width = imageSize[0].trim();
   const height = imageSize[1].trim();
   const bodyObject = {
-    prompt: prompt,
+    prompt: imagePrompt,
     refImages: image ? [image] : undefined,
     modelId: getImageModel().modelId,
     region: getRegion(),

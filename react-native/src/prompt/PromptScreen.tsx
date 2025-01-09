@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -11,12 +10,11 @@ import {
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../types/RouteTypes.ts';
-// @ts-ignore
-import { HeaderOptions } from '@react-navigation/elements/src/types.tsx';
 import { SystemPrompt } from '../types/Chat.ts';
 import { showInfo } from '../chat/util/ToastUtils.ts';
 import { useAppContext } from '../history/AppProvider.tsx';
 import { getPromptId } from '../storage/StorageUtils.ts';
+import { HeaderLeftView } from './HeaderLeftView.tsx';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 type PromptScreenRouteProp = RouteProp<RouteParamList, 'Prompt'>;
@@ -25,7 +23,7 @@ const MAX_NAME_LENGTH = 20;
 function PromptScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<PromptScreenRouteProp>();
-  const isAddMode = route.params.prompt == undefined;
+  const isAddMode = route.params.prompt === undefined;
   const [currentPrompt, setCurrentPrompt] = useState<SystemPrompt>(
     isAddMode
       ? {
@@ -37,21 +35,16 @@ function PromptScreen(): React.JSX.Element {
   );
   const { sendEvent } = useAppContext();
 
+  const headerLeft = useCallback(
+    () => HeaderLeftView(navigation),
+    [navigation]
+  );
   React.useLayoutEffect(() => {
-    const headerOption: HeaderOptions = {
-      headerLeft: () => (
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.headerContainer}>
-          <Image
-            source={require('../assets/back.png')}
-            style={styles.headerImage}
-          />
-        </TouchableOpacity>
-      ),
+    const headerOption = {
+      headerLeft,
     };
     navigation.setOptions(headerOption);
-  }, [navigation]);
+  }, [navigation, headerLeft]);
 
   const handleSave = () => {
     if (currentPrompt.name.trim().length === 0) {
@@ -115,12 +108,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  headerContainer: {
-    marginLeft: -10,
-    paddingRight: 16,
-    padding: 10,
-  },
-  headerImage: { width: 20, height: 20 },
   container: {
     flex: 1,
     padding: 16,

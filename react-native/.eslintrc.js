@@ -6,4 +6,5 @@ module.exports = {
     'prettier',
     '@react-native',
   ],
+  ignorePatterns: ['android/**', 'ios/**'],
 };
