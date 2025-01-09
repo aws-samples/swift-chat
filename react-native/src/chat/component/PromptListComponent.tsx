@@ -23,6 +23,7 @@ import DraggableFlatList, {
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../../types/RouteTypes.ts';
 import { useAppContext } from '../../history/AppProvider.tsx';
+import Dialog from 'react-native-dialog';
 
 interface PromptListProps {
   onSelectPrompt: (prompt: SystemPrompt | null) => void;
@@ -41,6 +42,8 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   const rawListRef = useRef<FlatList<SystemPrompt>>(null);
   const { event, sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+  const deletePromptIdRef = useRef<number>(0);
 
   const handleLongPress = () => {
     setIsEditMode(true);
@@ -87,6 +90,18 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
     navigation.navigate('Prompt', {});
   };
 
+  const handleDelete = () => {
+    const newPrompts = prompts.filter(
+      prompt => prompt.id !== deletePromptIdRef.current
+    );
+    if (selectedPrompt?.id === deletePromptIdRef.current) {
+      onSelectPrompt(null);
+    }
+    setPrompts(newPrompts);
+    saveSystemPrompts(newPrompts);
+    deletePromptIdRef.current = 0;
+  };
+
   const renderItem = ({
     item,
     drag,
@@ -119,14 +134,8 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
             <TouchableOpacity
               style={styles.deleteTouchable}
               onPress={() => {
-                const newPrompts = prompts.filter(
-                  prompt => prompt.id !== item.id
-                );
-                if (selectedPrompt?.id === item.id) {
-                  onSelectPrompt(null);
-                }
-                setPrompts(newPrompts);
-                saveSystemPrompts(newPrompts);
+                setShowDialog(true);
+                deletePromptIdRef.current = item.id;
               }}>
               <View style={styles.deleteLayout}>
                 <Text style={styles.deleteText}>×</Text>
@@ -140,12 +149,8 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
 
   return (
     <View style={styles.container}>
-      <DraggableFlatList<SystemPrompt>
-        ref={ref => {
-          if (ref) {
-            (rawListRef.current as FlatList<SystemPrompt>) = ref;
-          }
-        }}
+      <DraggableFlatList
+        ref={rawListRef as never}
         data={prompts}
         horizontal
         renderItem={renderItem}
@@ -178,6 +183,23 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
           />
         </TouchableOpacity>
       )}
+      <Dialog.Container visible={showDialog}>
+        <Dialog.Title>Delete Prompt</Dialog.Title>
+        <Dialog.Description>You cannot undo this action.</Dialog.Description>
+        <Dialog.Button
+          label="Cancel"
+          onPress={() => {
+            setShowDialog(false);
+          }}
+        />
+        <Dialog.Button
+          label="Delete"
+          onPress={() => {
+            handleDelete();
+            setShowDialog(false);
+          }}
+        />
+      </Dialog.Container>
     </View>
   );
 };
