@@ -34,7 +34,7 @@ const DrawerNavigator = () => (
       headerTintColor: 'black',
       headerTitleAlign: 'center',
       drawerStyle: { width: width },
-      headerStyle: { height: isMac ? 68 : undefined },
+      headerStyle: { height: isMac ? 66 : undefined },
     }}
     drawerContent={renderCustomDrawerContent}>
     <Drawer.Screen name="Bedrock" component={ChatScreen} />
@@ -52,12 +52,18 @@ const AppNavigator = () => {
       <Stack.Screen
         name="TokenUsage"
         component={TokenUsageScreen}
-        options={{ title: 'Usage' }}
+        options={{
+          title: 'Usage',
+          contentStyle: { height: isMac ? 68 : undefined },
+        }}
       />
       <Stack.Screen
         name="Prompt"
         component={PromptScreen}
-        options={{ title: 'System Prompt' }}
+        options={{
+          title: 'System Prompt',
+          contentStyle: { height: isMac ? 68 : undefined },
+        }}
       />
     </Stack.Navigator>
   );

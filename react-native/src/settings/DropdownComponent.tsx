@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, Image } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
+import { isMac } from '../App.tsx';
 
 interface DropdownItem {
   label: string;
@@ -53,7 +54,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         inputSearchStyle={styles.inputSearchStyle}
         data={data}
         search
-        maxHeight={300}
+        maxHeight={isMac ? 600 : 420}
         labelField="label"
         valueField="value"
         placeholder={placeholder}

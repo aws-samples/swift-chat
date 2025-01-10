@@ -117,7 +117,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
               styles.promptButton,
               selectedPrompt?.id === item.id && styles.selectedPromptButton,
               isActive && styles.draggingPrompt,
-              !isEditMode && prompts[0] === item && styles.firstButton,
+              prompts[0] === item && styles.firstButton,
               !isEditMode &&
                 prompts[prompts.length - 1] === item &&
                 styles.lastButton,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8E8E8',
     borderRadius: 8,
     marginLeft: 8,
-    borderWidth: 1.2,
+    borderWidth: 1.3,
     borderColor: '#E8E8E8',
   },
   firstButton: {
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.2,
+    borderWidth: 1.3,
     borderColor: '#666',
   },
   addText: {
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   deleteText: {
     color: '#fff',
     fontSize: 12,
-    marginTop: -2,
+    marginTop: -1.8,
     marginRight: -0.5,
     fontWeight: 'normal',
   },

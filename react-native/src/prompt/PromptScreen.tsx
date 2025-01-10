@@ -15,6 +15,7 @@ import { showInfo } from '../chat/util/ToastUtils.ts';
 import { useAppContext } from '../history/AppProvider.tsx';
 import { getPromptId } from '../storage/StorageUtils.ts';
 import { HeaderLeftView } from './HeaderLeftView.tsx';
+import { isMac } from '../App.tsx';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 type PromptScreenRouteProp = RouteProp<RouteParamList, 'Prompt'>;
@@ -70,7 +71,7 @@ function PromptScreen(): React.JSX.Element {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, isMac && styles.macInput]}
           placeholder="Prompt name"
           value={currentPrompt.name}
           onChangeText={text => {
@@ -78,7 +79,7 @@ function PromptScreen(): React.JSX.Element {
           }}
         />
         <TextInput
-          style={[styles.input, styles.contentInput]}
+          style={[styles.input, styles.contentInput, isMac && styles.macInput]}
           placeholder="Systrem prompt"
           value={currentPrompt.prompt}
           multiline
@@ -125,10 +126,8 @@ const styles = StyleSheet.create({
     maxHeight: 560,
     textAlignVertical: 'top',
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'black',
+  macInput: {
+    fontWeight: '300',
   },
   switchContainer: {
     flexDirection: 'row',
