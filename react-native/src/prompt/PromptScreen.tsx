@@ -69,7 +69,9 @@ function PromptScreen(): React.JSX.Element {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        automaticallyAdjustKeyboardInsets={true}>
         <TextInput
           style={[styles.input, isMac && styles.macInput]}
           placeholder="Prompt name"
@@ -111,7 +113,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     backgroundColor: '#fff',
   },
   input: {
@@ -140,6 +143,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 36,
   },
   saveButtonText: {
     color: '#fff',

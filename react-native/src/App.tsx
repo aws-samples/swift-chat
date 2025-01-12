@@ -17,7 +17,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
 import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
-export const isMac = true;
+export const isMac = false;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const minWidth = screenWidth > screenHeight ? screenHeight : screenWidth;
 const width = minWidth > 434 ? 320 : minWidth * 0.83;
