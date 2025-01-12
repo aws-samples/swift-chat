@@ -32,7 +32,7 @@ const renderCustomDrawerContent = (
 const DrawerNavigator = () => {
   const { drawerState } = useAppContext();
   const animatedStyle = useAnimatedStyle(() => {
-    // 使用 withTiming 来创建更平滑的动画
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     const width =
       drawerState === 'open'
         ? withTiming(320, {
@@ -52,7 +52,7 @@ const DrawerNavigator = () => {
       screenOptions={{
         headerTintColor: 'black',
         headerTitleAlign: 'center',
-        drawerStyle: animatedStyle,
+        drawerStyle: isMac ? animatedStyle : { width: width },
         headerStyle: { height: isMac ? 66 : undefined },
         drawerType: isMac ? 'permanent' : 'slide',
       }}
