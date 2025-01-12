@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -236,6 +237,7 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontSize: 14,
+    marginTop: Platform.OS === 'android' ? -2 : 0,
     color: '#333',
   },
   selectedPromptText: {

@@ -25,6 +25,8 @@ import { useAppContext } from './AppProvider.tsx';
 import { trigger } from '../chat/util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src';
 import { groupMessagesByDate } from './HistoryGroupUtil.ts';
+import { isMac } from '../App.tsx';
+import { DrawerActions } from '@react-navigation/native';
 
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   navigation,
@@ -36,13 +38,36 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   const deleteIdRef = useRef<number>(0);
   const drawerStatus = useDrawerStatus();
   const tapIndexRef = useRef<number>(1);
-  const { sendEvent } = useAppContext();
+  const isFirstRenderRef = useRef<boolean>(true);
+  const { event, sendEvent } = useAppContext();
+  const { drawerState, setDrawerState } = useAppContext();
+  const drawerStateRef = useRef(drawerState);
+  const setDrawerStateRef = useRef(setDrawerState);
+  useEffect(() => {
+    drawerStateRef.current = drawerState;
+  }, [drawerState]);
 
   useEffect(() => {
     groupChatHistoryRef.current = groupChatHistory;
   }, [groupChatHistory]);
 
   useEffect(() => {
+    if (event?.event === 'updateHistory') {
+      handleUpdateHistory();
+    }
+  }, [event]);
+
+  useEffect(() => {
+    if (isMac && isFirstRenderRef.current) {
+      handleUpdateHistory();
+      DrawerActions.toggleDrawer();
+      isFirstRenderRef.current = false;
+      return;
+    }
+    setDrawerStateRef.current(
+      drawerStateRef.current === 'open' ? 'closed' : 'open'
+    );
+
     if (drawerStatus === 'open') {
       trigger(HapticFeedbackTypes.soft);
       trigger(HapticFeedbackTypes.selection);
@@ -52,15 +77,19 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
       ) {
         return;
       }
-      const messageList = getMessageList();
-      chatHistoryRef.current = messageList;
-      const flatListData = groupMessagesByDate(messageList);
-      setGroupChatHistory(flatListData);
+      handleUpdateHistory();
     } else {
       trigger(HapticFeedbackTypes.selection);
       trigger(HapticFeedbackTypes.soft);
     }
-  }, [drawerStatus]);
+  }, [drawerStatus, navigation]);
+
+  const handleUpdateHistory = () => {
+    const messageList = getMessageList();
+    chatHistoryRef.current = messageList;
+    const flatListData = groupMessagesByDate(messageList);
+    setGroupChatHistory(flatListData);
+  };
 
   const handleDelete = () => {
     // update ui
@@ -139,9 +168,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
                   });
                   tapIndexRef.current += 1;
                 }}
-                onLongPress={event => {
+                onLongPress={gestureEvent => {
                   trigger(HapticFeedbackTypes.notificationWarning);
-                  event.preventDefault();
+                  gestureEvent.preventDefault();
                   setShowDialog(true);
                   deleteIdRef.current = item.id;
                 }}
@@ -154,17 +183,19 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
           }
         }}
       />
-      <TouchableOpacity
-        style={styles.settingsTouch}
-        onPress={() => {
-          navigation.navigate('Settings');
-        }}>
-        <Image
-          source={require('../assets/settings.png')}
-          style={styles.settingsLeftImg}
-        />
-        <Text style={styles.settingsText}>Settings</Text>
-      </TouchableOpacity>
+      {drawerState === 'open' && (
+        <TouchableOpacity
+          style={styles.settingsTouch}
+          onPress={() => {
+            navigation.navigate('Settings');
+          }}>
+          <Image
+            source={require('../assets/settings.png')}
+            style={styles.settingsLeftImg}
+          />
+          <Text style={styles.settingsText}>Settings</Text>
+        </TouchableOpacity>
+      )}
       <Dialog.Container visible={showDialog}>
         <Dialog.Title>Delete Message</Dialog.Title>
         <Dialog.Description>You cannot undo this action.</Dialog.Description>

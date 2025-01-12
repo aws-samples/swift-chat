@@ -21,7 +21,8 @@ export const CustomHeaderRightButton: React.FC<HeaderRightButtonProps> =
 
 const styles = StyleSheet.create({
   touchStyle: {
-    padding: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
   },
   editImage: {
     width: 22,

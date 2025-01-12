@@ -105,7 +105,7 @@ function ChatScreen(): React.JSX.Element {
   const textInputRef = useRef<TextInput>(null);
   const sessionIdRef = useRef(initialSessionId || getSessionId() + 1);
   const isCanceled = useRef(false);
-  const { sendEvent, event } = useAppContext();
+  const { sendEvent, event, drawerState } = useAppContext();
   const sendEventRef = useRef(sendEvent);
   const inputTexRef = useRef('');
   const controllerRef = useRef<AbortController | null>(null);
@@ -113,6 +113,7 @@ function ChatScreen(): React.JSX.Element {
   const selectedFilesRef = useRef(selectedFiles);
   const usageRef = useRef(usage);
   const systemPromptRef = useRef(systemPrompt);
+  const drawerStateRef = useRef(drawerState);
 
   // update refs value with state
   useEffect(() => {
@@ -121,6 +122,10 @@ function ChatScreen(): React.JSX.Element {
     usageRef.current = usage;
     setShowSystemPrompt(messages.length === 0);
   }, [chatStatus, messages, usage]);
+
+  useEffect(() => {
+    drawerStateRef.current = drawerState;
+  }, [drawerState]);
 
   useEffect(() => {
     selectedFilesRef.current = selectedFiles;
@@ -209,9 +214,12 @@ function ChatScreen(): React.JSX.Element {
         startNewChat.current();
         return;
       }
+      // click from history
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
       setUsage((msg[0] as IMessageWithToken).usage);
+      setSystemPrompt(null);
+      saveCurrentSystemPrompt(null);
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
@@ -287,7 +295,9 @@ function ChatScreen(): React.JSX.Element {
       getBedrockMessage(messagesRef.current[0]).then(currentMsg => {
         bedrockMessages.current.push(currentMsg);
       });
-
+      if (drawerStateRef.current === 'open') {
+        sendEventRef.current('updateHistory');
+      }
       setChatStatus(ChatStatus.Init);
     }
   }, [chatStatus]);
@@ -328,6 +338,9 @@ function ChatScreen(): React.JSX.Element {
 
   const { width: screenWidth, height: screenHeight } = screenDimensions;
 
+  const chatScreenWidth =
+    isMac && drawerState === 'open' ? screenWidth - 360 : screenWidth;
+
   const scrollStyle = StyleSheet.create({
     scrollToBottomContainerStyle: {
       width: 30,
@@ -337,7 +350,7 @@ function ChatScreen(): React.JSX.Element {
         screenHeight < screenWidth &&
         screenHeight < 500
           ? screenWidth / 2 - 75 // iphone landscape
-          : screenWidth / 2 - 15,
+          : chatScreenWidth / 2 - 15,
       bottom: screenHeight > screenWidth ? '1.5%' : '2%',
     },
   });

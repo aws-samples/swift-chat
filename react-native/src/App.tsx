@@ -9,17 +9,18 @@ import CustomDrawerContent from './history/CustomDrawerContent.tsx';
 import { Dimensions, Keyboard, StatusBar } from 'react-native';
 import ChatScreen from './chat/ChatScreen.tsx';
 import { RouteParamList } from './types/RouteTypes.ts';
-import { AppProvider } from './history/AppProvider.tsx';
+import { AppProvider, useAppContext } from './history/AppProvider.tsx';
 import SettingsScreen from './settings/SettingsScreen.tsx';
 import Toast from 'react-native-toast-message';
 import TokenUsageScreen from './settings/TokenUsageScreen.tsx';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
+import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
-export const isMac = false;
+export const isMac = true;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const minWidth = screenWidth > screenHeight ? screenHeight : screenWidth;
-const width = minWidth > 434 ? 360 : minWidth * 0.83;
+const width = minWidth > 434 ? 320 : minWidth * 0.83;
 
 const Drawer = createDrawerNavigator<RouteParamList>();
 const Stack = createNativeStackNavigator();
@@ -27,34 +28,57 @@ const Stack = createNativeStackNavigator();
 const renderCustomDrawerContent = (
   props: React.JSX.IntrinsicAttributes & DrawerContentComponentProps
 ) => <CustomDrawerContent {...props} />;
-const DrawerNavigator = () => (
-  <Drawer.Navigator
-    initialRouteName="Bedrock"
-    screenOptions={{
-      headerTintColor: 'black',
-      headerTitleAlign: 'center',
-      drawerStyle: { width: width },
-      headerStyle: { height: isMac ? 66 : undefined },
-    }}
-    drawerContent={renderCustomDrawerContent}>
-    <Drawer.Screen name="Bedrock" component={ChatScreen} />
-    <Drawer.Screen name="Settings" component={SettingsScreen} />
-  </Drawer.Navigator>
-);
+
+const DrawerNavigator = () => {
+  const { drawerState } = useAppContext();
+  const animatedStyle = useAnimatedStyle(() => {
+    // 使用 withTiming 来创建更平滑的动画
+    const width =
+      drawerState === 'open'
+        ? withTiming(320, {
+            duration: 300,
+          })
+        : withTiming(0, {
+            duration: 300,
+          });
+
+    return {
+      width,
+    };
+  }, [drawerState]);
+  return (
+    <Drawer.Navigator
+      initialRouteName="Bedrock"
+      screenOptions={{
+        headerTintColor: 'black',
+        headerTitleAlign: 'center',
+        drawerStyle: animatedStyle,
+        headerStyle: { height: isMac ? 66 : undefined },
+        drawerType: isMac ? 'permanent' : 'slide',
+      }}
+      drawerContent={renderCustomDrawerContent}>
+      <Drawer.Screen name="Bedrock" component={ChatScreen} />
+      <Drawer.Screen name="Settings" component={SettingsScreen} />
+    </Drawer.Navigator>
+  );
+};
 const AppNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Drawer" screenOptions={{}}>
       <Stack.Screen
         name="Drawer"
         component={DrawerNavigator}
-        options={{ headerShown: false }}
+        options={{ headerShown: false, headerLargeTitleShadowVisible: false }}
       />
       <Stack.Screen
         name="TokenUsage"
         component={TokenUsageScreen}
         options={{
           title: 'Usage',
-          contentStyle: { height: isMac ? 68 : undefined },
+          contentStyle: {
+            height: isMac ? 66 : undefined,
+          },
+          headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen
@@ -62,7 +86,8 @@ const AppNavigator = () => {
         component={PromptScreen}
         options={{
           title: 'System Prompt',
-          contentStyle: { height: isMac ? 68 : undefined },
+          contentStyle: { height: isMac ? 66 : undefined },
+          headerTitleAlign: 'center',
         }}
       />
     </Stack.Navigator>
