@@ -39,13 +39,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   const drawerStatus = useDrawerStatus();
   const tapIndexRef = useRef<number>(1);
   const isFirstRenderRef = useRef<boolean>(true);
+  const isSlideDrawerEnabledRef = useRef<boolean>(false);
   const { event, sendEvent } = useAppContext();
-  const { drawerState, setDrawerState } = useAppContext();
-  const drawerStateRef = useRef(drawerState);
-  const setDrawerStateRef = useRef(setDrawerState);
+  const { drawerType, setDrawerType } = useAppContext();
+
+  const drawerTypeRef = useRef(drawerType);
+  const setDrawerTypeRef = useRef(setDrawerType);
   useEffect(() => {
-    drawerStateRef.current = drawerState;
-  }, [drawerState]);
+    drawerTypeRef.current = drawerType;
+  }, [drawerType]);
 
   useEffect(() => {
     groupChatHistoryRef.current = groupChatHistory;
@@ -60,13 +62,22 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   useEffect(() => {
     if (isMac && isFirstRenderRef.current) {
       handleUpdateHistory();
-      DrawerActions.toggleDrawer();
       isFirstRenderRef.current = false;
       return;
     }
-    setDrawerStateRef.current(
-      drawerStateRef.current === 'open' ? 'closed' : 'open'
-    );
+    if (isMac) {
+      if (isSlideDrawerEnabledRef.current) {
+        isSlideDrawerEnabledRef.current = false;
+        return;
+      }
+      if (drawerTypeRef.current === 'permanent') {
+        setTimeout(() => {
+          setDrawerTypeRef.current('slide');
+          navigation.dispatch(DrawerActions.toggleDrawer());
+        }, 10);
+      }
+      isSlideDrawerEnabledRef.current = true;
+    }
 
     if (drawerStatus === 'open') {
       trigger(HapticFeedbackTypes.soft);
@@ -89,6 +100,12 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
     chatHistoryRef.current = messageList;
     const flatListData = groupMessagesByDate(messageList);
     setGroupChatHistory(flatListData);
+  };
+
+  const setDrawerToPermanent = () => {
+    if (isMac && drawerType === 'slide') {
+      setDrawerType('permanent');
+    }
   };
 
   const handleDelete = () => {
@@ -120,6 +137,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
             <TouchableOpacity
               style={styles.settingsTouch}
               onPress={() => {
+                setDrawerToPermanent();
                 navigation.navigate('Bedrock', {
                   sessionId: -1,
                   tapIndex: -1,
@@ -135,6 +153,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
             <TouchableOpacity
               style={styles.settingsTouch}
               onPress={() => {
+                setDrawerToPermanent();
                 navigation.navigate('Bedrock', {
                   sessionId: -1,
                   tapIndex: -2,
@@ -161,6 +180,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
             return (
               <TouchableOpacity
                 onPress={() => {
+                  setDrawerToPermanent();
                   navigation.navigate('Bedrock', {
                     sessionId: item.id,
                     tapIndex: tapIndexRef.current,
@@ -183,19 +203,18 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
           }
         }}
       />
-      {drawerState === 'open' && (
-        <TouchableOpacity
-          style={styles.settingsTouch}
-          onPress={() => {
-            navigation.navigate('Settings');
-          }}>
-          <Image
-            source={require('../assets/settings.png')}
-            style={styles.settingsLeftImg}
-          />
-          <Text style={styles.settingsText}>Settings</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={styles.settingsTouch}
+        onPress={() => {
+          setDrawerToPermanent();
+          navigation.navigate('Settings');
+        }}>
+        <Image
+          source={require('../assets/settings.png')}
+          style={styles.settingsLeftImg}
+        />
+        <Text style={styles.settingsText}>Settings</Text>
+      </TouchableOpacity>
       <Dialog.Container visible={showDialog}>
         <Dialog.Title>Delete Message</Dialog.Title>
         <Dialog.Description>You cannot undo this action.</Dialog.Description>

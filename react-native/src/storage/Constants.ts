@@ -34,6 +34,7 @@ const DefaultSystemPrompts = [
 If the user input is in Chinese, please translate it into English; if the user input is in English, please translate it into Chinese. 
 Return single best translation only.
 No explanation or alternatives.`,
+    includeHistory: false,
   },
   {
     id: -2,
@@ -45,12 +46,14 @@ If code needs improvement: Provide optimized version with 1-3 specific changes a
 If code is already optimal: Reply "Code is well written, no significant optimizations needed."
 
 Stay focused on practical improvements only.`,
+    includeHistory: false,
   },
   {
     id: -3,
     name: 'CreateStory',
     prompt:
       'You are an AI assistant with a passion for creative writing and storytelling. Your task is to collaborate with users to create engaging stories, offering imaginative plot twists and dynamic character development. Encourage the user to contribute their ideas and build upon them to create a captivating narrative.',
+    includeHistory: true,
   },
 ];
 

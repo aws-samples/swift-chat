@@ -49,7 +49,7 @@ export const invokeBedrockWithCallBack = async (
       region: getRegion(),
       system: prompt ? [{ text: prompt?.prompt }] : undefined,
     };
-    if (prompt) {
+    if (prompt?.includeHistory === false) {
       bodyObject.messages = messages.slice(-1);
     }
 

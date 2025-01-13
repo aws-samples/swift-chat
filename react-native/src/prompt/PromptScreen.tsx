@@ -3,9 +3,11 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -31,6 +33,7 @@ function PromptScreen(): React.JSX.Element {
           id: getPromptId() + 1,
           name: '',
           prompt: '',
+          includeHistory: false,
         }
       : route.params.prompt
   );
@@ -89,6 +92,16 @@ function PromptScreen(): React.JSX.Element {
             setCurrentPrompt({ ...currentPrompt, prompt: text });
           }}
         />
+        <View style={styles.switchContainer}>
+          <Text style={styles.label}>Include chat history</Text>
+          <Switch
+            style={[isMac ? styles.switch : {}]}
+            value={currentPrompt.includeHistory}
+            onValueChange={value => {
+              setCurrentPrompt({ ...currentPrompt, includeHistory: value });
+            }}
+          />
+        </View>
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>
             {isAddMode ? 'Create' : 'Update'}
@@ -136,7 +149,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginVertical: 10,
+    marginBottom: 20,
+  },
+  switch: {
+    marginRight: -14,
+    width: 32,
+    height: 32,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'black',
   },
   saveButton: {
     backgroundColor: '#007AFF',

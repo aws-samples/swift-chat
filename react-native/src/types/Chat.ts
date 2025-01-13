@@ -101,4 +101,5 @@ export interface SystemPrompt {
   id: number;
   name: string;
   prompt: string;
+  includeHistory: boolean;
 }

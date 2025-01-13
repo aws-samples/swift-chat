@@ -15,7 +15,6 @@ import Toast from 'react-native-toast-message';
 import TokenUsageScreen from './settings/TokenUsageScreen.tsx';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
-import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 export const isMac = false;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -30,31 +29,16 @@ const renderCustomDrawerContent = (
 ) => <CustomDrawerContent {...props} />;
 
 const DrawerNavigator = () => {
-  const { drawerState } = useAppContext();
-  const animatedStyle = useAnimatedStyle(() => {
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const width =
-      drawerState === 'open'
-        ? withTiming(320, {
-            duration: 300,
-          })
-        : withTiming(0, {
-            duration: 300,
-          });
-
-    return {
-      width,
-    };
-  }, [drawerState]);
+  const { drawerType } = useAppContext();
   return (
     <Drawer.Navigator
       initialRouteName="Bedrock"
       screenOptions={{
         headerTintColor: 'black',
         headerTitleAlign: 'center',
-        drawerStyle: isMac ? animatedStyle : { width: width },
+        drawerStyle: { width: width },
         headerStyle: { height: isMac ? 66 : undefined },
-        drawerType: isMac ? 'permanent' : 'slide',
+        drawerType: isMac ? drawerType : 'slide',
       }}
       drawerContent={renderCustomDrawerContent}>
       <Drawer.Screen name="Bedrock" component={ChatScreen} />

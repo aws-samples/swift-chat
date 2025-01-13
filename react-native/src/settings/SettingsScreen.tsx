@@ -389,12 +389,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     color: 'black',
   },
-  regionAutoSwitchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 10,
-  },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
