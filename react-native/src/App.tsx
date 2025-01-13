@@ -19,7 +19,7 @@ import PromptScreen from './prompt/PromptScreen.tsx';
 export const isMac = false;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const minWidth = screenWidth > screenHeight ? screenHeight : screenWidth;
-const width = minWidth > 434 ? 320 : minWidth * 0.83;
+const width = minWidth > 434 ? 300 : minWidth * 0.83;
 
 const Drawer = createDrawerNavigator<RouteParamList>();
 const Stack = createNativeStackNavigator();

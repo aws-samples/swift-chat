@@ -105,7 +105,7 @@ function ChatScreen(): React.JSX.Element {
   const textInputRef = useRef<TextInput>(null);
   const sessionIdRef = useRef(initialSessionId || getSessionId() + 1);
   const isCanceled = useRef(false);
-  const { sendEvent, event, drawerState } = useAppContext();
+  const { sendEvent, event, drawerType } = useAppContext();
   const sendEventRef = useRef(sendEvent);
   const inputTexRef = useRef('');
   const controllerRef = useRef<AbortController | null>(null);
@@ -113,7 +113,7 @@ function ChatScreen(): React.JSX.Element {
   const selectedFilesRef = useRef(selectedFiles);
   const usageRef = useRef(usage);
   const systemPromptRef = useRef(systemPrompt);
-  const drawerStateRef = useRef(drawerState);
+  const drawerTypeRef = useRef(drawerType);
 
   // update refs value with state
   useEffect(() => {
@@ -124,8 +124,8 @@ function ChatScreen(): React.JSX.Element {
   }, [chatStatus, messages, usage]);
 
   useEffect(() => {
-    drawerStateRef.current = drawerState;
-  }, [drawerState]);
+    drawerTypeRef.current = drawerType;
+  }, [drawerType]);
 
   useEffect(() => {
     selectedFilesRef.current = selectedFiles;
@@ -139,6 +139,10 @@ function ChatScreen(): React.JSX.Element {
     useCallback(() => {
       trigger(HapticFeedbackTypes.impactMedium);
       sessionIdRef.current = getSessionId() + 1;
+      sendEventRef.current('updateHistorySelectedId', {
+        id: sessionIdRef.current,
+      });
+
       clearCachedNode();
       setMessages([]);
       bedrockMessages.current = [];
@@ -236,6 +240,9 @@ function ChatScreen(): React.JSX.Element {
       const { id } = event.params;
       if (sessionIdRef.current === id) {
         sessionIdRef.current = getSessionId() + 1;
+        sendEventRef.current('updateHistorySelectedId', {
+          id: sessionIdRef.current,
+        });
         setUsage(undefined);
         bedrockMessages.current = [];
         clearCachedNode();
@@ -295,7 +302,7 @@ function ChatScreen(): React.JSX.Element {
       getBedrockMessage(messagesRef.current[0]).then(currentMsg => {
         bedrockMessages.current.push(currentMsg);
       });
-      if (drawerStateRef.current === 'open') {
+      if (drawerTypeRef.current === 'permanent') {
         sendEventRef.current('updateHistory');
       }
       setChatStatus(ChatStatus.Init);
@@ -339,7 +346,7 @@ function ChatScreen(): React.JSX.Element {
   const { width: screenWidth, height: screenHeight } = screenDimensions;
 
   const chatScreenWidth =
-    isMac && drawerState === 'open' ? screenWidth - 360 : screenWidth;
+    isMac && drawerType === 'permanent' ? screenWidth - 300 : screenWidth;
 
   const scrollStyle = StyleSheet.create({
     scrollToBottomContainerStyle: {
@@ -560,7 +567,7 @@ function ChatScreen(): React.JSX.Element {
             color: 'black',
           },
         }}
-        maxComposerHeight={isMac ? 320 : 200}
+        maxComposerHeight={isMac ? 360 : 200}
         onInputTextChanged={text => {
           if (
             isMac &&

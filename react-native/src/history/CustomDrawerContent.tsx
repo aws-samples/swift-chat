@@ -37,6 +37,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const deleteIdRef = useRef<number>(0);
   const drawerStatus = useDrawerStatus();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const tapIndexRef = useRef<number>(1);
   const isFirstRenderRef = useRef<boolean>(true);
   const isSlideDrawerEnabledRef = useRef<boolean>(false);
@@ -56,6 +57,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   useEffect(() => {
     if (event?.event === 'updateHistory') {
       handleUpdateHistory();
+    } else if (event?.event === 'updateHistorySelectedId') {
+      setSelectedId(event.params?.id ?? null);
     }
   }, [event]);
 
@@ -177,16 +180,21 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
               </View>
             );
           } else {
+            const isSelected = selectedId === item.id;
             return (
               <TouchableOpacity
+                activeOpacity={1}
                 onPress={() => {
+                  setSelectedId(item.id);
                   setDrawerToPermanent();
-                  navigation.navigate('Bedrock', {
-                    sessionId: item.id,
-                    tapIndex: tapIndexRef.current,
-                    mode: item.mode,
-                  });
-                  tapIndexRef.current += 1;
+                  setTimeout(() => {
+                    navigation.navigate('Bedrock', {
+                      sessionId: item.id,
+                      tapIndex: tapIndexRef.current,
+                      mode: item.mode,
+                    });
+                    tapIndexRef.current += 1;
+                  }, 0);
                 }}
                 onLongPress={gestureEvent => {
                   trigger(HapticFeedbackTypes.notificationWarning);
@@ -194,7 +202,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
                   setShowDialog(true);
                   deleteIdRef.current = item.id;
                 }}
-                style={styles.touch}>
+                style={[styles.touch, isSelected && styles.touchSelected]}>
                 <Text numberOfLines={1} style={styles.title}>
                   {item.title}
                 </Text>
@@ -272,9 +280,13 @@ const styles = StyleSheet.create({
   },
   touch: {
     paddingHorizontal: 8,
-    paddingVertical: 10,
+    paddingVertical: 12,
     marginHorizontal: 12,
-    marginVertical: 4,
+    marginVertical: 2,
+    borderRadius: 8,
+  },
+  touchSelected: {
+    backgroundColor: '#F5F5F5',
   },
   sectionContainer: {
     paddingHorizontal: 8,

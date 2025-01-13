@@ -93,7 +93,7 @@ function PromptScreen(): React.JSX.Element {
           }}
         />
         <View style={styles.switchContainer}>
-          <Text style={styles.label}>Include chat history</Text>
+          <Text style={styles.label}>Include Chat History</Text>
           <Switch
             style={[isMac ? styles.switch : {}]}
             value={currentPrompt.includeHistory}
