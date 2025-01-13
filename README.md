@@ -20,8 +20,9 @@ macOS platforms.
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
 - Multiple AI model support and switching
+- Fully Customizable System Prompt Assistant (New feature from v1.9.0 🎉)
 
-**New Features For Amazon Nova 🎉🎉🎉**
+**Supported Features For Amazon Nova**
 
 - Stream conversations with Amazon Nova Micro, Lite and Pro
 - Understand images, documents and videos with Nova Lite and Pro
@@ -41,6 +42,15 @@ macOS platforms.
 <img src="assets/avif/image_summary.avif" width=24%>
 <img src="assets/avif/doc_summary.avif" width=24%>
 <img src="assets/avif/video_summary.avif" width=24%>
+</div>
+
+**System Prompt Assistant**: Useful Preset System Prompts with Full Management Capabilities (Add/Edit/Sort/Delete)
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/prompt_translate.avif" width=24%>
+<img src="assets/avif/prompt_code.avif" width=24%>
+<img src="assets/avif/prompt_add_chef.avif" width=24%>
+<img src="assets/avif/prompt_edit.avif" width=24%>
 </div>
 
 **Creative Image Suite**: Generation, Style Replication, Background Removal & Replacement
@@ -82,7 +92,7 @@ Ensure you have access to Amazon Bedrock foundation models. SwiftChat default se
 
 - Region: `us-west-2`
 - Text Model: `Amazon Nova Pro`
-- Image Model: `Stable Image Core 1.0`
+- Image Model: `Stable Diffusion 3.5 Large`
 
 If you are using the image generation feature, please make sure you have enabled access to the `Amazon Nova Lite` model.
 Please follow the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to

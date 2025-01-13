@@ -12,6 +12,7 @@ macOS 等多个平台。
 
 - 与 AI 进行实时流式聊天
 - 支持丰富的 Markdown 渲染：表格、代码块、LaTeX 公式等
+- 可实现完全自定义的系统提示词助手
 - 带进度的 AI 图像生成
 - 多模态支持（相机拍照、图片选择和文档上传）
 - 对话历史记录列表查看和管理
@@ -19,8 +20,9 @@ macOS 等多个平台。
 - 针对 iPad 和 Android 平板电脑进行 UI 优化
 - 快速启动和响应性能
 - 支持多种 AI 模型及切换
+- 支持完全自定义的系统提示词助手 (v1.9.0 的新功能 🎉)
 
-**Amazon Nova 新功能 🎉🎉🎉**
+**Amazon Nova 功能支持**
 
 - 支持与 Amazon Nova Micro、Lite 和 Pro 进行流式对话
 - 支持 Nova Lite 和 Pro 对图片、文档及视频内容的理解
@@ -38,6 +40,16 @@ macOS 等多个平台。
 <img src="assets/avif/image_summary.avif" width=24%>
 <img src="assets/avif/doc_summary.avif" width=24%>
 <img src="assets/avif/video_summary.avif" width=24%>
+</div>
+
+
+**系统提示词助手**: 提供实用的内置系统提示词，同时支持添加、编辑、排序和删除系统提示词来构建你自己的助手
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/avif/prompt_translate.avif" width=24%>
+<img src="assets/avif/prompt_code.avif" width=24%>
+<img src="assets/avif/prompt_add_chef.avif" width=24%>
+<img src="assets/avif/prompt_edit.avif" width=24%>
 </div>
 
 **图像创作助手**：图像生成、风格复制、背景移除与替换
@@ -75,7 +87,7 @@ macOS 等多个平台。
 
 - 区域: `us-west-2`
 - 文本模型: `Amazon Nova Pro`
-- 图像模型: `Stable Image Core 1.0`
+- 图像模型: `Stable Diffusion 3.5 Large`
 
 如果您要使用图片生成功能，请确保已开启 `Amazon Nova Lite` 模型的访问权限。您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
 来启用您的模型。
