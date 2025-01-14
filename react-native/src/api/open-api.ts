@@ -37,7 +37,6 @@ export const invokeOpenAIWithCallBack = async (
     headers: {
       accept: '*/*',
       'content-type': 'application/json',
-      'Transfer-Encoding': 'chunked',
       Authorization: 'Bearer ' + getApiKey(),
     },
     body: JSON.stringify(bodyObject),
@@ -63,6 +62,10 @@ export const invokeOpenAIWithCallBack = async (
         const { done, value } = await reader.read();
         const chunk = decoder.decode(value, { stream: true });
         const parsed = parseStreamData(chunk);
+        if (parsed.error) {
+          callback(parsed.error, true, true);
+          break;
+        }
         completeMessage += parsed.content;
         if (parsed.usage && parsed.usage.inputTokens) {
           callback(completeMessage, false, false, parsed.usage);
@@ -122,7 +125,8 @@ const parseStreamData = (chunk: string) => {
         };
       }
     } catch (error) {
-      console.warn('parse error:', error);
+      console.info('parse error:', error, cleanedData);
+      return { error: cleanedData };
     }
   }
   return { content, usage };
