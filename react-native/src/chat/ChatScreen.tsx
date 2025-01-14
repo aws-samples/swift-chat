@@ -273,7 +273,7 @@ function ChatScreen(): React.JSX.Element {
       if (textInputRef.current) {
         textInputRef.current.focus();
       }
-    }, 300);
+    }, 100);
   };
 
   // update screenWith and height when screen rotate
