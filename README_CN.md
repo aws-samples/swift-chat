@@ -249,19 +249,23 @@ macOS 等多个平台。
 首先，克隆此仓库。所有 App 代码位于 react-native 文件夹中。在继续之前，请执行以下命令来下载依赖项。
 
 ```bash
-cd react-native && npm i
+cd react-native && npm i && npm start 
 ```
 
 ### 构建 Android
 
+在新的终端中执行：
+
 ```bash
-npm start && npm run android
+npm run android
 ```
 
 ## 构建 iOS
 
+先打开一个新的终端，如果是第一次运行，请先执行 `cd ios && pod install && cd ..` 来安装原生依赖，然后运行：
+
 ```bash
-npm start && npm run ios
+npm run ios
 ```
 
 ### 构建 macOS

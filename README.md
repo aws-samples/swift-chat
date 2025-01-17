@@ -263,19 +263,24 @@ First, clone this repository. All app code is located in the `react-native` fold
 following command to download dependencies.
 
 ```bash
-cd react-native && npm i
+cd react-native && npm i && npm start
 ```
 
 ### Build for Android
 
+open a new terminal and execute:
+
 ```bash
-npm start && npm run android
+npm run android
 ```
 
 ### Build for iOS
 
+also open a new terminal, for the first time you need to install the native dependencies 
+by execute `cd ios && pod install && cd ..`, then execute the follow command:  
+
 ```bash
-npm start && npm run ios
+npm run ios
 ```
 
 ### Build for macOS
