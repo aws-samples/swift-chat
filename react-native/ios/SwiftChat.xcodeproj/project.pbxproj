@@ -503,7 +503,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.carlwe.swiftchat;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aws.swiftchat;
 				PRODUCT_NAME = SwiftChat;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -543,7 +543,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.carlwe.swiftchat;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aws.swiftchat;
 				PRODUCT_NAME = SwiftChat;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
