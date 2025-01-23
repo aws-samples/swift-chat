@@ -87,7 +87,8 @@ const isMultiModalModel = (): boolean => {
   return (
     textModelId.includes('claude-3') ||
     textModelId.includes('nova-pro') ||
-    textModelId.includes('nova-lite')
+    textModelId.includes('nova-lite') ||
+    textModelId.startsWith('ollama')
   );
 };
 

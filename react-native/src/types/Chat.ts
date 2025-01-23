@@ -23,6 +23,10 @@ export type Model = {
   modelName: string;
 };
 
+export type OllamaModel = {
+  name: string;
+};
+
 export type AllModel = {
   textModel: Model[];
   imageModel: Model[];

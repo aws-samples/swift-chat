@@ -41,6 +41,7 @@ const currentSessionIdKey = keyPrefix + 'currentSessionId';
 const hapticEnabledKey = keyPrefix + 'hapticEnabled';
 const apiUrlKey = keyPrefix + 'apiUrlKey';
 const apiKeyTag = keyPrefix + 'apiKeyTag';
+const ollamaApiUrlKey = keyPrefix + 'ollamaApiUrlKey';
 const deepSeekApiKeyTag = keyPrefix + 'deepSeekApiKeyTag';
 const openAIApiKeyTag = keyPrefix + 'openAIApiKeyTag';
 const regionKey = keyPrefix + 'regionKey';
@@ -55,6 +56,7 @@ const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
+let currentOllamaApiUrl: string | undefined;
 let currentDeepSeekApiKey: string | undefined;
 let currentOpenAIApiKey: string | undefined;
 let currentRegion: string | undefined;
@@ -143,6 +145,15 @@ export function getApiUrl(): string {
   }
 }
 
+export function getOllamaApiUrl(): string {
+  if (currentOllamaApiUrl) {
+    return currentOllamaApiUrl;
+  } else {
+    currentOllamaApiUrl = storage.getString(ollamaApiUrlKey) ?? '';
+    return currentOllamaApiUrl;
+  }
+}
+
 export function getApiKey(): string {
   if (currentApiKey) {
     return currentApiKey;
@@ -184,6 +195,11 @@ export function saveApiUrl(apiUrl: string) {
 
 export function saveApiKey(apiKey: string) {
   encryptStorage.set(apiKeyTag, apiKey);
+}
+
+export function saveOllamaApiURL(apiUrl: string) {
+  currentOllamaApiUrl = apiUrl;
+  storage.set(ollamaApiUrlKey, apiUrl);
 }
 
 export function saveDeepSeekApiKey(apiKey: string) {

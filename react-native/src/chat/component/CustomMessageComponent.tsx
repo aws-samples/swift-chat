@@ -50,10 +50,13 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const isDeepSeek = userName.includes('DeepSeek');
   const isOpenAI = userName.includes('GPT');
+  const isOllama = userName.includes(':');
   const modelIcon = isDeepSeek
     ? require('../../assets/deepseek.png')
     : isOpenAI
     ? require('../../assets/openai.png')
+    : isOllama
+    ? require('../../assets/ollama-white.png')
     : require('../../assets/bedrock.png');
 
   const imgSource =
@@ -253,6 +256,7 @@ const customMarkedStyles: MarkedStyles = {
   h2: { fontSize: 24 },
   h3: { fontSize: 20 },
   h4: { fontSize: 18 },
+  blockquote: { marginVertical: 8 },
 };
 
 export default CustomMessageComponent;

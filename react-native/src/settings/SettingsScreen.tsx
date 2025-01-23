@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Image,
   Linking,
@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -26,6 +25,7 @@ import {
   getImageModel,
   getImageSize,
   getModelUsage,
+  getOllamaApiUrl,
   getOpenAIApiKey,
   getRegion,
   getTextModel,
@@ -35,6 +35,7 @@ import {
   saveImageModel,
   saveImageSize,
   saveKeys,
+  saveOllamaApiURL,
   saveOpenAIApiKey,
   saveRegion,
   saveTextModel,
@@ -42,14 +43,21 @@ import {
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';
-import { DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
+import { AllModel, DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
 
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
 import CustomDropdown from './DropdownComponent.tsx';
 import { getTotalCost } from './ModelPrice.ts';
-import { getAllRegions } from '../storage/Constants.ts';
+import {
+  DeepSeekModels,
+  getAllRegions,
+  getDefaultTextModels,
+  GPTModels,
+} from '../storage/Constants.ts';
 import { showInfo } from '../chat/util/ToastUtils.ts';
+import CustomTextInput from './CustomTextInput.tsx';
+import { requestAllOllamaModels } from '../api/ollama-api.ts';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -62,6 +70,7 @@ const GITHUB_LINK = 'https://github.com/aws-samples/swift-chat';
 function SettingsScreen(): React.JSX.Element {
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
+  const [ollamaApiUrl, setOllamaApiUrl] = useState(getOllamaApiUrl);
   const [deepSeekApiKey, setDeepSeekApiKey] = useState(getDeepSeekApiKey);
   const [openAIApiKey, setOpenAIApiKey] = useState(getOpenAIApiKey);
   const [region, setRegion] = useState(getRegion);
@@ -74,7 +83,7 @@ function SettingsScreen(): React.JSX.Element {
   const [selectedImageModel, setSelectedImageModel] = useState<string>('');
   const [upgradeInfo, setUpgradeInfo] = useState<UpgradeInfo>(initUpgradeInfo);
   const [cost, setCost] = useState('0.00');
-
+  const controllerRef = useRef<AbortController | null>(null);
   useEffect(() => {
     return navigation.addListener('focus', () => {
       setCost(getTotalCost(getModelUsage()).toString());
@@ -114,6 +123,13 @@ function SettingsScreen(): React.JSX.Element {
   }, [apiUrl, apiKey]);
 
   useEffect(() => {
+    saveOllamaApiURL(ollamaApiUrl);
+    if (ollamaApiUrl.length > 0) {
+      fetchAndSetModelNames().then();
+    }
+  }, [ollamaApiUrl]);
+
+  useEffect(() => {
     saveDeepSeekApiKey(deepSeekApiKey);
   }, [deepSeekApiKey]);
 
@@ -122,6 +138,9 @@ function SettingsScreen(): React.JSX.Element {
   }, [openAIApiKey]);
 
   const fetchAndSetModelNames = async () => {
+    controllerRef.current = new AbortController();
+    let ollamaModels: Model[] = [];
+    ollamaModels = await requestAllOllamaModels();
     const response = await requestAllModels();
     if (response.imageModel.length > 0) {
       setImageModels(response.imageModel);
@@ -137,38 +156,31 @@ function SettingsScreen(): React.JSX.Element {
         saveImageModel(response.imageModel[0]);
       }
     }
-    if (response.textModel.length > 0) {
+    if (response.textModel.length === 0) {
+      response.textModel = [...getDefaultTextModels(), ...ollamaModels];
+    } else {
       response.textModel = [
-        {
-          modelName: 'DeepSeek v3',
-          modelId: 'deepseek-chat',
-        },
-        {
-          modelName: 'GPT-4o',
-          modelId: 'gpt-4o',
-        },
-        {
-          modelName: 'GPT-4o mini',
-          modelId: 'gpt-4o-mini',
-        },
         ...response.textModel,
+        ...GPTModels,
+        ...DeepSeekModels,
+        ...ollamaModels,
       ];
-      setTextModels(response.textModel);
-      const textModel = getTextModel();
-      const targetModels = response.textModel.filter(
-        model => model.modelName === textModel.modelName
+    }
+    setTextModels(response.textModel);
+    const textModel = getTextModel();
+    const targetModels = response.textModel.filter(
+      model => model.modelName === textModel.modelName
+    );
+    if (targetModels && targetModels.length === 1) {
+      setSelectedTextModel(targetModels[0].modelId);
+      saveTextModel(targetModels[0]);
+    } else {
+      const defaultMissMatchModel = response.textModel.filter(
+        model => model.modelName === 'Claude 3 Sonnet'
       );
-      if (targetModels && targetModels.length === 1) {
-        setSelectedTextModel(targetModels[0].modelId);
-        saveTextModel(targetModels[0]);
-      } else {
-        const defaultMissMatchModel = response.textModel.filter(
-          model => model.modelName === 'Claude 3 Sonnet'
-        );
-        if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
-          setSelectedTextModel(defaultMissMatchModel[0].modelId);
-          saveTextModel(defaultMissMatchModel[0]);
-        }
+      if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
+        setSelectedTextModel(defaultMissMatchModel[0].modelId);
+        saveTextModel(defaultMissMatchModel[0]);
       }
     }
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
@@ -230,35 +242,18 @@ function SettingsScreen(): React.JSX.Element {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
-        <Text style={styles.label}>API URL</Text>
-        <TextInput
-          style={styles.input}
+        <Text style={[styles.label, styles.firstLabel]}>Amazon Bedrock</Text>
+        <CustomTextInput
+          label="API URL"
           value={apiUrl}
           onChangeText={setApiUrl}
           placeholder="Enter API URL"
         />
-        <Text style={styles.label}>API Key</Text>
-        <TextInput
-          style={styles.input}
+        <CustomTextInput
+          label="API Key"
           value={apiKey}
           onChangeText={setApiKey}
           placeholder="Enter API Key"
-          secureTextEntry={true}
-        />
-        <Text style={styles.label}>DeepSeek API Key</Text>
-        <TextInput
-          style={styles.input}
-          value={deepSeekApiKey}
-          onChangeText={setDeepSeekApiKey}
-          placeholder="Enter Deep Seek API Key"
-          secureTextEntry={true}
-        />
-        <Text style={styles.label}>OpenAI API Key</Text>
-        <TextInput
-          style={styles.input}
-          value={openAIApiKey}
-          onChangeText={setOpenAIApiKey}
-          placeholder="Enter OpenAI API Key"
           secureTextEntry={true}
         />
         <CustomDropdown
@@ -274,6 +269,30 @@ function SettingsScreen(): React.JSX.Element {
           }}
           placeholder="Select a region"
         />
+        <Text style={[styles.label, styles.middleLabel]}>
+          Other Model Provider
+        </Text>
+        <CustomTextInput
+          label="Ollama API URL"
+          value={ollamaApiUrl}
+          onChangeText={setOllamaApiUrl}
+          placeholder="Enter Ollama API URL"
+        />
+        <CustomTextInput
+          label="OpenAI API Key"
+          value={openAIApiKey}
+          onChangeText={setOpenAIApiKey}
+          placeholder="Enter OpenAI API Key"
+          secureTextEntry={true}
+        />
+        <CustomTextInput
+          label="DeepSeek API Key"
+          value={deepSeekApiKey}
+          onChangeText={setDeepSeekApiKey}
+          placeholder="Enter Deep Seek API Key"
+          secureTextEntry={true}
+        />
+        <Text style={[styles.label, styles.middleLabel]}>Select Model</Text>
         <CustomDropdown
           label="Text Model"
           data={textModelsData}
@@ -418,6 +437,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: 'black',
+  },
+  firstLabel: {
+    marginBottom: 12,
+  },
+  middleLabel: {
+    marginTop: 10,
+    marginBottom: 12,
   },
   text: {
     fontSize: 14,

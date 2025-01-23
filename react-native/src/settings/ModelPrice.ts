@@ -81,9 +81,13 @@ function getImagePrice(
 
 export const ModelPrice: ModelPriceType = {
   textModelPrices: {
-    'DeepSeek v3': {
+    'DeepSeek-V3': {
       inputTokenPrice: 0.00014,
       outputTokenPrice: 0.00028,
+    },
+    'DeepSeek-R1': {
+      inputTokenPrice: 0.00055,
+      outputTokenPrice: 0.00219,
     },
     'GPT-4o': {
       inputTokenPrice: 0.0025,

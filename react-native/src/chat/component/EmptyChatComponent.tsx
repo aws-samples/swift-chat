@@ -25,10 +25,13 @@ export const EmptyChatComponent = ({
   const navigation = useNavigation<NavigationProp>();
   const isDeepSeek = getTextModel().modelId.includes('deepseek');
   const isOpenAI = getTextModel().modelId.includes('gpt');
+  const isOllama = getTextModel().modelId.startsWith('ollama-');
   const modelIcon = isDeepSeek
     ? require('../../assets/deepseek.png')
     : isOpenAI
     ? require('../../assets/openai.png')
+    : isOllama
+    ? require('../../assets/ollama-white.png')
     : require('../../assets/bedrock.png');
   const source =
     chatMode === ChatMode.Text ? modelIcon : require('../../assets/image.png');

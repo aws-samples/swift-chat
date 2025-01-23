@@ -44,7 +44,6 @@ export const invokeOpenAIWithCallBack = async (
     reactNative: { textStreaming: true },
   };
   const url = getApiURL();
-  let intervalId: ReturnType<typeof setInterval>;
   let completeMessage = '';
   const timeoutId = setTimeout(() => controller.abort(), 60000);
   fetch(url!, options)
@@ -58,15 +57,37 @@ export const invokeOpenAIWithCallBack = async (
       }
       const reader = body.getReader();
       const decoder = new TextDecoder();
+      let isFirstReason = true;
+      let isFirstContent = true;
+      let lastChunk = '';
       while (true) {
         const { done, value } = await reader.read();
         const chunk = decoder.decode(value, { stream: true });
-        const parsed = parseStreamData(chunk);
+        const parsed = parseStreamData(chunk, lastChunk);
         if (parsed.error) {
-          callback(parsed.error, true, true);
+          callback(completeMessage + '\n\n' + parsed.error, true, true);
           break;
         }
-        completeMessage += parsed.content;
+        if (parsed.reason) {
+          const formattedReason = parsed.reason.replace(/\n\n/g, '\n>\n>');
+          if (isFirstReason) {
+            completeMessage += '> ';
+            isFirstReason = false;
+          }
+          completeMessage += formattedReason;
+        }
+        if (parsed.content) {
+          if (!isFirstReason && isFirstContent) {
+            completeMessage += '\n\n';
+            isFirstContent = false;
+          }
+          completeMessage += parsed.content;
+        }
+        if (parsed.dataChunk) {
+          lastChunk = parsed.dataChunk;
+        } else {
+          lastChunk = '';
+        }
         if (parsed.usage && parsed.usage.inputTokens) {
           callback(completeMessage, false, false, parsed.usage);
         } else {
@@ -79,7 +100,6 @@ export const invokeOpenAIWithCallBack = async (
     })
     .catch(error => {
       console.log(error);
-      clearInterval(intervalId);
       if (shouldStop()) {
         if (completeMessage === '') {
           completeMessage = '...';
@@ -93,9 +113,10 @@ export const invokeOpenAIWithCallBack = async (
     });
 };
 
-const parseStreamData = (chunk: string) => {
-  const dataChunks = chunk.split('\n\n');
+const parseStreamData = (chunk: string, lastChunk: string = '') => {
+  const dataChunks = (lastChunk + chunk).split('\n\n');
   let content = '';
+  let reason = '';
   let usage: Usage | undefined;
 
   for (const dataChunk of dataChunks) {
@@ -114,6 +135,10 @@ const parseStreamData = (chunk: string) => {
         content += parsedData.choices[0].delta.content;
       }
 
+      if (parsedData.choices[0]?.delta?.reasoning_content) {
+        reason += parsedData.choices[0].delta.reasoning_content;
+      }
+
       if (parsedData.usage) {
         usage = {
           modelName: getTextModel().modelName,
@@ -125,17 +150,22 @@ const parseStreamData = (chunk: string) => {
         };
       }
     } catch (error) {
-      console.info('parse error:', error, cleanedData);
-      return { error: cleanedData };
+      if (lastChunk.length > 0) {
+        return { error: error + cleanedData };
+      }
+      if (reason || content) {
+        return { reason, content, dataChunk, usage };
+      }
     }
   }
-  return { content, usage };
+  return { reason, content, usage };
 };
 
 type ChatResponse = {
   choices: Array<{
     delta: {
       content: string;
+      reasoning_content: string;
     };
   }>;
   usage?: {

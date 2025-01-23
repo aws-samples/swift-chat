@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     zIndex: 999,
     paddingHorizontal: 4,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   dropdown: {
     height: 44,

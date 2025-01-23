@@ -16,23 +16,23 @@ const RegionList = [
 
 export const DefaultRegion = 'us-west-2';
 
+export const GPTModels = [
+  { modelName: 'GPT-4o', modelId: 'gpt-4o' },
+  { modelName: 'GPT-4o mini', modelId: 'gpt-4o-mini' },
+];
+
+export const DeepSeekModels = [
+  { modelName: 'DeepSeek-V3', modelId: 'deepseek-chat' },
+  { modelName: 'DeepSeek-R1', modelId: 'deepseek-reasoner' },
+];
+
 const DefaultTextModel = [
   {
     modelName: 'Nova Pro',
     modelId: 'us.amazon.nova-pro-v1:0',
   },
-  {
-    modelName: 'DeepSeek v3',
-    modelId: 'deepseek-chat',
-  },
-  {
-    modelName: 'GPT-4o',
-    modelId: 'gpt-4o',
-  },
-  {
-    modelName: 'GPT-4o mini',
-    modelId: 'gpt-4o-mini',
-  },
+  ...GPTModels,
+  ...DeepSeekModels,
 ];
 
 const DefaultImageModel = {
