@@ -43,7 +43,7 @@ import {
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';
-import { AllModel, DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
+import { DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
 
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
