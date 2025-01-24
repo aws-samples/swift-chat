@@ -24,7 +24,6 @@ export const invokeOllamaWithCallBack = async (
     model: getTextModel().modelId.split('ollama-')[1],
     messages: getOllamaMessages(messages, prompt),
   };
-  console.log(JSON.stringify(bodyObject, null, 2));
   const options = {
     method: 'POST',
     headers: {
@@ -90,25 +89,33 @@ export const invokeOllamaWithCallBack = async (
 const parseStreamData = (chunk: string) => {
   let content = '';
   let usage: Usage | undefined;
-
-  try {
-    const parsedData: OllamaResponse = JSON.parse(chunk);
-
-    if (parsedData.message?.content) {
-      content = parsedData.message?.content;
+  const dataChunks = chunk.split('\n');
+  for (let dataChunk of dataChunks) {
+    if (!dataChunk.trim()) {
+      continue;
     }
-
-    if (parsedData.done) {
-      usage = {
-        modelName: getTextModel().modelName,
-        inputTokens: parsedData.prompt_eval_count,
-        outputTokens: parsedData.eval_count,
-        totalTokens: parsedData.prompt_eval_count + parsedData.eval_count,
-      };
+    if (dataChunk[0] === '\n') {
+      dataChunk = dataChunk.slice(1);
     }
-  } catch (error) {
-    console.info('parse error:', error, chunk);
-    return { error: chunk };
+    try {
+      const parsedData: OllamaResponse = JSON.parse(dataChunk);
+
+      if (parsedData.message?.content) {
+        content += parsedData.message?.content;
+      }
+
+      if (parsedData.done) {
+        usage = {
+          modelName: getTextModel().modelName,
+          inputTokens: parsedData.prompt_eval_count,
+          outputTokens: parsedData.eval_count,
+          totalTokens: parsedData.prompt_eval_count + parsedData.eval_count,
+        };
+      }
+    } catch (error) {
+      console.info('parse error:', error, chunk);
+      return { error: chunk };
+    }
   }
   return { content, usage };
 };
@@ -164,7 +171,7 @@ export const requestAllOllamaModels = async (): Promise<Model[]> => {
     signal: controller.signal,
     reactNative: { textStreaming: true },
   };
-  const timeoutId = setTimeout(() => controller.abort(), 3000);
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
     const response = await fetch(modelsUrl, options);
     clearTimeout(timeoutId);

@@ -224,7 +224,7 @@ export const requestAllModels = async (): Promise<AllModel> => {
     body: JSON.stringify(bodyObject),
     reactNative: { textStreaming: true },
   };
-  const timeoutId = setTimeout(() => controller.abort(), 3000);
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
     const response = await fetch(url, options);
     clearTimeout(timeoutId);

@@ -31,8 +31,8 @@ const DefaultTextModel = [
     modelName: 'Nova Pro',
     modelId: 'us.amazon.nova-pro-v1:0',
   },
-  ...GPTModels,
   ...DeepSeekModels,
+  ...GPTModels,
 ];
 
 const DefaultImageModel = {

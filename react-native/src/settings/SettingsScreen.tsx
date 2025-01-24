@@ -60,6 +60,7 @@ import {
 import { showInfo } from '../chat/util/ToastUtils.ts';
 import CustomTextInput from './CustomTextInput.tsx';
 import { requestAllOllamaModels } from '../api/ollama-api.ts';
+import TabButton from './TabButton';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -167,9 +168,9 @@ function SettingsScreen(): React.JSX.Element {
     } else {
       response.textModel = [
         ...response.textModel,
-        ...GPTModels,
-        ...DeepSeekModels,
         ...ollamaModels,
+        ...DeepSeekModels,
+        ...GPTModels,
       ];
     }
     setTextModels(response.textModel);
@@ -304,28 +305,23 @@ function SettingsScreen(): React.JSX.Element {
         );
       case 'openai':
         return (
-          <View style={styles.apiKeyContainer}>
-            <View style={styles.apiKeyInputContainer}>
-              <CustomTextInput
-                label="OpenAI API Key"
-                value={openAIApiKey}
-                onChangeText={setOpenAIApiKey}
-                placeholder="Enter OpenAI API Key"
-                secureTextEntry={true}
-              />
-            </View>
-            <View
-              style={[
-                styles.proxyContainer,
-                isMac && styles.proxyMacContainer,
-              ]}>
-              <Text style={styles.proxyLabel}>Proxy</Text>
+          <>
+            <CustomTextInput
+              label="OpenAI API Key"
+              value={openAIApiKey}
+              onChangeText={setOpenAIApiKey}
+              placeholder="Enter OpenAI API Key"
+              secureTextEntry={true}
+            />
+            <View style={styles.proxySwitchContainer}>
+              <Text style={styles.proxyLabel}>Use Proxy</Text>
               <Switch
+                style={[isMac ? styles.switch : {}]}
                 value={openAIProxyEnabled}
                 onValueChange={toggleOpenAIProxy}
               />
             </View>
-          </View>
+          </>
         );
       default:
         return null;
@@ -336,56 +332,26 @@ function SettingsScreen(): React.JSX.Element {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
         <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              selectedTab === 'bedrock' && styles.selectedTab,
-            ]}
-            onPress={() => setSelectedTab('bedrock')}>
-            <Text
-              style={[
-                styles.tabText,
-                selectedTab === 'bedrock' && styles.selectedTabText,
-              ]}>
-              {isMac ? 'Amazon Bedrock' : 'Bedrock'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, selectedTab === 'ollama' && styles.selectedTab]}
-            onPress={() => setSelectedTab('ollama')}>
-            <Text
-              style={[
-                styles.tabText,
-                selectedTab === 'ollama' && styles.selectedTabText,
-              ]}>
-              Ollama
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              selectedTab === 'deepseek' && styles.selectedTab,
-            ]}
-            onPress={() => setSelectedTab('deepseek')}>
-            <Text
-              style={[
-                styles.tabText,
-                selectedTab === 'deepseek' && styles.selectedTabText,
-              ]}>
-              DeepSeek
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, selectedTab === 'openai' && styles.selectedTab]}
-            onPress={() => setSelectedTab('openai')}>
-            <Text
-              style={[
-                styles.tabText,
-                selectedTab === 'openai' && styles.selectedTabText,
-              ]}>
-              OpenAI
-            </Text>
-          </TouchableOpacity>
+          <TabButton
+            label={isMac ? 'Amazon Bedrock' : 'Bedrock'}
+            isSelected={selectedTab === 'bedrock'}
+            onPress={() => setSelectedTab('bedrock')}
+          />
+          <TabButton
+            label="Ollama"
+            isSelected={selectedTab === 'ollama'}
+            onPress={() => setSelectedTab('ollama')}
+          />
+          <TabButton
+            label="DeepSeek"
+            isSelected={selectedTab === 'deepseek'}
+            onPress={() => setSelectedTab('deepseek')}
+          />
+          <TabButton
+            label="OpenAI"
+            isSelected={selectedTab === 'openai'}
+            onPress={() => setSelectedTab('openai')}
+          />
         </View>
 
         <View style={styles.providerSettingsContainer}>
@@ -545,6 +511,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 12,
   },
+  proxyLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'black',
+    marginLeft: 2,
+  },
   text: {
     fontSize: 14,
     fontWeight: '400',
@@ -565,6 +537,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginVertical: 10,
+  },
+  proxySwitchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 0,
   },
   itemContainer: {
     flexDirection: 'row',
@@ -605,12 +583,6 @@ const styles = StyleSheet.create({
   proxyMacContainer: {
     marginTop: 10,
   },
-  proxyLabel: {
-    fontSize: 12,
-    color: 'black',
-    fontWeight: '500',
-    marginBottom: 6,
-  },
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 12,
@@ -619,33 +591,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     padding: 6,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  selectedTab: {
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  selectedTabText: {
-    color: '#000',
-  },
   providerSettingsContainer: {
     marginBottom: 8,
+  },
+  switch: {
+    marginRight: -14,
+    width: 32,
+    height: 32,
   },
 });
 
