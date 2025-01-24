@@ -89,6 +89,8 @@ function SettingsScreen(): React.JSX.Element {
   const [upgradeInfo, setUpgradeInfo] = useState<UpgradeInfo>(initUpgradeInfo);
   const [cost, setCost] = useState('0.00');
   const controllerRef = useRef<AbortController | null>(null);
+  const [selectedTab, setSelectedTab] = useState('bedrock');
+
   useEffect(() => {
     return navigation.addListener('focus', () => {
       setCost(getTotalCost(getModelUsage()).toString());
@@ -248,71 +250,148 @@ function SettingsScreen(): React.JSX.Element {
     saveOpenAIProxyEnabled(value);
   };
 
+  const renderProviderSettings = () => {
+    switch (selectedTab) {
+      case 'bedrock':
+        return (
+          <>
+            <CustomTextInput
+              label="API URL"
+              value={apiUrl}
+              onChangeText={setApiUrl}
+              placeholder="Enter API URL"
+            />
+            <CustomTextInput
+              label="API Key"
+              value={apiKey}
+              onChangeText={setApiKey}
+              placeholder="Enter API Key"
+              secureTextEntry={true}
+            />
+            <CustomDropdown
+              label="Region"
+              data={regionsData}
+              value={region}
+              onChange={(item: DropdownItem) => {
+                if (item.value !== '' && item.value !== region) {
+                  setRegion(item.value);
+                  saveRegion(item.value);
+                  fetchAndSetModelNames().then();
+                }
+              }}
+              placeholder="Select a region"
+            />
+          </>
+        );
+      case 'ollama':
+        return (
+          <CustomTextInput
+            label="Ollama API URL"
+            value={ollamaApiUrl}
+            onChangeText={setOllamaApiUrl}
+            placeholder="Enter Ollama API URL"
+          />
+        );
+      case 'deepseek':
+        return (
+          <CustomTextInput
+            label="DeepSeek API Key"
+            value={deepSeekApiKey}
+            onChangeText={setDeepSeekApiKey}
+            placeholder="Enter Deep Seek API Key"
+            secureTextEntry={true}
+          />
+        );
+      case 'openai':
+        return (
+          <View style={styles.apiKeyContainer}>
+            <View style={styles.apiKeyInputContainer}>
+              <CustomTextInput
+                label="OpenAI API Key"
+                value={openAIApiKey}
+                onChangeText={setOpenAIApiKey}
+                placeholder="Enter OpenAI API Key"
+                secureTextEntry={true}
+              />
+            </View>
+            <View
+              style={[
+                styles.proxyContainer,
+                isMac && styles.proxyMacContainer,
+              ]}>
+              <Text style={styles.proxyLabel}>Proxy</Text>
+              <Switch
+                value={openAIProxyEnabled}
+                onValueChange={toggleOpenAIProxy}
+              />
+            </View>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
-        <Text style={[styles.label, styles.firstLabel]}>Amazon Bedrock</Text>
-        <CustomTextInput
-          label="API URL"
-          value={apiUrl}
-          onChangeText={setApiUrl}
-          placeholder="Enter API URL"
-        />
-        <CustomTextInput
-          label="API Key"
-          value={apiKey}
-          onChangeText={setApiKey}
-          placeholder="Enter API Key"
-          secureTextEntry={true}
-        />
-        <CustomDropdown
-          label="Region"
-          data={regionsData}
-          value={region}
-          onChange={(item: DropdownItem) => {
-            if (item.value !== '' && item.value !== region) {
-              setRegion(item.value);
-              saveRegion(item.value);
-              fetchAndSetModelNames().then();
-            }
-          }}
-          placeholder="Select a region"
-        />
-        <Text style={[styles.label, styles.middleLabel]}>
-          Other Model Provider
-        </Text>
-        <CustomTextInput
-          label="Ollama API URL"
-          value={ollamaApiUrl}
-          onChangeText={setOllamaApiUrl}
-          placeholder="Enter Ollama API URL"
-        />
-        <CustomTextInput
-          label="DeepSeek API Key"
-          value={deepSeekApiKey}
-          onChangeText={setDeepSeekApiKey}
-          placeholder="Enter Deep Seek API Key"
-          secureTextEntry={true}
-        />
-        <View style={styles.apiKeyContainer}>
-          <View style={styles.apiKeyInputContainer}>
-            <CustomTextInput
-              label="OpenAI API Key"
-              value={openAIApiKey}
-              onChangeText={setOpenAIApiKey}
-              placeholder="Enter OpenAI API Key"
-              secureTextEntry={true}
-            />
-          </View>
-          <View
-            style={[styles.proxyContainer, isMac && styles.proxyMacContainer]}>
-            <Text style={styles.proxyLabel}>Proxy</Text>
-            <Switch
-              value={openAIProxyEnabled}
-              onValueChange={toggleOpenAIProxy}
-            />
-          </View>
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              selectedTab === 'bedrock' && styles.selectedTab,
+            ]}
+            onPress={() => setSelectedTab('bedrock')}>
+            <Text
+              style={[
+                styles.tabText,
+                selectedTab === 'bedrock' && styles.selectedTabText,
+              ]}>
+              {isMac ? 'Amazon Bedrock' : 'Bedrock'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'ollama' && styles.selectedTab]}
+            onPress={() => setSelectedTab('ollama')}>
+            <Text
+              style={[
+                styles.tabText,
+                selectedTab === 'ollama' && styles.selectedTabText,
+              ]}>
+              Ollama
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              selectedTab === 'deepseek' && styles.selectedTab,
+            ]}
+            onPress={() => setSelectedTab('deepseek')}>
+            <Text
+              style={[
+                styles.tabText,
+                selectedTab === 'deepseek' && styles.selectedTabText,
+              ]}>
+              DeepSeek
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'openai' && styles.selectedTab]}
+            onPress={() => setSelectedTab('openai')}>
+            <Text
+              style={[
+                styles.tabText,
+                selectedTab === 'openai' && styles.selectedTabText,
+              ]}>
+              OpenAI
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        <View style={styles.providerSettingsContainer}>
+          {renderProviderSettings()}
+        </View>
+
         <Text style={[styles.label, styles.middleLabel]}>Select Model</Text>
         <CustomDropdown
           label="Text Model"
@@ -531,6 +610,42 @@ const styles = StyleSheet.create({
     color: 'black',
     fontWeight: '500',
     marginBottom: 6,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    marginHorizontal: -2,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    padding: 6,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  selectedTab: {
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  selectedTabText: {
+    color: '#000',
+  },
+  providerSettingsContainer: {
+    marginBottom: 8,
   },
 });
 
