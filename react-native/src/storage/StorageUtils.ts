@@ -53,7 +53,7 @@ const modelUsageKey = keyPrefix + 'modelUsageKey';
 const systemPromptsKey = keyPrefix + 'systemPromptsKey';
 const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
-const serverProxyEnabledKey = keyPrefix + 'serverProxyEnabledKey';
+const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -64,7 +64,7 @@ let currentRegion: string | undefined;
 let currentImageModel: Model | undefined;
 let currentTextModel: Model | undefined;
 let currentSystemPrompts: SystemPrompt[] | undefined;
-let currentServerProxyEnabled: boolean | undefined;
+let currentOpenAIProxyEnabled: boolean | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -376,17 +376,17 @@ export function savePromptId(promptId: number) {
   storage.set(currentPromptIdKey, promptId);
 }
 
-export function saveServerProxyEnabled(enabled: boolean) {
-  currentServerProxyEnabled = enabled;
-  storage.set(serverProxyEnabledKey, enabled);
+export function saveOpenAIProxyEnabled(enabled: boolean) {
+  currentOpenAIProxyEnabled = enabled;
+  storage.set(openAIProxyEnabledKey, enabled);
 }
 
-export function getServerProxyEnabled() {
-  if (currentServerProxyEnabled !== undefined) {
-    return currentServerProxyEnabled;
+export function getOpenAIProxyEnabled() {
+  if (currentOpenAIProxyEnabled !== undefined) {
+    return currentOpenAIProxyEnabled;
   } else {
-    currentServerProxyEnabled =
-      storage.getBoolean(serverProxyEnabledKey) ?? false;
-    return currentServerProxyEnabled;
+    currentOpenAIProxyEnabled =
+      storage.getBoolean(openAIProxyEnabledKey) ?? true;
+    return currentOpenAIProxyEnabled;
   }
 }

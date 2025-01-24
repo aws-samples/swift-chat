@@ -3,7 +3,7 @@ import {
   getApiUrl,
   getDeepSeekApiKey,
   getOpenAIApiKey,
-  getServerProxyEnabled,
+  getOpenAIProxyEnabled,
   getTextModel,
 } from '../storage/StorageUtils.ts';
 import {
@@ -260,7 +260,7 @@ function getApiURL(): string {
   if (getTextModel().modelId.includes('deepseek')) {
     return 'https://api.deepseek.com/chat/completions';
   } else {
-    if (getServerProxyEnabled()) {
+    if (getOpenAIProxyEnabled()) {
       return (isDev ? 'http://localhost:8080' : getApiUrl()) + '/api/gpt';
     } else {
       return 'https://api.openai.com/v1/chat/completions';

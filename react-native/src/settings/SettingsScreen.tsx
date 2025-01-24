@@ -27,6 +27,7 @@ import {
   getModelUsage,
   getOllamaApiUrl,
   getOpenAIApiKey,
+  getOpenAIProxyEnabled,
   getRegion,
   getTextModel,
   isNewStabilityImageModel,
@@ -37,6 +38,7 @@ import {
   saveKeys,
   saveOllamaApiURL,
   saveOpenAIApiKey,
+  saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
 } from '../storage/StorageUtils.ts';
@@ -73,6 +75,9 @@ function SettingsScreen(): React.JSX.Element {
   const [ollamaApiUrl, setOllamaApiUrl] = useState(getOllamaApiUrl);
   const [deepSeekApiKey, setDeepSeekApiKey] = useState(getDeepSeekApiKey);
   const [openAIApiKey, setOpenAIApiKey] = useState(getOpenAIApiKey);
+  const [openAIProxyEnabled, setOpenAIProxyEnabled] = useState(
+    getOpenAIProxyEnabled
+  );
   const [region, setRegion] = useState(getRegion);
   const [imageSize, setImageSize] = useState(getImageSize);
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
@@ -238,6 +243,11 @@ function SettingsScreen(): React.JSX.Element {
     value: size,
   }));
 
+  const toggleOpenAIProxy = (value: boolean) => {
+    setOpenAIProxyEnabled(value);
+    saveOpenAIProxyEnabled(value);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
@@ -278,19 +288,31 @@ function SettingsScreen(): React.JSX.Element {
           placeholder="Enter Ollama API URL"
         />
         <CustomTextInput
-          label="OpenAI API Key"
-          value={openAIApiKey}
-          onChangeText={setOpenAIApiKey}
-          placeholder="Enter OpenAI API Key"
-          secureTextEntry={true}
-        />
-        <CustomTextInput
           label="DeepSeek API Key"
           value={deepSeekApiKey}
           onChangeText={setDeepSeekApiKey}
           placeholder="Enter Deep Seek API Key"
           secureTextEntry={true}
         />
+        <View style={styles.apiKeyContainer}>
+          <View style={styles.apiKeyInputContainer}>
+            <CustomTextInput
+              label="OpenAI API Key"
+              value={openAIApiKey}
+              onChangeText={setOpenAIApiKey}
+              placeholder="Enter OpenAI API Key"
+              secureTextEntry={true}
+            />
+          </View>
+          <View
+            style={[styles.proxyContainer, isMac && styles.proxyMacContainer]}>
+            <Text style={styles.proxyLabel}>Proxy</Text>
+            <Switch
+              value={openAIProxyEnabled}
+              onValueChange={toggleOpenAIProxy}
+            />
+          </View>
+        </View>
         <Text style={[styles.label, styles.middleLabel]}>Select Model</Text>
         <CustomDropdown
           label="Text Model"
@@ -488,6 +510,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginVertical: 10,
     paddingBottom: 60,
+  },
+  apiKeyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  apiKeyInputContainer: {
+    flex: 1,
+    marginRight: 10,
+  },
+  proxyContainer: {
+    marginBottom: 12,
+  },
+  proxyMacContainer: {
+    marginTop: 10,
+  },
+  proxyLabel: {
+    fontSize: 12,
+    color: 'black',
+    fontWeight: '500',
+    marginBottom: 6,
   },
 });
 
