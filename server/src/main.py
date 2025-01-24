@@ -1,7 +1,7 @@
 import base64
 from typing import List
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request as FastAPIRequest
 from fastapi.responses import StreamingResponse, PlainTextResponse
 import boto3
 import json
@@ -14,6 +14,7 @@ from typing import Annotated
 from urllib.request import urlopen, Request
 import time
 from image_nl_processor import get_native_request_with_ref_image, get_analyse_result
+import httpx
 
 app = FastAPI()
 security = HTTPBearer()
@@ -40,6 +41,17 @@ class ConverseRequest(BaseModel):
     modelId: str
     region: str
     system: List[dict] | None = None
+
+
+class StreamOptions(BaseModel):
+    include_usage: bool = True
+
+
+class GPTRequest(BaseModel):
+    model: str
+    messages: List[dict]
+    stream: bool = True
+    stream_options: StreamOptions
 
 
 class ModelsRequest(BaseModel):
@@ -208,6 +220,37 @@ async def upgrade(request: UpgradeRequest,
             elif request.os == 'mac':
                 url = download_prefix + new_version + "/SwiftChat.dmg"
     return {"needUpgrade": need_upgrade, "version": new_version, "url": url}
+
+
+@app.post("/api/gpt")
+async def converse_gpt(request: GPTRequest, raw_request: FastAPIRequest):
+    auth_header = raw_request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid auth header")
+    openai_api_key = auth_header.split(" ")[1]
+
+    async def event_generator():
+        async with httpx.AsyncClient() as client:
+            try:
+                async with client.stream(
+                        "POST",
+                        "https://api.openai.com/v1/chat/completions",
+                        json=request.model_dump(),
+                        headers={
+                            "Authorization": f"Bearer {openai_api_key}",
+                            "Content-Type": "application/json",
+                            "Accept": "text/event-stream"
+                        }
+                ) as response:
+                    async for line in response.aiter_bytes():
+                        if line:
+                            yield line
+
+            except Exception as err:
+                print("error:", err)
+                yield f"Error: {str(err)}".encode('utf-8')
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 def calculate_version_total(version: str) -> int:

@@ -2,3 +2,4 @@ fastapi~=0.112.1
 boto3==1.35.74
 pydantic~=2.8.2
 uvicorn~=0.30.6
+httpx~=0.28.1

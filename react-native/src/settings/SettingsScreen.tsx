@@ -65,7 +65,7 @@ const initUpgradeInfo: UpgradeInfo = {
   url: '',
 };
 
-const GITHUB_LINK = 'https://github.com/aws-samples/swift-chat';
+export const GITHUB_LINK = 'https://github.com/aws-samples/swift-chat';
 
 function SettingsScreen(): React.JSX.Element {
   const [apiUrl, setApiUrl] = useState(getApiUrl);
@@ -139,8 +139,7 @@ function SettingsScreen(): React.JSX.Element {
 
   const fetchAndSetModelNames = async () => {
     controllerRef.current = new AbortController();
-    let ollamaModels: Model[] = [];
-    ollamaModels = await requestAllOllamaModels();
+    const ollamaModels = await requestAllOllamaModels();
     const response = await requestAllModels();
     if (response.imageModel.length > 0) {
       setImageModels(response.imageModel);

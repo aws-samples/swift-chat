@@ -53,6 +53,7 @@ const modelUsageKey = keyPrefix + 'modelUsageKey';
 const systemPromptsKey = keyPrefix + 'systemPromptsKey';
 const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
+const serverProxyEnabledKey = keyPrefix + 'serverProxyEnabledKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -63,6 +64,7 @@ let currentRegion: string | undefined;
 let currentImageModel: Model | undefined;
 let currentTextModel: Model | undefined;
 let currentSystemPrompts: SystemPrompt[] | undefined;
+let currentServerProxyEnabled: boolean | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -372,4 +374,19 @@ export function getPromptId() {
 
 export function savePromptId(promptId: number) {
   storage.set(currentPromptIdKey, promptId);
+}
+
+export function saveServerProxyEnabled(enabled: boolean) {
+  currentServerProxyEnabled = enabled;
+  storage.set(serverProxyEnabledKey, enabled);
+}
+
+export function getServerProxyEnabled() {
+  if (currentServerProxyEnabled !== undefined) {
+    return currentServerProxyEnabled;
+  } else {
+    currentServerProxyEnabled =
+      storage.getBoolean(serverProxyEnabledKey) ?? false;
+    return currentServerProxyEnabled;
+  }
 }

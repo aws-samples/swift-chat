@@ -155,7 +155,6 @@ function getOllamaMessages(
 export const requestAllOllamaModels = async (): Promise<Model[]> => {
   const controller = new AbortController();
   const modelsUrl = getOllamaApiUrl() + '/api/tags';
-  console.log(modelsUrl);
   const options = {
     method: 'GET',
     headers: {

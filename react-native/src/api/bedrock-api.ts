@@ -32,7 +32,7 @@ type CallbackFunction = (
   needStop: boolean,
   usage?: Usage
 ) => void;
-const isDev = false;
+export const isDev = false;
 const USAGE_START = '\n{"inputTokens":';
 export const invokeBedrockWithCallBack = async (
   messages: BedrockMessage[],

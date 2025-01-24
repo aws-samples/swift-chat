@@ -1,14 +1,19 @@
 import { SystemPrompt, Usage } from '../types/Chat.ts';
 import {
+  getApiUrl,
   getDeepSeekApiKey,
   getOpenAIApiKey,
+  getServerProxyEnabled,
   getTextModel,
 } from '../storage/StorageUtils.ts';
 import {
   BedrockMessage,
+  ImageContent,
   OpenAIMessage,
   TextContent,
 } from '../chat/util/BedrockMessageConvertor.ts';
+import { isDev } from './bedrock-api.ts';
+import { GITHUB_LINK } from '../settings/SettingsScreen.tsx';
 
 type CallbackFunction = (
   result: string,
@@ -118,10 +123,12 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
   let content = '';
   let reason = '';
   let usage: Usage | undefined;
-
-  for (const dataChunk of dataChunks) {
+  for (let dataChunk of dataChunks) {
     if (!dataChunk.trim()) {
       continue;
+    }
+    if (dataChunk[0] === '\n') {
+      dataChunk = dataChunk.slice(1);
     }
     const cleanedData = dataChunk.replace(/^data: /, '');
     if (cleanedData.trim() === '[DONE]') {
@@ -130,7 +137,16 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
 
     try {
       const parsedData: ChatResponse = JSON.parse(cleanedData);
-
+      if (parsedData.error) {
+        return { error: parsedData.error.message };
+      }
+      if (parsedData.detail) {
+        return {
+          error:
+            `Error: Please upgrade your [server API](${GITHUB_LINK}?tab=readme-ov-file#upgrade-api), API ` +
+            parsedData.detail,
+        };
+      }
       if (parsedData.choices[0]?.delta?.content) {
         content += parsedData.choices[0].delta.content;
       }
@@ -174,6 +190,10 @@ type ChatResponse = {
     total_tokens: number;
     prompt_cache_hit_tokens: number;
   };
+  error?: {
+    message: string;
+  };
+  detail?: string;
 };
 
 function getOpenAIMessages(
@@ -182,12 +202,36 @@ function getOpenAIMessages(
 ): OpenAIMessage[] {
   return [
     ...(prompt ? [{ role: 'system', content: prompt.prompt }] : []),
-    ...messages.map(message => ({
-      role: message.role,
-      content: message.content
-        .map(content => (content as TextContent).text)
-        .join('\n'),
-    })),
+    ...messages.map(message => {
+      const hasImage = message.content.some(content => 'image' in content);
+      if (hasImage) {
+        return {
+          role: message.role,
+          content: message.content.map(content => {
+            if ('text' in content) {
+              return {
+                type: 'text' as const,
+                text: (content as TextContent).text,
+              };
+            } else {
+              const base64Data = (content as ImageContent).image.source.bytes;
+              return {
+                type: 'image_url' as const,
+                image_url: {
+                  url: `data:image/png;base64,${base64Data}`,
+                },
+              };
+            }
+          }),
+        };
+      }
+      return {
+        role: message.role,
+        content: message.content
+          .map(content => (content as TextContent).text)
+          .join('\n'),
+      };
+    }),
   ];
 }
 
@@ -203,6 +247,10 @@ function getApiURL(): string {
   if (getTextModel().modelId.includes('deepseek')) {
     return 'https://api.deepseek.com/chat/completions';
   } else {
-    return 'https://api.openai.com/v1/chat/completions';
+    if (getServerProxyEnabled()) {
+      return (isDev ? 'http://localhost:8080' : getApiUrl()) + '/api/gpt';
+    } else {
+      return 'https://api.openai.com/v1/chat/completions';
+    }
   }
 }
