@@ -15,8 +15,9 @@ import Toast from 'react-native-toast-message';
 import TokenUsageScreen from './settings/TokenUsageScreen.tsx';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
+import { isMacCatalyst } from './utils/PlatformUtils';
 
-export const isMac = false;
+export const isMac = isMacCatalyst;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const minWidth = screenWidth > screenHeight ? screenHeight : screenWidth;
 const width = minWidth > 434 ? 300 : minWidth * 0.83;
