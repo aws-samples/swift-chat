@@ -48,18 +48,24 @@ export const invokeOllamaWithCallBack = async (
       }
       const reader = body.getReader();
       const decoder = new TextDecoder();
+      let lastChunk = '';
       while (true) {
         const { done, value } = await reader.read();
         const chunk = decoder.decode(value, { stream: true });
         if (!chunk) {
           break;
         }
-        const parsed = parseStreamData(chunk);
+        const parsed = parseStreamData(chunk, lastChunk);
         if (parsed.error) {
           callback(parsed.error, true, true);
           break;
         }
         completeMessage += parsed.content;
+        if (parsed.dataChunk) {
+          lastChunk = parsed.dataChunk;
+        } else {
+          lastChunk = '';
+        }
         if (parsed.usage && parsed.usage.inputTokens) {
           callback(completeMessage, true, false, parsed.usage);
         } else {
@@ -86,10 +92,10 @@ export const invokeOllamaWithCallBack = async (
     });
 };
 
-const parseStreamData = (chunk: string) => {
+const parseStreamData = (chunk: string, lastChunk: string = '') => {
   let content = '';
   let usage: Usage | undefined;
-  const dataChunks = chunk.split('\n');
+  const dataChunks = (lastChunk + chunk).split('\n');
   for (let dataChunk of dataChunks) {
     if (!dataChunk.trim()) {
       continue;
@@ -113,8 +119,12 @@ const parseStreamData = (chunk: string) => {
         };
       }
     } catch (error) {
-      console.info('parse error:', error, chunk);
-      return { error: chunk };
+      if (lastChunk.length > 0) {
+        return { error: error + chunk };
+      }
+      if (content.length > 0) {
+        return { content, dataChunk, usage };
+      }
     }
   }
   return { content, usage };
