@@ -200,9 +200,9 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ![](assets/history_settings_zh.png)
 
-对于 Mac 版本，我们不仅支持历史记录的显示，还在 1.9.0 版本后添加了侧边栏固定显示模式。
+对于 Mac 版本，我们不仅支持历史记录的显示，还在 1.9.0 版本后添加了侧边栏固定显示模式，如下是在 Mac 上演示如何添加自定义系统提示词的动画。
 
-![](assets/mac_ui.png)
+![](assets/avif/english_teacher.avif)
 
 ### 消息处理
 

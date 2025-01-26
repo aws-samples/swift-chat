@@ -212,9 +212,9 @@ We feature streamlined chat History, Settings pages, and intuitive Usage statist
 ![](assets/history_settings.png)
 
 Similarly, for the Mac version, we not only support the display of history, but also added a permanent sidebar
-display mode after v1.9.0.
+display mode after v1.9.0, Below is a demo animation for how to add custom system prompt.
 
-![](assets/mac_ui.png)
+![](assets/avif/english_teacher.avif)
 
 ### Message Handling
 
