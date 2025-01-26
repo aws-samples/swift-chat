@@ -3,9 +3,9 @@
 # SwiftChat - A Cross-platform AI Chat App
 
 SwiftChat is a fast and responsive AI chat application developed with [React Native](https://reactnative.dev/) and
-powered by [Amazon Bedrock](https://aws.amazon.com/bedrock/). With its minimalist design philosophy and robust privacy
-protection, it delivers real-time streaming conversations and AI image generation capabilities across Android, iOS, and
-macOS platforms.
+powered by [Amazon Bedrock](https://aws.amazon.com/bedrock/), with compatibility extending to other model providers such
+as Ollama, DeepSeek, and OpenAI. With its minimalist design philosophy and robust privacy protection, it delivers
+real-time streaming conversations and AI image generation capabilities across Android, iOS, and macOS platforms.
 
 ![](assets/promo.png)
 
@@ -19,7 +19,7 @@ macOS platforms.
 - Cross-platform support (Android, iOS, macOS)
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
-- Multiple AI model support and switching
+- Multiple AI model support and switching (Amazon Bedrock, Ollama, DeepSeek and OpenAI, New feature from v1.10.0 🎉)
 - Fully Customizable System Prompt Assistant (New feature from v1.9.0 🎉)
 
 **Supported Features For Amazon Nova**
@@ -31,7 +31,6 @@ macOS platforms.
 - Support using natural language to make Nova Canvas generate images, remove backgrounds, replace backgrounds, and
   create images in similar styles.
 - Support LaTeX formula rendering (inline and display modes) for Amazon Nova.
-
 
 ### Feature Showcase
 
@@ -69,7 +68,7 @@ macOS platforms.
 We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation.
 All of these features are also seamlessly displayed on Android and macOS with native UI
 
-> Note: Some animated images have been sped up for demonstration. If you experience lag, please view on Chrome, Firefox, 
+> Note: Some animated images have been sped up for demonstration. If you experience lag, please view on Chrome, Firefox,
 > or Edge browser on your computer.
 
 ## Architecture
@@ -84,7 +83,7 @@ cost-effective
 solution, as shown in
 this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming).
 
-## Getting Started
+## Getting Started with Amazon Bedrock
 
 ### Prerequisites
 
@@ -95,7 +94,8 @@ Ensure you have access to Amazon Bedrock foundation models. SwiftChat default se
 - Image Model: `Stable Diffusion 3.5 Large`
 
 If you are using the image generation feature, please make sure you have enabled access to the `Amazon Nova Lite` model.
-Please follow the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to
+Please follow
+the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to
 enable your models.
 
 ### Step 1: Set up your API Key
@@ -105,11 +105,11 @@ enable your models.
 2. Check whether you are in the [supported region](#supported-region), then click on the **Create parameter** button.
 3. Fill in the parameters below, leaving other options as default:
 
-   - **Name**: Enter a parameter name (e.g., "SwiftChatAPIKey", will be used as `ApiKeyParam` in Step 2).
+    - **Name**: Enter a parameter name (e.g., "SwiftChatAPIKey", will be used as `ApiKeyParam` in Step 2).
 
-   - **Type**: Select `SecureString`
+    - **Type**: Select `SecureString`
 
-   - **Value**: Enter any string without spaces.(this will be your `API Key` in Step 3)
+    - **Value**: Enter any string without spaces.(this will be your `API Key` in Step 3)
 
 4. Click **Create parameter**.
 
@@ -118,17 +118,17 @@ enable your models.
 1. Click one of the following buttons to launch the CloudFormation Stack in the same region where your API Key was
    created.
 
-   - **App Runner**
+    - **App Runner**
 
-     [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
-   - **Lambda** (Note: For AWS customer use only)
+    - **Lambda** (Note: For AWS customer use only)
 
-     [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. Click **Next**, On the "Specify stack details" page, provide the following information:
-   - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
-   - For App Runner, choose an `InstanceTypeParam` based on your needs.
+    - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
+    - For App Runner, choose an `InstanceTypeParam` based on your needs.
 3. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 4. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
@@ -140,9 +140,9 @@ can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or
 
 1. Download the App
 
-   - Android App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.9.0/SwiftChat.apk)
-   - macOS App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.9.0/SwiftChat.dmg)
-   - iOS (Currently we do not provide the iOS version, you can build it locally with Xcode)
+    - Android App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.9.0/SwiftChat.apk)
+    - macOS App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.9.0/SwiftChat.dmg)
+    - iOS (Currently we do not provide the iOS version, you can build it locally with Xcode)
 
 2. Launch the App, open the drawer menu, and tap **Settings**.
 3. Paste the `API URL` and `API Key` then select the Region.
@@ -164,6 +164,37 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 - Europe (Paris): eu-west-3
 - South America (São Paulo): sa-east-1
 
+## Getting Started with Other Model Providers
+
+### Configure Ollama
+
+1. Navigate to the **Settings Page** and select the **Ollama** tab.
+2. Enter your Ollama Server URL. For example:
+    ```bash
+    http://localhost:11434
+    ```
+3. Once the correct Server URL is entered, you can select your desired Ollama models from the **Text Model** dropdown
+   list.
+
+### Configure DeepSeek
+
+1. Go to the **Settings Page** and select the **DeepSeek** tab.
+2. Input your DeepSeek API Key.
+3. Choose DeepSeek models from the **Text Model** dropdown list. Currently, the following DeepSeek models are supported:
+    - `DeepSeek-V3`
+    - `DeepSeek-R1`
+
+### Configure OpenAI
+
+1. Navigate to the **Settings Page** and select the **OpenAI** tab.
+2. Enter your OpenAI API Key.
+3. Select OpenAI models from the **Text Model** dropdown list. The following OpenAI models are currently supported:
+    - `GPT-4o`
+    - `GPT-4o mini`
+
+Additionally, if you have deployed the ClickStream Server, you can enable the **Use Proxy** option to forward your
+requests.
+
 ## Detailed Features
 
 **Quick Access Tools**: Code Copy, Selection Mode, Scroll Controls and Token Counter
@@ -178,7 +209,7 @@ We feature streamlined chat History, Settings pages, and intuitive Usage statist
 
 ![](assets/history_settings.png)
 
-Similarly, for the Mac version, we not only support the display of history, but also added a permanent sidebar 
+Similarly, for the Mac version, we not only support the display of history, but also added a permanent sidebar
 display mode after v1.9.0.
 
 ![](assets/mac_ui.png)
@@ -186,10 +217,10 @@ display mode after v1.9.0.
 ### Message Handling
 
 - [x] Text copy support:
-  - Copy button in message header
-  - Copy button in code blocks
-  - Direct Select and copy code on macOS (double click or long click on iOS)
-  - Long press text to copy entire sentence (Right-click on macOS)
+    - Copy button in message header
+    - Copy button in code blocks
+    - Direct Select and copy code on macOS (double click or long click on iOS)
+    - Long press text to copy entire sentence (Right-click on macOS)
 - [x] Text selection mode by tapping message title or double-clicking text
 - [x] Message timeline view in history
 - [x] Delete messages through long press in history
@@ -276,8 +307,8 @@ npm run android
 
 ### Build for iOS
 
-also open a new terminal, for the first time you need to install the native dependencies 
-by execute `cd ios && pod install && cd ..`, then execute the follow command:  
+also open a new terminal, for the first time you need to install the native dependencies
+by execute `cd ios && pod install && cd ..`, then execute the follow command:
 
 ```bash
 npm run ios
@@ -285,7 +316,7 @@ npm run ios
 
 ### Build for macOS
 
-1. Modify as `isMac = true` in `/src/App.tsx` and execute `npm start`.
+1. Execute `npm start`.
 2. Double click `ios/SwiftChat.xcworkspace` to open the project in your Xcode.
 3. Change the build destination to `My Mac (Mac Catalyst)` then click the ▶ Run button.
 

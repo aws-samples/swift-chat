@@ -2,9 +2,10 @@
 
 # SwiftChat - 跨平台 AI 聊天应用
 
-SwiftChat 是一个使用 [React Native](https://reactnative.dev/) 构建并由 [Amazon Bedrock](https://aws.amazon.com/bedrock/)
-提供支持的快速响应式 AI 聊天应用。它采用极简设计理念和强大的隐私保护，提供实时流式对话和 AI 图像生成功能，支持 Android、iOS 和
-macOS 等多个平台。
+SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https://reactnative.dev/)
+开发，并依托 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 提供强大支持，同时兼容 Ollama、DeepSeek 和 OpenAI
+等其他模型供应商。凭借其极简设计理念与坚实的隐私保护措施，该应用在 Android、iOS 和 macOS 平台上实现了实时流式对话及 AI
+图像生成功能。
 
 ![](assets/promo.png)
 
@@ -19,7 +20,7 @@ macOS 等多个平台。
 - 跨平台支持（Android、iOS、macOS）
 - 针对 iPad 和 Android 平板电脑进行 UI 优化
 - 快速启动和响应性能
-- 支持多种 AI 模型及切换
+- 支持多种 AI 模型及切换 (包括 Amazon Bedrock, Ollama, DeepSeek 以及 OpenAI, v1.10.0 的新功能 🎉)
 - 支持完全自定义的系统提示词助手 (v1.9.0 的新功能 🎉)
 
 **Amazon Nova 功能支持**
@@ -65,7 +66,8 @@ macOS 等多个平台。
 
 ![](assets/markdown_zh.png)
 
-我们重新设计了用户界面，优化了字体大小和行间距，呈现出更优雅、清爽的视觉效果。这些功能也都完美适配了 Android 和 macOS 的原生界面，确保了流畅的使用体验。
+我们重新设计了用户界面，优化了字体大小和行间距，呈现出更优雅、清爽的视觉效果。这些功能也都完美适配了 Android 和 macOS
+的原生界面，确保了流畅的使用体验。
 
 > 注意： 放了方便展示其中一些动图有加速处理。如您遇到动图卡顿的情况，请在电脑上使用 Chrome, Firefox 或者 Edge 浏览器进行查看。
 
@@ -79,7 +81,7 @@ macOS 等多个平台。
 的选项，以获得更具成本效益的解决方案，如 [示例](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming)
 所示。
 
-## 入门指南
+## 入门指南 - 使用 Amazon Bedrock 上的模型
 
 ### 前置条件
 
@@ -89,7 +91,8 @@ macOS 等多个平台。
 - 文本模型: `Amazon Nova Pro`
 - 图像模型: `Stable Diffusion 3.5 Large`
 
-如果您要使用图片生成功能，请确保已开启 `Amazon Nova Lite` 模型的访问权限。您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
+如果您要使用图片生成功能，请确保已开启 `Amazon Nova Lite`
+模型的访问权限。您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
 来启用您的模型。
 
 ### 第 1 步: 设置 API Key
@@ -97,26 +100,26 @@ macOS 等多个平台。
 1. 登录您的 AWS 控制台并右键点击 [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) 在新窗口中打开。
 2. 检查您是否在 [支持的区域](#支持的区域)，然后点击 **创建参数** 按钮。
 3. 完成以下参数填写，其他选项保持默认：
-   - **名称**：输入参数名称(例如 "SwiftChatAPIKey"，该名称将在步骤 2 中用作 `ApiKeyParam`)。
-   - **类型**：选择 `SecureString`。
-   - **值**：任何不含空格的字符串（该值将在步骤 3 的应用设置中作为 `API Key` 使用）。
+    - **名称**：输入参数名称(例如 "SwiftChatAPIKey"，该名称将在步骤 2 中用作 `ApiKeyParam`)。
+    - **类型**：选择 `SecureString`。
+    - **值**：任何不含空格的字符串（该值将在步骤 3 的应用设置中作为 `API Key` 使用）。
 4. 点击 **创建参数**。
 
 ### 第 2 步: 部署堆栈并获取 API URL
 
 1. 点击以下按钮中的一个，在 API Key 所在区域启动 CloudFormation 堆栈。
 
-   - **App Runner**
+    - **App Runner**
 
-     [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
-   - **Lambda** (注意：仅供 AWS 客户使用)
+    - **Lambda** (注意：仅供 AWS 客户使用)
 
-     [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. 点击 **下一步**，在"指定堆栈详细信息"页面中提供以下信息:
-   - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。
-   - 对于 App Runner，根据您的需求选择`InstanceTypeParam`。
+    - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。
+    - 对于 App Runner，根据您的需求选择`InstanceTypeParam`。
 3. 点击 **下一步**，保持 "配置堆栈选项" 页面默认设置，阅读功能并勾选底部的 "我确认，AWS CloudFormation 可能会创建 IAM 资源"
    复选框。
 4. 点击 **下一步**，在 "审核并创建" 中检查配置并点击 **提交**。
@@ -128,9 +131,9 @@ macOS 等多个平台。
 
 1. 下载应用
 
-   - Android 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.9.0/SwiftChat.apk)
-   - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.9.0/SwiftChat.dmg)
-   - iOS (目前不提供 iOS 版本，您可以使用 Xcode 在本地构建)
+    - Android 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.9.0/SwiftChat.apk)
+    - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.9.0/SwiftChat.dmg)
+    - iOS (目前不提供 iOS 版本，您可以使用 Xcode 在本地构建)
 
 2. 启动应用，点击左侧菜单按钮，并点击底部的 **Settings**。
 3. 粘贴`API URL`和`API Key`然后选择 Region。
@@ -151,6 +154,35 @@ macOS 等多个平台。
 - 欧洲(伦敦):eu-west-2
 - 欧洲(巴黎):eu-west-3
 - 南美洲(圣保罗):sa-east-1
+
+## 入门指南 - 使用其他模型提供商
+
+### 配置 Ollama
+
+1. 进入 **设置页面**，选择 **Ollama** 标签。
+2. 输入您的 Ollama 服务器 URL。例如：
+    ```bash
+    http://localhost:11434
+    ```
+3. 输入正确的服务器 URL 后，您可以从 **文本模型** 下拉列表中选择所需的 Ollama 模型。
+
+### 配置 DeepSeek
+
+1. 进入 **设置页面**，选择 **DeepSeek** 标签。
+2. 输入您的 DeepSeek API 密钥。
+3. 从 **文本模型** 下拉列表中选择 DeepSeek 模型。目前支持以下 DeepSeek 模型：
+    - `DeepSeek-V3`
+    - `DeepSeek-R1`
+
+### 配置 OpenAI
+
+1. 进入 **设置页面**，选择 **OpenAI** 标签。
+2. 输入您的 OpenAI API 密钥。
+3. 从 **文本模型** 下拉列表中选择 OpenAI 模型。目前支持以下 OpenAI 模型：
+    - `GPT-4o`
+    - `GPT-4o mini`
+
+此外，如果您已部署 ClickStream 服务器，可以启用 **使用代理** 选项以转发您的请求。
 
 ## 详细功能
 
@@ -173,10 +205,10 @@ macOS 等多个平台。
 ### 消息处理
 
 - [x] 文本复制支持：
-  - 点击消息标题栏右侧的复制按钮
-  - 点击代码块右上角的复制按钮
-  - 在 macOS 上可直接选择并复制代码（iOS 上双击或长按）
-  - 长按文本复制整句（macOS 上点击右键）
+    - 点击消息标题栏右侧的复制按钮
+    - 点击代码块右上角的复制按钮
+    - 在 macOS 上可直接选择并复制代码（iOS 上双击或长按）
+    - 长按文本复制整句（macOS 上点击右键）
 - [x] 通过点击消息标题或双击文本启用文本选择模式
 - [x] 历史消息按时间线展示
 - [x] 在历史记录中长按可删除消息
@@ -270,7 +302,7 @@ npm run ios
 
 ### 构建 macOS
 
-1. 在 `/src/App.tsx` 中将 `isMac` 修改为 `true` 并执行 `npm start`。
+1. 执行 `npm start`。
 2. 双击 `ios/SwiftChat.xcworkspace` 在 Xcode 中打开项目。
 3. 将构建目标更改为 `My Mac (Mac Catalyst)` 然后点击 ▶ 运行按钮。
 
