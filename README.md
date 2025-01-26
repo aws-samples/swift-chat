@@ -19,7 +19,7 @@ real-time streaming conversations and AI image generation capabilities across An
 - Cross-platform support (Android, iOS, macOS)
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
-- Multiple AI model support and switching (Amazon Bedrock, Ollama, DeepSeek and OpenAI, New feature from v1.10.0 🎉)
+- Multiple AI model supported (Amazon Bedrock, Ollama, DeepSeek and OpenAI, From v1.10.0 🎉)
 - Fully Customizable System Prompt Assistant (New feature from v1.9.0 🎉)
 
 **Supported Features For Amazon Nova**
