@@ -245,12 +245,8 @@ display mode after v1.9.0.
 - [x] Check detailed token usage and image generation count in Settings
 - [x] In-app upgrade notifications (Android & macOS)
 
-We have optimized the layout for landscape mode. As shown below, you can comfortably view table contents in landscape
+We have optimized the layout for landscape mode. As shown below, you can comfortably view table/code contents in landscape
 orientation.
-
-![](assets/landscape.png)
-
-Similarly, for code that requires horizontal scrolling, rotate to landscape mode for better viewing.
 
 ![](assets/avif/landscape.avif)
 

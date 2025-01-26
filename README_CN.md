@@ -234,11 +234,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 - [x] 在设置中查看详细的 token 使用情况和图片生成数量
 - [x] 应用内升级提示（Android 和 macOS）
 
-我们针对横屏做了相应优化，下图展示了通过横屏模式您可以很好地阅读表格内容。
-
-![](assets/landscape_zh.png)
-
-同样，对于需要横向滚动的代码，可以旋转至横屏模式以获得更好的查看体验。
+我们针对横屏做了相应优化，下图展示了通过横屏模式您可以很好地阅读表格和代码内容。
 
 ![](assets/avif/landscape.avif)
 
