@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 12,
-    marginHorizontal: -2,
+    marginHorizontal: Platform.OS === 'ios' ? -2 : 0,
     borderRadius: 8,
     backgroundColor: '#f5f5f5',
     padding: 6,

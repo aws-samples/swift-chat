@@ -194,8 +194,8 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
     - `GPT-4o`
     - `GPT-4o mini`
 
-Additionally, if you have deployed the ClickStream Server, you can enable the **Use Proxy** option to forward your
-requests.
+Additionally, if you have deployed the [ClickStream Server](#step-2-deploy-stack-and-get-your-api-url), you can enable
+the **Use Proxy** option to forward your requests.
 
 ## Detailed Features
 

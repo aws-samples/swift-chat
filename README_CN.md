@@ -184,7 +184,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     - `GPT-4o`
     - `GPT-4o mini`
 
-此外，如果您已部署 ClickStream 服务器，可以启用 **使用代理** 选项以转发您的请求。
+此外，如果您已部署 [ClickStream Server](#第-2-步-部署堆栈并获取-api-url)，可以启用 **Use Proxy** 选项以转发您的请求。
 
 ## 详细功能
 
