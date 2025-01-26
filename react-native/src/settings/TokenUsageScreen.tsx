@@ -173,14 +173,32 @@ function TokenUsageScreen(): React.JSX.Element {
           </View>
         </View>
         <Text
-          style={styles.priceLink}
+          style={styles.firstPriceLink}
           onPress={() =>
             Linking.openURL('https://aws.amazon.com/bedrock/pricing/')
           }>
-          * Estimated costs based on US region pricing. Actual charges may vary
-          by region. For accurate pricing, please refer to{' '}
-          <Text style={[styles.priceLink, styles.underline]}>
+          * Amazon Bedrock model pricing is estimated based on US region rates.
+          Actual costs may vary by region. For accurate pricing, please refer to{' '}
+          <Text style={[styles.firstPriceLink, styles.underline]}>
             Amazon Bedrock Pricing
+          </Text>
+        </Text>
+        <Text
+          style={styles.priceLink}
+          onPress={() =>
+            Linking.openURL('https://api-docs.deepseek.com/quick_start/pricing')
+          }>
+          * For DeepSeek models, please refer to{' '}
+          <Text style={[styles.priceLink, styles.underline]}>
+            DeepSeek API Pricing
+          </Text>
+        </Text>
+        <Text
+          style={styles.priceLink}
+          onPress={() => Linking.openURL('https://openai.com/api/pricing/')}>
+          * For OpenAI models, please refer to{' '}
+          <Text style={[styles.priceLink, styles.underline]}>
+            OpenAI API Pricing
           </Text>
         </Text>
       </ScrollView>
@@ -260,11 +278,18 @@ const styles = StyleSheet.create({
   pricingContainer: {
     marginTop: 16,
   },
-  priceLink: {
+  firstPriceLink: {
     marginTop: 16,
     fontSize: 12,
     color: 'grey',
-    paddingVertical: 8,
+    paddingVertical: 4,
+    textAlign: 'left',
+  },
+  priceLink: {
+    marginTop: 4,
+    fontSize: 12,
+    color: 'grey',
+    paddingVertical: 4,
     textAlign: 'left',
   },
   underline: {
