@@ -20,7 +20,9 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 - 跨平台支持（Android、iOS、macOS）
 - 针对 iPad 和 Android 平板电脑进行 UI 优化
 - 快速启动和响应性能
-- 支持多种 AI 模型及切换 (包括 Amazon Bedrock, Ollama, DeepSeek 以及 OpenAI, v1.10.0 的新功能 🎉)
+- 支持多种 AI 模型及切换 (
+  包括 [Amazon Bedrock](https://aws.amazon.com/bedrock/)，[Ollama](https://github.com/ollama/ollama)，[DeepSeek](https://www.deepseek.com/)
+  和 [OpenAI](https://openai.com/)，v1.10.0 的新功能 🎉)
 - 支持完全自定义的系统提示词助手 (v1.9.0 的新功能 🎉)
 
 **Amazon Nova 功能支持**

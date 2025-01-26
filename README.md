@@ -19,7 +19,9 @@ real-time streaming conversations and AI image generation capabilities across An
 - Cross-platform support (Android, iOS, macOS)
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
-- Multiple AI model supported (Amazon Bedrock, Ollama, DeepSeek and OpenAI, From v1.10.0 🎉)
+- Multiple AI model
+  supported ([Amazon Bedrock](https://aws.amazon.com/bedrock/), [Ollama](https://github.com/ollama/ollama), [DeepSeek](https://www.deepseek.com/)
+  and [OpenAI](https://openai.com/), From v1.10.0 🎉)
 - Fully Customizable System Prompt Assistant (New feature from v1.9.0 🎉)
 
 **Supported Features For Amazon Nova**
@@ -245,7 +247,8 @@ display mode after v1.9.0.
 - [x] Check detailed token usage and image generation count in Settings
 - [x] In-app upgrade notifications (Android & macOS)
 
-We have optimized the layout for landscape mode. As shown below, you can comfortably view table/code contents in landscape
+We have optimized the layout for landscape mode. As shown below, you can comfortably view table/code contents in
+landscape
 orientation.
 
 ![](assets/avif/landscape.avif)
