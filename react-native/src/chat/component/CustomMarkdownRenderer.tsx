@@ -40,15 +40,15 @@ import Disc from '@jsamr/counter-style/lib/es/presets/disc';
 import MathView from 'react-native-math-view';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
-const cachedNode: { [key: string]: React.ReactNode } = {};
-let currentNodeType = '';
-let currentCacheKey = '';
-let currentText = '';
-let currentNode: React.ReactNode;
+// const cachedNode: { [key: string]: React.ReactNode } = {};
+// let currentNodeType = '';
+// let currentCacheKey = '';
+// let currentText = '';
+// let currentNode: React.ReactNode;
 let mathViewIndex = 0;
 
 export function clearCachedNode() {
-  Object.keys(cachedNode).forEach(key => delete cachedNode[key]);
+  // Object.keys(cachedNode).forEach(key => delete cachedNode[key]);
 }
 
 function getMathKey() {
@@ -160,32 +160,32 @@ export class CustomMarkdownRenderer
     return hash >>> 0;
   }
 
-  private checkCache(
-    nodeType: string,
-    cacheKey: string,
-    text: string,
-    node: React.ReactNode
-  ) {
-    if (currentNodeType === '') {
-      currentNodeType = nodeType;
-    }
-    if (currentText === '') {
-      currentText = text;
-    }
-    if (currentNodeType !== nodeType) {
-      cachedNode[currentCacheKey] = currentNode;
-      currentNodeType = nodeType;
-    } else {
-      if (text.length <= currentText.length) {
-        if (!cachedNode[currentCacheKey]) {
-          cachedNode[currentCacheKey] = currentNode;
-        }
-      }
-    }
-    currentCacheKey = cacheKey;
-    currentNode = node;
-    currentText = text;
-  }
+  // private checkCache(
+  //   nodeType: string,
+  //   cacheKey: string,
+  //   text: string,
+  //   node: React.ReactNode
+  // ) {
+  //   if (currentNodeType === '') {
+  //     currentNodeType = nodeType;
+  //   }
+  //   if (currentText === '') {
+  //     currentText = text;
+  //   }
+  //   if (currentNodeType !== nodeType) {
+  //     cachedNode[currentCacheKey] = currentNode;
+  //     currentNodeType = nodeType;
+  //   } else {
+  //     if (text.length <= currentText.length) {
+  //       if (!cachedNode[currentCacheKey]) {
+  //         cachedNode[currentCacheKey] = currentNode;
+  //       }
+  //     }
+  //   }
+  //   currentCacheKey = cacheKey;
+  //   currentNode = node;
+  //   currentText = text;
+  // }
 
   getTextView(children: string | ReactNode[], styles?: TextStyle): ReactNode {
     return (
@@ -206,15 +206,15 @@ export class CustomMarkdownRenderer
   }
 
   codespan(text: string, styles?: TextStyle): ReactNode {
-    const cacheKey = `codespan:${this.hashStringDjb2(text.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `codespan:${this.hashStringDjb2(text.toString())}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     const codespan = this.getTextView(text, {
       ...styles,
       ...customStyles.codeSpanText,
     });
-    this.checkCache('codespan', cacheKey, text.toString(), codespan);
+    // this.checkCache('codespan', cacheKey, text.toString(), codespan);
     return codespan;
   }
 
@@ -222,12 +222,12 @@ export class CustomMarkdownRenderer
     if (Array.isArray(text)) {
       return this.getNodeForTextArray(text, styles);
     }
-    const cacheKey = `text:${this.hashStringDjb2(text.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `text:${this.hashStringDjb2(text.toString())}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     const textNode = this.getTextView(text, styles);
-    this.checkCache('text', cacheKey, text.toString(), textNode);
+    // this.checkCache('text', cacheKey, text.toString(), textNode);
     return textNode;
   }
 
@@ -235,12 +235,12 @@ export class CustomMarkdownRenderer
     if (Array.isArray(children)) {
       return this.getNodeForTextArray(children, styles);
     }
-    const cacheKey = `strong:${this.hashStringDjb2(children.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `strong:${this.hashStringDjb2(children.toString())}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     const strong = this.getTextView(children, styles);
-    this.checkCache('strong', cacheKey, children.toString(), strong);
+    // this.checkCache('strong', cacheKey, children.toString(), strong);
     return strong;
   }
 
@@ -248,23 +248,23 @@ export class CustomMarkdownRenderer
     if (Array.isArray(children)) {
       return this.getNodeForTextArray(children, styles);
     }
-    const cacheKey = `em:${this.hashStringDjb2(children.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `em:${this.hashStringDjb2(children.toString())}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     const em = this.getTextView(children, styles);
-    this.checkCache('em', cacheKey, children.toString(), em);
+    // this.checkCache('em', cacheKey, children.toString(), em);
     return em;
   }
 
   br(): ReactNode {
     const text = '\n';
-    const cacheKey = `br:${this.hashStringDjb2(text)}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `br:${this.hashStringDjb2(text)}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     const br = this.getTextView(text, {});
-    this.checkCache('br', cacheKey, text, br);
+    // this.checkCache('br', cacheKey, text, br);
     return br;
   }
 
@@ -272,12 +272,12 @@ export class CustomMarkdownRenderer
     if (Array.isArray(children)) {
       return this.getNodeForTextArray(children, styles);
     }
-    const cacheKey = `del:${this.hashStringDjb2(children.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `del:${this.hashStringDjb2(children.toString())}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     const del = this.getTextView(children, styles);
-    this.checkCache('del', cacheKey, children.toString(), del);
+    // this.checkCache('del', cacheKey, children.toString(), del);
     return del;
   }
 
@@ -285,12 +285,12 @@ export class CustomMarkdownRenderer
     if (Array.isArray(text)) {
       return this.getNodeForTextArray(text, styles);
     }
-    const cacheKey = `heading:${this.hashStringDjb2(text.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `heading:${this.hashStringDjb2(text.toString())}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     const heading = this.getTextView(text, styles);
-    this.checkCache('heading', cacheKey, text.toString(), heading);
+    // this.checkCache('heading', cacheKey, text.toString(), heading);
     return heading;
   }
 
@@ -298,12 +298,12 @@ export class CustomMarkdownRenderer
     if (Array.isArray(text)) {
       return this.getNodeForTextArray(text, styles);
     }
-    const cacheKey = `escape:${this.hashStringDjb2(text.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `escape:${this.hashStringDjb2(text.toString())}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     const escape = this.getTextView(text, styles);
-    this.checkCache('escape', cacheKey, text.toString(), escape);
+    // this.checkCache('escape', cacheKey, text.toString(), escape);
     return escape;
   }
 
@@ -343,10 +343,10 @@ export class CustomMarkdownRenderer
     _containerStyle?: ViewStyle,
     _textStyle?: TextStyle
   ): ReactNode {
-    const cacheKey = `code:${language}:${this.hashStringDjb2(text)}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
+    // const cacheKey = `code:${language}:${this.hashStringDjb2(text)}`;
+    // if (cachedNode[cacheKey]) {
+    //   return cachedNode[cacheKey];
+    // }
     if (text && text !== '') {
       const codeComponent = (
         <MemoizedCodeHighlighter
@@ -355,7 +355,7 @@ export class CustomMarkdownRenderer
           language={language}
         />
       );
-      this.checkCache('code', cacheKey, text, codeComponent);
+      // this.checkCache('code', cacheKey, text, codeComponent);
       return codeComponent;
     } else {
       return <></>;

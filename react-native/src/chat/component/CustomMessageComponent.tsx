@@ -156,15 +156,19 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
               onLayout={event => {
                 inputHeightRef.current = event.nativeEvent.layout.height;
               }}>
-              <Markdown
-                value={currentMessage.text}
-                flatListProps={{
-                  initialNumToRender: 8,
-                }}
-                styles={customMarkedStyles}
-                renderer={customMarkdownRenderer}
-                tokenizer={customTokenizer}
-              />
+              {currentMessage?.user._id !== 1 ? (
+                <Markdown
+                  value={currentMessage.text}
+                  flatListProps={{
+                    initialNumToRender: 8,
+                  }}
+                  styles={customMarkedStyles}
+                  renderer={customMarkdownRenderer}
+                  tokenizer={customTokenizer}
+                />
+              ) : (
+                <Text style={styles.questionText}>{currentMessage.text}</Text>
+              )}
             </View>
           </TapGestureHandler>
         )}
@@ -236,6 +240,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: 'black',
+  },
+  questionText: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 24,
+    paddingVertical: 8,
+    color: '#333333',
   },
   inputText: {
     fontSize: 16,
