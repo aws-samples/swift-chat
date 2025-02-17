@@ -43,26 +43,79 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const [copied, setCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const inputHeightRef = useRef(0);
-  const userName =
-    currentMessage?.user._id === 1
-      ? 'You'
-      : currentMessage?.user.name ?? 'Bedrock';
 
-  const isDeepSeek = userName.includes('DeepSeek');
-  const isOpenAI = userName.includes('GPT');
-  const isOllama = userName.includes(':');
-  const modelIcon = isDeepSeek
-    ? require('../../assets/deepseek.png')
-    : isOpenAI
-    ? require('../../assets/openai.png')
-    : isOllama
-    ? require('../../assets/ollama-white.png')
-    : require('../../assets/bedrock.png');
+  const setIsEditValue = useCallback(
+    (value: boolean) => {
+      if (chatStatus !== ChatStatus.Running) {
+        setIsEdit(value);
+      }
+    },
+    [chatStatus]
+  );
 
-  const imgSource =
-    currentMessage?.user._id === 1
-      ? require('../../assets/user.png')
-      : modelIcon;
+  const handleCopy = useCallback(() => {
+    if (isEdit) {
+      setIsEditValue(false);
+      return;
+    }
+    Clipboard.setString(currentMessage?.text ?? '');
+    setCopied(true);
+  }, [isEdit, setIsEditValue, currentMessage?.text]);
+
+  const userInfo = useMemo(() => {
+    if (!currentMessage) {
+      return { userName: '', imgSource: null };
+    }
+
+    const userName =
+      currentMessage.user._id === 1
+        ? 'You'
+        : currentMessage.user.name ?? 'Bedrock';
+    const isDeepSeek = userName.includes('DeepSeek');
+    const isOpenAI = userName.includes('GPT');
+    const isOllama = userName.includes(':');
+
+    const modelIcon = isDeepSeek
+      ? require('../../assets/deepseek.png')
+      : isOpenAI
+      ? require('../../assets/openai.png')
+      : isOllama
+      ? require('../../assets/ollama-white.png')
+      : require('../../assets/bedrock.png');
+
+    const imgSource =
+      currentMessage.user._id === 1
+        ? require('../../assets/user.png')
+        : modelIcon;
+
+    return { userName, imgSource };
+  }, [currentMessage]);
+
+  const headerContent = useMemo(() => {
+    return (
+      <>
+        <Image source={userInfo.imgSource} style={styles.avatar} />
+        <Text style={styles.name}>{userInfo.userName}</Text>
+      </>
+    );
+  }, [userInfo]);
+
+  const copyButton = useMemo(() => {
+    return (
+      <TouchableOpacity onPress={handleCopy} style={styles.copyContainer}>
+        <Image
+          source={
+            isEdit
+              ? require('../../assets/select.png')
+              : copied
+              ? require('../../assets/done.png')
+              : require('../../assets/copy_grey.png')
+          }
+          style={styles.copy}
+        />
+      </TouchableOpacity>
+    );
+  }, [isEdit, copied, handleCopy]);
 
   const handleImagePress = useCallback((pressMode: PressMode, url: string) => {
     if (pressMode === PressMode.Click) {
@@ -79,34 +132,21 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         .catch(err => err && console.log(err));
     }
   }, []);
+
   const customMarkdownRenderer = useMemo(
     () => new CustomMarkdownRenderer(handleImagePress),
     [handleImagePress]
   );
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
-  const handleCopy = () => {
-    if (isEdit) {
-      setIsEditValue(false);
-      return;
-    }
-    Clipboard.setString(currentMessage?.text ?? '');
-    setCopied(true);
-  };
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     setIsEditValue(!isEdit);
-  };
+  }, [isEdit, setIsEditValue]);
 
-  const onDoubleTap = () => {
+  const onDoubleTap = useCallback(() => {
     setIsEditValue(true);
-  };
-
-  const setIsEditValue = (value: boolean) => {
-    if (chatStatus !== ChatStatus.Running) {
-      setIsEdit(value);
-    }
-  };
+  }, [setIsEditValue]);
 
   useEffect(() => {
     if (copied) {
@@ -118,30 +158,40 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     }
   }, [copied]);
 
+  const messageContent = useMemo(() => {
+    if (!currentMessage) {
+      return null;
+    }
+
+    if (currentMessage.user._id !== 1) {
+      console.log('render markdown:', currentMessage.text);
+      return (
+        <Markdown
+          value={currentMessage.text}
+          flatListProps={{
+            initialNumToRender: 8,
+          }}
+          styles={customMarkedStyles}
+          renderer={customMarkdownRenderer}
+          tokenizer={customTokenizer}
+        />
+      );
+    }
+
+    return <Text style={styles.questionText}>{currentMessage.text}</Text>;
+  }, [currentMessage, customMarkdownRenderer, customTokenizer]);
+
   if (!currentMessage) {
     return null;
   }
-
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.header}
         activeOpacity={1}
         onPress={handleEdit}>
-        <Image source={imgSource} style={styles.avatar} />
-        <Text style={styles.name}>{userName}</Text>
-        <TouchableOpacity onPress={handleCopy} style={styles.copyContainer}>
-          <Image
-            source={
-              isEdit
-                ? require('../../assets/select.png')
-                : copied
-                ? require('../../assets/done.png')
-                : require('../../assets/copy_grey.png')
-            }
-            style={styles.copy}
-          />
-        </TouchableOpacity>
+        {headerContent}
+        {copyButton}
       </TouchableOpacity>
       <View style={styles.marked_box}>
         {!isEdit && (
@@ -156,19 +206,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
               onLayout={event => {
                 inputHeightRef.current = event.nativeEvent.layout.height;
               }}>
-              {currentMessage?.user._id !== 1 ? (
-                <Markdown
-                  value={currentMessage.text}
-                  flatListProps={{
-                    initialNumToRender: 8,
-                  }}
-                  styles={customMarkedStyles}
-                  renderer={customMarkdownRenderer}
-                  tokenizer={customTokenizer}
-                />
-              ) : (
-                <Text style={styles.questionText}>{currentMessage.text}</Text>
-              )}
+              {messageContent}
             </View>
           </TapGestureHandler>
         )}
@@ -270,4 +308,10 @@ const customMarkedStyles: MarkedStyles = {
   blockquote: { marginVertical: 8 },
 };
 
-export default CustomMessageComponent;
+export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.currentMessage?.text === nextProps.currentMessage?.text &&
+    prevProps.currentMessage?.image === nextProps.currentMessage?.image &&
+    prevProps.chatStatus === nextProps.chatStatus
+  );
+});

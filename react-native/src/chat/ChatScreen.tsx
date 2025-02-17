@@ -114,13 +114,13 @@ function ChatScreen(): React.JSX.Element {
   const usageRef = useRef(usage);
   const systemPromptRef = useRef(systemPrompt);
   const drawerTypeRef = useRef(drawerType);
+  const lastMessageRef = useRef('');
 
   // update refs value with state
   useEffect(() => {
     messagesRef.current = messages;
     chatStatusRef.current = chatStatus;
     usageRef.current = usage;
-    setShowSystemPrompt(messages.length === 0);
   }, [chatStatus, messages, usage]);
 
   useEffect(() => {
@@ -146,6 +146,7 @@ function ChatScreen(): React.JSX.Element {
       clearCachedNode();
       setMessages([]);
       bedrockMessages.current = [];
+      lastMessageRef.current = '';
       showKeyboard();
     }, [])
   );
@@ -418,17 +419,22 @@ function ChatScreen(): React.JSX.Element {
               }));
               updateTotalUsage(usageInfo);
             }
-            setMessages(prevMessages => {
-              const newMessages = [...prevMessages];
-              newMessages[0] = {
-                ...prevMessages[0],
-                text: msg,
-              };
-              return newMessages;
-            });
+
+            if (lastMessageRef.current !== msg) {
+              lastMessageRef.current = msg;
+              setMessages(prevMessages => {
+                const newMessages = [...prevMessages];
+                newMessages[0] = {
+                  ...prevMessages[0],
+                  text: msg,
+                };
+                return newMessages;
+              });
+            }
           };
           const setComplete = () => {
             trigger(HapticFeedbackTypes.notificationSuccess);
+            lastMessageRef.current = '';
             setChatStatus(ChatStatus.Complete);
           };
           if (modeRef.current === ChatMode.Text) {
@@ -458,6 +464,7 @@ function ChatScreen(): React.JSX.Element {
 
   // handle onSend
   const onSend = useCallback((message: IMessage[] = []) => {
+    setShowSystemPrompt(false);
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
       showInfo('please wait for all videos to be ready');
