@@ -15,9 +15,8 @@ import {
   View,
 } from 'react-native';
 import Share from 'react-native-share';
-import Markdown from 'react-native-marked';
 import { IMessage, MessageProps } from 'react-native-gifted-chat';
-import { CustomMarkdownRenderer } from './CustomMarkdownRenderer.tsx';
+import { CustomMarkdownRenderer } from './markdown/CustomMarkdownRenderer.tsx';
 import { MarkedStyles } from 'react-native-marked/src/theme/types.ts';
 import { ChatStatus, PressMode } from '../../types/Chat.ts';
 import { trigger } from '../util/HapticUtils.ts';
@@ -29,8 +28,9 @@ import {
 } from './CustomFileListComponent.tsx';
 import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
-import { CustomTokenizer } from './CustomTokenizer.ts';
+import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
+import Markdown from "./markdown/Markdown.tsx";
 
 interface CustomMessageProps extends MessageProps<IMessage> {
   chatStatus: ChatStatus;

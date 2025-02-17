@@ -20,7 +20,7 @@ import SyntaxHighlighter, {
   type SyntaxHighlighterProps,
 } from 'react-syntax-highlighter';
 import transform, { StyleTuple } from 'css-to-react-native';
-import { isMac } from '../../App.tsx';
+import { isMac } from '../../../App.tsx';
 import { trimNewlines } from 'trim-newlines';
 
 type ReactStyle = Record<string, CSSProperties>;

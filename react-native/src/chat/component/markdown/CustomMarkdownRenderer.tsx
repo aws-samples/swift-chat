@@ -29,8 +29,8 @@ import { Table, Cell, TableWrapper } from 'react-native-table-component';
 import RNFS from 'react-native-fs';
 import MDSvg from 'react-native-marked/src/components/MDSvg.tsx';
 import MDImage from 'react-native-marked/src/components/MDImage.tsx';
-import ImageProgressBar from './ImageProgressBar.tsx';
-import { PressMode } from '../../types/Chat.ts';
+import ImageProgressBar from '../ImageProgressBar.tsx';
+import { PressMode } from '../../../types/Chat.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
 import MarkedList from '@jsamr/react-native-li';
 import Decimal from '@jsamr/counter-style/lib/es/presets/decimal';
@@ -72,8 +72,8 @@ export const CopyButton: React.FC<CopyButtonProps> = React.memo(
     // UseMemo to memoize the image source to prevent flickering
     const imageSource = useMemo(() => {
       return copied
-        ? require('../../assets/done.png')
-        : require('../../assets/copy.png');
+        ? require('../../../assets/done.png')
+        : require('../../../assets/copy.png');
     }, [copied]);
 
     useEffect(() => {

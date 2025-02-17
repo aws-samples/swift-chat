@@ -47,7 +47,7 @@ import {
 } from './util/BedrockMessageConvertor.ts';
 import { trigger } from './util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
-import { clearCachedNode } from './component/CustomMarkdownRenderer.tsx';
+import { clearCachedNode } from './component/markdown/CustomMarkdownRenderer.tsx';
 import { isMac } from '../App.tsx';
 import { CustomChatFooter } from './component/CustomChatFooter.tsx';
 import {
@@ -147,6 +147,7 @@ function ChatScreen(): React.JSX.Element {
       setMessages([]);
       bedrockMessages.current = [];
       lastMessageRef.current = '';
+      setShowSystemPrompt(true);
       showKeyboard();
     }, [])
   );
