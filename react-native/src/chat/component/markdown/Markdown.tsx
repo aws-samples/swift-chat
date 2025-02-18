@@ -49,6 +49,7 @@ const Markdown = ({
       keyExtractor={keyExtractor}
       maxToRenderPerBatch={8}
       initialNumToRender={8}
+      /* eslint-disable-next-line react-native/no-inline-styles */
       style={{
         backgroundColor: colorScheme === 'light' ? '#ffffff' : '#000000',
       }}

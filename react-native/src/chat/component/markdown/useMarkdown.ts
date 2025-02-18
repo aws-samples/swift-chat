@@ -60,6 +60,10 @@ const useMarkdown = (
       return [];
     }
 
+    // return the cached elements when no changes
+    if (value === cacheRef.current.lastValue) {
+      return cacheRef.current.cachedElements;
+    }
     // If it's the first time, new answer, or rendering new session, parse directly
     if (
       cacheRef.current.lastValue.length === 0 ||
@@ -94,13 +98,20 @@ const useMarkdown = (
     const lastToken = cacheRef.current.cachedTokens[lastTokenIndex];
 
     // Combine the text of the last token with new text to get the latest content to parse
-    const combinedText = lastToken.raw + newContent;
+    let combinedText = lastToken.raw + newContent;
+    if (lastToken.type === 'space') {
+      combinedText =
+        cacheRef.current.cachedTokens[lastTokenIndex - 1].raw + combinedText;
+    }
 
     // Get new tokens
     const newTokens = marked.lexer(combinedText, {
       gfm: true,
       tokenizer: options?.tokenizer as Tokenizer<never>,
     });
+
+    // Parse new tokens into new Elements
+    const newElements = parser.parse(newTokens);
 
     // Merge tokens: remove the last token from cache, add newly parsed tokens
     const mergedTokens = cacheRef.current.cachedTokens;
@@ -110,9 +121,6 @@ const useMarkdown = (
       mergedTokens.push(...newTokens);
     }
 
-    // Parse new tokens into new Elements
-    const newElements = parser.parse(newTokens);
-
     // Merge new Elements into final Elements
     const mergedElements = cacheRef.current.cachedElements;
     if (mergedElements.length > 0) {
@@ -120,14 +128,12 @@ const useMarkdown = (
     } else {
       mergedElements.push(...newElements);
     }
-
     // Update cache with new references
     cacheRef.current = {
       lastValue: value,
       cachedTokens: mergedTokens,
       cachedElements: mergedElements,
     };
-
     return mergedElements;
   }, [value, parser, options?.tokenizer, options?.chatStatus]);
 };

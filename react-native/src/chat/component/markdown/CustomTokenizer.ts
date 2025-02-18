@@ -50,7 +50,9 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
     return null;
   }
 
-  paragraph(src: string): ReturnType<MarkedTokenizer<CustomToken>['paragraph']> {
+  paragraph(
+    src: string
+  ): ReturnType<MarkedTokenizer<CustomToken>['paragraph']> {
     const latex = this.processLatex(src);
     if (latex && latex.token) {
       return latex.token;

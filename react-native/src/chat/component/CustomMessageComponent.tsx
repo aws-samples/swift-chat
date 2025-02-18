@@ -30,7 +30,7 @@ import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
 import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
-import Markdown from "./markdown/Markdown.tsx";
+import Markdown from './markdown/Markdown.tsx';
 
 interface CustomMessageProps extends MessageProps<IMessage> {
   chatStatus: ChatStatus;
@@ -43,6 +43,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const [copied, setCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const inputHeightRef = useRef(0);
+  const chatStatusRef = useRef(chatStatus);
 
   const setIsEditValue = useCallback(
     (value: boolean) => {
@@ -173,7 +174,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           styles={customMarkedStyles}
           renderer={customMarkdownRenderer}
           tokenizer={customTokenizer}
-          chatStatus={chatStatus}
+          chatStatus={chatStatusRef.current}
         />
       );
     }
