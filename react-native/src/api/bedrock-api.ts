@@ -100,6 +100,7 @@ export const invokeBedrockWithCallBack = async (
       reactNative: { textStreaming: true },
     };
     const url = getApiPrefix() + '/converse';
+    let intervalId: ReturnType<typeof setInterval>;
     let completeMessage = '';
     const timeoutId = setTimeout(() => controller.abort(), 60000);
     fetch(url!, options)
@@ -142,6 +143,7 @@ export const invokeBedrockWithCallBack = async (
         }
       })
       .catch(error => {
+        clearInterval(intervalId);
         if (shouldStop()) {
           if (completeMessage === '') {
             completeMessage = '...';

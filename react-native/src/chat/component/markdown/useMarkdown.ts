@@ -1,5 +1,5 @@
-import { useMemo, type ReactNode } from 'react';
-import { type Tokenizer, marked } from 'marked';
+import { type ReactNode, useMemo, useRef } from 'react';
+import { marked, type Tokenizer } from 'marked';
 import type {
   MarkedStyles,
   UserTheme,
@@ -12,6 +12,7 @@ import type {
   CustomToken,
   RendererInterface,
 } from 'react-native-marked/src/lib/types';
+import { ChatStatus } from '../../../types/Chat.ts';
 
 export interface useMarkdownHookOptions {
   colorScheme?: ColorSchemeName;
@@ -20,6 +21,7 @@ export interface useMarkdownHookOptions {
   styles?: MarkedStyles;
   baseUrl?: string;
   tokenizer?: Tokenizer<CustomToken>;
+  chatStatus?: ChatStatus;
 }
 
 const useMarkdown = (
@@ -41,16 +43,93 @@ const useMarkdown = (
     [options?.renderer, options?.baseUrl, styles]
   );
 
-  const elements = useMemo(() => {
-    const tokens = marked.lexer(value, {
+  // Use useRef to store cache to prevent loss during re-renders
+  const cacheRef = useRef<{
+    lastValue: string;
+    cachedTokens: ReturnType<typeof marked.lexer>;
+    cachedElements: ReactNode[];
+  }>({
+    lastValue: '',
+    cachedTokens: marked.lexer(''),
+    cachedElements: [],
+  });
+
+  return useMemo(() => {
+    // Early return for empty value
+    if (!value) {
+      return [];
+    }
+
+    // If it's the first time, new answer, or rendering new session, parse directly
+    if (
+      cacheRef.current.lastValue.length === 0 ||
+      value.length < cacheRef.current.lastValue.length ||
+      options?.chatStatus === ChatStatus.Init
+    ) {
+      const tokens = marked.lexer(value, {
+        gfm: true,
+        tokenizer: options?.tokenizer as Tokenizer<never>,
+      });
+      const elements = parser.parse(tokens);
+
+      // Only update cache during streaming response
+      if (options?.chatStatus === ChatStatus.Running && value !== '...') {
+        cacheRef.current = {
+          lastValue: value,
+          cachedTokens: tokens,
+          cachedElements: elements,
+        };
+      }
+      return elements;
+    }
+
+    // Get the streaming appended content
+    const newContent = value.slice(cacheRef.current.lastValue.length);
+    if (!newContent) {
+      return cacheRef.current.cachedElements;
+    }
+
+    // Get the last token for combining
+    const lastTokenIndex = cacheRef.current.cachedTokens.length - 1;
+    const lastToken = cacheRef.current.cachedTokens[lastTokenIndex];
+
+    // Combine the text of the last token with new text to get the latest content to parse
+    const combinedText = lastToken.raw + newContent;
+
+    // Get new tokens
+    const newTokens = marked.lexer(combinedText, {
       gfm: true,
       tokenizer: options?.tokenizer as Tokenizer<never>,
     });
-    console.log('-----------', tokens);
-    return parser.parse(tokens);
-  }, [value, parser, options?.tokenizer]);
 
-  return elements;
+    // Merge tokens: remove the last token from cache, add newly parsed tokens
+    const mergedTokens = cacheRef.current.cachedTokens;
+    if (mergedTokens.length > 0) {
+      mergedTokens.splice(mergedTokens.length - 1, 1, ...newTokens);
+    } else {
+      mergedTokens.push(...newTokens);
+    }
+
+    // Parse new tokens into new Elements
+    const newElements = parser.parse(newTokens);
+
+    // Merge new Elements into final Elements
+    const mergedElements = cacheRef.current.cachedElements;
+    if (mergedElements.length > 0) {
+      mergedElements.splice(mergedElements.length - 1, 1, ...newElements);
+    } else {
+      mergedElements.push(...newElements);
+    }
+
+    // Update cache with new references
+    cacheRef.current = {
+      lastValue: value,
+      cachedTokens: mergedTokens,
+      cachedElements: mergedElements,
+    };
+
+    return mergedElements;
+  }, [value, parser, options?.tokenizer, options?.chatStatus]);
 };
 
 export default useMarkdown;

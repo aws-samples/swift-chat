@@ -164,7 +164,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     }
 
     if (currentMessage.user._id !== 1) {
-      console.log('render markdown:', currentMessage.text);
       return (
         <Markdown
           value={currentMessage.text}
@@ -174,6 +173,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           styles={customMarkedStyles}
           renderer={customMarkdownRenderer}
           tokenizer={customTokenizer}
+          chatStatus={chatStatus}
         />
       );
     }
