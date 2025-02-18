@@ -50,29 +50,48 @@ export const invokeOllamaWithCallBack = async (
       const decoder = new TextDecoder();
       let lastChunk = '';
       while (true) {
-        const { done, value } = await reader.read();
-        const chunk = decoder.decode(value, { stream: true });
-        if (!chunk) {
-          break;
+        if (shouldStop()) {
+          await reader.cancel();
+          if (completeMessage === '') {
+            completeMessage = '...';
+          }
+          callback(completeMessage, true, true);
+          return;
         }
-        const parsed = parseStreamData(chunk, lastChunk);
-        if (parsed.error) {
-          callback(parsed.error, true, true);
-          break;
-        }
-        completeMessage += parsed.content;
-        if (parsed.dataChunk) {
-          lastChunk = parsed.dataChunk;
-        } else {
-          lastChunk = '';
-        }
-        if (parsed.usage && parsed.usage.inputTokens) {
-          callback(completeMessage, true, false, parsed.usage);
-        } else {
-          callback(completeMessage, done, false);
-        }
-        if (done) {
-          break;
+
+        try {
+          const { done, value } = await reader.read();
+          const chunk = decoder.decode(value, { stream: true });
+          if (!chunk) {
+            return;
+          }
+          const parsed = parseStreamData(chunk, lastChunk);
+          if (parsed.error) {
+            callback(parsed.error, true, true);
+            return;
+          }
+          completeMessage += parsed.content;
+          if (parsed.dataChunk) {
+            lastChunk = parsed.dataChunk;
+          } else {
+            lastChunk = '';
+          }
+          if (parsed.usage && parsed.usage.inputTokens) {
+            callback(completeMessage, true, false, parsed.usage);
+            return;
+          } else {
+            callback(completeMessage, done, false);
+          }
+          if (done) {
+            return;
+          }
+        } catch (readError) {
+          console.log('Error reading stream:', readError);
+          if (completeMessage === '') {
+            completeMessage = '...';
+          }
+          callback(completeMessage, true, true);
+          return;
         }
       }
     })

@@ -100,7 +100,6 @@ export const invokeBedrockWithCallBack = async (
       reactNative: { textStreaming: true },
     };
     const url = getApiPrefix() + '/converse';
-    let intervalId: ReturnType<typeof setInterval>;
     let completeMessage = '';
     const timeoutId = setTimeout(() => controller.abort(), 60000);
     fetch(url!, options)
@@ -115,35 +114,53 @@ export const invokeBedrockWithCallBack = async (
         const reader = body.getReader();
         const decoder = new TextDecoder();
         while (true) {
-          const { done, value } = await reader.read();
-          const chunk = decoder.decode(value, { stream: true });
-          if (
-            chunk[chunk.length - 1] === '}' &&
-            chunk.includes('\n') &&
-            chunk.indexOf(USAGE_START) !== -1
-          ) {
-            const index = chunk.indexOf(USAGE_START);
-            let usage: Usage;
-            if (index > 0) {
-              usage = JSON.parse(chunk.slice(index + 1));
-              completeMessage += chunk.substring(0, index);
-              callback(completeMessage, false, false);
-            } else {
-              usage = JSON.parse(chunk.slice(1));
+          if (shouldStop()) {
+            await reader.cancel();
+            if (completeMessage === '') {
+              completeMessage = '...';
             }
-            usage.modelName = getTextModel().modelName;
-            callback(completeMessage, false, false, usage);
-          } else {
-            completeMessage += chunk;
-            callback(completeMessage, done, false);
+            callback(completeMessage, true, true);
+            return;
           }
-          if (done) {
-            break;
+
+          try {
+            const { done, value } = await reader.read();
+            const chunk = decoder.decode(value, { stream: true });
+            if (
+              chunk[chunk.length - 1] === '}' &&
+              chunk.includes('\n') &&
+              chunk.indexOf(USAGE_START) !== -1
+            ) {
+              const index = chunk.indexOf(USAGE_START);
+              let usage: Usage;
+              if (index > 0) {
+                usage = JSON.parse(chunk.slice(index + 1));
+                completeMessage += chunk.substring(0, index);
+                callback(completeMessage, false, false);
+              } else {
+                usage = JSON.parse(chunk.slice(1));
+              }
+              usage.modelName = getTextModel().modelName;
+              callback(completeMessage, false, false, usage);
+            } else {
+              completeMessage += chunk;
+              callback(completeMessage, done, false);
+            }
+            if (done) {
+              return;
+            }
+          } catch (readError) {
+            console.log('Error reading stream:', readError);
+            if (completeMessage === '') {
+              completeMessage = '...';
+            }
+            callback(completeMessage, true, true);
+            return;
           }
         }
       })
       .catch(error => {
-        clearInterval(intervalId);
+        clearTimeout(timeoutId);
         if (shouldStop()) {
           if (completeMessage === '') {
             completeMessage = '...';

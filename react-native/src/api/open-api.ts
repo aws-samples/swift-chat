@@ -67,45 +67,64 @@ export const invokeOpenAIWithCallBack = async (
       let isFirstContent = true;
       let lastChunk = '';
       while (true) {
-        const { done, value } = await reader.read();
-        const chunk = decoder.decode(value, { stream: true });
-        const parsed = parseStreamData(chunk, lastChunk);
-        if (parsed.error) {
-          callback(completeMessage + '\n\n' + parsed.error, true, true);
-          break;
-        }
-        if (parsed.reason) {
-          const formattedReason = parsed.reason.replace(/\n\n/g, '\n>\n>');
-          if (isFirstReason) {
-            completeMessage += '> ';
-            isFirstReason = false;
+        if (shouldStop()) {
+          await reader.cancel();
+          if (completeMessage === '') {
+            completeMessage = '...';
           }
-          completeMessage += formattedReason;
+          callback(completeMessage, true, true);
+          return;
         }
-        if (parsed.content) {
-          if (!isFirstReason && isFirstContent) {
-            completeMessage += '\n\n';
-            isFirstContent = false;
+
+        try {
+          const { done, value } = await reader.read();
+          const chunk = decoder.decode(value, { stream: true });
+          const parsed = parseStreamData(chunk, lastChunk);
+          if (parsed.error) {
+            callback(completeMessage + '\n\n' + parsed.error, true, true);
+            return;
           }
-          completeMessage += parsed.content;
-        }
-        if (parsed.dataChunk) {
-          lastChunk = parsed.dataChunk;
-        } else {
-          lastChunk = '';
-        }
-        if (parsed.usage && parsed.usage.inputTokens) {
-          callback(completeMessage, false, false, parsed.usage);
-        } else {
-          callback(completeMessage, done, false);
-        }
-        if (done) {
-          break;
+          if (parsed.reason) {
+            const formattedReason = parsed.reason.replace(/\n\n/g, '\n>\n>');
+            if (isFirstReason) {
+              completeMessage += '> ';
+              isFirstReason = false;
+            }
+            completeMessage += formattedReason;
+          }
+          if (parsed.content) {
+            if (!isFirstReason && isFirstContent) {
+              completeMessage += '\n\n';
+              isFirstContent = false;
+            }
+            completeMessage += parsed.content;
+          }
+          if (parsed.dataChunk) {
+            lastChunk = parsed.dataChunk;
+          } else {
+            lastChunk = '';
+          }
+          if (parsed.usage && parsed.usage.inputTokens) {
+            callback(completeMessage, false, false, parsed.usage);
+          } else {
+            callback(completeMessage, done, false);
+          }
+          if (done) {
+            return;
+          }
+        } catch (readError) {
+          console.log('Error reading stream:', readError);
+          if (completeMessage === '') {
+            completeMessage = '...';
+          }
+          callback(completeMessage, true, true);
+          return;
         }
       }
     })
     .catch(error => {
       console.log(error);
+      clearTimeout(timeoutId);
       if (shouldStop()) {
         if (completeMessage === '') {
           completeMessage = '...';
