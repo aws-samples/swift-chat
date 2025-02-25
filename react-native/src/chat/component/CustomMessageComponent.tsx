@@ -64,8 +64,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       ? 'Reasoning: ' +
           currentMessage.reasoning +
           '\n\n' +
-          currentMessage?.text ?? ''
-      : currentMessage?.text ?? '';
+          currentMessage?.text || ''
+      : currentMessage?.text || '';
     Clipboard.setString(copyText);
     setCopied(true);
   }, [isEdit, setIsEditValue, currentMessage?.reasoning, currentMessage?.text]);

@@ -54,6 +54,7 @@ import { isMac } from '../App.tsx';
 import CustomDropdown from './DropdownComponent.tsx';
 import { getTotalCost } from './ModelPrice.ts';
 import {
+  BedrockThinkingModels,
   DeepSeekModels,
   getAllRegions,
   getDefaultTextModels,
@@ -86,7 +87,10 @@ function SettingsScreen(): React.JSX.Element {
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
   const navigation = useNavigation<NavigationProp<RouteParamList>>();
   const [textModels, setTextModels] = useState<Model[]>([]);
-  const [selectedTextModel, setSelectedTextModel] = useState<string>('');
+  const [selectedTextModel, setSelectedTextModel] = useState<Model>({
+    modelId: '',
+    modelName: '',
+  });
   const [imageModels, setImageModels] = useState<Model[]>([]);
   const [selectedImageModel, setSelectedImageModel] = useState<string>('');
   const [upgradeInfo, setUpgradeInfo] = useState<UpgradeInfo>(initUpgradeInfo);
@@ -122,7 +126,7 @@ function SettingsScreen(): React.JSX.Element {
     const allModel = getAllModels();
     const textModel = getTextModel();
     setTextModels(allModel.textModel);
-    setSelectedTextModel(textModel.modelId);
+    setSelectedTextModel(textModel);
     const imageModel = getImageModel();
     setImageModels(allModel.imageModel);
     setSelectedImageModel(imageModel.modelId);
@@ -182,14 +186,14 @@ function SettingsScreen(): React.JSX.Element {
       model => model.modelName === textModel.modelName
     );
     if (targetModels && targetModels.length === 1) {
-      setSelectedTextModel(targetModels[0].modelId);
+      setSelectedTextModel(targetModels[0]);
       saveTextModel(targetModels[0]);
     } else {
       const defaultMissMatchModel = response.textModel.filter(
         model => model.modelName === 'Claude 3 Sonnet'
       );
       if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
-        setSelectedTextModel(defaultMissMatchModel[0].modelId);
+        setSelectedTextModel(defaultMissMatchModel[0]);
         saveTextModel(defaultMissMatchModel[0]);
       }
     }
@@ -370,13 +374,13 @@ function SettingsScreen(): React.JSX.Element {
         <CustomDropdown
           label="Text Model"
           data={textModelsData}
-          value={selectedTextModel}
+          value={selectedTextModel.modelId}
           onChange={(item: DropdownItem) => {
             if (item.value !== '') {
-              setSelectedTextModel(item.value);
               const selectedModel = textModels.find(
                 model => model.modelId === item.value
               );
+              setSelectedTextModel(selectedModel!);
               if (selectedModel) {
                 saveTextModel(selectedModel);
               }
@@ -384,14 +388,18 @@ function SettingsScreen(): React.JSX.Element {
           }}
           placeholder="Select a model"
         />
-        <View style={styles.thinkingSwitchContainer}>
-          <Text style={styles.proxyLabel}>Enable Thinking</Text>
-          <Switch
-            style={[isMac ? styles.switch : {}]}
-            value={thinkingEnabled}
-            onValueChange={toggleThinking}
-          />
-        </View>
+        {selectedTextModel &&
+          BedrockThinkingModels.includes(selectedTextModel.modelName) && (
+            <View style={styles.thinkingSwitchContainer}>
+              <Text style={styles.proxyLabel}>Enable Thinking</Text>
+              <Switch
+                style={[isMac ? styles.switch : {}]}
+                value={thinkingEnabled}
+                onValueChange={toggleThinking}
+              />
+            </View>
+          )}
+
         <CustomDropdown
           label="Image Model"
           data={imageModelsData}

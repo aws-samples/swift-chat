@@ -27,6 +27,7 @@ import {
 } from '../chat/util/BedrockMessageConvertor.ts';
 import { invokeOpenAIWithCallBack } from './open-api.ts';
 import { invokeOllamaWithCallBack } from './ollama-api.ts';
+import { BedrockThinkingModels } from '../storage/Constants.ts';
 
 type CallbackFunction = (
   result: string,
@@ -410,8 +411,8 @@ const isEnableThinking = (): boolean => {
 };
 
 const isThinkingModel = (): boolean => {
-  const textModelId = getTextModel().modelId;
-  return textModelId.includes('claude-3-7-sonnet');
+  const textModelName = getTextModel().modelName;
+  return BedrockThinkingModels.includes(textModelName);
 };
 
 function isConfigured(): boolean {

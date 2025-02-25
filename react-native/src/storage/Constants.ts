@@ -1,4 +1,5 @@
 import { Model, SystemPrompt } from '../types/Chat.ts';
+import { getTextModel } from './StorageUtils.ts';
 
 const RegionList = [
   'us-west-2',
@@ -25,6 +26,8 @@ export const DeepSeekModels = [
   { modelName: 'DeepSeek-V3', modelId: 'deepseek-chat' },
   { modelName: 'DeepSeek-R1', modelId: 'deepseek-reasoner' },
 ];
+
+export const BedrockThinkingModels = ['Claude 3.7 Sonnet'];
 
 const DefaultTextModel = [
   {
