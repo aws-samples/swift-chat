@@ -20,7 +20,8 @@ type CallbackFunction = (
   result: string,
   complete: boolean,
   needStop: boolean,
-  usage?: Usage
+  usage?: Usage,
+  reasoning?: string
 ) => void;
 export const invokeOpenAIWithCallBack = async (
   messages: BedrockMessage[],
@@ -51,6 +52,7 @@ export const invokeOpenAIWithCallBack = async (
   };
   const url = getApiURL();
   let completeMessage = '';
+  let completeReasoning = '';
   const timeoutId = setTimeout(() => controller.abort(), 60000);
   fetch(url!, options)
     .then(response => {
@@ -63,8 +65,6 @@ export const invokeOpenAIWithCallBack = async (
       }
       const reader = body.getReader();
       const decoder = new TextDecoder();
-      let isFirstReason = true;
-      let isFirstContent = true;
       let lastChunk = '';
       while (true) {
         if (shouldStop()) {
@@ -72,7 +72,7 @@ export const invokeOpenAIWithCallBack = async (
           if (completeMessage === '') {
             completeMessage = '...';
           }
-          callback(completeMessage, true, true);
+          callback(completeMessage, true, true, undefined, completeReasoning);
           return;
         }
 
@@ -81,22 +81,19 @@ export const invokeOpenAIWithCallBack = async (
           const chunk = decoder.decode(value, { stream: true });
           const parsed = parseStreamData(chunk, lastChunk);
           if (parsed.error) {
-            callback(completeMessage + '\n\n' + parsed.error, true, true);
+            callback(
+              completeMessage + '\n\n' + parsed.error,
+              true,
+              true,
+              undefined,
+              completeReasoning
+            );
             return;
           }
           if (parsed.reason) {
-            const formattedReason = parsed.reason.replace(/\n\n/g, '\n>\n>');
-            if (isFirstReason) {
-              completeMessage += '> ';
-              isFirstReason = false;
-            }
-            completeMessage += formattedReason;
+            completeReasoning += parsed.reason;
           }
           if (parsed.content) {
-            if (!isFirstReason && isFirstContent) {
-              completeMessage += '\n\n';
-              isFirstContent = false;
-            }
             completeMessage += parsed.content;
           }
           if (parsed.dataChunk) {
@@ -105,9 +102,21 @@ export const invokeOpenAIWithCallBack = async (
             lastChunk = '';
           }
           if (parsed.usage && parsed.usage.inputTokens) {
-            callback(completeMessage, false, false, parsed.usage);
+            callback(
+              completeMessage,
+              false,
+              false,
+              parsed.usage,
+              completeReasoning
+            );
           } else {
-            callback(completeMessage, done, false);
+            callback(
+              completeMessage,
+              done,
+              false,
+              undefined,
+              completeReasoning
+            );
           }
           if (done) {
             return;
@@ -117,7 +126,7 @@ export const invokeOpenAIWithCallBack = async (
           if (completeMessage === '') {
             completeMessage = '...';
           }
-          callback(completeMessage, true, true);
+          callback(completeMessage, true, true, undefined, completeReasoning);
           return;
         }
       }
@@ -129,11 +138,17 @@ export const invokeOpenAIWithCallBack = async (
         if (completeMessage === '') {
           completeMessage = '...';
         }
-        callback(completeMessage, true, true);
+        callback(completeMessage, true, true, undefined, completeReasoning);
       } else {
         const errorMsg = String(error);
         const errorInfo = 'Request error: ' + errorMsg;
-        callback(completeMessage + '\n\n' + errorInfo, true, true);
+        callback(
+          completeMessage + '\n\n' + errorInfo,
+          true,
+          true,
+          undefined,
+          completeReasoning
+        );
       }
     });
 };

@@ -30,6 +30,7 @@ import {
   getOpenAIProxyEnabled,
   getRegion,
   getTextModel,
+  getThinkingEnabled,
   isNewStabilityImageModel,
   saveAllModels,
   saveDeepSeekApiKey,
@@ -41,6 +42,7 @@ import {
   saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
+  saveThinkingEnabled,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -91,6 +93,7 @@ function SettingsScreen(): React.JSX.Element {
   const [cost, setCost] = useState('0.00');
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedTab, setSelectedTab] = useState('bedrock');
+  const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -251,6 +254,11 @@ function SettingsScreen(): React.JSX.Element {
     saveOpenAIProxyEnabled(value);
   };
 
+  const toggleThinking = (value: boolean) => {
+    setThinkingEnabled(value);
+    saveThinkingEnabled(value);
+  };
+
   const renderProviderSettings = () => {
     switch (selectedTab) {
       case 'bedrock':
@@ -376,6 +384,14 @@ function SettingsScreen(): React.JSX.Element {
           }}
           placeholder="Select a model"
         />
+        <View style={styles.thinkingSwitchContainer}>
+          <Text style={styles.proxyLabel}>Enable Thinking</Text>
+          <Switch
+            style={[isMac ? styles.switch : {}]}
+            value={thinkingEnabled}
+            onValueChange={toggleThinking}
+          />
+        </View>
         <CustomDropdown
           label="Image Model"
           data={imageModelsData}
@@ -543,6 +559,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginVertical: 0,
+  },
+  thinkingSwitchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   itemContainer: {
     flexDirection: 'row',

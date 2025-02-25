@@ -1,5 +1,6 @@
 import {
   AllModel,
+  BedrockChunk,
   ChatMode,
   ImageRes,
   SystemPrompt,
@@ -15,6 +16,7 @@ import {
   getOpenAIApiKey,
   getRegion,
   getTextModel,
+  getThinkingEnabled,
 } from '../storage/StorageUtils.ts';
 import { saveImageToLocal } from '../chat/util/FileUtils.ts';
 import {
@@ -30,10 +32,10 @@ type CallbackFunction = (
   result: string,
   complete: boolean,
   needStop: boolean,
-  usage?: Usage
+  usage?: Usage,
+  reasoning?: string
 ) => void;
-export const isDev = false;
-const USAGE_START = '\n{"inputTokens":';
+export const isDev = true;
 export const invokeBedrockWithCallBack = async (
   messages: BedrockMessage[],
   chatMode: ChatMode,
@@ -82,6 +84,7 @@ export const invokeBedrockWithCallBack = async (
       messages: messages,
       modelId: getTextModel().modelId,
       region: getRegion(),
+      enableThinking: isEnableThinking(),
       system: prompt ? [{ text: prompt?.prompt }] : undefined,
     };
     if (prompt?.includeHistory === false) {
@@ -101,6 +104,7 @@ export const invokeBedrockWithCallBack = async (
     };
     const url = getApiPrefix() + '/converse';
     let completeMessage = '';
+    let completeReasoning = '';
     const timeoutId = setTimeout(() => controller.abort(), 60000);
     fetch(url!, options)
       .then(response => {
@@ -119,34 +123,52 @@ export const invokeBedrockWithCallBack = async (
             if (completeMessage === '') {
               completeMessage = '...';
             }
-            callback(completeMessage, true, true);
+            callback(completeMessage, true, true, undefined, completeReasoning);
             return;
           }
 
           try {
             const { done, value } = await reader.read();
             const chunk = decoder.decode(value, { stream: true });
-            if (
-              chunk[chunk.length - 1] === '}' &&
-              chunk.includes('\n') &&
-              chunk.indexOf(USAGE_START) !== -1
-            ) {
-              const index = chunk.indexOf(USAGE_START);
-              let usage: Usage;
-              if (index > 0) {
-                usage = JSON.parse(chunk.slice(index + 1));
-                completeMessage += chunk.substring(0, index);
-                callback(completeMessage, false, false);
-              } else {
-                usage = JSON.parse(chunk.slice(1));
+            const bedrockChunk = parseChunk(chunk);
+            if (bedrockChunk) {
+              if (bedrockChunk.reasoning) {
+                completeReasoning += bedrockChunk.reasoning ?? '';
+                callback(
+                  completeMessage,
+                  false,
+                  false,
+                  undefined,
+                  completeReasoning
+                );
+              } else if (bedrockChunk.usage) {
+                bedrockChunk.usage.modelName = getTextModel().modelName;
+                callback(
+                  completeMessage,
+                  false,
+                  false,
+                  bedrockChunk.usage,
+                  completeReasoning
+                );
+              } else if (bedrockChunk.text) {
+                completeMessage += bedrockChunk.text ?? '';
+                callback(
+                  completeMessage,
+                  false,
+                  false,
+                  undefined,
+                  completeReasoning
+                );
               }
-              usage.modelName = getTextModel().modelName;
-              callback(completeMessage, false, false, usage);
-            } else {
-              completeMessage += chunk;
-              callback(completeMessage, done, false);
             }
             if (done) {
+              callback(
+                completeMessage,
+                true,
+                false,
+                undefined,
+                completeReasoning
+              );
               return;
             }
           } catch (readError) {
@@ -154,7 +176,7 @@ export const invokeBedrockWithCallBack = async (
             if (completeMessage === '') {
               completeMessage = '...';
             }
-            callback(completeMessage, true, true);
+            callback(completeMessage, true, true, undefined, completeReasoning);
             return;
           }
         }
@@ -165,7 +187,7 @@ export const invokeBedrockWithCallBack = async (
           if (completeMessage === '') {
             completeMessage = '...';
           }
-          callback(completeMessage, true, true);
+          callback(completeMessage, true, true, undefined, completeReasoning);
         } else {
           let errorMsg = String(error);
           if (errorMsg.endsWith('AbortError: Aborted')) {
@@ -363,6 +385,18 @@ export const genImage = async (
   }
 };
 
+function parseChunk(rawChunk: string) {
+  if (rawChunk.length > 0) {
+    const bedrockChunk: BedrockChunk = JSON.parse(rawChunk);
+    const reasoning =
+      bedrockChunk?.contentBlockDelta?.delta?.reasoningContent?.text;
+    const text = bedrockChunk?.contentBlockDelta?.delta?.text;
+    const usage = bedrockChunk?.metadata?.usage;
+    return { reasoning, text, usage };
+  }
+  return null;
+}
+
 function getApiPrefix(): string {
   if (isDev) {
     return 'http://localhost:8080/api';
@@ -370,6 +404,15 @@ function getApiPrefix(): string {
     return getApiUrl() + '/api';
   }
 }
+
+const isEnableThinking = (): boolean => {
+  return isThinkingModel() && getThinkingEnabled();
+};
+
+const isThinkingModel = (): boolean => {
+  const textModelId = getTextModel().modelId;
+  return textModelId.includes('claude-3-7-sonnet');
+};
 
 function isConfigured(): boolean {
   return getApiPrefix().startsWith('http') && getApiKey().length > 0;

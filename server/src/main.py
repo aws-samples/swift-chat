@@ -39,6 +39,7 @@ class ImageRequest(BaseModel):
 class ConverseRequest(BaseModel):
     messages: List[dict] = []
     modelId: str
+    enableThinking: bool | None = None
     region: str
     system: List[dict] | None = None
 
@@ -123,6 +124,13 @@ async def converse(request: ConverseRequest,
             "messages": request.messages,
             "modelId": model_id
         }
+        if request.enableThinking:
+            command['additionalModelRequestFields'] = {
+                "reasoning_config": {
+                    "type": "enabled",
+                    "budget_tokens": 1024
+                }
+            }
         if request.system is not None:
             command["system"] = request.system
 
@@ -130,12 +138,7 @@ async def converse(request: ConverseRequest,
             try:
                 response = client.converse_stream(**command)
                 for item in response['stream']:
-                    if "contentBlockDelta" in item:
-                        text = item["contentBlockDelta"].get("delta", {}).get("text", "")
-                        if text:
-                            yield text
-                    elif "metadata" in item:
-                        yield "\n" + json.dumps(item["metadata"]["usage"])
+                    yield json.dumps(item)
             except Exception as err:
                 yield f"Error: {str(err)}"
 

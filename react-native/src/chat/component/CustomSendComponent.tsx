@@ -1,11 +1,16 @@
-import { IMessage, Send, SendProps } from 'react-native-gifted-chat';
+import { Send, SendProps } from 'react-native-gifted-chat';
 import React from 'react';
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { ChatMode, ChatStatus, FileInfo } from '../../types/Chat.ts';
+import {
+  ChatMode,
+  ChatStatus,
+  FileInfo,
+  SwiftChatMessage,
+} from '../../types/Chat.ts';
 import { CustomAddFileComponent } from './CustomAddFileComponent.tsx';
 import { getImageModel, getTextModel } from '../../storage/StorageUtils.ts';
 
-interface CustomSendComponentProps extends SendProps<IMessage> {
+interface CustomSendComponentProps extends SendProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
   chatMode: ChatMode;
   selectedFiles: FileInfo[];
@@ -45,7 +50,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
             const { onSend } = props;
             if (onSend) {
               onSend(
-                { text: text ? text.trim() : '' } as Partial<IMessage>,
+                { text: text ? text.trim() : '' } as Partial<SwiftChatMessage>,
                 true
               );
             }

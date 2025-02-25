@@ -15,10 +15,10 @@ import {
   View,
 } from 'react-native';
 import Share from 'react-native-share';
-import { IMessage, MessageProps } from 'react-native-gifted-chat';
+import { MessageProps } from 'react-native-gifted-chat';
 import { CustomMarkdownRenderer } from './markdown/CustomMarkdownRenderer.tsx';
 import { MarkedStyles } from 'react-native-marked/src/theme/types.ts';
-import { ChatStatus, PressMode } from '../../types/Chat.ts';
+import { ChatStatus, PressMode, SwiftChatMessage } from '../../types/Chat.ts';
 import { trigger } from '../util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -32,7 +32,7 @@ import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
 import Markdown from './markdown/Markdown.tsx';
 
-interface CustomMessageProps extends MessageProps<IMessage> {
+interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
 }
 
@@ -42,6 +42,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [isReasoningExpanded, setIsReasoningExpanded] = useState(true);
   const inputHeightRef = useRef(0);
   const chatStatusRef = useRef(chatStatus);
 
@@ -59,9 +60,15 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       setIsEditValue(false);
       return;
     }
-    Clipboard.setString(currentMessage?.text ?? '');
+    const copyText = currentMessage?.reasoning
+      ? 'Reasoning: ' +
+          currentMessage.reasoning +
+          '\n\n' +
+          currentMessage?.text ?? ''
+      : currentMessage?.text ?? '';
+    Clipboard.setString(copyText);
     setCopied(true);
-  }, [isEdit, setIsEditValue, currentMessage?.text]);
+  }, [isEdit, setIsEditValue, currentMessage?.reasoning, currentMessage?.text]);
 
   const userInfo = useMemo(() => {
     if (!currentMessage) {
@@ -141,6 +148,62 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
 
+  const toggleReasoning = useCallback(() => {
+    setIsReasoningExpanded(prev => !prev);
+  }, []);
+
+  const reasoningSection = useMemo(() => {
+    if (
+      !currentMessage?.reasoning ||
+      currentMessage?.reasoning.length === 0 ||
+      currentMessage.user._id === 1
+    ) {
+      return null;
+    }
+
+    return (
+      <View style={styles.reasoningContainer}>
+        <TouchableOpacity
+          style={styles.reasoningHeader}
+          onPress={toggleReasoning}
+          activeOpacity={0.7}>
+          <Image
+            source={require('../../assets/back.png')}
+            style={[
+              styles.reasoningArrow,
+              isReasoningExpanded && styles.reasoningArrowExpanded,
+            ]}
+          />
+          <Text style={styles.reasoningTitle}>Reasoning</Text>
+        </TouchableOpacity>
+
+        {isReasoningExpanded && (
+          <View style={styles.reasoningContent}>
+            <Markdown
+              value={currentMessage.reasoning}
+              flatListProps={{
+                initialNumToRender: 8,
+                style: {
+                  backgroundColor: '#f5f5f5',
+                },
+              }}
+              styles={customMarkedStyles}
+              renderer={customMarkdownRenderer}
+              tokenizer={customTokenizer}
+              chatStatus={chatStatusRef.current}
+            />
+          </View>
+        )}
+      </View>
+    );
+  }, [
+    currentMessage,
+    isReasoningExpanded,
+    toggleReasoning,
+    customMarkdownRenderer,
+    customTokenizer,
+  ]);
+
   const handleEdit = useCallback(() => {
     setIsEditValue(!isEdit);
   }, [isEdit, setIsEditValue]);
@@ -195,6 +258,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         {copyButton}
       </TouchableOpacity>
       <View style={styles.marked_box}>
+        {reasoningSection}
         {!isEdit && (
           <TapGestureHandler
             numberOfTaps={2}
@@ -297,6 +361,37 @@ const styles = StyleSheet.create({
     color: '#333333',
     letterSpacing: 0,
   },
+  reasoningContainer: {
+    marginBottom: 8,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  reasoningHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    backgroundColor: '#eeeeee',
+  },
+  reasoningTitle: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#333',
+  },
+  reasoningArrow: {
+    width: 14,
+    height: 14,
+    marginRight: 8,
+    transform: [{ rotate: '180deg' }],
+  },
+  reasoningArrowExpanded: {
+    transform: [{ rotate: '-90deg' }],
+  },
+  reasoningContent: {
+    padding: 8,
+  },
 });
 
 const customMarkedStyles: MarkedStyles = {
@@ -313,6 +408,8 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
   return (
     prevProps.currentMessage?.text === nextProps.currentMessage?.text &&
     prevProps.currentMessage?.image === nextProps.currentMessage?.image &&
+    prevProps.currentMessage?.reasoning ===
+      nextProps.currentMessage?.reasoning &&
     prevProps.chatStatus === nextProps.chatStatus
   );
 });

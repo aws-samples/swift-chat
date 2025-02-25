@@ -1,9 +1,8 @@
-import { IMessage } from 'react-native-gifted-chat';
-import { FileInfo, FileType } from '../../types/Chat.ts';
+import { FileInfo, FileType, SwiftChatMessage } from '../../types/Chat.ts';
 import { getFileBytes } from './FileUtils.ts';
 
 export async function getBedrockMessagesFromChatMessages(
-  messages: IMessage[]
+  messages: SwiftChatMessage[]
 ): Promise<BedrockMessage[]> {
   const bedrockMessages: BedrockMessage[] = [];
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -14,7 +13,7 @@ export async function getBedrockMessagesFromChatMessages(
 }
 
 export async function getBedrockMessage(
-  message: IMessage
+  message: SwiftChatMessage
 ): Promise<BedrockMessage> {
   const content: MessageContent[] = [{ text: message.text }];
   if (message.image) {
