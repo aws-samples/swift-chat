@@ -388,14 +388,57 @@ export const genImage = async (
 
 function parseChunk(rawChunk: string) {
   if (rawChunk.length > 0) {
-    const bedrockChunk: BedrockChunk = JSON.parse(rawChunk);
-    const reasoning =
-      bedrockChunk?.contentBlockDelta?.delta?.reasoningContent?.text;
-    const text = bedrockChunk?.contentBlockDelta?.delta?.text;
-    const usage = bedrockChunk?.metadata?.usage;
-    return { reasoning, text, usage };
+    try {
+      const bedrockChunk: BedrockChunk = JSON.parse(rawChunk);
+      return extractChunkContent(bedrockChunk);
+    } catch (error) {
+      console.log('JSON parse error: ' + error);
+      if (rawChunk.indexOf('}{') > 0) {
+        const jsonParts = rawChunk.split('}{');
+        let combinedReasoning = '';
+        let combinedText = '';
+        let lastUsage;
+        for (let i = 0; i < jsonParts.length; i++) {
+          let part = jsonParts[i];
+          part =
+            (i >= 1 ? '{' : '') + part + (i < jsonParts.length - 1 ? '}' : '');
+          try {
+            const chunk: BedrockChunk = JSON.parse(part);
+            const content = extractChunkContent(chunk);
+            if (content.reasoning) {
+              combinedReasoning += content.reasoning;
+            }
+            if (content.text) {
+              combinedText += content.text;
+            }
+            if (content.usage) {
+              lastUsage = content.usage;
+            }
+          } catch (innerError) {
+            console.log('Error parsing split JSON part: ' + innerError);
+          }
+        }
+        return {
+          reasoning: combinedReasoning,
+          text: combinedText,
+          usage: lastUsage,
+        };
+      }
+      return null;
+    }
   }
   return null;
+}
+
+/**
+ * Helper function to extract content from a BedrockChunk
+ */
+function extractChunkContent(bedrockChunk: BedrockChunk) {
+  const reasoning =
+    bedrockChunk?.contentBlockDelta?.delta?.reasoningContent?.text;
+  const text = bedrockChunk?.contentBlockDelta?.delta?.text;
+  const usage = bedrockChunk?.metadata?.usage;
+  return { reasoning, text, usage };
 }
 
 function getApiPrefix(): string {
