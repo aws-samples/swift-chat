@@ -423,8 +423,14 @@ function parseChunk(rawChunk: string) {
           text: combinedText,
           usage: lastUsage,
         };
+      } else {
+        // return and display the raw error
+        return {
+          reasoning: undefined,
+          text: rawChunk,
+          usage: undefined,
+        };
       }
-      return null;
     }
   }
   return null;

@@ -4,7 +4,6 @@ import type {
   MarkedStyles,
   UserTheme,
 } from 'react-native-marked/src/theme/types';
-import Parser from 'react-native-marked/src/lib/Parser';
 import Renderer from 'react-native-marked/src/lib/Renderer';
 import getStyles from 'react-native-marked/src/theme/styles';
 import type { ColorSchemeName } from 'react-native';
@@ -13,6 +12,7 @@ import type {
   RendererInterface,
 } from 'react-native-marked/src/lib/types';
 import { ChatStatus } from '../../../types/Chat.ts';
+import Parser from './Parser.tsx';
 
 export interface useMarkdownHookOptions {
   colorScheme?: ColorSchemeName;
