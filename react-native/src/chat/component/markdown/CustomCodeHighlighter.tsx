@@ -3,6 +3,9 @@ import React, {
   type FunctionComponent,
   type ReactNode,
   useMemo,
+  useCallback,
+  memo,
+  useRef,
 } from 'react';
 import {
   Platform,
@@ -62,6 +65,17 @@ const ALLOWED_STYLE_PROPERTIES: Record<string, boolean> = {
   fontStyle: true,
 };
 
+// Memoized Text component to prevent unnecessary re-renders
+const MemoizedText = memo(
+  ({
+    style,
+    children,
+  }: {
+    style: StyleProp<TextStyle>;
+    children: ReactNode;
+  }) => <Text style={style}>{children}</Text>
+);
+
 export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   children,
   textStyle,
@@ -75,114 +89,166 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
     [hljsStyle]
   );
 
-  const getStylesForNode = (node: rendererNode): TextStyle[] => {
-    const classes: string[] = node.properties?.className ?? [];
-    return classes
-      .map((c: string) => stylesheet[c])
-      .filter(c => !!c) as TextStyle[];
-  };
+  const getStylesForNode = useCallback(
+    (node: rendererNode): TextStyle[] => {
+      const classes: string[] = node.properties?.className ?? [];
+      return classes
+        .map((c: string) => stylesheet[c])
+        .filter(c => !!c) as TextStyle[];
+    },
+    [stylesheet]
+  );
 
-  const renderNode = (nodes: rendererNode[]): ReactNode => {
-    return (
-      <TextInput
-        style={[
-          styles.inputText,
-          {
-            marginBottom: -nodes.length * (isMac ? 3 : 2.6),
-          },
-        ]}
-        editable={false}
-        multiline>
-        {nodes.map((node, index) => {
-          const stack: rendererNode[] = [node];
-          let result: ReactNode[] = [];
+  // Calculate base text style once
+  const baseTextStyle = useMemo(
+    () => [textStyle, { color: stylesheet.hljs?.color }],
+    [textStyle, stylesheet.hljs?.color]
+  );
 
-          while (stack.length > 0) {
-            const currentNode = stack.pop()!;
+  // Cache of previously processed nodes
+  const processedNodesCache = useRef<ReactNode[][]>([]);
+  const prevNodesLength = useRef<number>(0);
 
-            if (currentNode.type === 'text') {
-              result.push(currentNode.value || '');
-            } else if (currentNode.children) {
-              const childElements = currentNode.children.map(
-                (child, childIndex) => {
-                  if (child.type === 'text') {
-                    return (
-                      <Text
-                        key={`${index}-${childIndex}`}
-                        style={[
-                          textStyle,
-                          { color: stylesheet.hljs?.color },
-                          getStylesForNode(currentNode),
-                        ]}>
-                        {child.value}
-                      </Text>
-                    );
-                  } else {
-                    return (
-                      <Text
-                        key={`${index}-${childIndex}`}
-                        style={[
-                          textStyle,
-                          { color: stylesheet.hljs?.color },
-                          getStylesForNode(child),
-                        ]}>
-                        {child.children
-                          ?.map(grandChild => grandChild.value)
-                          .join('')}
-                      </Text>
-                    );
-                  }
-                }
-              );
-              result = result.concat(childElements);
+  // Process a single node into React elements
+  const processNode = useCallback(
+    (node: rendererNode, index: number): ReactNode[] => {
+      const stack: rendererNode[] = [node];
+      let result: ReactNode[] = [];
+
+      while (stack.length > 0) {
+        const currentNode = stack.pop()!;
+
+        if (currentNode.type === 'text') {
+          result.push(currentNode.value || '');
+        } else if (currentNode.children) {
+          const childElements = currentNode.children.map(
+            (child, childIndex) => {
+              if (child.type === 'text') {
+                const nodeStyles = getStylesForNode(currentNode);
+                return (
+                  <MemoizedText
+                    key={`${index}-${childIndex}`}
+                    style={[...baseTextStyle, ...nodeStyles]}>
+                    {child.value}
+                  </MemoizedText>
+                );
+              } else {
+                const childStyles = getStylesForNode(child);
+                const childContent = child.children
+                  ?.map(grandChild => grandChild.value)
+                  .join('');
+
+                return (
+                  <MemoizedText
+                    key={`${index}-${childIndex}`}
+                    style={[...baseTextStyle, ...childStyles]}>
+                    {childContent}
+                  </MemoizedText>
+                );
+              }
             }
-          }
-          return result;
-        })}
-      </TextInput>
-    );
-  };
+          );
+          result = result.concat(childElements);
+        }
+      }
+      return result;
+    },
+    [baseTextStyle, getStylesForNode]
+  );
 
-  const renderAndroidNode = (nodes: rendererNode[], keyPrefix = 'row') =>
-    nodes.reduce<ReactNode[]>((acc, node, index) => {
-      const keyPrefixWithIndex = `${keyPrefix}_${index}`;
-      if (node.children) {
-        const styles = StyleSheet.flatten([
-          textStyle,
-          { color: stylesheet.hljs?.color },
-          getStylesForNode(node),
-        ]);
-        acc.push(
-          <Text style={styles} key={keyPrefixWithIndex}>
-            {renderAndroidNode(node.children, `${keyPrefixWithIndex}_child`)}
-          </Text>
+  const renderNode = useCallback(
+    (nodes: rendererNode[]): ReactNode => {
+      // Calculate margin bottom value once
+      const marginBottomValue = -nodes.length * (isMac ? 3 : 2.75);
+
+      // Optimization for streaming content - only process new nodes
+      if (nodes.length >= prevNodesLength.current) {
+        // When initial render or nodes are added (streaming case)
+        if (processedNodesCache.current.length === 0) {
+          // First render - process all nodes
+          processedNodesCache.current = nodes.map((node, index) =>
+            processNode(node, index)
+          );
+        } else if (nodes.length > prevNodesLength.current) {
+          // Streaming case - only process new nodes
+          for (let i = prevNodesLength.current; i < nodes.length; i++) {
+            processedNodesCache.current[i] = processNode(nodes[i], i);
+          }
+        }
+        // If same length but content changed (rare in streaming), we'll keep the cache as is
+      } else {
+        // If nodes length decreased (rare case, not typical for streaming)
+        processedNodesCache.current = nodes.map((node, index) =>
+          processNode(node, index)
         );
       }
 
-      if (node.value) {
-        acc.push(trimNewlines(String(node.value)));
-      }
+      // Update length reference for next render
+      prevNodesLength.current = nodes.length;
 
-      return acc;
-    }, []);
+      return (
+        <TextInput
+          style={[
+            styles.inputText,
+            {
+              marginBottom: marginBottomValue,
+            },
+          ]}
+          editable={false}
+          multiline>
+          {processedNodesCache.current}
+        </TextInput>
+      );
+    },
+    [processNode]
+  );
 
-  const renderer = (props: rendererProps) => {
-    const { rows } = props;
-    return (
-      <ScrollView
-        {...scrollViewProps}
-        horizontal
-        contentContainerStyle={[
-          stylesheet.hljs,
-          scrollViewProps?.contentContainerStyle,
-          containerStyle,
-        ]}>
-        <View onStartShouldSetResponder={() => true}>
-          {Platform.OS === 'ios' ? renderNode(rows) : renderAndroidNode(rows)}
-        </View>
-      </ScrollView>
-    );
-  };
+  const renderAndroidNode = useCallback(
+    (nodes: rendererNode[], keyPrefix = 'row') =>
+      nodes.reduce<ReactNode[]>((acc, node, index) => {
+        const keyPrefixWithIndex = `${keyPrefix}_${index}`;
+        if (node.children) {
+          const styles = StyleSheet.flatten([
+            textStyle,
+            { color: stylesheet.hljs?.color },
+            getStylesForNode(node),
+          ]);
+          acc.push(
+            <Text style={styles} key={keyPrefixWithIndex}>
+              {renderAndroidNode(node.children, `${keyPrefixWithIndex}_child`)}
+            </Text>
+          );
+        }
+
+        if (node.value) {
+          acc.push(trimNewlines(String(node.value)));
+        }
+
+        return acc;
+      }, []),
+    [textStyle, stylesheet, getStylesForNode]
+  );
+
+  const renderer = useCallback(
+    (props: rendererProps) => {
+      const { rows } = props;
+      return (
+        <ScrollView
+          {...scrollViewProps}
+          horizontal
+          contentContainerStyle={[
+            stylesheet.hljs,
+            scrollViewProps?.contentContainerStyle,
+            containerStyle,
+          ]}>
+          <View onStartShouldSetResponder={() => true}>
+            {Platform.OS === 'ios' ? renderNode(rows) : renderAndroidNode(rows)}
+          </View>
+        </ScrollView>
+      );
+    },
+    [stylesheet, scrollViewProps, containerStyle, renderNode, renderAndroidNode]
+  );
 
   return (
     <SyntaxHighlighter

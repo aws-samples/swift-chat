@@ -1,5 +1,4 @@
 import { Model, SystemPrompt } from '../types/Chat.ts';
-import { getTextModel } from './StorageUtils.ts';
 
 const RegionList = [
   'us-west-2',
