@@ -352,17 +352,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
   },
-  reasoningArrow: {
-    width: 14,
-    height: 14,
-    marginRight: 8,
-    transform: [{ rotate: '180deg' }],
-  },
-  reasoningArrowExpanded: {
-    transform: [{ rotate: '-90deg' }],
-  },
   reasoningContent: {
-    padding: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
 });
 
