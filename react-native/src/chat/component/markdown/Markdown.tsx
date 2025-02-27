@@ -44,17 +44,11 @@ const Markdown = ({
     []
   );
 
-  const contentSize = Math.floor(rnElements.length / 100) + 1;
-  const initNum = 20 * contentSize;
-  const maxBatch = 20 * contentSize;
-  const windowSize = 20 * contentSize + 1;
   return (
     <FlatList
       removeClippedSubviews={false}
       keyExtractor={keyExtractor}
-      maxToRenderPerBatch={maxBatch}
-      initialNumToRender={initNum}
-      windowSize={windowSize}
+      initialNumToRender={rnElements.length}
       /* eslint-disable-next-line react-native/no-inline-styles */
       style={{
         backgroundColor: colorScheme === 'light' ? '#ffffff' : '#000000',

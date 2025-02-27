@@ -36,7 +36,7 @@ type CallbackFunction = (
   usage?: Usage,
   reasoning?: string
 ) => void;
-export const isDev = true;
+export const isDev = false;
 export const invokeBedrockWithCallBack = async (
   messages: BedrockMessage[],
   chatMode: ChatMode,
