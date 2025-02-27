@@ -107,6 +107,8 @@ async def converse(request: ConverseRequest,
         max_tokens = 4096
         if model_id.startswith('meta.llama'):
             max_tokens = 2048
+        if 'claude-3-7-sonnet' in model_id:
+            max_tokens = 64000
         for message in request.messages:
             if message["role"] == "user":
                 for content in message["content"]:
@@ -128,7 +130,7 @@ async def converse(request: ConverseRequest,
             command['additionalModelRequestFields'] = {
                 "reasoning_config": {
                     "type": "enabled",
-                    "budget_tokens": 1024
+                    "budget_tokens": 16000
                 }
             }
         if request.system is not None:
