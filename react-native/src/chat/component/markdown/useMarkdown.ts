@@ -67,6 +67,7 @@ const useMarkdown = (
     // If it's the first time, new answer, or rendering new session, parse directly
     if (
       cacheRef.current.lastValue.length === 0 ||
+      cacheRef.current.lastValue === '![](bedrock://imgProgress)' ||
       value.length < cacheRef.current.lastValue.length ||
       options?.chatStatus === ChatStatus.Init
     ) {

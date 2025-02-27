@@ -123,6 +123,9 @@ function SettingsScreen(): React.JSX.Element {
   };
 
   useEffect(() => {
+    if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
+      return;
+    }
     const allModel = getAllModels();
     const textModel = getTextModel();
     setTextModels(allModel.textModel);
@@ -138,6 +141,9 @@ function SettingsScreen(): React.JSX.Element {
   }, [apiUrl, apiKey]);
 
   useEffect(() => {
+    if (ollamaApiUrl === getOllamaApiUrl()) {
+      return;
+    }
     saveOllamaApiURL(ollamaApiUrl);
     if (ollamaApiUrl.length > 0) {
       fetchAndSetModelNames().then();
