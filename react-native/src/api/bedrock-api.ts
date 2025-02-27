@@ -142,22 +142,24 @@ export const invokeBedrockWithCallBack = async (
                   undefined,
                   completeReasoning
                 );
-              } else if (bedrockChunk.usage) {
-                bedrockChunk.usage.modelName = getTextModel().modelName;
-                callback(
-                  completeMessage,
-                  false,
-                  false,
-                  bedrockChunk.usage,
-                  completeReasoning
-                );
-              } else if (bedrockChunk.text) {
+              }
+              if (bedrockChunk.text) {
                 completeMessage += bedrockChunk.text ?? '';
                 callback(
                   completeMessage,
                   false,
                   false,
                   undefined,
+                  completeReasoning
+                );
+              }
+              if (bedrockChunk.usage) {
+                bedrockChunk.usage.modelName = getTextModel().modelName;
+                callback(
+                  completeMessage,
+                  false,
+                  false,
+                  bedrockChunk.usage,
                   completeReasoning
                 );
               }
