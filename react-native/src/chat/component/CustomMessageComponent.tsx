@@ -42,7 +42,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [isReasoningExpanded, setIsReasoningExpanded] = useState(true);
   const inputHeightRef = useRef(0);
   const chatStatusRef = useRef(chatStatus);
 
@@ -148,10 +147,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
 
-  const toggleReasoning = useCallback(() => {
-    setIsReasoningExpanded(prev => !prev);
-  }, []);
-
   const reasoningSection = useMemo(() => {
     if (
       !currentMessage?.reasoning ||
@@ -163,46 +158,28 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
     return (
       <View style={styles.reasoningContainer}>
-        <TouchableOpacity
-          style={styles.reasoningHeader}
-          onPress={toggleReasoning}
-          activeOpacity={0.7}>
-          <Image
-            source={require('../../assets/back.png')}
-            style={[
-              styles.reasoningArrow,
-              isReasoningExpanded && styles.reasoningArrowExpanded,
-            ]}
-          />
+        <View style={styles.reasoningHeader}>
           <Text style={styles.reasoningTitle}>Reasoning</Text>
-        </TouchableOpacity>
+        </View>
 
-        {isReasoningExpanded && (
-          <View style={styles.reasoningContent}>
-            <Markdown
-              value={currentMessage.reasoning}
-              flatListProps={{
-                initialNumToRender: 8,
-                style: {
-                  backgroundColor: '#f5f5f5',
-                },
-              }}
-              styles={customMarkedStyles}
-              renderer={customMarkdownRenderer}
-              tokenizer={customTokenizer}
-              chatStatus={chatStatusRef.current}
-            />
-          </View>
-        )}
+        <View style={styles.reasoningContent}>
+          <Markdown
+            value={currentMessage.reasoning}
+            flatListProps={{
+              initialNumToRender: 8,
+              style: {
+                backgroundColor: '#f5f5f5',
+              },
+            }}
+            styles={customMarkedStyles}
+            renderer={customMarkdownRenderer}
+            tokenizer={customTokenizer}
+            chatStatus={chatStatusRef.current}
+          />
+        </View>
       </View>
     );
-  }, [
-    currentMessage,
-    isReasoningExpanded,
-    toggleReasoning,
-    customMarkdownRenderer,
-    customTokenizer,
-  ]);
+  }, [currentMessage, customMarkdownRenderer, customTokenizer]);
 
   const handleEdit = useCallback(() => {
     setIsEditValue(!isEdit);
@@ -349,7 +326,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     paddingVertical: 8,
-    color: '#333333',
+    color: '#333',
   },
   inputText: {
     fontSize: 16,
@@ -358,7 +335,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
     padding: 0,
     fontWeight: '300',
-    color: '#333333',
+    color: '#333',
     letterSpacing: 0,
   },
   reasoningContainer: {
@@ -371,8 +348,7 @@ const styles = StyleSheet.create({
   reasoningHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    padding: 8,
     backgroundColor: '#eeeeee',
   },
   reasoningTitle: {

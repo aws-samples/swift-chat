@@ -358,12 +358,12 @@ function ChatScreen(): React.JSX.Element {
     },
   });
 
-  const scrollToBottom = () => {
+  const scrollToTop = () => {
     if (flatListRef.current) {
       flatListRef.current.scrollToEnd();
     }
   };
-  const scrollToTop = () => {
+  const scrollToBottom = () => {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: true });
     }
@@ -514,7 +514,7 @@ function ChatScreen(): React.JSX.Element {
           _id: 1,
         }}
         alignTop={false}
-        inverted={false}
+        inverted={true}
         renderChatEmpty={() => (
           <EmptyChatComponent chatMode={modeRef.current} />
         )}
@@ -612,7 +612,6 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
     flexGrow: 1,
     justifyContent: 'flex-end',
-    flexDirection: 'column-reverse',
   },
   textInputStyle: {
     marginLeft: 14,

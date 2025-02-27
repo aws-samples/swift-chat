@@ -392,7 +392,6 @@ function parseChunk(rawChunk: string) {
       const bedrockChunk: BedrockChunk = JSON.parse(rawChunk);
       return extractChunkContent(bedrockChunk);
     } catch (error) {
-      console.log('JSON parse error: ' + error);
       if (rawChunk.indexOf('}{') > 0) {
         const jsonParts = rawChunk.split('}{');
         let combinedReasoning = '';
@@ -425,6 +424,7 @@ function parseChunk(rawChunk: string) {
         };
       } else {
         // return and display the raw error
+        console.log('Unexpected raw chunk: ' + rawChunk);
         return {
           reasoning: undefined,
           text: rawChunk,
