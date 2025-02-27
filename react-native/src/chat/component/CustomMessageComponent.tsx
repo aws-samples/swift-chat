@@ -166,7 +166,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           <Markdown
             value={currentMessage.reasoning}
             flatListProps={{
-              initialNumToRender: 8,
               style: {
                 backgroundColor: '#f5f5f5',
               },
@@ -208,9 +207,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       return (
         <Markdown
           value={currentMessage.text}
-          flatListProps={{
-            initialNumToRender: 8,
-          }}
           styles={customMarkedStyles}
           renderer={customMarkdownRenderer}
           tokenizer={customTokenizer}
