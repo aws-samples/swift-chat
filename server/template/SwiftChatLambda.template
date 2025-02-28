@@ -140,7 +140,7 @@
             "Arn"
           ]
         },
-        "Timeout": 300
+        "Timeout": 900
       },
       "DependsOn": [
         "LambdaExecutionRoleDefaultPolicy6D69732F",

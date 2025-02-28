@@ -386,6 +386,7 @@ function ChatScreen(): React.JSX.Element {
         sendEventRef.current('onImageStart');
       }
       controllerRef.current = new AbortController();
+      isCanceled.current = false;
       invokeBedrockWithCallBack(
         bedrockMessages.current,
         modeRef.current,
@@ -453,7 +454,7 @@ function ChatScreen(): React.JSX.Element {
             }, 1000);
           }
           if (needStop) {
-            isCanceled.current = false;
+            isCanceled.current = true;
           }
         }
       ).then();
