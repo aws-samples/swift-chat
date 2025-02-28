@@ -74,6 +74,7 @@ const initUpgradeInfo: UpgradeInfo = {
 export const GITHUB_LINK = 'https://github.com/aws-samples/swift-chat';
 
 function SettingsScreen(): React.JSX.Element {
+  const allModel = getAllModels();
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
   const [ollamaApiUrl, setOllamaApiUrl] = useState(getOllamaApiUrl);
@@ -86,13 +87,13 @@ function SettingsScreen(): React.JSX.Element {
   const [imageSize, setImageSize] = useState(getImageSize);
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
   const navigation = useNavigation<NavigationProp<RouteParamList>>();
-  const [textModels, setTextModels] = useState<Model[]>([]);
-  const [selectedTextModel, setSelectedTextModel] = useState<Model>({
-    modelId: '',
-    modelName: '',
-  });
-  const [imageModels, setImageModels] = useState<Model[]>([]);
-  const [selectedImageModel, setSelectedImageModel] = useState<string>('');
+  const [textModels, setTextModels] = useState<Model[]>(allModel.textModel);
+  const [selectedTextModel, setSelectedTextModel] =
+    useState<Model>(getTextModel);
+  const [imageModels, setImageModels] = useState<Model[]>(allModel.imageModel);
+  const [selectedImageModel, setSelectedImageModel] = useState<string>(
+    getImageModel().modelId
+  );
   const [upgradeInfo, setUpgradeInfo] = useState<UpgradeInfo>(initUpgradeInfo);
   const [cost, setCost] = useState('0.00');
   const controllerRef = useRef<AbortController | null>(null);
@@ -126,13 +127,6 @@ function SettingsScreen(): React.JSX.Element {
     if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
       return;
     }
-    const allModel = getAllModels();
-    const textModel = getTextModel();
-    setTextModels(allModel.textModel);
-    setSelectedTextModel(textModel);
-    const imageModel = getImageModel();
-    setImageModels(allModel.imageModel);
-    setSelectedImageModel(imageModel.modelId);
     if (apiUrl.length > 0 && apiKey.length > 0) {
       saveKeys(apiUrl, apiKey);
       fetchAndSetModelNames().then();
