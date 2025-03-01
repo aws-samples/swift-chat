@@ -147,7 +147,7 @@ can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or
     - iOS (Currently we do not provide the iOS version, you can build it locally with Xcode)
 
 2. Launch the App, open the drawer menu, and tap **Settings**.
-3. Paste the `API URL` and `API Key` then select the Region.
+3. Paste the `API URL` and `API Key`(The **Value** you typed in Parameter Store) then select the Region.
 4. Click the top right ✓ icon to save your configuration and start your chat.
 
 Congratulations 🎉 Your SwiftChat App is ready to use!
@@ -265,7 +265,6 @@ orientation.
 
 - Speed up end-to-end API requests through **image compression**
 - Deploying APIs in the **same region** as Bedrock provides lower latency
-- Minimal response payload with **zero parsing** needed for direct display
 
 📱 **Fast Render Speed**
 

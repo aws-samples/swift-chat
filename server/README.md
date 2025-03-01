@@ -1,6 +1,8 @@
 ## SwiftChat Backend API
 
-The SwiftChat backend API is implemented using Python language and the FastAPI framework. It is packaged as a Docker image using [aws-lambda-adapter](https://github.com/awslabs/aws-lambda-web-adapter) and deployed to AWS App Runner or AWS Lambda for execution.
+The SwiftChat backend API is implemented using Python language and the FastAPI framework. It is packaged as a Docker
+image using [aws-lambda-adapter](https://github.com/awslabs/aws-lambda-web-adapter) and deployed to AWS App Runner or
+AWS Lambda for execution.
 
 ## API Reference
 
@@ -31,11 +33,16 @@ export API_KEY=<API Key>
        }
      ],
      "modelId": "anthropic.claude-3-5-sonnet-20240620-v1:0",
-     "region": "us-west-2"
+     "region": "us-west-2",
+     "enableThinking": false,
+     "system": [
+       "text": "your system prompt"
+     ]
    }'
    ```
 
-   This API is used to implement streaming conversations, and it only returns the text and token usage for display.
+   This API is used to implement streaming conversations, and it returns the raw Amazon Bedrock response json string,
+   you need to parse it for display.
 
    The `messages` under body fully complies with the messages structure specification in Amazon
    Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)

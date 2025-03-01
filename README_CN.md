@@ -138,7 +138,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     - iOS (目前不提供 iOS 版本，您可以使用 Xcode 在本地构建)
 
 2. 启动应用，点击左侧菜单按钮，并点击底部的 **Settings**。
-3. 粘贴`API URL`和`API Key`然后选择 Region。
+3. 粘贴`API URL`和`API Key` (Parameter Store 中您填写的**值**) 然后选择 Region。
 4. 点击右上角 ✓ 图标保存配置并开始聊天。
 
 恭喜 🎉 您的 SwiftChat 应用已准备就绪!
@@ -252,7 +252,6 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 - 通过**图像压缩**加速端到端 API 请求
 - 在与 Bedrock **相同区域**部署 API 以提供更低延迟
-- 最小响应有效负载，**零解析**直接显示
 
 📱 **快速渲染速度**
 
