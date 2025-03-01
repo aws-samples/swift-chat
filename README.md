@@ -7,8 +7,8 @@
 
 ## 📱 Quick Download
 
-- [Download for Android](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.apk)
-- [Download for macOS](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.dmg)
+- [Download for Android](https://github.com/aws-samples/swift-chat/releases/download/2.0.0/SwiftChat.apk)
+- [Download for macOS](https://github.com/aws-samples/swift-chat/releases/download/2.0.0/SwiftChat.dmg)
 - For iOS: Currently available through local build with Xcode
 
 [中文](/README_CN.md)
