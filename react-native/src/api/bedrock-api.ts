@@ -103,7 +103,7 @@ export const invokeBedrockWithCallBack = async (
       signal: controller.signal,
       reactNative: { textStreaming: true },
     };
-    const url = getApiPrefix() + '/converse';
+    const url = getApiPrefix() + '/converse/v2';
     let completeMessage = '';
     let completeReasoning = '';
     const timeoutId = setTimeout(() => controller.abort(), 60000);
