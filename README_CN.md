@@ -1,6 +1,17 @@
-[English](/README.md)
-
 # SwiftChat - 跨平台 AI 聊天应用
+
+> 🚀 您的私人 AI 助手 - 快速、安全、跨平台
+
+[![GitHub Release](https://img.shields.io/github/v/release/aws-samples/swift-chat)](https://github.com/aws-samples/swift-chat/releases)
+[![License](https://img.shields.io/badge/license-MIT--0-green)](LICENSE)
+
+## 📱 快速下载
+
+- [下载 Android 版本](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.apk)
+- [下载 macOS 版本](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.dmg)
+- iOS 版本：目前可通过 Xcode 本地构建使用
+
+[English](/README.md)
 
 SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https://reactnative.dev/)
 开发，并依托 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 提供强大支持，同时兼容 Ollama、DeepSeek 和 OpenAI
@@ -71,7 +82,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 我们重新设计了用户界面，优化了字体大小和行间距，呈现出更优雅、清爽的视觉效果。这些功能也都完美适配了 Android 和 macOS
 的原生界面，确保了流畅的使用体验。
 
-> 注意： 放了方便展示其中一些动图有加速处理。如您遇到动图卡顿的情况，请在电脑上使用 Chrome, Firefox 或者 Edge 浏览器进行查看。
+> 注意： 为了方便展示，其中一些动图有加速处理。如您遇到动图卡顿的情况，请在电脑上使用 Chrome, Firefox 或者 Edge 浏览器进行查看。
 
 ## 架构
 
@@ -93,9 +104,10 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 - 文本模型: `Amazon Nova Pro`
 - 图像模型: `Stable Diffusion 3.5 Large`
 
-如果您要使用图片生成功能，请确保已开启 `Amazon Nova Lite`
-模型的访问权限。您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
-来启用您的模型。
+如果您要使用图片生成功能，请确保已开启 `Amazon Nova Lite` 模型的访问权限。您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) 来启用您的模型。
+
+<details>
+<summary><b>🔧 配置步骤（点击展开）</b></summary>
 
 ### 第 1 步: 设置 API Key
 
@@ -122,26 +134,19 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 2. 点击 **下一步**，在"指定堆栈详细信息"页面中提供以下信息:
     - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。
     - 对于 App Runner，根据您的需求选择`InstanceTypeParam`。
-3. 点击 **下一步**，保持 "配置堆栈选项" 页面默认设置，阅读功能并勾选底部的 "我确认，AWS CloudFormation 可能会创建 IAM 资源"
-   复选框。
+3. 点击 **下一步**，保持 "配置堆栈选项" 页面默认设置，阅读功能并勾选底部的 "我确认，AWS CloudFormation 可能会创建 IAM 资源" 复选框。
 4. 点击 **下一步**，在 "审核并创建" 中检查配置并点击 **提交**。
 
-等待约 3-5 分钟部署完成，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到 **API URL**
-类似`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws`。
+等待约 3-5 分钟部署完成，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到 **API URL** 类似`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws`。
 
-### 第 3 步: 下载应用并设置 API URL 和 API Key
+### 第 3 步: 启动应用并设置 API URL 和 API Key
 
-1. 下载应用
-
-    - Android 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.apk)
-    - macOS 应用点击 [下载](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.dmg)
-    - iOS (目前不提供 iOS 版本，您可以使用 Xcode 在本地构建)
-
-2. 启动应用，点击左侧菜单按钮，并点击底部的 **Settings**。
-3. 粘贴`API URL`和`API Key` (Parameter Store 中您填写的**值**) 然后选择 Region。
-4. 点击右上角 ✓ 图标保存配置并开始聊天。
+1. 启动应用，点击左侧菜单按钮，并点击底部的 **Settings**。
+2. 粘贴`API URL`和`API Key` (Parameter Store 中您填写的**值**) 然后选择 Region。
+3. 点击右上角 ✓ 图标保存配置并开始聊天。
 
 恭喜 🎉 您的 SwiftChat 应用已准备就绪!
+</details>
 
 ### 支持的区域
 
@@ -159,7 +164,8 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ## 入门指南 - 使用其他模型提供商
 
-### 配置 Ollama
+<details>
+<summary><b>🔧 配置 Ollama（点击展开）</b></summary>
 
 1. 进入 **设置页面**，选择 **Ollama** 标签。
 2. 输入您的 Ollama 服务器 URL。例如：
@@ -168,7 +174,10 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     ```
 3. 输入正确的服务器 URL 后，您可以从 **文本模型** 下拉列表中选择所需的 Ollama 模型。
 
-### 配置 DeepSeek
+</details>
+
+<details>
+<summary><b>🔧 配置 DeepSeek（点击展开）</b></summary>
 
 1. 进入 **设置页面**，选择 **DeepSeek** 标签。
 2. 输入您的 DeepSeek API 密钥。
@@ -176,7 +185,10 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     - `DeepSeek-V3`
     - `DeepSeek-R1`
 
-### 配置 OpenAI
+</details>
+
+<details>
+<summary><b>🔧 配置 OpenAI（点击展开）</b></summary>
 
 1. 进入 **设置页面**，选择 **OpenAI** 标签。
 2. 输入您的 OpenAI API 密钥。
@@ -185,6 +197,8 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     - `GPT-4o mini`
 
 此外，如果您已部署 [ClickStream Server](#第-2-步-部署堆栈并获取-api-url)，可以启用 **Use Proxy** 选项以转发您的请求。
+
+</details>
 
 ## 详细功能
 
