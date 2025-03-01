@@ -26,6 +26,8 @@ export const DeepSeekModels = [
   { modelName: 'DeepSeek-R1', modelId: 'deepseek-reasoner' },
 ];
 
+export const BedrockThinkingModels = ['Claude 3.7 Sonnet'];
+
 const DefaultTextModel = [
   {
     modelName: 'Nova Pro',

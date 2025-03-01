@@ -9,28 +9,28 @@ import React, {
   useState,
 } from 'react';
 import {
-  type ViewStyle,
-  StyleSheet,
-  Platform,
-  TextStyle,
-  Text,
-  View,
-  ScrollView,
   Dimensions,
-  TextProps,
-  ImageStyle,
-  TouchableOpacity,
   Image,
+  ImageStyle,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextProps,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  type ViewStyle,
 } from 'react-native';
-import { Renderer } from 'react-native-marked';
 import type { RendererInterface } from 'react-native-marked';
+import { Renderer } from 'react-native-marked';
 import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { Table, Cell, TableWrapper } from 'react-native-table-component';
+import { Cell, Table, TableWrapper } from 'react-native-table-component';
 import RNFS from 'react-native-fs';
 import MDSvg from 'react-native-marked/src/components/MDSvg.tsx';
 import MDImage from 'react-native-marked/src/components/MDImage.tsx';
-import ImageProgressBar from './ImageProgressBar.tsx';
-import { PressMode } from '../../types/Chat.ts';
+import ImageProgressBar from '../ImageProgressBar.tsx';
+import { PressMode } from '../../../types/Chat.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
 import MarkedList from '@jsamr/react-native-li';
 import Decimal from '@jsamr/counter-style/lib/es/presets/decimal';
@@ -40,16 +40,7 @@ import Disc from '@jsamr/counter-style/lib/es/presets/disc';
 import MathView from 'react-native-math-view';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
-const cachedNode: { [key: string]: React.ReactNode } = {};
-let currentNodeType = '';
-let currentCacheKey = '';
-let currentText = '';
-let currentNode: React.ReactNode;
 let mathViewIndex = 0;
-
-export function clearCachedNode() {
-  Object.keys(cachedNode).forEach(key => delete cachedNode[key]);
-}
 
 function getMathKey() {
   mathViewIndex++;
@@ -72,8 +63,8 @@ export const CopyButton: React.FC<CopyButtonProps> = React.memo(
     // UseMemo to memoize the image source to prevent flickering
     const imageSource = useMemo(() => {
       return copied
-        ? require('../../assets/done.png')
-        : require('../../assets/copy.png');
+        ? require('../../../assets/done.png')
+        : require('../../../assets/copy.png');
     }, [copied]);
 
     useEffect(() => {
@@ -150,43 +141,6 @@ export class CustomMarkdownRenderer
     super();
   }
 
-  private hashStringDjb2(str: string): number {
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-      // eslint-disable-next-line no-bitwise
-      hash = (hash * 33) ^ str.charCodeAt(i);
-    }
-    // eslint-disable-next-line no-bitwise
-    return hash >>> 0;
-  }
-
-  private checkCache(
-    nodeType: string,
-    cacheKey: string,
-    text: string,
-    node: React.ReactNode
-  ) {
-    if (currentNodeType === '') {
-      currentNodeType = nodeType;
-    }
-    if (currentText === '') {
-      currentText = text;
-    }
-    if (currentNodeType !== nodeType) {
-      cachedNode[currentCacheKey] = currentNode;
-      currentNodeType = nodeType;
-    } else {
-      if (text.length <= currentText.length) {
-        if (!cachedNode[currentCacheKey]) {
-          cachedNode[currentCacheKey] = currentNode;
-        }
-      }
-    }
-    currentCacheKey = cacheKey;
-    currentNode = node;
-    currentText = text;
-  }
-
   getTextView(children: string | ReactNode[], styles?: TextStyle): ReactNode {
     return (
       <Text selectable key={this.getKey()} style={styles}>
@@ -206,105 +160,57 @@ export class CustomMarkdownRenderer
   }
 
   codespan(text: string, styles?: TextStyle): ReactNode {
-    const cacheKey = `codespan:${this.hashStringDjb2(text.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
-    const codespan = this.getTextView(text, {
+    return this.getTextView(text, {
       ...styles,
       ...customStyles.codeSpanText,
     });
-    this.checkCache('codespan', cacheKey, text.toString(), codespan);
-    return codespan;
   }
 
   text(text: string | ReactNode[], styles?: TextStyle): ReactNode {
     if (Array.isArray(text)) {
       return this.getNodeForTextArray(text, styles);
     }
-    const cacheKey = `text:${this.hashStringDjb2(text.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
-    const textNode = this.getTextView(text, styles);
-    this.checkCache('text', cacheKey, text.toString(), textNode);
-    return textNode;
+    return this.getTextView(text, styles);
   }
 
   strong(children: string | ReactNode[], styles?: TextStyle): ReactNode {
     if (Array.isArray(children)) {
       return this.getNodeForTextArray(children, styles);
     }
-    const cacheKey = `strong:${this.hashStringDjb2(children.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
-    const strong = this.getTextView(children, styles);
-    this.checkCache('strong', cacheKey, children.toString(), strong);
-    return strong;
+    return this.getTextView(children, styles);
   }
 
   em(children: string | ReactNode[], styles?: TextStyle): ReactNode {
     if (Array.isArray(children)) {
       return this.getNodeForTextArray(children, styles);
     }
-    const cacheKey = `em:${this.hashStringDjb2(children.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
-    const em = this.getTextView(children, styles);
-    this.checkCache('em', cacheKey, children.toString(), em);
-    return em;
+    return this.getTextView(children, styles);
   }
 
   br(): ReactNode {
     const text = '\n';
-    const cacheKey = `br:${this.hashStringDjb2(text)}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
-    const br = this.getTextView(text, {});
-    this.checkCache('br', cacheKey, text, br);
-    return br;
+    return this.getTextView(text, {});
   }
 
   del(children: string | ReactNode[], styles?: TextStyle): ReactNode {
     if (Array.isArray(children)) {
       return this.getNodeForTextArray(children, styles);
     }
-    const cacheKey = `del:${this.hashStringDjb2(children.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
-    const del = this.getTextView(children, styles);
-    this.checkCache('del', cacheKey, children.toString(), del);
-    return del;
+    return this.getTextView(children, styles);
   }
 
   heading(text: string | ReactNode[], styles?: TextStyle): ReactNode {
     if (Array.isArray(text)) {
       return this.getNodeForTextArray(text, styles);
     }
-    const cacheKey = `heading:${this.hashStringDjb2(text.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
-    const heading = this.getTextView(text, styles);
-    this.checkCache('heading', cacheKey, text.toString(), heading);
-    return heading;
+    return this.getTextView(text, styles);
   }
 
   escape(text: string, styles?: TextStyle): ReactNode {
     if (Array.isArray(text)) {
       return this.getNodeForTextArray(text, styles);
     }
-    const cacheKey = `escape:${this.hashStringDjb2(text.toString())}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
-    const escape = this.getTextView(text, styles);
-    this.checkCache('escape', cacheKey, text.toString(), escape);
-    return escape;
+    return this.getTextView(text, styles);
   }
 
   image(uri: string, alt?: string, style?: ImageStyle): ReactNode {
@@ -343,20 +249,14 @@ export class CustomMarkdownRenderer
     _containerStyle?: ViewStyle,
     _textStyle?: TextStyle
   ): ReactNode {
-    const cacheKey = `code:${language}:${this.hashStringDjb2(text)}`;
-    if (cachedNode[cacheKey]) {
-      return cachedNode[cacheKey];
-    }
     if (text && text !== '') {
-      const codeComponent = (
+      return (
         <MemoizedCodeHighlighter
           key={this.getKey()}
           text={text}
           language={language}
         />
       );
-      this.checkCache('code', cacheKey, text, codeComponent);
-      return codeComponent;
     } else {
       return <></>;
     }
@@ -545,7 +445,7 @@ const customStyles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#eaeaea',
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
   },

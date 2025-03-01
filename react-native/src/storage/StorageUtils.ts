@@ -1,10 +1,9 @@
-import { IMessage } from 'react-native-gifted-chat';
 import { MMKV } from 'react-native-mmkv';
 import {
   AllModel,
   Chat,
   ChatMode,
-  IMessageWithToken,
+  SwiftChatMessage,
   Model,
   SystemPrompt,
   Usage,
@@ -54,6 +53,7 @@ const systemPromptsKey = keyPrefix + 'systemPromptsKey';
 const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
+const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -65,19 +65,20 @@ let currentImageModel: Model | undefined;
 let currentTextModel: Model | undefined;
 let currentSystemPrompts: SystemPrompt[] | undefined;
 let currentOpenAIProxyEnabled: boolean | undefined;
+let currentThinkingEnabled: boolean | undefined;
 
 export function saveMessages(
   sessionId: number,
-  messages: IMessage[],
+  messages: SwiftChatMessage[],
   usage: Usage
 ) {
-  (messages[0] as IMessageWithToken).usage = usage;
+  (messages[0] as SwiftChatMessage).usage = usage;
   storage.set(sessionIdPrefix + sessionId, JSON.stringify(messages));
 }
 
 export function saveMessageList(
   sessionId: number,
-  fistMessage: IMessage,
+  fistMessage: SwiftChatMessage,
   chatMode: ChatMode
 ) {
   let allMessageStr = getMessageListStr();
@@ -112,10 +113,10 @@ function getMessageListStr() {
   return storage.getString(messageListKey) ?? ']';
 }
 
-export function getMessagesBySessionId(sessionId: number): IMessage[] {
+export function getMessagesBySessionId(sessionId: number): SwiftChatMessage[] {
   const messageStr = storage.getString(sessionIdPrefix + sessionId);
   if (messageStr) {
-    return JSON.parse(messageStr) as IMessage[];
+    return JSON.parse(messageStr) as SwiftChatMessage[];
   }
   return [];
 }
@@ -388,5 +389,19 @@ export function getOpenAIProxyEnabled() {
     currentOpenAIProxyEnabled =
       storage.getBoolean(openAIProxyEnabledKey) ?? true;
     return currentOpenAIProxyEnabled;
+  }
+}
+
+export function saveThinkingEnabled(enabled: boolean) {
+  currentThinkingEnabled = enabled;
+  storage.set(thinkingEnabledKey, enabled);
+}
+
+export function getThinkingEnabled() {
+  if (currentThinkingEnabled !== undefined) {
+    return currentThinkingEnabled;
+  } else {
+    currentThinkingEnabled = storage.getBoolean(thinkingEnabledKey) ?? true;
+    return currentThinkingEnabled;
   }
 }

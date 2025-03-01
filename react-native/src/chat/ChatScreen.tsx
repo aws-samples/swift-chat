@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { GiftedChat, IMessage } from 'react-native-gifted-chat';
+import { GiftedChat } from 'react-native-gifted-chat';
 import {
   AppState,
   Dimensions,
@@ -33,7 +33,7 @@ import {
   ChatMode,
   ChatStatus,
   FileInfo,
-  IMessageWithToken,
+  SwiftChatMessage,
   SystemPrompt,
   Usage,
 } from '../types/Chat.ts';
@@ -47,7 +47,6 @@ import {
 } from './util/BedrockMessageConvertor.ts';
 import { trigger } from './util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
-import { clearCachedNode } from './component/CustomMarkdownRenderer.tsx';
 import { isMac } from '../App.tsx';
 import { CustomChatFooter } from './component/CustomChatFooter.tsx';
 import {
@@ -88,7 +87,7 @@ function ChatScreen(): React.JSX.Element {
   const mode = route.params?.mode ?? currentMode;
   const modeRef = useRef(mode);
 
-  const [messages, setMessages] = useState<IMessage[]>([]);
+  const [messages, setMessages] = useState<SwiftChatMessage[]>([]);
   const [systemPrompt, setSystemPrompt] = useState<SystemPrompt | null>(
     getCurrentSystemPrompt
   );
@@ -101,7 +100,7 @@ function ChatScreen(): React.JSX.Element {
   const chatStatusRef = useRef(chatStatus);
   const messagesRef = useRef(messages);
   const bedrockMessages = useRef<BedrockMessage[]>([]);
-  const flatListRef = useRef<FlatList<IMessage>>(null);
+  const flatListRef = useRef<FlatList<SwiftChatMessage>>(null);
   const textInputRef = useRef<TextInput>(null);
   const sessionIdRef = useRef(initialSessionId || getSessionId() + 1);
   const isCanceled = useRef(false);
@@ -120,7 +119,6 @@ function ChatScreen(): React.JSX.Element {
     messagesRef.current = messages;
     chatStatusRef.current = chatStatus;
     usageRef.current = usage;
-    setShowSystemPrompt(messages.length === 0);
   }, [chatStatus, messages, usage]);
 
   useEffect(() => {
@@ -143,9 +141,9 @@ function ChatScreen(): React.JSX.Element {
         id: sessionIdRef.current,
       });
 
-      clearCachedNode();
       setMessages([]);
       bedrockMessages.current = [];
+      setShowSystemPrompt(true);
       showKeyboard();
     }, [])
   );
@@ -221,14 +219,13 @@ function ChatScreen(): React.JSX.Element {
       // click from history
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
-      setUsage((msg[0] as IMessageWithToken).usage);
+      setUsage((msg[0] as SwiftChatMessage).usage);
       setSystemPrompt(null);
       saveCurrentSystemPrompt(null);
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
 
-      clearCachedNode();
       setMessages(msg);
       scrollToBottom();
     }
@@ -245,7 +242,6 @@ function ChatScreen(): React.JSX.Element {
         });
         setUsage(undefined);
         bedrockMessages.current = [];
-        clearCachedNode();
         setMessages([]);
       }
     }
@@ -390,6 +386,7 @@ function ChatScreen(): React.JSX.Element {
         sendEventRef.current('onImageStart');
       }
       controllerRef.current = new AbortController();
+      isCanceled.current = false;
       invokeBedrockWithCallBack(
         bedrockMessages.current,
         modeRef.current,
@@ -400,7 +397,8 @@ function ChatScreen(): React.JSX.Element {
           msg: string,
           complete: boolean,
           needStop: boolean,
-          usageInfo?: Usage
+          usageInfo?: Usage,
+          reasoning?: string
         ) => {
           if (chatStatusRef.current !== ChatStatus.Running) {
             return;
@@ -418,14 +416,21 @@ function ChatScreen(): React.JSX.Element {
               }));
               updateTotalUsage(usageInfo);
             }
-            setMessages(prevMessages => {
-              const newMessages = [...prevMessages];
-              newMessages[0] = {
-                ...prevMessages[0],
-                text: msg,
-              };
-              return newMessages;
-            });
+            const previousMessage = messagesRef.current[0];
+            if (
+              previousMessage.text !== msg ||
+              previousMessage.reasoning !== reasoning
+            ) {
+              setMessages(prevMessages => {
+                const newMessages = [...prevMessages];
+                newMessages[0] = {
+                  ...prevMessages[0],
+                  text: msg,
+                  reasoning: reasoning,
+                };
+                return newMessages;
+              });
+            }
           };
           const setComplete = () => {
             trigger(HapticFeedbackTypes.notificationSuccess);
@@ -449,7 +454,7 @@ function ChatScreen(): React.JSX.Element {
             }, 1000);
           }
           if (needStop) {
-            isCanceled.current = false;
+            isCanceled.current = true;
           }
         }
       ).then();
@@ -457,7 +462,8 @@ function ChatScreen(): React.JSX.Element {
   }, [messages]);
 
   // handle onSend
-  const onSend = useCallback((message: IMessage[] = []) => {
+  const onSend = useCallback((message: SwiftChatMessage[] = []) => {
+    setShowSystemPrompt(false);
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
       showInfo('please wait for all videos to be ready');
@@ -582,7 +588,7 @@ function ChatScreen(): React.JSX.Element {
                 textInputRef.current.clear();
               }
             }, 1);
-            const msg: IMessage = {
+            const msg: SwiftChatMessage = {
               text: inputTexRef.current,
               user: { _id: 1 },
               createdAt: new Date(),

@@ -20,7 +20,8 @@ type CallbackFunction = (
   result: string,
   complete: boolean,
   needStop: boolean,
-  usage?: Usage
+  usage?: Usage,
+  reasoning?: string
 ) => void;
 export const invokeOpenAIWithCallBack = async (
   messages: BedrockMessage[],
@@ -51,6 +52,7 @@ export const invokeOpenAIWithCallBack = async (
   };
   const url = getApiURL();
   let completeMessage = '';
+  let completeReasoning = '';
   const timeoutId = setTimeout(() => controller.abort(), 60000);
   fetch(url!, options)
     .then(response => {
@@ -63,58 +65,90 @@ export const invokeOpenAIWithCallBack = async (
       }
       const reader = body.getReader();
       const decoder = new TextDecoder();
-      let isFirstReason = true;
-      let isFirstContent = true;
       let lastChunk = '';
       while (true) {
-        const { done, value } = await reader.read();
-        const chunk = decoder.decode(value, { stream: true });
-        const parsed = parseStreamData(chunk, lastChunk);
-        if (parsed.error) {
-          callback(completeMessage + '\n\n' + parsed.error, true, true);
-          break;
-        }
-        if (parsed.reason) {
-          const formattedReason = parsed.reason.replace(/\n\n/g, '\n>\n>');
-          if (isFirstReason) {
-            completeMessage += '> ';
-            isFirstReason = false;
+        if (shouldStop()) {
+          await reader.cancel();
+          if (completeMessage === '') {
+            completeMessage = '...';
           }
-          completeMessage += formattedReason;
+          callback(completeMessage, true, true, undefined, completeReasoning);
+          return;
         }
-        if (parsed.content) {
-          if (!isFirstReason && isFirstContent) {
-            completeMessage += '\n\n';
-            isFirstContent = false;
+
+        try {
+          const { done, value } = await reader.read();
+          const chunk = decoder.decode(value, { stream: true });
+          const parsed = parseStreamData(chunk, lastChunk);
+          if (parsed.error) {
+            callback(
+              completeMessage + '\n\n' + parsed.error,
+              true,
+              true,
+              undefined,
+              completeReasoning
+            );
+            return;
           }
-          completeMessage += parsed.content;
-        }
-        if (parsed.dataChunk) {
-          lastChunk = parsed.dataChunk;
-        } else {
-          lastChunk = '';
-        }
-        if (parsed.usage && parsed.usage.inputTokens) {
-          callback(completeMessage, false, false, parsed.usage);
-        } else {
-          callback(completeMessage, done, false);
-        }
-        if (done) {
-          break;
+          if (parsed.reason) {
+            completeReasoning += parsed.reason;
+          }
+          if (parsed.content) {
+            completeMessage += parsed.content;
+          }
+          if (parsed.dataChunk) {
+            lastChunk = parsed.dataChunk;
+          } else {
+            lastChunk = '';
+          }
+          if (parsed.usage && parsed.usage.inputTokens) {
+            callback(
+              completeMessage,
+              false,
+              false,
+              parsed.usage,
+              completeReasoning
+            );
+          } else {
+            callback(
+              completeMessage,
+              done,
+              false,
+              undefined,
+              completeReasoning
+            );
+          }
+          if (done) {
+            return;
+          }
+        } catch (readError) {
+          console.log('Error reading stream:', readError);
+          if (completeMessage === '') {
+            completeMessage = '...';
+          }
+          callback(completeMessage, true, true, undefined, completeReasoning);
+          return;
         }
       }
     })
     .catch(error => {
       console.log(error);
+      clearTimeout(timeoutId);
       if (shouldStop()) {
         if (completeMessage === '') {
           completeMessage = '...';
         }
-        callback(completeMessage, true, true);
+        callback(completeMessage, true, true, undefined, completeReasoning);
       } else {
         const errorMsg = String(error);
         const errorInfo = 'Request error: ' + errorMsg;
-        callback(completeMessage + '\n\n' + errorInfo, true, true);
+        callback(
+          completeMessage + '\n\n' + errorInfo,
+          true,
+          true,
+          undefined,
+          completeReasoning
+        );
       }
     });
 };

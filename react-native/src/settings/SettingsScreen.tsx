@@ -30,6 +30,7 @@ import {
   getOpenAIProxyEnabled,
   getRegion,
   getTextModel,
+  getThinkingEnabled,
   isNewStabilityImageModel,
   saveAllModels,
   saveDeepSeekApiKey,
@@ -41,6 +42,7 @@ import {
   saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
+  saveThinkingEnabled,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -52,6 +54,7 @@ import { isMac } from '../App.tsx';
 import CustomDropdown from './DropdownComponent.tsx';
 import { getTotalCost } from './ModelPrice.ts';
 import {
+  BedrockThinkingModels,
   DeepSeekModels,
   getAllRegions,
   getDefaultTextModels,
@@ -71,6 +74,7 @@ const initUpgradeInfo: UpgradeInfo = {
 export const GITHUB_LINK = 'https://github.com/aws-samples/swift-chat';
 
 function SettingsScreen(): React.JSX.Element {
+  const allModel = getAllModels();
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
   const [ollamaApiUrl, setOllamaApiUrl] = useState(getOllamaApiUrl);
@@ -83,14 +87,18 @@ function SettingsScreen(): React.JSX.Element {
   const [imageSize, setImageSize] = useState(getImageSize);
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
   const navigation = useNavigation<NavigationProp<RouteParamList>>();
-  const [textModels, setTextModels] = useState<Model[]>([]);
-  const [selectedTextModel, setSelectedTextModel] = useState<string>('');
-  const [imageModels, setImageModels] = useState<Model[]>([]);
-  const [selectedImageModel, setSelectedImageModel] = useState<string>('');
+  const [textModels, setTextModels] = useState<Model[]>(allModel.textModel);
+  const [selectedTextModel, setSelectedTextModel] =
+    useState<Model>(getTextModel);
+  const [imageModels, setImageModels] = useState<Model[]>(allModel.imageModel);
+  const [selectedImageModel, setSelectedImageModel] = useState<string>(
+    getImageModel().modelId
+  );
   const [upgradeInfo, setUpgradeInfo] = useState<UpgradeInfo>(initUpgradeInfo);
   const [cost, setCost] = useState('0.00');
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedTab, setSelectedTab] = useState('bedrock');
+  const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -116,13 +124,9 @@ function SettingsScreen(): React.JSX.Element {
   };
 
   useEffect(() => {
-    const allModel = getAllModels();
-    const textModel = getTextModel();
-    setTextModels(allModel.textModel);
-    setSelectedTextModel(textModel.modelId);
-    const imageModel = getImageModel();
-    setImageModels(allModel.imageModel);
-    setSelectedImageModel(imageModel.modelId);
+    if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
+      return;
+    }
     if (apiUrl.length > 0 && apiKey.length > 0) {
       saveKeys(apiUrl, apiKey);
       fetchAndSetModelNames().then();
@@ -131,6 +135,9 @@ function SettingsScreen(): React.JSX.Element {
   }, [apiUrl, apiKey]);
 
   useEffect(() => {
+    if (ollamaApiUrl === getOllamaApiUrl()) {
+      return;
+    }
     saveOllamaApiURL(ollamaApiUrl);
     if (ollamaApiUrl.length > 0) {
       fetchAndSetModelNames().then();
@@ -179,14 +186,14 @@ function SettingsScreen(): React.JSX.Element {
       model => model.modelName === textModel.modelName
     );
     if (targetModels && targetModels.length === 1) {
-      setSelectedTextModel(targetModels[0].modelId);
+      setSelectedTextModel(targetModels[0]);
       saveTextModel(targetModels[0]);
     } else {
       const defaultMissMatchModel = response.textModel.filter(
         model => model.modelName === 'Claude 3 Sonnet'
       );
       if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
-        setSelectedTextModel(defaultMissMatchModel[0].modelId);
+        setSelectedTextModel(defaultMissMatchModel[0]);
         saveTextModel(defaultMissMatchModel[0]);
       }
     }
@@ -249,6 +256,11 @@ function SettingsScreen(): React.JSX.Element {
   const toggleOpenAIProxy = (value: boolean) => {
     setOpenAIProxyEnabled(value);
     saveOpenAIProxyEnabled(value);
+  };
+
+  const toggleThinking = (value: boolean) => {
+    setThinkingEnabled(value);
+    saveThinkingEnabled(value);
   };
 
   const renderProviderSettings = () => {
@@ -362,13 +374,13 @@ function SettingsScreen(): React.JSX.Element {
         <CustomDropdown
           label="Text Model"
           data={textModelsData}
-          value={selectedTextModel}
+          value={selectedTextModel.modelId}
           onChange={(item: DropdownItem) => {
             if (item.value !== '') {
-              setSelectedTextModel(item.value);
               const selectedModel = textModels.find(
                 model => model.modelId === item.value
               );
+              setSelectedTextModel(selectedModel!);
               if (selectedModel) {
                 saveTextModel(selectedModel);
               }
@@ -376,6 +388,18 @@ function SettingsScreen(): React.JSX.Element {
           }}
           placeholder="Select a model"
         />
+        {selectedTextModel &&
+          BedrockThinkingModels.includes(selectedTextModel.modelName) && (
+            <View style={styles.thinkingSwitchContainer}>
+              <Text style={styles.proxyLabel}>Enable Thinking</Text>
+              <Switch
+                style={[isMac ? styles.switch : {}]}
+                value={thinkingEnabled}
+                onValueChange={toggleThinking}
+              />
+            </View>
+          )}
+
         <CustomDropdown
           label="Image Model"
           data={imageModelsData}
@@ -543,6 +567,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginVertical: 0,
+  },
+  thinkingSwitchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   itemContainer: {
     flexDirection: 'row',

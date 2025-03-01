@@ -1,6 +1,17 @@
-[中文](/README_CN.md)
-
 # SwiftChat - A Cross-platform AI Chat App
+
+> 🚀 Your Personal AI Assistant - Fast, Private, and Cross-platform
+
+[![GitHub Release](https://img.shields.io/github/v/release/aws-samples/swift-chat)](https://github.com/aws-samples/swift-chat/releases)
+[![License](https://img.shields.io/badge/license-MIT--0-green)](LICENSE)
+
+## 📱 Quick Download
+
+- [Download for Android](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.apk)
+- [Download for macOS](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.dmg)
+- For iOS: Currently available through local build with Xcode
+
+[中文](/README_CN.md)
 
 SwiftChat is a fast and responsive AI chat application developed with [React Native](https://reactnative.dev/) and
 powered by [Amazon Bedrock](https://aws.amazon.com/bedrock/), with compatibility extending to other model providers such
@@ -100,6 +111,9 @@ Please follow
 the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to
 enable your models.
 
+<details>
+<summary><b>🔧 Configuration Steps (Click to expand)</b></summary>
+
 ### Step 1: Set up your API Key
 
 1. Sign in to your AWS console and
@@ -138,19 +152,14 @@ enable your models.
 Wait about 3-5 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
 can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or `https://xxx.lambda-url.xxx.on.aws`
 
-### Step 3: Download the app and setup with API URL and API Key
+### Step 3: Open the App and setup with API URL and API Key
 
-1. Download the App
-
-    - Android App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.apk)
-    - macOS App click to [Download](https://github.com/aws-samples/swift-chat/releases/download/1.10.0/SwiftChat.dmg)
-    - iOS (Currently we do not provide the iOS version, you can build it locally with Xcode)
-
-2. Launch the App, open the drawer menu, and tap **Settings**.
-3. Paste the `API URL` and `API Key` then select the Region.
-4. Click the top right ✓ icon to save your configuration and start your chat.
+1. Launch the App, open the drawer menu, and tap **Settings**.
+2. Paste the `API URL` and `API Key`(The **Value** you typed in Parameter Store) then select the Region.
+3. Click the top right ✓ icon to save your configuration and start your chat.
 
 Congratulations 🎉 Your SwiftChat App is ready to use!
+</details>
 
 ### Supported Region
 
@@ -168,7 +177,8 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 ## Getting Started with Other Model Providers
 
-### Configure Ollama
+<details>
+<summary><b>🔧 Configure Ollama (Click to expand)</b></summary>
 
 1. Navigate to the **Settings Page** and select the **Ollama** tab.
 2. Enter your Ollama Server URL. For example:
@@ -178,7 +188,10 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 3. Once the correct Server URL is entered, you can select your desired Ollama models from the **Text Model** dropdown
    list.
 
-### Configure DeepSeek
+</details>
+
+<details>
+<summary><b>🔧 Configure DeepSeek (Click to expand)</b></summary>
 
 1. Go to the **Settings Page** and select the **DeepSeek** tab.
 2. Input your DeepSeek API Key.
@@ -186,7 +199,10 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
     - `DeepSeek-V3`
     - `DeepSeek-R1`
 
-### Configure OpenAI
+</details>
+
+<details>
+<summary><b>🔧 Configure OpenAI (Click to expand)</b></summary>
 
 1. Navigate to the **Settings Page** and select the **OpenAI** tab.
 2. Enter your OpenAI API Key.
@@ -196,6 +212,8 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 Additionally, if you have deployed the [ClickStream Server](#step-2-deploy-stack-and-get-your-api-url), you can enable
 the **Use Proxy** option to forward your requests.
+
+</details>
 
 ## Detailed Features
 
@@ -265,7 +283,6 @@ orientation.
 
 - Speed up end-to-end API requests through **image compression**
 - Deploying APIs in the **same region** as Bedrock provides lower latency
-- Minimal response payload with **zero parsing** needed for direct display
 
 📱 **Fast Render Speed**
 
