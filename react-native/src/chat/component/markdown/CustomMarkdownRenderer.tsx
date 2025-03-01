@@ -445,7 +445,7 @@ const customStyles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#eaeaea',
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
   },

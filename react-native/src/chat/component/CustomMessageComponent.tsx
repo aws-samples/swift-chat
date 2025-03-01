@@ -167,7 +167,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             value={currentMessage.reasoning}
             flatListProps={{
               style: {
-                backgroundColor: '#f5f5f5',
+                backgroundColor: '#f3f3f3',
               },
             }}
             styles={customMarkedStyles}
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   reasoningContainer: {
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f3f3f3',
     overflow: 'hidden',
     marginTop: 8,
   },
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
-    backgroundColor: '#eeeeee',
+    backgroundColor: '#eaeaea',
   },
   reasoningTitle: {
     fontSize: 15,
