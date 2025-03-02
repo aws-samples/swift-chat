@@ -397,7 +397,7 @@ function parseChunk(rawChunk: string) {
   if (rawChunk.length > 0) {
     try {
       const bedrockChunk: BedrockChunk = JSON.parse(rawChunk);
-      return extractChunkContent(bedrockChunk);
+      return extractChunkContent(bedrockChunk, rawChunk);
     } catch (error) {
       if (rawChunk.indexOf('}{') > 0) {
         const jsonParts = rawChunk.split('}{');
@@ -410,7 +410,7 @@ function parseChunk(rawChunk: string) {
             (i >= 1 ? '{' : '') + part + (i < jsonParts.length - 1 ? '}' : '');
           try {
             const chunk: BedrockChunk = JSON.parse(part);
-            const content = extractChunkContent(chunk);
+            const content = extractChunkContent(chunk, rawChunk);
             if (content.reasoning) {
               combinedReasoning += content.reasoning;
             }
@@ -446,12 +446,17 @@ function parseChunk(rawChunk: string) {
 /**
  * Helper function to extract content from a BedrockChunk
  */
-function extractChunkContent(bedrockChunk: BedrockChunk) {
+function extractChunkContent(bedrockChunk: BedrockChunk, rawChunk: string) {
   const reasoning =
     bedrockChunk?.contentBlockDelta?.delta?.reasoningContent?.text;
   const text = bedrockChunk?.contentBlockDelta?.delta?.text;
   const usage = bedrockChunk?.metadata?.usage;
-  return { reasoning, text, usage };
+  if (reasoning || text || usage) {
+    return { reasoning, text, usage };
+  } else {
+    // return raw text for display error
+    return { reasoning, text: rawChunk, usage };
+  }
 }
 
 function getApiPrefix(): string {
