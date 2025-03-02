@@ -449,14 +449,12 @@ function parseChunk(rawChunk: string) {
 function extractChunkContent(bedrockChunk: BedrockChunk, rawChunk: string) {
   const reasoning =
     bedrockChunk?.contentBlockDelta?.delta?.reasoningContent?.text;
-  const text = bedrockChunk?.contentBlockDelta?.delta?.text;
+  let text = bedrockChunk?.contentBlockDelta?.delta?.text;
   const usage = bedrockChunk?.metadata?.usage;
-  if (reasoning || text || usage) {
-    return { reasoning, text, usage };
-  } else {
-    // return raw text for display error
-    return { reasoning, text: rawChunk, usage };
+  if (bedrockChunk?.detail) {
+    text = rawChunk;
   }
+  return { reasoning, text, usage };
 }
 
 function getApiPrefix(): string {

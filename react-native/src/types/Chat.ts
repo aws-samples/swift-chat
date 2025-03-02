@@ -116,6 +116,7 @@ export interface BedrockChunk {
   metadata: {
     usage: Usage;
   };
+  detail: string;
 }
 
 export interface Delta {

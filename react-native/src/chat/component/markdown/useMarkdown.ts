@@ -46,10 +46,12 @@ const useMarkdown = (
   // Use useRef to store cache to prevent loss during re-renders
   const cacheRef = useRef<{
     lastValue: string;
+    lastNewContent: string;
     cachedTokens: ReturnType<typeof marked.lexer>;
     cachedElements: ReactNode[];
   }>({
     lastValue: '',
+    lastNewContent: '',
     cachedTokens: marked.lexer(''),
     cachedElements: [],
   });
@@ -81,6 +83,7 @@ const useMarkdown = (
       if (options?.chatStatus === ChatStatus.Running && value !== '...') {
         cacheRef.current = {
           lastValue: value,
+          lastNewContent: value,
           cachedTokens: tokens,
           cachedElements: elements,
         };
@@ -99,7 +102,17 @@ const useMarkdown = (
     const lastToken = cacheRef.current.cachedTokens[lastTokenIndex];
 
     // Combine the text of the last token with new text to get the latest content to parse
-    let combinedText = lastToken.raw + newContent;
+    let combinedText = lastToken.raw;
+    if (lastToken.type === 'list') {
+      const lastNewContent = cacheRef.current.lastNewContent;
+      if (
+        combinedText[combinedText.length - 1] === '\n' &&
+        lastNewContent[lastNewContent.length - 1] === ' '
+      ) {
+        combinedText = combinedText.slice(0, -1) + ' ';
+      }
+    }
+    combinedText += newContent;
     if (lastToken.type === 'space') {
       combinedText =
         cacheRef.current.cachedTokens[lastTokenIndex - 1].raw + combinedText;
@@ -132,6 +145,7 @@ const useMarkdown = (
     // Update cache with new references
     cacheRef.current = {
       lastValue: value,
+      lastNewContent: newContent,
       cachedTokens: mergedTokens,
       cachedElements: mergedElements,
     };
