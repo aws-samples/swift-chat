@@ -60,7 +60,6 @@ import {
   getDefaultTextModels,
   GPTModels,
 } from '../storage/Constants.ts';
-import { showInfo } from '../chat/util/ToastUtils.ts';
 import CustomTextInput from './CustomTextInput.tsx';
 import { requestAllOllamaModels } from '../api/ollama-api.ts';
 import TabButton from './TabButton';
