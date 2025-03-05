@@ -219,14 +219,10 @@ function SettingsScreen(): React.JSX.Element {
       headerRight: () => (
         <CustomHeaderRightButton
           onPress={async () => {
-            if (apiUrl.length > 0 && apiKey.length > 0) {
-              navigation.navigate('Bedrock', {
-                sessionId: -1,
-                tapIndex: -1,
-              });
-            } else {
-              showInfo('Please input your API URL and API Key');
-            }
+            navigation.navigate('Bedrock', {
+              sessionId: -1,
+              tapIndex: -1,
+            });
           }}
           imageSource={require('../assets/done.png')}
         />
