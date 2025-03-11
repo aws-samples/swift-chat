@@ -195,7 +195,8 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
           modelName: getTextModel().modelName,
           inputTokens:
             parsedData.usage.prompt_tokens -
-            (parsedData.usage.prompt_cache_hit_tokens ?? 0),
+            (Math.floor((3 / 4) * parsedData.usage.prompt_cache_hit_tokens) ??
+              0),
           outputTokens: parsedData.usage.completion_tokens,
           totalTokens: parsedData.usage.total_tokens,
         };
