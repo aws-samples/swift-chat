@@ -27,7 +27,7 @@ import {
 } from '../chat/util/BedrockMessageConvertor.ts';
 import { invokeOpenAIWithCallBack } from './open-api.ts';
 import { invokeOllamaWithCallBack } from './ollama-api.ts';
-import { BedrockThinkingModels } from '../storage/Constants.ts';
+import { BedrockThinkingModels, DeepSeekModels } from '../storage/Constants.ts';
 
 type CallbackFunction = (
   result: string,
@@ -45,7 +45,9 @@ export const invokeBedrockWithCallBack = async (
   controller: AbortController,
   callback: CallbackFunction
 ) => {
-  const isDeepSeek = getTextModel().modelId.includes('deepseek');
+  const isDeepSeek = DeepSeekModels.some(
+    model => model.modelId === getTextModel().modelId
+  );
   const isOpenAI = getTextModel().modelId.includes('gpt');
   const isOllama = getTextModel().modelId.startsWith('ollama-');
   if (chatMode === ChatMode.Text && (isDeepSeek || isOpenAI || isOllama)) {

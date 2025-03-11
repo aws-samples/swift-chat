@@ -1,4 +1,5 @@
 import { Model, SystemPrompt } from '../types/Chat.ts';
+import { getDeepSeekApiKey, getOpenAIApiKey } from './StorageUtils.ts';
 
 const RegionList = [
   'us-west-2',
@@ -28,13 +29,11 @@ export const DeepSeekModels = [
 
 export const BedrockThinkingModels = ['Claude 3.7 Sonnet'];
 
-const DefaultTextModel = [
+export const DefaultTextModel = [
   {
     modelName: 'Nova Pro',
     modelId: 'us.amazon.nova-pro-v1:0',
   },
-  ...DeepSeekModels,
-  ...GPTModels,
 ];
 
 const DefaultImageModel = {
@@ -78,7 +77,14 @@ export function getAllRegions() {
 }
 
 export function getDefaultTextModels() {
-  return DefaultTextModel as Model[];
+  return [...DefaultTextModel, ...getDefaultApiKeyModels()] as Model[];
+}
+
+export function getDefaultApiKeyModels() {
+  return [
+    ...(getDeepSeekApiKey().length > 0 ? DeepSeekModels : []),
+    ...(getOpenAIApiKey().length > 0 ? GPTModels : []),
+  ] as Model[];
 }
 
 export function getDefaultImageModels() {

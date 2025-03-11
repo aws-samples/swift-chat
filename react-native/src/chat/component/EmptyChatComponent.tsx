@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RouteParamList } from '../../types/RouteTypes.ts';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { getTextModel } from '../../storage/StorageUtils.ts';
+import { DeepSeekModels } from '../../storage/Constants.ts';
 
 const isAndroid = Platform.OS === 'android';
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
@@ -23,7 +24,9 @@ export const EmptyChatComponent = ({
   chatMode,
 }: EmptyChatComponentProps): React.ReactElement => {
   const navigation = useNavigation<NavigationProp>();
-  const isDeepSeek = getTextModel().modelId.includes('deepseek');
+  const isDeepSeek = DeepSeekModels.some(
+    model => model.modelId === getTextModel().modelId
+  );
   const isOpenAI = getTextModel().modelId.includes('gpt');
   const isOllama = getTextModel().modelId.startsWith('ollama-');
   const modelIcon = isDeepSeek

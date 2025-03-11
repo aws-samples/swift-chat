@@ -52,13 +52,15 @@ import { DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
 import CustomDropdown from './DropdownComponent.tsx';
-import { getTotalCost } from './ModelPrice.ts';
+import {
+  addBedrockPrefixToDeepseekModels,
+  getTotalCost,
+} from './ModelPrice.ts';
 import {
   BedrockThinkingModels,
-  DeepSeekModels,
+  DefaultTextModel,
   getAllRegions,
-  getDefaultTextModels,
-  GPTModels,
+  getDefaultApiKeyModels,
 } from '../storage/Constants.ts';
 import CustomTextInput from './CustomTextInput.tsx';
 import { requestAllOllamaModels } from '../api/ollama-api.ts';
@@ -138,23 +140,30 @@ function SettingsScreen(): React.JSX.Element {
       return;
     }
     saveOllamaApiURL(ollamaApiUrl);
-    if (ollamaApiUrl.length > 0) {
-      fetchAndSetModelNames().then();
-    }
+    fetchAndSetModelNames().then();
   }, [ollamaApiUrl]);
 
   useEffect(() => {
+    if (deepSeekApiKey === getDeepSeekApiKey()) {
+      return;
+    }
     saveDeepSeekApiKey(deepSeekApiKey);
+    fetchAndSetModelNames().then();
   }, [deepSeekApiKey]);
 
   useEffect(() => {
+    if (openAIApiKey === getOpenAIApiKey()) {
+      return;
+    }
     saveOpenAIApiKey(openAIApiKey);
+    fetchAndSetModelNames().then();
   }, [openAIApiKey]);
 
   const fetchAndSetModelNames = async () => {
     controllerRef.current = new AbortController();
     const ollamaModels = await requestAllOllamaModels();
     const response = await requestAllModels();
+    addBedrockPrefixToDeepseekModels(response.textModel);
     if (response.imageModel.length > 0) {
       setImageModels(response.imageModel);
       const imageModel = getImageModel();
@@ -170,13 +179,16 @@ function SettingsScreen(): React.JSX.Element {
       }
     }
     if (response.textModel.length === 0) {
-      response.textModel = [...getDefaultTextModels(), ...ollamaModels];
+      response.textModel = [
+        ...DefaultTextModel,
+        ...ollamaModels,
+        ...getDefaultApiKeyModels(),
+      ];
     } else {
       response.textModel = [
         ...response.textModel,
         ...ollamaModels,
-        ...DeepSeekModels,
-        ...GPTModels,
+        ...getDefaultApiKeyModels(),
       ];
     }
     setTextModels(response.textModel);

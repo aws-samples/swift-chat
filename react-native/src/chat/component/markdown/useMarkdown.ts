@@ -113,7 +113,7 @@ const useMarkdown = (
       }
     }
     combinedText += newContent;
-    if (lastToken.type === 'space') {
+    if (lastToken.type === 'space' && lastTokenIndex > 0) {
       combinedText =
         cacheRef.current.cachedTokens[lastTokenIndex - 1].raw + combinedText;
     }

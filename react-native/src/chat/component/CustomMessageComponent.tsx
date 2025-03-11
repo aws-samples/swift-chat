@@ -31,6 +31,8 @@ import { isMac } from '../../App.tsx';
 import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
 import Markdown from './markdown/Markdown.tsx';
+import { DeepSeekModels } from '../../storage/Constants.ts';
+import { getTextModel } from '../../storage/StorageUtils.ts';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
@@ -78,7 +80,9 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       currentMessage.user._id === 1
         ? 'You'
         : currentMessage.user.name ?? 'Bedrock';
-    const isDeepSeek = userName.includes('DeepSeek');
+    const isDeepSeek = DeepSeekModels.some(
+      model => model.modelId === getTextModel().modelId
+    );
     const isOpenAI = userName.includes('GPT');
     const isOllama = userName.includes(':');
 

@@ -1,4 +1,4 @@
-import { Usage, UsagePrice } from '../types/Chat.ts';
+import { Model, Usage, UsagePrice } from '../types/Chat.ts';
 
 export const getUsagePrice = (usage: Usage): UsagePrice => {
   const usagePrice: UsagePrice = {
@@ -81,6 +81,10 @@ function getImagePrice(
 
 export const ModelPrice: ModelPriceType = {
   textModelPrices: {
+    'Bedrock DeepSeek-R1': {
+      inputTokenPrice: 0.00135,
+      outputTokenPrice: 0.0054,
+    },
     'DeepSeek-V3': {
       inputTokenPrice: 0.00027,
       outputTokenPrice: 0.0011,
@@ -371,4 +375,15 @@ export function getTotalImagePrice(usage: Usage[]) {
       )
       .toFixed(6)
   );
+}
+
+export function addBedrockPrefixToDeepseekModels(models: Model[]): void {
+  for (let i = 0; i < models.length; i++) {
+    if (models[i].modelName.toLowerCase().includes('deepseek')) {
+      models[i] = {
+        ...models[i],
+        modelName: `Bedrock ${models[i].modelName}`,
+      };
+    }
+  }
 }
