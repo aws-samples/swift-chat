@@ -350,31 +350,33 @@ function SettingsScreen(): React.JSX.Element {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
-        <View style={styles.tabContainer}>
-          <TabButton
-            label={isMac ? 'Amazon Bedrock' : 'Bedrock'}
-            isSelected={selectedTab === 'bedrock'}
-            onPress={() => setSelectedTab('bedrock')}
-          />
-          <TabButton
-            label="Ollama"
-            isSelected={selectedTab === 'ollama'}
-            onPress={() => setSelectedTab('ollama')}
-          />
-          <TabButton
-            label="DeepSeek"
-            isSelected={selectedTab === 'deepseek'}
-            onPress={() => setSelectedTab('deepseek')}
-          />
-          <TabButton
-            label="OpenAI"
-            isSelected={selectedTab === 'openai'}
-            onPress={() => setSelectedTab('openai')}
-          />
-        </View>
+        <View style={styles.providerSettingsWrapper}>
+          <View style={styles.tabContainer}>
+            <TabButton
+              label={isMac ? 'Amazon Bedrock' : 'Bedrock'}
+              isSelected={selectedTab === 'bedrock'}
+              onPress={() => setSelectedTab('bedrock')}
+            />
+            <TabButton
+              label="Ollama"
+              isSelected={selectedTab === 'ollama'}
+              onPress={() => setSelectedTab('ollama')}
+            />
+            <TabButton
+              label="DeepSeek"
+              isSelected={selectedTab === 'deepseek'}
+              onPress={() => setSelectedTab('deepseek')}
+            />
+            <TabButton
+              label="OpenAI"
+              isSelected={selectedTab === 'openai'}
+              onPress={() => setSelectedTab('openai')}
+            />
+          </View>
 
-        <View style={styles.providerSettingsContainer}>
-          {renderProviderSettings()}
+          <View style={styles.providerSettingsContainer}>
+            {renderProviderSettings()}
+          </View>
         </View>
 
         <Text style={[styles.label, styles.middleLabel]}>Select Model</Text>
@@ -573,7 +575,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginVertical: 0,
+    marginBottom: 8,
   },
   thinkingSwitchContainer: {
     flexDirection: 'row',
@@ -620,6 +622,16 @@ const styles = StyleSheet.create({
   proxyMacContainer: {
     marginTop: 10,
   },
+  providerSettingsWrapper: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 2,
+    marginBottom: 12,
+  },
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 12,
@@ -629,7 +641,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   providerSettingsContainer: {
-    marginBottom: 8,
+    paddingHorizontal: 2,
   },
   switch: {
     marginRight: -14,
