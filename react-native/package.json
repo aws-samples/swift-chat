@@ -48,9 +48,9 @@
     "react-syntax-highlighter": "^15.5.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "@babel/preset-env": "^7.20.0",
-    "@babel/runtime": "^7.20.0",
+    "@babel/core": "^7.26.10",
+    "@babel/preset-env": "^7.26.9",
+    "@babel/runtime": "^7.26.10",
     "@react-native/babel-preset": "0.74.85",
     "@react-native/eslint-config": "0.74.85",
     "@react-native/metro-config": "0.74.85",
