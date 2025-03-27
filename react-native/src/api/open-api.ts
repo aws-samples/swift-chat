@@ -205,6 +205,8 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
     } catch (error) {
       if (lastChunk.length > 0) {
         return { error: error + cleanedData };
+      } else if (reason === '' && content === '') {
+        return { error: chunk };
       }
       if (reason || content) {
         return { reason, content, dataChunk, usage };

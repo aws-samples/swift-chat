@@ -386,7 +386,13 @@ export const genImage = async (
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const response = await fetch(url, options);
     if (!response.ok) {
-      const errMsg = `HTTP error! status: ${response.status}`;
+      const responseJson = await response.json();
+      const errMsg = responseJson.detail.includes(
+        "You don't have access to the model"
+      )
+        ? responseJson.detail +
+          ' Please enable your `Nova Lite` model in the US region to support generating images with Chinese prompts.'
+        : responseJson.detail;
       console.log(errMsg);
       return {
         image: '',
