@@ -34,7 +34,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, secureTextEntry && { paddingRight: 40 }]}
+          style={[styles.input, secureTextEntry && styles.inputPadding]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -88,6 +88,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     color: 'black',
     flex: 1,
+  },
+  inputPadding: {
+    paddingRight: 40,
   },
   eyeButton: {
     position: 'absolute',

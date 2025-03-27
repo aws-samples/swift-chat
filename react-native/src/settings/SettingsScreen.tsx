@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image,
   Linking,
@@ -116,82 +116,7 @@ function SettingsScreen(): React.JSX.Element {
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
 
-  useEffect(() => {
-    return navigation.addListener('focus', () => {
-      setCost(getTotalCost(getModelUsage()).toString());
-      fetchAndSetModelNames().then();
-    });
-  }, [navigation]);
-
-  const toggleHapticFeedback = (value: boolean) => {
-    setHapticEnabled(value);
-    setHapticFeedbackEnabled(value);
-    if (value && Platform.OS === 'android') {
-      trigger(HapticFeedbackTypes.impactMedium);
-    }
-  };
-
-  const handleCheckUpgrade = async () => {
-    if ((isMac || Platform.OS === 'android') && upgradeInfo.needUpgrade) {
-      await Linking.openURL(upgradeInfo.url);
-    } else {
-      await Linking.openURL(GITHUB_LINK + '/releases');
-    }
-  };
-
-  useEffect(() => {
-    if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
-      return;
-    }
-    saveKeys(apiUrl, apiKey);
-    fetchAndSetModelNames().then();
-    fetchUpgradeInfo().then();
-  }, [apiUrl, apiKey]);
-
-  useEffect(() => {
-    if (ollamaApiUrl === getOllamaApiUrl()) {
-      return;
-    }
-    saveOllamaApiURL(ollamaApiUrl);
-    fetchAndSetModelNames().then();
-  }, [ollamaApiUrl]);
-
-  useEffect(() => {
-    if (deepSeekApiKey === getDeepSeekApiKey()) {
-      return;
-    }
-    saveDeepSeekApiKey(deepSeekApiKey);
-    fetchAndSetModelNames().then();
-  }, [deepSeekApiKey]);
-
-  useEffect(() => {
-    if (openAIApiKey === getOpenAIApiKey()) {
-      return;
-    }
-    saveOpenAIApiKey(openAIApiKey);
-    fetchAndSetModelNames().then();
-  }, [openAIApiKey]);
-
-  useEffect(() => {
-    if (openAICompatApiURL === getOpenAICompatApiURL()) {
-      return;
-    }
-    saveOpenAICompatApiURL(openAICompatApiURL);
-  }, [openAICompatApiURL]);
-
-  useEffect(() => {
-    if (openAICompatApiKey === getOpenAICompatApiKey()) {
-      return;
-    }
-    saveOpenAICompatApiKey(openAICompatApiKey);
-  }, [openAICompatApiKey]);
-
-  useEffect(() => {
-    saveOpenAICompatModels(openAICompatModels);
-    fetchAndSetModelNames().then();
-  }, [openAICompatModels]);
-
-  const fetchAndSetModelNames = async () => {
+  const fetchAndSetModelNames = useCallback(async () => {
     controllerRef.current = new AbortController();
     const ollamaModels = await requestAllOllamaModels();
     const response = await requestAllModels();
@@ -256,7 +181,82 @@ function SettingsScreen(): React.JSX.Element {
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
       saveAllModels(response);
     }
+  }, [openAICompatModels]);
+
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      setCost(getTotalCost(getModelUsage()).toString());
+      fetchAndSetModelNames().then();
+    });
+  }, [navigation, fetchAndSetModelNames]);
+
+  const toggleHapticFeedback = (value: boolean) => {
+    setHapticEnabled(value);
+    setHapticFeedbackEnabled(value);
+    if (value && Platform.OS === 'android') {
+      trigger(HapticFeedbackTypes.impactMedium);
+    }
   };
+
+  const handleCheckUpgrade = async () => {
+    if ((isMac || Platform.OS === 'android') && upgradeInfo.needUpgrade) {
+      await Linking.openURL(upgradeInfo.url);
+    } else {
+      await Linking.openURL(GITHUB_LINK + '/releases');
+    }
+  };
+
+  useEffect(() => {
+    if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
+      return;
+    }
+    saveKeys(apiUrl, apiKey);
+    fetchAndSetModelNames().then();
+    fetchUpgradeInfo().then();
+  }, [apiUrl, apiKey, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (ollamaApiUrl === getOllamaApiUrl()) {
+      return;
+    }
+    saveOllamaApiURL(ollamaApiUrl);
+    fetchAndSetModelNames().then();
+  }, [ollamaApiUrl, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (deepSeekApiKey === getDeepSeekApiKey()) {
+      return;
+    }
+    saveDeepSeekApiKey(deepSeekApiKey);
+    fetchAndSetModelNames().then();
+  }, [deepSeekApiKey, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (openAIApiKey === getOpenAIApiKey()) {
+      return;
+    }
+    saveOpenAIApiKey(openAIApiKey);
+    fetchAndSetModelNames().then();
+  }, [openAIApiKey, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (openAICompatApiURL === getOpenAICompatApiURL()) {
+      return;
+    }
+    saveOpenAICompatApiURL(openAICompatApiURL);
+  }, [openAICompatApiURL]);
+
+  useEffect(() => {
+    if (openAICompatApiKey === getOpenAICompatApiKey()) {
+      return;
+    }
+    saveOpenAICompatApiKey(openAICompatApiKey);
+  }, [openAICompatApiKey]);
+
+  useEffect(() => {
+    saveOpenAICompatModels(openAICompatModels);
+    fetchAndSetModelNames().then();
+  }, [openAICompatModels, fetchAndSetModelNames]);
 
   const fetchUpgradeInfo = async () => {
     if (isMac || Platform.OS === 'android') {
