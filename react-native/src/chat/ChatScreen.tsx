@@ -90,6 +90,7 @@ function ChatScreen(): React.JSX.Element {
   const modeRef = useRef(mode);
 
   const [messages, setMessages] = useState<SwiftChatMessage[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
   const [systemPrompt, setSystemPrompt] = useState<SystemPrompt | null>(
     getCurrentSystemPrompt
   );
@@ -220,6 +221,8 @@ function ChatScreen(): React.JSX.Element {
         return;
       }
       // click from history
+      setMessages([]);
+      setIsLoadingMessages(true);
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
       setUsage((msg[0] as SwiftChatMessage).usage);
@@ -228,9 +231,11 @@ function ChatScreen(): React.JSX.Element {
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
-
-      setMessages(msg);
-      scrollToBottom();
+      setTimeout(() => {
+        setMessages(msg);
+        setIsLoadingMessages(false);
+        scrollToBottom();
+      }, 0);
     }
   }, [initialSessionId, mode, tapIndex]);
 
@@ -451,7 +456,11 @@ function ChatScreen(): React.JSX.Element {
                 const newMessages = [...prevMessages];
                 newMessages[0] = {
                   ...prevMessages[0],
-                  text: msg,
+                  text:
+                    isCanceled.current &&
+                    previousMessage.text === textPlaceholder
+                      ? 'Canceled...'
+                      : msg,
                   reasoning: reasoning,
                 };
                 return newMessages;
@@ -545,7 +554,10 @@ function ChatScreen(): React.JSX.Element {
         alignTop={false}
         inverted={true}
         renderChatEmpty={() => (
-          <EmptyChatComponent chatMode={modeRef.current} />
+          <EmptyChatComponent
+            chatMode={modeRef.current}
+            isLoadingMessages={isLoadingMessages}
+          />
         )}
         alwaysShowSend={
           chatStatus !== ChatStatus.Init || selectedFiles.length > 0

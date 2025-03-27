@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import ImageSpinner from './ImageSpinner';
 import { ChatMode, ModelTag } from '../../types/Chat.ts';
 import { useNavigation } from '@react-navigation/native';
 import { RouteParamList } from '../../types/RouteTypes.ts';
@@ -18,10 +19,12 @@ type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
 interface EmptyChatComponentProps {
   chatMode: ChatMode;
+  isLoadingMessages?: boolean;
 }
 
 export const EmptyChatComponent = ({
   chatMode,
+  isLoadingMessages = false,
 }: EmptyChatComponentProps): React.ReactElement => {
   const navigation = useNavigation<NavigationProp>();
   const isDeepSeek = DeepSeekModels.some(
@@ -48,7 +51,16 @@ export const EmptyChatComponent = ({
         onPress={() => {
           navigation.navigate('Settings', {});
         }}>
-        <Image source={source} style={styles.emptyChatImage} />
+        {isLoadingMessages ? (
+          <ImageSpinner
+            visible={true}
+            size={24}
+            isRotate={true}
+            source={require('../../assets/loading.png')}
+          />
+        ) : (
+          <Image source={source} style={styles.emptyChatImage} />
+        )}
       </TouchableOpacity>
     </View>
   );

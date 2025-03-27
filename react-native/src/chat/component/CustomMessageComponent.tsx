@@ -33,6 +33,7 @@ import { State, TapGestureHandler } from 'react-native-gesture-handler';
 import Markdown from './markdown/Markdown.tsx';
 import { DeepSeekModels } from '../../storage/Constants.ts';
 import { getTextModel } from '../../storage/StorageUtils.ts';
+import ImageSpinner from './ImageSpinner.tsx';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
@@ -46,6 +47,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const [isEdit, setIsEdit] = useState(false);
   const inputHeightRef = useRef(0);
   const chatStatusRef = useRef(chatStatus);
+  const isLoading =
+    chatStatus === ChatStatus.Running && currentMessage?.text === '...';
 
   const setIsEditValue = useCallback(
     (value: boolean) => {
@@ -185,8 +188,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   }, [currentMessage, customMarkdownRenderer, customTokenizer]);
 
   const handleEdit = useCallback(() => {
-    setIsEditValue(!isEdit);
-  }, [isEdit, setIsEditValue]);
+    if (!isLoading) {
+      setIsEditValue(!isEdit);
+    }
+  }, [isEdit, isLoading, setIsEditValue]);
 
   const onDoubleTap = useCallback(() => {
     setIsEditValue(true);
@@ -225,6 +230,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   if (!currentMessage) {
     return null;
   }
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -235,8 +241,17 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         {copyButton}
       </TouchableOpacity>
       <View style={styles.marked_box}>
-        {reasoningSection}
-        {!isEdit && (
+        {isLoading && (
+          <View style={styles.loading}>
+            <ImageSpinner
+              visible={true}
+              size={18}
+              source={require('../../assets/loading.png')}
+            />
+          </View>
+        )}
+        {!isLoading && reasoningSection}
+        {!isLoading && !isEdit && (
           <TapGestureHandler
             numberOfTaps={2}
             onHandlerStateChange={({ nativeEvent }) => {
@@ -359,6 +374,10 @@ const styles = StyleSheet.create({
   reasoningContent: {
     paddingHorizontal: 8,
     paddingVertical: 4,
+  },
+  loading: {
+    marginTop: 12,
+    marginBottom: 10,
   },
 });
 
