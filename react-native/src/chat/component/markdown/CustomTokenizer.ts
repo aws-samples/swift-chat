@@ -109,6 +109,7 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
         ),
         ...(isDisplayMode ? [{ type: 'br', raw: '  \n' }] : []),
         latexToken,
+        ...(isDisplayMode ? [{ type: 'br', raw: '  \n' }] : []),
         ...afterTokens.flatMap(token =>
           token.type === 'paragraph' ? token.tokens || [] : [token]
         ),
