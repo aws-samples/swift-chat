@@ -21,7 +21,16 @@ export interface EventData {
 export type Model = {
   modelId: string;
   modelName: string;
+  modelTag?: string;
 };
+
+export enum ModelTag {
+  Bedrock = 'Bedrock',
+  OpenAI = 'OpenAI',
+  OpenAICompatible = 'OpenAICompatible',
+  DeepSeek = 'DeepSeek',
+  Ollama = 'Ollama',
+}
 
 export type OllamaModel = {
   name: string;

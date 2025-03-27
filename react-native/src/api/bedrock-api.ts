@@ -3,6 +3,8 @@ import {
   BedrockChunk,
   ChatMode,
   ImageRes,
+  Model,
+  ModelTag,
   SystemPrompt,
   UpgradeInfo,
   Usage,
@@ -14,6 +16,7 @@ import {
   getImageModel,
   getImageSize,
   getOpenAIApiKey,
+  getOpenAICompatApiURL,
   getRegion,
   getTextModel,
   getThinkingEnabled,
@@ -48,15 +51,28 @@ export const invokeBedrockWithCallBack = async (
   const isDeepSeek = DeepSeekModels.some(
     model => model.modelId === getTextModel().modelId
   );
-  const isOpenAI = getTextModel().modelId.includes('gpt');
-  const isOllama = getTextModel().modelId.startsWith('ollama-');
-  if (chatMode === ChatMode.Text && (isDeepSeek || isOpenAI || isOllama)) {
+  const isOpenAI =
+    getTextModel().modelTag === ModelTag.OpenAI ||
+    getTextModel().modelId.includes('gpt');
+  const isOllama =
+    getTextModel().modelTag === ModelTag.Ollama ||
+    getTextModel().modelId.startsWith('ollama-');
+  const isOpenAICompatible =
+    getTextModel().modelTag === ModelTag.OpenAICompatible;
+  if (
+    chatMode === ChatMode.Text &&
+    (isDeepSeek || isOpenAI || isOpenAICompatible || isOllama)
+  ) {
     if (isDeepSeek && getDeepSeekApiKey().length === 0) {
       callback('Please configure your DeepSeek API Key', true, true);
       return;
     }
     if (isOpenAI && getOpenAIApiKey().length === 0) {
       callback('Please configure your OpenAI API Key', true, true);
+      return;
+    }
+    if (isOpenAICompatible && getOpenAICompatApiURL().length === 0) {
+      callback('Please configure your OpenAI Compatible API URL', true, true);
       return;
     }
     if (isOllama) {
@@ -283,7 +299,18 @@ export const requestAllModels = async (): Promise<AllModel> => {
       console.log(`HTTP error! status: ${response.status}`);
       return { imageModel: [], textModel: [] };
     }
-    return await response.json();
+    const allModel = await response.json();
+    allModel.imageModel.map((item: Model) => ({
+      modelId: item.modelId,
+      modelName: item.modelName,
+      modelTag: ModelTag.Bedrock,
+    }));
+    allModel.textModel.map((item: Model) => ({
+      modelId: item.modelId,
+      modelName: item.modelName,
+      modelTag: ModelTag.Bedrock,
+    }));
+    return allModel;
   } catch (error) {
     console.log('Error fetching models:', error);
     clearTimeout(timeoutId);

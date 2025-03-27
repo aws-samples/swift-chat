@@ -27,6 +27,9 @@ import {
   getModelUsage,
   getOllamaApiUrl,
   getOpenAIApiKey,
+  getOpenAICompatApiKey,
+  getOpenAICompatApiURL,
+  getOpenAICompatModels,
   getOpenAIProxyEnabled,
   getRegion,
   getTextModel,
@@ -39,6 +42,9 @@ import {
   saveKeys,
   saveOllamaApiURL,
   saveOpenAIApiKey,
+  saveOpenAICompatApiKey,
+  saveOpenAICompatApiURL,
+  saveOpenAICompatModels,
   saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
@@ -47,7 +53,7 @@ import {
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';
-import { DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
+import { DropdownItem, Model, ModelTag, UpgradeInfo } from '../types/Chat.ts';
 
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
@@ -83,6 +89,15 @@ function SettingsScreen(): React.JSX.Element {
   const [openAIApiKey, setOpenAIApiKey] = useState(getOpenAIApiKey);
   const [openAIProxyEnabled, setOpenAIProxyEnabled] = useState(
     getOpenAIProxyEnabled
+  );
+  const [openAICompatApiURL, setOpenAICompatApiURL] = useState(
+    getOpenAICompatApiURL
+  );
+  const [openAICompatApiKey, setOpenAICompatApiKey] = useState(
+    getOpenAICompatApiKey
+  );
+  const [openAICompatModels, setOpenAICompatModels] = useState(
+    getOpenAICompatModels
   );
   const [region, setRegion] = useState(getRegion);
   const [imageSize, setImageSize] = useState(getImageSize);
@@ -128,11 +143,9 @@ function SettingsScreen(): React.JSX.Element {
     if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
       return;
     }
-    if (apiUrl.length > 0 && apiKey.length > 0) {
-      saveKeys(apiUrl, apiKey);
-      fetchAndSetModelNames().then();
-      fetchUpgradeInfo().then();
-    }
+    saveKeys(apiUrl, apiKey);
+    fetchAndSetModelNames().then();
+    fetchUpgradeInfo().then();
   }, [apiUrl, apiKey]);
 
   useEffect(() => {
@@ -159,6 +172,25 @@ function SettingsScreen(): React.JSX.Element {
     fetchAndSetModelNames().then();
   }, [openAIApiKey]);
 
+  useEffect(() => {
+    if (openAICompatApiURL === getOpenAICompatApiURL()) {
+      return;
+    }
+    saveOpenAICompatApiURL(openAICompatApiURL);
+  }, [openAICompatApiURL]);
+
+  useEffect(() => {
+    if (openAICompatApiKey === getOpenAICompatApiKey()) {
+      return;
+    }
+    saveOpenAICompatApiKey(openAICompatApiKey);
+  }, [openAICompatApiKey]);
+
+  useEffect(() => {
+    saveOpenAICompatModels(openAICompatModels);
+    fetchAndSetModelNames().then();
+  }, [openAICompatModels]);
+
   const fetchAndSetModelNames = async () => {
     controllerRef.current = new AbortController();
     const ollamaModels = await requestAllOllamaModels();
@@ -178,17 +210,30 @@ function SettingsScreen(): React.JSX.Element {
         saveImageModel(response.imageModel[0]);
       }
     }
+    let openAICompatModelList: Model[] = [];
+    if (openAICompatModels.length > 0) {
+      openAICompatModelList = openAICompatModels.split(',').map(
+        modelId =>
+          ({
+            modelId,
+            modelName: modelId,
+            modelTag: ModelTag.OpenAICompatible,
+          } as Model)
+      );
+    }
     if (response.textModel.length === 0) {
       response.textModel = [
         ...DefaultTextModel,
         ...ollamaModels,
         ...getDefaultApiKeyModels(),
+        ...openAICompatModelList,
       ];
     } else {
       response.textModel = [
         ...response.textModel,
         ...ollamaModels,
         ...getDefaultApiKeyModels(),
+        ...openAICompatModelList,
       ];
     }
     setTextModels(response.textModel);
@@ -332,14 +377,40 @@ function SettingsScreen(): React.JSX.Element {
               placeholder="Enter OpenAI API Key"
               secureTextEntry={true}
             />
-            <View style={styles.proxySwitchContainer}>
-              <Text style={styles.proxyLabel}>Use Proxy</Text>
-              <Switch
-                style={[isMac ? styles.switch : {}]}
-                value={openAIProxyEnabled}
-                onValueChange={toggleOpenAIProxy}
-              />
-            </View>
+            {apiKey.length > 0 && apiUrl.length > 0 && (
+              <View style={styles.proxySwitchContainer}>
+                <Text style={styles.proxyLabel}>Use Proxy</Text>
+                <Switch
+                  style={[isMac ? styles.switch : {}]}
+                  value={openAIProxyEnabled}
+                  onValueChange={toggleOpenAIProxy}
+                />
+              </View>
+            )}
+            <Text style={[styles.label, styles.middleLabel]}>
+              OpenAI Compatible
+            </Text>
+            <CustomTextInput
+              label="Base URL"
+              value={openAICompatApiURL}
+              onChangeText={setOpenAICompatApiURL}
+              placeholder="Enter Base URL"
+              secureTextEntry={false}
+            />
+            <CustomTextInput
+              label="API Key"
+              value={openAICompatApiKey}
+              onChangeText={setOpenAICompatApiKey}
+              placeholder="Enter API Key"
+              secureTextEntry={true}
+            />
+            <CustomTextInput
+              label="Model ID"
+              value={openAICompatModels}
+              onChangeText={setOpenAICompatModels}
+              placeholder="Enter Model IDs, split by comma"
+              secureTextEntry={false}
+            />
           </>
         );
       default:

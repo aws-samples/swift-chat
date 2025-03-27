@@ -1,8 +1,10 @@
-import { SystemPrompt, Usage } from '../types/Chat.ts';
+import { ModelTag, SystemPrompt, Usage } from '../types/Chat.ts';
 import {
   getApiUrl,
   getDeepSeekApiKey,
   getOpenAIApiKey,
+  getOpenAICompatApiKey,
+  getOpenAICompatApiURL,
   getOpenAIProxyEnabled,
   getTextModel,
 } from '../storage/StorageUtils.ts';
@@ -283,7 +285,9 @@ function getOpenAIMessages(
 }
 
 function getApiKey(): string {
-  if (getTextModel().modelId.includes('deepseek')) {
+  if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
+    return getOpenAICompatApiKey();
+  } else if (getTextModel().modelId.includes('deepseek')) {
     return getDeepSeekApiKey();
   } else {
     return getOpenAIApiKey();
@@ -291,7 +295,9 @@ function getApiKey(): string {
 }
 
 function getApiURL(): string {
-  if (getTextModel().modelId.includes('deepseek')) {
+  if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
+    return getOpenAICompatApiURL() + '/chat/completions';
+  } else if (getTextModel().modelId.includes('deepseek')) {
     return 'https://api.deepseek.com/chat/completions';
   } else {
     if (getOpenAIProxyEnabled()) {

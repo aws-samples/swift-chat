@@ -1,4 +1,4 @@
-import { Model, SystemPrompt } from '../types/Chat.ts';
+import { Model, ModelTag, SystemPrompt } from '../types/Chat.ts';
 import { getDeepSeekApiKey, getOpenAIApiKey } from './StorageUtils.ts';
 
 const RegionList = [
@@ -18,13 +18,25 @@ const RegionList = [
 export const DefaultRegion = 'us-west-2';
 
 export const GPTModels = [
-  { modelName: 'GPT-4o', modelId: 'gpt-4o' },
-  { modelName: 'GPT-4o mini', modelId: 'gpt-4o-mini' },
+  { modelName: 'GPT-4o', modelId: 'gpt-4o', modelTag: ModelTag.OpenAI },
+  {
+    modelName: 'GPT-4o mini',
+    modelId: 'gpt-4o-mini',
+    modelTag: ModelTag.OpenAI,
+  },
 ];
 
 export const DeepSeekModels = [
-  { modelName: 'DeepSeek-V3', modelId: 'deepseek-chat' },
-  { modelName: 'DeepSeek-R1', modelId: 'deepseek-reasoner' },
+  {
+    modelName: 'DeepSeek-V3',
+    modelId: 'deepseek-chat',
+    modelTag: ModelTag.DeepSeek,
+  },
+  {
+    modelName: 'DeepSeek-R1',
+    modelId: 'deepseek-reasoner',
+    modelTag: ModelTag.DeepSeek,
+  },
 ];
 
 export const BedrockThinkingModels = ['Claude 3.7 Sonnet'];
@@ -33,12 +45,14 @@ export const DefaultTextModel = [
   {
     modelName: 'Nova Pro',
     modelId: 'us.amazon.nova-pro-v1:0',
+    modelTag: ModelTag.Bedrock,
   },
 ];
 
 const DefaultImageModel = {
   modelName: 'Stable Diffusion 3.5 Large',
   modelId: 'stability.sd3-5-large-v1:0',
+  modelTag: ModelTag.Bedrock,
 };
 
 const DefaultSystemPrompts = [

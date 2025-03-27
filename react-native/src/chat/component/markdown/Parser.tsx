@@ -212,9 +212,6 @@ class Parser {
           ...styles,
         });
       case 'html': {
-        console.warn(
-          'react-native-marked: rendering html from markdown is not supported'
-        );
         return this.renderer.html(token.raw, {
           ...this.styles.text,
           ...styles,

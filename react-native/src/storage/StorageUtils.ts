@@ -43,6 +43,9 @@ const apiKeyTag = keyPrefix + 'apiKeyTag';
 const ollamaApiUrlKey = keyPrefix + 'ollamaApiUrlKey';
 const deepSeekApiKeyTag = keyPrefix + 'deepSeekApiKeyTag';
 const openAIApiKeyTag = keyPrefix + 'openAIApiKeyTag';
+const openAICompatApiKeyTag = keyPrefix + 'openAICompatApiKeyTag';
+const openAICompatApiURLKey = keyPrefix + 'openAICompatApiURLKey';
+const openAICompatModelsKey = keyPrefix + 'openAICompatModelsKey';
 const regionKey = keyPrefix + 'regionKey';
 const textModelKey = keyPrefix + 'textModelKey';
 const imageModelKey = keyPrefix + 'imageModelKey';
@@ -60,6 +63,8 @@ let currentApiKey: string | undefined;
 let currentOllamaApiUrl: string | undefined;
 let currentDeepSeekApiKey: string | undefined;
 let currentOpenAIApiKey: string | undefined;
+let currentOpenAICompatApiKey: string | undefined;
+let currentOpenAICompatApiURL: string | undefined;
 let currentRegion: string | undefined;
 let currentImageModel: Model | undefined;
 let currentTextModel: Model | undefined;
@@ -182,6 +187,43 @@ export function getOpenAIApiKey(): string {
     currentOpenAIApiKey = encryptStorage.getString(openAIApiKeyTag) ?? '';
     return currentOpenAIApiKey;
   }
+}
+
+export function getOpenAICompatApiKey(): string {
+  if (currentOpenAICompatApiKey) {
+    return currentOpenAICompatApiKey;
+  } else {
+    currentOpenAICompatApiKey =
+      encryptStorage.getString(openAICompatApiKeyTag) ?? '';
+    return currentOpenAICompatApiKey;
+  }
+}
+
+export function getOpenAICompatApiURL(): string {
+  if (currentOpenAICompatApiURL) {
+    return currentOpenAICompatApiURL;
+  } else {
+    currentOpenAICompatApiURL = storage.getString(openAICompatApiURLKey) ?? '';
+    return currentOpenAICompatApiURL;
+  }
+}
+
+export function getOpenAICompatModels(): string {
+  return storage.getString(openAICompatModelsKey) ?? '';
+}
+
+export function saveOpenAICompatApiKey(apiKey: string) {
+  currentOpenAICompatApiKey = apiKey;
+  encryptStorage.set(openAICompatApiKeyTag, apiKey);
+}
+
+export function saveOpenAICompatApiURL(apiUrl: string) {
+  currentOpenAICompatApiURL = apiUrl;
+  storage.set(openAICompatApiURLKey, apiUrl);
+}
+
+export function saveOpenAICompatModels(models: string) {
+  storage.set(openAICompatModelsKey, models);
 }
 
 export function saveHapticEnabled(enabled: boolean) {
