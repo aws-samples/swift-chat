@@ -47,8 +47,8 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
             <Image
               source={
                 isPasswordVisible
-                  ? require('../assets/eye.png')
-                  : require('../assets/eye_close.png')
+                  ? require('../assets/eye_close.png')
+                  : require('../assets/eye.png')
               }
               style={styles.eyeIcon}
             />
@@ -91,15 +91,15 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     position: 'absolute',
-    right: 8,
+    right: 0,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: 12,
   },
   eyeIcon: {
-    width: 20,
-    height: 20,
+    width: 16,
+    height: 16,
     resizeMode: 'contain',
   },
 });
