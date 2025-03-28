@@ -235,7 +235,7 @@ function ChatScreen(): React.JSX.Element {
         setMessages(msg);
         setIsLoadingMessages(false);
         scrollToBottom();
-      }, 0);
+      }, 200);
     }
   }, [initialSessionId, mode, tapIndex]);
 

@@ -35,7 +35,7 @@ const ImageSpinner = ({
       rotation.value = 0;
       rotation.value = withRepeat(
         withTiming(360, {
-          duration: 500,
+          duration: 600,
           easing: Easing.linear,
         }),
         -1,
