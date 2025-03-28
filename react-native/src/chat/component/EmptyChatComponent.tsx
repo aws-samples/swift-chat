@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ChatMode } from '../../types/Chat.ts';
+import ImageSpinner from './ImageSpinner';
+import { ChatMode, ModelTag } from '../../types/Chat.ts';
 import { useNavigation } from '@react-navigation/native';
 import { RouteParamList } from '../../types/RouteTypes.ts';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -18,17 +19,23 @@ type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
 interface EmptyChatComponentProps {
   chatMode: ChatMode;
+  isLoadingMessages?: boolean;
 }
 
 export const EmptyChatComponent = ({
   chatMode,
+  isLoadingMessages = false,
 }: EmptyChatComponentProps): React.ReactElement => {
   const navigation = useNavigation<NavigationProp>();
   const isDeepSeek = DeepSeekModels.some(
     model => model.modelId === getTextModel().modelId
   );
-  const isOpenAI = getTextModel().modelId.includes('gpt');
-  const isOllama = getTextModel().modelId.startsWith('ollama-');
+  const isOpenAI =
+    getTextModel().modelTag === ModelTag.OpenAI ||
+    getTextModel().modelId.includes('gpt');
+  const isOllama =
+    getTextModel().modelTag === ModelTag.Ollama ||
+    getTextModel().modelId.startsWith('ollama-');
   const modelIcon = isDeepSeek
     ? require('../../assets/deepseek.png')
     : isOpenAI
@@ -44,7 +51,16 @@ export const EmptyChatComponent = ({
         onPress={() => {
           navigation.navigate('Settings', {});
         }}>
-        <Image source={source} style={styles.emptyChatImage} />
+        {isLoadingMessages ? (
+          <ImageSpinner
+            visible={true}
+            size={24}
+            isRotate={true}
+            source={require('../../assets/loading.png')}
+          />
+        ) : (
+          <Image source={source} style={styles.emptyChatImage} />
+        )}
       </TouchableOpacity>
     </View>
   );

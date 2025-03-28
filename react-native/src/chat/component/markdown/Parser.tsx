@@ -47,6 +47,12 @@ class Parser {
           (token as CustomToken).args!.displayMode = false;
         }
       }
+      if (preToken && preToken.type === 'br' && token.type === 'custom') {
+        if ((token as CustomToken)?.args?.displayMode === false) {
+          (token as CustomToken).args!.displayMode = true;
+        }
+      }
+
       preToken = token;
       return this._parseToken(token, styles);
     });
@@ -212,9 +218,6 @@ class Parser {
           ...styles,
         });
       case 'html': {
-        console.warn(
-          'react-native-marked: rendering html from markdown is not supported'
-        );
         return this.renderer.html(token.raw, {
           ...this.styles.text,
           ...styles,

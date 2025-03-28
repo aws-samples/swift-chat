@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image,
   Linking,
@@ -27,6 +27,9 @@ import {
   getModelUsage,
   getOllamaApiUrl,
   getOpenAIApiKey,
+  getOpenAICompatApiKey,
+  getOpenAICompatApiURL,
+  getOpenAICompatModels,
   getOpenAIProxyEnabled,
   getRegion,
   getTextModel,
@@ -39,6 +42,9 @@ import {
   saveKeys,
   saveOllamaApiURL,
   saveOpenAIApiKey,
+  saveOpenAICompatApiKey,
+  saveOpenAICompatApiURL,
+  saveOpenAICompatModels,
   saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
@@ -47,7 +53,7 @@ import {
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';
-import { DropdownItem, Model, UpgradeInfo } from '../types/Chat.ts';
+import { DropdownItem, Model, ModelTag, UpgradeInfo } from '../types/Chat.ts';
 
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
@@ -84,6 +90,15 @@ function SettingsScreen(): React.JSX.Element {
   const [openAIProxyEnabled, setOpenAIProxyEnabled] = useState(
     getOpenAIProxyEnabled
   );
+  const [openAICompatApiURL, setOpenAICompatApiURL] = useState(
+    getOpenAICompatApiURL
+  );
+  const [openAICompatApiKey, setOpenAICompatApiKey] = useState(
+    getOpenAICompatApiKey
+  );
+  const [openAICompatModels, setOpenAICompatModels] = useState(
+    getOpenAICompatModels
+  );
   const [region, setRegion] = useState(getRegion);
   const [imageSize, setImageSize] = useState(getImageSize);
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
@@ -101,65 +116,7 @@ function SettingsScreen(): React.JSX.Element {
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
 
-  useEffect(() => {
-    return navigation.addListener('focus', () => {
-      setCost(getTotalCost(getModelUsage()).toString());
-      fetchAndSetModelNames().then();
-    });
-  }, [navigation]);
-
-  const toggleHapticFeedback = (value: boolean) => {
-    setHapticEnabled(value);
-    setHapticFeedbackEnabled(value);
-    if (value && Platform.OS === 'android') {
-      trigger(HapticFeedbackTypes.impactMedium);
-    }
-  };
-
-  const handleCheckUpgrade = async () => {
-    if ((isMac || Platform.OS === 'android') && upgradeInfo.needUpgrade) {
-      await Linking.openURL(upgradeInfo.url);
-    } else {
-      await Linking.openURL(GITHUB_LINK + '/releases');
-    }
-  };
-
-  useEffect(() => {
-    if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
-      return;
-    }
-    if (apiUrl.length > 0 && apiKey.length > 0) {
-      saveKeys(apiUrl, apiKey);
-      fetchAndSetModelNames().then();
-      fetchUpgradeInfo().then();
-    }
-  }, [apiUrl, apiKey]);
-
-  useEffect(() => {
-    if (ollamaApiUrl === getOllamaApiUrl()) {
-      return;
-    }
-    saveOllamaApiURL(ollamaApiUrl);
-    fetchAndSetModelNames().then();
-  }, [ollamaApiUrl]);
-
-  useEffect(() => {
-    if (deepSeekApiKey === getDeepSeekApiKey()) {
-      return;
-    }
-    saveDeepSeekApiKey(deepSeekApiKey);
-    fetchAndSetModelNames().then();
-  }, [deepSeekApiKey]);
-
-  useEffect(() => {
-    if (openAIApiKey === getOpenAIApiKey()) {
-      return;
-    }
-    saveOpenAIApiKey(openAIApiKey);
-    fetchAndSetModelNames().then();
-  }, [openAIApiKey]);
-
-  const fetchAndSetModelNames = async () => {
+  const fetchAndSetModelNames = useCallback(async () => {
     controllerRef.current = new AbortController();
     const ollamaModels = await requestAllOllamaModels();
     const response = await requestAllModels();
@@ -178,17 +135,30 @@ function SettingsScreen(): React.JSX.Element {
         saveImageModel(response.imageModel[0]);
       }
     }
+    let openAICompatModelList: Model[] = [];
+    if (openAICompatModels.length > 0) {
+      openAICompatModelList = openAICompatModels.split(',').map(
+        modelId =>
+          ({
+            modelId,
+            modelName: modelId,
+            modelTag: ModelTag.OpenAICompatible,
+          } as Model)
+      );
+    }
     if (response.textModel.length === 0) {
       response.textModel = [
         ...DefaultTextModel,
         ...ollamaModels,
         ...getDefaultApiKeyModels(),
+        ...openAICompatModelList,
       ];
     } else {
       response.textModel = [
         ...response.textModel,
         ...ollamaModels,
         ...getDefaultApiKeyModels(),
+        ...openAICompatModelList,
       ];
     }
     setTextModels(response.textModel);
@@ -211,7 +181,82 @@ function SettingsScreen(): React.JSX.Element {
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
       saveAllModels(response);
     }
+  }, [openAICompatModels]);
+
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      setCost(getTotalCost(getModelUsage()).toString());
+      fetchAndSetModelNames().then();
+    });
+  }, [navigation, fetchAndSetModelNames]);
+
+  const toggleHapticFeedback = (value: boolean) => {
+    setHapticEnabled(value);
+    setHapticFeedbackEnabled(value);
+    if (value && Platform.OS === 'android') {
+      trigger(HapticFeedbackTypes.impactMedium);
+    }
   };
+
+  const handleCheckUpgrade = async () => {
+    if ((isMac || Platform.OS === 'android') && upgradeInfo.needUpgrade) {
+      await Linking.openURL(upgradeInfo.url);
+    } else {
+      await Linking.openURL(GITHUB_LINK + '/releases');
+    }
+  };
+
+  useEffect(() => {
+    if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
+      return;
+    }
+    saveKeys(apiUrl, apiKey);
+    fetchAndSetModelNames().then();
+    fetchUpgradeInfo().then();
+  }, [apiUrl, apiKey, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (ollamaApiUrl === getOllamaApiUrl()) {
+      return;
+    }
+    saveOllamaApiURL(ollamaApiUrl);
+    fetchAndSetModelNames().then();
+  }, [ollamaApiUrl, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (deepSeekApiKey === getDeepSeekApiKey()) {
+      return;
+    }
+    saveDeepSeekApiKey(deepSeekApiKey);
+    fetchAndSetModelNames().then();
+  }, [deepSeekApiKey, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (openAIApiKey === getOpenAIApiKey()) {
+      return;
+    }
+    saveOpenAIApiKey(openAIApiKey);
+    fetchAndSetModelNames().then();
+  }, [openAIApiKey, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (openAICompatApiURL === getOpenAICompatApiURL()) {
+      return;
+    }
+    saveOpenAICompatApiURL(openAICompatApiURL);
+  }, [openAICompatApiURL]);
+
+  useEffect(() => {
+    if (openAICompatApiKey === getOpenAICompatApiKey()) {
+      return;
+    }
+    saveOpenAICompatApiKey(openAICompatApiKey);
+  }, [openAICompatApiKey]);
+
+  useEffect(() => {
+    saveOpenAICompatModels(openAICompatModels);
+    fetchAndSetModelNames().then();
+  }, [openAICompatModels, fetchAndSetModelNames]);
 
   const fetchUpgradeInfo = async () => {
     if (isMac || Platform.OS === 'android') {
@@ -332,14 +377,40 @@ function SettingsScreen(): React.JSX.Element {
               placeholder="Enter OpenAI API Key"
               secureTextEntry={true}
             />
-            <View style={styles.proxySwitchContainer}>
-              <Text style={styles.proxyLabel}>Use Proxy</Text>
-              <Switch
-                style={[isMac ? styles.switch : {}]}
-                value={openAIProxyEnabled}
-                onValueChange={toggleOpenAIProxy}
-              />
-            </View>
+            {apiKey.length > 0 && apiUrl.length > 0 && (
+              <View style={styles.proxySwitchContainer}>
+                <Text style={styles.proxyLabel}>Use Proxy</Text>
+                <Switch
+                  style={[isMac ? styles.switch : {}]}
+                  value={openAIProxyEnabled}
+                  onValueChange={toggleOpenAIProxy}
+                />
+              </View>
+            )}
+            <Text style={[styles.label, styles.middleLabel]}>
+              OpenAI Compatible
+            </Text>
+            <CustomTextInput
+              label="Base URL"
+              value={openAICompatApiURL}
+              onChangeText={setOpenAICompatApiURL}
+              placeholder="Enter Base URL"
+              secureTextEntry={false}
+            />
+            <CustomTextInput
+              label="API Key"
+              value={openAICompatApiKey}
+              onChangeText={setOpenAICompatApiKey}
+              placeholder="Enter API Key"
+              secureTextEntry={true}
+            />
+            <CustomTextInput
+              label="Model ID"
+              value={openAICompatModels}
+              onChangeText={setOpenAICompatModels}
+              placeholder="Enter Model IDs, split by comma"
+              secureTextEntry={false}
+            />
           </>
         );
       default:
@@ -350,31 +421,33 @@ function SettingsScreen(): React.JSX.Element {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
-        <View style={styles.tabContainer}>
-          <TabButton
-            label={isMac ? 'Amazon Bedrock' : 'Bedrock'}
-            isSelected={selectedTab === 'bedrock'}
-            onPress={() => setSelectedTab('bedrock')}
-          />
-          <TabButton
-            label="Ollama"
-            isSelected={selectedTab === 'ollama'}
-            onPress={() => setSelectedTab('ollama')}
-          />
-          <TabButton
-            label="DeepSeek"
-            isSelected={selectedTab === 'deepseek'}
-            onPress={() => setSelectedTab('deepseek')}
-          />
-          <TabButton
-            label="OpenAI"
-            isSelected={selectedTab === 'openai'}
-            onPress={() => setSelectedTab('openai')}
-          />
-        </View>
+        <View style={styles.providerSettingsWrapper}>
+          <View style={styles.tabContainer}>
+            <TabButton
+              label={isMac ? 'Amazon Bedrock' : 'Bedrock'}
+              isSelected={selectedTab === 'bedrock'}
+              onPress={() => setSelectedTab('bedrock')}
+            />
+            <TabButton
+              label="Ollama"
+              isSelected={selectedTab === 'ollama'}
+              onPress={() => setSelectedTab('ollama')}
+            />
+            <TabButton
+              label="DeepSeek"
+              isSelected={selectedTab === 'deepseek'}
+              onPress={() => setSelectedTab('deepseek')}
+            />
+            <TabButton
+              label="OpenAI"
+              isSelected={selectedTab === 'openai'}
+              onPress={() => setSelectedTab('openai')}
+            />
+          </View>
 
-        <View style={styles.providerSettingsContainer}>
-          {renderProviderSettings()}
+          <View style={styles.providerSettingsContainer}>
+            {renderProviderSettings()}
+          </View>
         </View>
 
         <Text style={[styles.label, styles.middleLabel]}>Select Model</Text>
@@ -573,7 +646,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginVertical: 0,
+    marginBottom: 8,
   },
   thinkingSwitchContainer: {
     flexDirection: 'row',
@@ -620,6 +693,16 @@ const styles = StyleSheet.create({
   proxyMacContainer: {
     marginTop: 10,
   },
+  providerSettingsWrapper: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 2,
+    marginBottom: 12,
+  },
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 12,
@@ -629,7 +712,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   providerSettingsContainer: {
-    marginBottom: 8,
+    paddingHorizontal: 2,
   },
   switch: {
     marginRight: -14,

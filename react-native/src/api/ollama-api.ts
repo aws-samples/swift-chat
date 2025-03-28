@@ -1,4 +1,10 @@
-import { Model, OllamaModel, SystemPrompt, Usage } from '../types/Chat.ts';
+import {
+  Model,
+  ModelTag,
+  OllamaModel,
+  SystemPrompt,
+  Usage,
+} from '../types/Chat.ts';
 import { getOllamaApiUrl, getTextModel } from '../storage/StorageUtils.ts';
 import {
   BedrockMessage,
@@ -21,7 +27,7 @@ export const invokeOllamaWithCallBack = async (
   callback: CallbackFunction
 ) => {
   const bodyObject = {
-    model: getTextModel().modelId.split('ollama-')[1],
+    model: getTextModel().modelId,
     messages: getOllamaMessages(messages, prompt),
   };
   const options = {
@@ -210,8 +216,9 @@ export const requestAllOllamaModels = async (): Promise<Model[]> => {
     }
     const data = await response.json();
     return data.models.map((item: OllamaModel) => ({
-      modelId: 'ollama-' + item.name,
+      modelId: item.name,
       modelName: item.name,
+      modelTag: ModelTag.Ollama,
     }));
   } catch (error) {
     clearTimeout(timeoutId);
