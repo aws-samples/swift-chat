@@ -596,28 +596,40 @@ function ChatScreen(): React.JSX.Element {
             isShowSystemPrompt={showSystemPrompt}
           />
         )}
-        renderMessage={props => (
-          <CustomMessageComponent
-            {...props}
-            chatStatus={chatStatus}
-            isLastAIMessage={
-              props.currentMessage?._id === messages[0]?._id &&
-              props.currentMessage?.user._id !== 1
-            }
-            onRegenerate={() => {
-              trigger(HapticFeedbackTypes.impactMedium);
-              // Reset bedrockMessages to only include the user's message
-              getBedrockMessage(messages[1]).then(userMsg => {
-                bedrockMessages.current = [userMsg];
-                setChatStatus(ChatStatus.Running);
-                setMessages(previousMessages => [
-                  createBotMessage(modeRef.current),
-                  ...previousMessages.slice(1),
-                ]);
-              });
-            }}
-          />
-        )}
+        renderMessage={props => {
+          // Find the index of the current message in the messages array
+          const messageIndex = messages.findIndex(
+            msg => msg._id === props.currentMessage?._id
+          );
+
+          return (
+            <CustomMessageComponent
+              {...props}
+              chatStatus={chatStatus}
+              isLastAIMessage={
+                props.currentMessage?._id === messages[0]?._id &&
+                props.currentMessage?.user._id !== 1
+              }
+              onRegenerate={() => {
+                trigger(HapticFeedbackTypes.impactMedium);
+                const userMessageIndex = messageIndex + 1;
+                if (userMessageIndex < messages.length) {
+                  // Reset bedrockMessages to only include the user's message
+                  getBedrockMessage(messages[userMessageIndex]).then(
+                    userMsg => {
+                      bedrockMessages.current = [userMsg];
+                      setChatStatus(ChatStatus.Running);
+                      setMessages(previousMessages => [
+                        createBotMessage(modeRef.current),
+                        ...previousMessages.slice(userMessageIndex),
+                      ]);
+                    }
+                  );
+                }
+              }}
+            />
+          );
+        }}
         listViewProps={{
           contentContainerStyle: styles.contentContainer,
           contentInset: { top: 2 },
