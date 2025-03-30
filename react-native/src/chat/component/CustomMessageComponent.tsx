@@ -29,26 +29,33 @@ import {
 import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
 import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
-import { State, TapGestureHandler } from 'react-native-gesture-handler';
 import Markdown from './markdown/Markdown.tsx';
 import { DeepSeekModels } from '../../storage/Constants.ts';
 import { getTextModel } from '../../storage/StorageUtils.ts';
 import ImageSpinner from './ImageSpinner.tsx';
+import { State, TapGestureHandler } from 'react-native-gesture-handler';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
+  isLastAIMessage?: boolean;
+  onRegenerate?: () => void;
 }
 
 const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   currentMessage,
   chatStatus,
+  isLastAIMessage,
+  onRegenerate,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [clickTitleCopied, setClickTitleCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+
   const inputHeightRef = useRef(0);
   const chatStatusRef = useRef(chatStatus);
   const isLoading =
     chatStatus === ChatStatus.Running && currentMessage?.text === '...';
+  const [forceShowButtons, setForceShowButtons] = useState(false);
 
   const setIsEditValue = useCallback(
     (value: boolean) => {
@@ -59,11 +66,11 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     [chatStatus]
   );
 
+  const toggleButtons = useCallback(() => {
+    setForceShowButtons(prev => !prev);
+  }, []);
+
   const handleCopy = useCallback(() => {
-    if (isEdit) {
-      setIsEditValue(false);
-      return;
-    }
     const copyText = currentMessage?.reasoning
       ? 'Reasoning: ' +
           currentMessage.reasoning +
@@ -72,7 +79,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       : currentMessage?.text || '';
     Clipboard.setString(copyText);
     setCopied(true);
-  }, [isEdit, setIsEditValue, currentMessage?.reasoning, currentMessage?.text]);
+  }, [currentMessage?.reasoning, currentMessage?.text]);
 
   const userInfo = useMemo(() => {
     if (!currentMessage) {
@@ -115,21 +122,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   }, [userInfo]);
 
   const copyButton = useMemo(() => {
-    return (
-      <TouchableOpacity onPress={handleCopy} style={styles.copyContainer}>
-        <Image
-          source={
-            isEdit
-              ? require('../../assets/select.png')
-              : copied
-              ? require('../../assets/done.png')
-              : require('../../assets/copy_grey.png')
-          }
-          style={styles.copy}
-        />
-      </TouchableOpacity>
-    );
-  }, [isEdit, copied, handleCopy]);
+    return clickTitleCopied ? (
+      <Image source={require('../../assets/done.png')} style={styles.copy} />
+    ) : null;
+  }, [clickTitleCopied]);
 
   const handleImagePress = useCallback((pressMode: PressMode, url: string) => {
     if (pressMode === PressMode.Click) {
@@ -187,15 +183,11 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     );
   }, [currentMessage, customMarkdownRenderer, customTokenizer]);
 
-  const handleEdit = useCallback(() => {
+  const handleShowButton = useCallback(() => {
     if (!isLoading) {
-      setIsEditValue(!isEdit);
+      toggleButtons();
     }
-  }, [isEdit, isLoading, setIsEditValue]);
-
-  const onDoubleTap = useCallback(() => {
-    setIsEditValue(true);
-  }, [setIsEditValue]);
+  }, [isLoading, toggleButtons]);
 
   useEffect(() => {
     if (copied) {
@@ -206,6 +198,16 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       return () => clearTimeout(timer);
     }
   }, [copied]);
+
+  useEffect(() => {
+    if (clickTitleCopied) {
+      const timer = setTimeout(() => {
+        setClickTitleCopied(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [clickTitleCopied]);
 
   const messageContent = useMemo(() => {
     if (!currentMessage) {
@@ -227,6 +229,52 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     return <Text style={styles.questionText}>{currentMessage.text}</Text>;
   }, [currentMessage, customMarkdownRenderer, customTokenizer]);
 
+  const messageActionButtons = useMemo(() => {
+    return (
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity onPress={handleCopy} style={styles.actionButton}>
+          <Image
+            source={
+              copied
+                ? require('../../assets/done.png')
+                : require('../../assets/copy_grey.png')
+            }
+            style={styles.actionButtonIcon}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setIsEditValue(!isEdit)}
+          style={styles.actionButton}>
+          <Image
+            source={
+              isEdit
+                ? require('../../assets/select.png')
+                : require('../../assets/select_grey.png')
+            }
+            style={styles.actionButtonIcon}
+          />
+        </TouchableOpacity>
+
+        {currentMessage?.user._id !== 1 && (
+          <TouchableOpacity onPress={onRegenerate} style={styles.actionButton}>
+            <Image
+              source={require('../../assets/refresh.png')}
+              style={styles.actionButtonIcon}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }, [
+    handleCopy,
+    copied,
+    isEdit,
+    onRegenerate,
+    setIsEditValue,
+    currentMessage,
+  ]);
+
   if (!currentMessage) {
     return null;
   }
@@ -236,7 +284,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       <TouchableOpacity
         style={styles.header}
         activeOpacity={1}
-        onPress={handleEdit}>
+        onPress={() => setClickTitleCopied(true)}>
         {headerContent}
         {copyButton}
       </TouchableOpacity>
@@ -256,7 +304,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             numberOfTaps={2}
             onHandlerStateChange={({ nativeEvent }) => {
               if (nativeEvent.state === State.ACTIVE) {
-                onDoubleTap();
+                handleShowButton();
               }
             }}>
             <View
@@ -285,6 +333,9 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             {currentMessage.text}
           </TextInput>
         )}
+        {((isLastAIMessage && chatStatus !== ChatStatus.Running) ||
+          forceShowButtons) &&
+          messageActionButtons}
         {currentMessage.image && (
           <CustomFileListComponent
             files={JSON.parse(currentMessage.image)}
@@ -320,9 +371,6 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     marginRight: 6,
-  },
-  copyContainer: {
-    padding: 4,
   },
   copy: {
     width: 18,
@@ -379,6 +427,21 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 10,
   },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginLeft: -8,
+    marginTop: -2,
+    marginBottom: 4,
+  },
+  actionButton: {
+    padding: 8,
+  },
+  actionButtonIcon: {
+    width: 16,
+    height: 16,
+  },
 });
 
 const customMarkedStyles: MarkedStyles = {
@@ -389,6 +452,7 @@ const customMarkedStyles: MarkedStyles = {
   h3: { fontSize: 20 },
   h4: { fontSize: 18 },
   blockquote: { marginVertical: 8 },
+  paragraph: { paddingVertical: 6 },
 };
 
 export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
@@ -397,6 +461,8 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
     prevProps.currentMessage?.image === nextProps.currentMessage?.image &&
     prevProps.currentMessage?.reasoning ===
       nextProps.currentMessage?.reasoning &&
-    prevProps.chatStatus === nextProps.chatStatus
+    prevProps.chatStatus === nextProps.chatStatus &&
+    prevProps.isLastAIMessage === nextProps.isLastAIMessage &&
+    prevProps.onRegenerate === nextProps.onRegenerate
   );
 });

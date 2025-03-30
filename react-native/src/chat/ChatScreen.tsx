@@ -597,7 +597,26 @@ function ChatScreen(): React.JSX.Element {
           />
         )}
         renderMessage={props => (
-          <CustomMessageComponent {...props} chatStatus={chatStatus} />
+          <CustomMessageComponent
+            {...props}
+            chatStatus={chatStatus}
+            isLastAIMessage={
+              props.currentMessage?._id === messages[0]?._id &&
+              props.currentMessage?.user._id !== 1
+            }
+            onRegenerate={() => {
+              trigger(HapticFeedbackTypes.impactMedium);
+              // Reset bedrockMessages to only include the user's message
+              getBedrockMessage(messages[1]).then(userMsg => {
+                bedrockMessages.current = [userMsg];
+                setChatStatus(ChatStatus.Running);
+                setMessages(previousMessages => [
+                  createBotMessage(modeRef.current),
+                  ...previousMessages.slice(1),
+                ]);
+              });
+            }}
+          />
         )}
         listViewProps={{
           contentContainerStyle: styles.contentContainer,
