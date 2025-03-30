@@ -51,7 +51,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const [clickTitleCopied, setClickTitleCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  const inputHeightRef = useRef(0);
+  const [inputHeight, setInputHeight] = useState(0);
   const chatStatusRef = useRef(chatStatus);
   const isLoading =
     chatStatus === ChatStatus.Running && currentMessage?.text === '...';
@@ -307,12 +307,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                 handleShowButton();
               }
             }}>
-            <View
-              onLayout={event => {
-                inputHeightRef.current = event.nativeEvent.layout.height;
-              }}>
-              {messageContent}
-            </View>
+            <View>{messageContent}</View>
           </TapGestureHandler>
         )}
         {isEdit && (
@@ -320,16 +315,21 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             editable={Platform.OS === 'android'}
             multiline
             showSoftInputOnFocus={false}
+            onContentSizeChange={event => {
+              const { height } = event.nativeEvent.contentSize;
+              setInputHeight(height);
+            }}
             style={[
               styles.inputText,
               // eslint-disable-next-line react-native/no-inline-styles
               {
-                height: inputHeightRef.current - 1,
                 fontWeight: isMac ? '300' : 'normal',
                 lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
-                paddingTop: Platform.OS === 'android' ? 7 : 5,
+                paddingTop: Platform.OS === 'android' ? 7 : 3,
+                marginBottom: -inputHeight * 0.138 + 8,
               },
-            ]}>
+            ]}
+            textAlignVertical="top">
             {currentMessage.text}
           </TextInput>
         )}
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     lineHeight: 24,
-    paddingVertical: 8,
+    paddingVertical: 6,
     color: '#333',
   },
   inputText: {
