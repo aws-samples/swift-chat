@@ -7,10 +7,12 @@ import React, {
 } from 'react';
 import {
   Image,
+  NativeSyntheticEvent,
   Platform,
   StyleSheet,
   Text,
   TextInput,
+  TextInputSelectionChangeEventData,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -53,6 +55,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const [inputHeight, setInputHeight] = useState(0);
   const chatStatusRef = useRef(chatStatus);
+  const textInputRef = useRef<TextInput>(null);
+  const [inputTextSelection, setInputTextSelection] = useState<
+    { start: number; end: number } | undefined
+  >(undefined);
   const isLoading =
     chatStatus === ChatStatus.Running && currentMessage?.text === '...';
   const [forceShowButtons, setForceShowButtons] = useState(false);
@@ -61,14 +67,40 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     (value: boolean) => {
       if (chatStatus !== ChatStatus.Running) {
         setIsEdit(value);
+        if (!value) {
+          setInputTextSelection(undefined);
+        }
       }
     },
     [chatStatus]
   );
 
+  // Use useEffect with setTimeout to ensure selection happens after TextInput is fully rendered
+  useEffect(() => {
+    if (isEdit && currentMessage?.text) {
+      const timer = setTimeout(() => {
+        textInputRef.current?.focus();
+        setInputTextSelection({
+          start: 0,
+          end: currentMessage.text.length,
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isEdit, currentMessage?.text]);
+
   const toggleButtons = useCallback(() => {
     setForceShowButtons(prev => !prev);
   }, []);
+
+  // Handle selection changes made by the user
+  const handleSelectionChange = useCallback(
+    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+      const { selection } = event.nativeEvent;
+      setInputTextSelection(selection);
+    },
+    []
+  );
 
   const handleCopy = useCallback(() => {
     const copyText = currentMessage?.reasoning
@@ -312,6 +344,9 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         )}
         {isEdit && (
           <TextInput
+            ref={textInputRef}
+            selection={inputTextSelection}
+            onSelectionChange={handleSelectionChange}
             editable={Platform.OS === 'android'}
             multiline
             showSoftInputOnFocus={false}
