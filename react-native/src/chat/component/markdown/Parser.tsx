@@ -65,6 +65,14 @@ class Parser {
   ): ReactNode {
     switch (token.type) {
       case 'paragraph': {
+        if (token.raw.startsWith('$') && token.raw.endsWith('$')) {
+          const sliceCount = token.raw.startsWith('$$') ? 2 : 1;
+          const children = this._parse(token.tokens ?? []);
+          return this.renderer.custom('latex', token.raw, children, {
+            text: token.raw.slice(sliceCount, token.raw.length - sliceCount),
+            displayMode: true,
+          });
+        }
         const children = this.getNormalizedSiblingNodesForBlockAndInlineTokens(
           token.tokens,
           this.styles.text

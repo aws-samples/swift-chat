@@ -38,7 +38,6 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
           type: 'custom',
           raw: match[0],
           identifier: 'latex',
-          tokens: MarkedLexer(text),
           args: {
             text: text,
             displayMode: isDisplayMode,
@@ -53,21 +52,10 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
   paragraph(
     src: string
   ): ReturnType<MarkedTokenizer<CustomToken>['paragraph']> {
-    const latex = this.processLatex(src);
-    if (latex && latex.token) {
-      return latex.token;
-    }
-    const res = this.processDollarLatex(src, true);
-    if (res) {
-      return res;
-    }
     return super.paragraph(src);
   }
 
-  private processDollarLatex(
-    src: string,
-    forParagraph: boolean = false
-  ): CustomToken | null {
+  private processDollarLatex(src: string): CustomToken | null {
     // Check for $$...$$ format (display mode)
     const displayDollarRegex = /\$\$([\s\S]+?)\$\$/;
     const displayDollarMatch = src.match(displayDollarRegex);
@@ -77,7 +65,6 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
         src,
         displayDollarMatch,
         true,
-        forParagraph,
         (displaySrc, match) => {
           const startIndex = displaySrc.indexOf('$$');
           const endIndex = displaySrc.indexOf('$$', startIndex + 2) + 2;
@@ -100,7 +87,6 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
         src,
         inlineDollarMatch,
         false,
-        forParagraph,
         (inlineSrc, match) => {
           const fullMatch = match[0];
           const startPos = inlineSrc.indexOf(fullMatch);
@@ -123,7 +109,6 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
     src: string,
     match: RegExpMatchArray,
     isDisplayMode: boolean,
-    forParagraph: boolean,
     extractParts: (
       src: string,
       match: RegExpMatchArray
@@ -146,7 +131,6 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
       type: 'custom',
       raw: formula,
       identifier: 'latex',
-      tokens: MarkedLexer(formulaContent),
       args: {
         text: formulaContent.trim(),
         displayMode: isDisplayMode,
@@ -160,7 +144,7 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
 
     // Create a text token containing all parts
     return {
-      type: forParagraph ? 'paragraph' : 'text',
+      type: 'text',
       raw: src,
       text: src,
       tokens: [

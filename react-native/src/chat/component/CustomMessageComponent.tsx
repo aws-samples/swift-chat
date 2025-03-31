@@ -110,7 +110,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           currentMessage?.text || ''
       : currentMessage?.text || '';
     Clipboard.setString(copyText);
-    setCopied(true);
   }, [currentMessage?.reasoning, currentMessage?.text]);
 
   const userInfo = useMemo(() => {
@@ -233,13 +232,14 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   useEffect(() => {
     if (clickTitleCopied) {
+      handleCopy();
       const timer = setTimeout(() => {
         setClickTitleCopied(false);
       }, 2000);
 
       return () => clearTimeout(timer);
     }
-  }, [clickTitleCopied]);
+  }, [handleCopy, clickTitleCopied]);
 
   const messageContent = useMemo(() => {
     if (!currentMessage) {
@@ -264,7 +264,12 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const messageActionButtons = useMemo(() => {
     return (
       <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity onPress={handleCopy} style={styles.actionButton}>
+        <TouchableOpacity
+          onPress={() => {
+            handleCopy();
+            setCopied(true);
+          }}
+          style={styles.actionButton}>
           <Image
             source={
               copied
