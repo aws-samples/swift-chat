@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ChatMode, FileInfo, SystemPrompt } from '../../types/Chat.ts';
 import {
@@ -6,6 +6,8 @@ import {
   DisplayMode,
 } from './CustomFileListComponent.tsx';
 import { PromptListComponent } from './PromptListComponent.tsx';
+import { ModelIconButton } from './ModelIconButton.tsx';
+import { ModelSelectionModal } from './ModelSelectionModal.tsx';
 
 interface CustomComposerProps {
   files: FileInfo[];
@@ -22,34 +24,66 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
   chatMode,
   isShowSystemPrompt,
 }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 });
+  const modelIconRef = useRef<View>(null);
+
+  const handleOpenModal = () => {
+    // Get the position of the model icon
+    if (modelIconRef.current) {
+      modelIconRef.current.measure((x, y, width, height, pageX, pageY) => {
+        setIconPosition({ x: pageX, y: pageY + 10 });
+        setModalVisible(true);
+      });
+    } else {
+      setModalVisible(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+  };
+
   if (files.length > 0 || (isShowSystemPrompt && chatMode === ChatMode.Text)) {
     return (
-      <View
-        style={{
-          ...styles.container,
-          ...(isShowSystemPrompt && {
-            height: 60,
-          }),
-        }}>
-        {isShowSystemPrompt && (
-          <PromptListComponent
-            onSelectPrompt={prompt => {
-              onSystemPromptUpdated(prompt);
-            }}
-          />
-        )}
-        {files.length > 0 && (
-          <CustomFileListComponent
-            files={files}
-            onFileUpdated={onFileUpdated}
-            mode={
-              chatMode === ChatMode.Image
-                ? DisplayMode.GenImage
-                : DisplayMode.Edit
-            }
-          />
-        )}
-      </View>
+      <>
+        <View
+          style={{
+            ...styles.container,
+            ...(isShowSystemPrompt && {
+              height: 60,
+            }),
+          }}>
+          {isShowSystemPrompt && chatMode === ChatMode.Text && (
+            <View style={styles.promptContainer}>
+              <PromptListComponent
+                onSelectPrompt={prompt => {
+                  onSystemPromptUpdated(prompt);
+                }}
+              />
+              <View ref={modelIconRef} collapsable={false}>
+                <ModelIconButton onPress={handleOpenModal} />
+              </View>
+            </View>
+          )}
+          {files.length > 0 && (
+            <CustomFileListComponent
+              files={files}
+              onFileUpdated={onFileUpdated}
+              mode={
+                chatMode === ChatMode.Image
+                  ? DisplayMode.GenImage
+                  : DisplayMode.Edit
+              }
+            />
+          )}
+        </View>
+        <ModelSelectionModal
+          visible={modalVisible}
+          onClose={handleCloseModal}
+          iconPosition={iconPosition}
+        />
+      </>
     );
   } else {
     return null;
@@ -59,5 +93,10 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
 const styles = StyleSheet.create({
   container: {
     height: 90,
+  },
+  promptContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
 });

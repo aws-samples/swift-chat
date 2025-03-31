@@ -57,6 +57,7 @@ const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
 const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
+const modelOrderKey = keyPrefix + 'modelOrderKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -71,13 +72,19 @@ let currentTextModel: Model | undefined;
 let currentSystemPrompts: SystemPrompt[] | undefined;
 let currentOpenAIProxyEnabled: boolean | undefined;
 let currentThinkingEnabled: boolean | undefined;
+let currentModelOrder: Model[] | undefined;
 
 export function saveMessages(
   sessionId: number,
   messages: SwiftChatMessage[],
   usage: Usage
 ) {
-  (messages[0] as SwiftChatMessage).usage = usage;
+  messages[0].usage = usage;
+  messages.forEach((message, index) => {
+    if (index !== 0 && 'usage' in message) {
+      delete message.usage;
+    }
+  });
   storage.set(sessionIdPrefix + sessionId, JSON.stringify(messages));
 }
 
@@ -446,4 +453,57 @@ export function getThinkingEnabled() {
     currentThinkingEnabled = storage.getBoolean(thinkingEnabledKey) ?? true;
     return currentThinkingEnabled;
   }
+}
+
+// Model order functions
+export function saveModelOrder(models: Model[]) {
+  currentModelOrder = models;
+  storage.set(modelOrderKey, JSON.stringify(models));
+}
+
+export function getModelOrder(): Model[] {
+  if (currentModelOrder) {
+    return currentModelOrder;
+  } else {
+    const modelOrderString = storage.getString(modelOrderKey) ?? '';
+    if (modelOrderString.length > 0) {
+      currentModelOrder = JSON.parse(modelOrderString) as Model[];
+    } else {
+      currentModelOrder = [];
+    }
+    return currentModelOrder;
+  }
+}
+
+// Update model order when a model is used
+export function updateModelOrder(model: Model) {
+  const currentOrder = getModelOrder();
+  const updatedOrder = [
+    model,
+    ...currentOrder.filter(m => m.modelId !== model.modelId),
+  ];
+  saveModelOrder(updatedOrder);
+  return updatedOrder;
+}
+
+// Get merged model order - combines history with current available models
+export function getMergedModelOrder(): Model[] {
+  const historyModels = getModelOrder();
+  const currentTextModels = getAllModels().textModel;
+  const currentModelMap = new Map<string, Model>();
+  currentTextModels.forEach(model => {
+    currentModelMap.set(model.modelId, model);
+  });
+  const mergedModels: Model[] = [];
+  historyModels.forEach(model => {
+    if (currentModelMap.has(model.modelId)) {
+      mergedModels.push(currentModelMap.get(model.modelId)!);
+      currentModelMap.delete(model.modelId);
+    }
+  });
+  currentModelMap.forEach(model => {
+    mergedModels.push(model);
+  });
+
+  return mergedModels;
 }

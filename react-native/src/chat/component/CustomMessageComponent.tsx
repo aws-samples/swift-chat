@@ -20,7 +20,12 @@ import Share from 'react-native-share';
 import { MessageProps } from 'react-native-gifted-chat';
 import { CustomMarkdownRenderer } from './markdown/CustomMarkdownRenderer.tsx';
 import { MarkedStyles } from 'react-native-marked/src/theme/types.ts';
-import { ChatStatus, PressMode, SwiftChatMessage } from '../../types/Chat.ts';
+import {
+  ChatStatus,
+  ModelTag,
+  PressMode,
+  SwiftChatMessage,
+} from '../../types/Chat.ts';
 import { trigger } from '../util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -33,7 +38,6 @@ import { isMac } from '../../App.tsx';
 import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
 import Markdown from './markdown/Markdown.tsx';
 import { DeepSeekModels } from '../../storage/Constants.ts';
-import { getTextModel } from '../../storage/StorageUtils.ts';
 import ImageSpinner from './ImageSpinner.tsx';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
 
@@ -116,23 +120,25 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     if (!currentMessage) {
       return { userName: '', imgSource: null };
     }
-
-    const userName =
-      currentMessage.user._id === 1
-        ? 'You'
-        : currentMessage.user.name ?? 'Bedrock';
-    const isDeepSeek = DeepSeekModels.some(
-      model => model.modelId === getTextModel().modelId
-    );
-    const isOpenAI = userName.includes('GPT');
-    const isOllama = userName.includes(':');
+    const user = currentMessage.user;
+    const userName = user._id === 1 ? 'You' : user.name ?? 'Bedrock';
+    const isDeepSeek =
+      DeepSeekModels.some(model => model.modelName === userName) ||
+      user.modelTag === ModelTag.DeepSeek;
+    const isOpenAI =
+      userName.includes('GPT') || user.modelTag === ModelTag.OpenAI;
+    const isOpenAICompatible = user.modelTag === ModelTag.OpenAICompatible;
+    const isOllama =
+      userName.includes(':') || user.modelTag === ModelTag.Ollama;
 
     const modelIcon = isDeepSeek
       ? require('../../assets/deepseek.png')
       : isOpenAI
       ? require('../../assets/openai.png')
+      : isOpenAICompatible
+      ? require('../../assets/openai_api.png')
       : isOllama
-      ? require('../../assets/ollama-white.png')
+      ? require('../../assets/ollama_white.png')
       : require('../../assets/bedrock.png');
 
     const imgSource =

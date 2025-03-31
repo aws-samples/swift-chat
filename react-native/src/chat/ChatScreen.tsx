@@ -73,6 +73,7 @@ const createBotMessage = (mode: string) => {
         mode === ChatMode.Text
           ? getTextModel().modelName
           : getImageModel().modelName,
+      modelTag: mode === ChatMode.Text ? getTextModel().modelTag : undefined,
     },
   };
 };

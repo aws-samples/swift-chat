@@ -33,6 +33,8 @@ export const EmptyChatComponent = ({
   const isOpenAI =
     getTextModel().modelTag === ModelTag.OpenAI ||
     getTextModel().modelId.includes('gpt');
+  const isOpenAICompatible =
+    getTextModel().modelTag === ModelTag.OpenAICompatible;
   const isOllama =
     getTextModel().modelTag === ModelTag.Ollama ||
     getTextModel().modelId.startsWith('ollama-');
@@ -40,8 +42,10 @@ export const EmptyChatComponent = ({
     ? require('../../assets/deepseek.png')
     : isOpenAI
     ? require('../../assets/openai.png')
+    : isOpenAICompatible
+    ? require('../../assets/openai_api.png')
     : isOllama
-    ? require('../../assets/ollama-white.png')
+    ? require('../../assets/ollama_white.png')
     : require('../../assets/bedrock.png');
   const source =
     chatMode === ChatMode.Text ? modelIcon : require('../../assets/image.png');
