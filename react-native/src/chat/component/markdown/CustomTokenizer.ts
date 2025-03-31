@@ -57,13 +57,73 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
     if (latex && latex.token) {
       return latex.token;
     }
+    const res = this.processDollarLatex(src, true);
+    if (res) {
+      return res;
+    }
     return super.paragraph(src);
+  }
+
+  private processDollarLatex(
+    src: string,
+    forParagraph: boolean = false
+  ): CustomToken | null {
+    // Check for $$...$$ format (display mode)
+    const displayDollarRegex = /\$\$([\s\S]+?)\$\$/;
+    const displayDollarMatch = src.match(displayDollarRegex);
+
+    if (displayDollarMatch) {
+      return this.processLatexInText(
+        src,
+        displayDollarMatch,
+        true,
+        forParagraph,
+        (displaySrc, match) => {
+          const startIndex = displaySrc.indexOf('$$');
+          const endIndex = displaySrc.indexOf('$$', startIndex + 2) + 2;
+          return {
+            beforeFormula: displaySrc.substring(0, startIndex),
+            formula: match[0],
+            formulaContent: match[1],
+            afterFormula: displaySrc.substring(endIndex),
+          };
+        }
+      ) as CustomToken;
+    }
+
+    // Check for $...$ format (inline mode)
+    const inlineDollarRegex = /([^$]|^)\$([^$\n]+?)\$([^$]|$)/;
+    const inlineDollarMatch = src.match(inlineDollarRegex);
+
+    if (inlineDollarMatch) {
+      return this.processLatexInText(
+        src,
+        inlineDollarMatch,
+        false,
+        forParagraph,
+        (inlineSrc, match) => {
+          const fullMatch = match[0];
+          const startPos = inlineSrc.indexOf(fullMatch);
+          const dollarPos = fullMatch.indexOf('$');
+          const lastDollarPos = fullMatch.lastIndexOf('$');
+          return {
+            beforeFormula: inlineSrc.substring(0, startPos + dollarPos),
+            formula:
+              '$' + fullMatch.substring(dollarPos + 1, lastDollarPos) + '$',
+            formulaContent: fullMatch.substring(dollarPos + 1, lastDollarPos),
+            afterFormula: inlineSrc.substring(startPos + lastDollarPos + 1),
+          };
+        }
+      ) as CustomToken;
+    }
+    return null;
   }
 
   private processLatexInText(
     src: string,
     match: RegExpMatchArray,
     isDisplayMode: boolean,
+    forParagraph: boolean,
     extractParts: (
       src: string,
       match: RegExpMatchArray
@@ -100,7 +160,7 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
 
     // Create a text token containing all parts
     return {
-      type: 'text',
+      type: forParagraph ? 'paragraph' : 'text',
       raw: src,
       text: src,
       tokens: [
@@ -118,53 +178,10 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
   }
 
   text(src: string): ReturnType<MarkedTokenizer<CustomToken>['text']> {
-    // Check for $$...$$ format (display mode)
-    const displayDollarRegex = /\$\$([\s\S]+?)\$\$/;
-    const displayDollarMatch = src.match(displayDollarRegex);
-
-    if (displayDollarMatch) {
-      return this.processLatexInText(
-        src,
-        displayDollarMatch,
-        true,
-        (displaySrc, match) => {
-          const startIndex = displaySrc.indexOf('$$');
-          const endIndex = displaySrc.indexOf('$$', startIndex + 2) + 2;
-          return {
-            beforeFormula: displaySrc.substring(0, startIndex),
-            formula: match[0],
-            formulaContent: match[1],
-            afterFormula: displaySrc.substring(endIndex),
-          };
-        }
-      );
+    const res = this.processDollarLatex(src);
+    if (res) {
+      return res;
     }
-
-    // Check for $...$ format (inline mode)
-    const inlineDollarRegex = /([^$]|^)\$([^$\n]+?)\$([^$]|$)/;
-    const inlineDollarMatch = src.match(inlineDollarRegex);
-
-    if (inlineDollarMatch) {
-      return this.processLatexInText(
-        src,
-        inlineDollarMatch,
-        false,
-        (inlineSrc, match) => {
-          const fullMatch = match[0];
-          const startPos = inlineSrc.indexOf(fullMatch);
-          const dollarPos = fullMatch.indexOf('$');
-          const lastDollarPos = fullMatch.lastIndexOf('$');
-          return {
-            beforeFormula: inlineSrc.substring(0, startPos + dollarPos),
-            formula:
-              '$' + fullMatch.substring(dollarPos + 1, lastDollarPos) + '$',
-            formulaContent: fullMatch.substring(dollarPos + 1, lastDollarPos),
-            afterFormula: inlineSrc.substring(startPos + lastDollarPos + 1),
-          };
-        }
-      );
-    }
-
     return super.text(src);
   }
 
