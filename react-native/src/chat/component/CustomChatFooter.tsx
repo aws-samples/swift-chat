@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { ChatMode, FileInfo, SystemPrompt } from '../../types/Chat.ts';
 import {
   CustomFileListComponent,
@@ -27,18 +27,22 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 });
   const modelIconRef = useRef<View>(null);
-
+  const iconPositionRef = useRef({ x: 0, y: 0 });
   const handleOpenModal = () => {
-    // Get the position of the model icon
-    if (modelIconRef.current) {
-      modelIconRef.current.measure((x, y, width, height, pageX, pageY) => {
-        setIconPosition({ x: pageX, y: pageY + 10 });
-        setModalVisible(true);
-      });
-    } else {
+    modelIconRef.current?.measure((x, y, width, height, pageX, pageY) => {
       setModalVisible(true);
-    }
+    });
   };
+  useEffect(() => {
+    Keyboard.addListener('keyboardWillShow', () => {
+      modelIconRef.current?.measure((x, y, width, height, pageX, pageY) => {
+        if (iconPositionRef.current.y === 0) {
+          iconPositionRef.current = { x: pageX, y: pageY + 10 };
+          setIconPosition(iconPositionRef.current);
+        }
+      });
+    });
+  }, []);
 
   const handleCloseModal = () => {
     setModalVisible(false);

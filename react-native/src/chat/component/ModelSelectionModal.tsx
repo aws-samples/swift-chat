@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useAppContext } from '../../history/AppProvider';
 import {
   Modal,
   StyleSheet,
@@ -42,6 +43,7 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
     y: 70,
   },
 }) => {
+  const { sendEvent } = useAppContext();
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model>(getTextModel());
 
@@ -95,6 +97,9 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
 
     // Update model order (move selected model to the top of history)
     updateModelOrder(model);
+
+    // Send model changed event
+    sendEvent('modelChanged');
 
     // Get updated merged model list
     const mergedModels = getMergedModelOrder();
@@ -225,7 +230,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
   closeButton: {
     width: 20,
