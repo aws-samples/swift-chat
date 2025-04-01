@@ -130,6 +130,11 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
     } else {
       afterTokens = afterFormula ? MarkedLexer(afterFormula) : [];
     }
+    if (isDisplayMode) {
+      if (!(beforeFormula.endsWith('\n') || afterFormula.startsWith('\n'))) {
+        isDisplayMode = false;
+      }
+    }
 
     // Create LaTeX token
     const latexToken: CustomToken = {
@@ -161,7 +166,7 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
           ? [{ type: 'br', raw: '  \n' }]
           : []),
         latexToken,
-        ...(isDisplayMode ||
+        ...((isDisplayMode && afterFormula.length > 1) ||
         (afterFormula.length > 1 && afterFormula.startsWith('\n'))
           ? [{ type: 'br', raw: '  \n' }]
           : []),
