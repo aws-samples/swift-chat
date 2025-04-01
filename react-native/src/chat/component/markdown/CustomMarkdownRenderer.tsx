@@ -359,6 +359,7 @@ export class CustomMarkdownRenderer
         <MathView
           key={getMathKey()}
           math={text}
+          renderError={() => this.getTextView(text, customStyles.text)}
           style={
             isDisplayMode
               ? customStyles.displayMathView

@@ -434,15 +434,13 @@ function parseChunk(rawChunk: string) {
       const bedrockChunk: BedrockChunk = JSON.parse(rawChunk);
       return extractChunkContent(bedrockChunk, rawChunk);
     } catch (error) {
-      if (rawChunk.indexOf('}{') > 0) {
-        const jsonParts = rawChunk.split('}{');
+      const jsonParts = splitJsonStrings(rawChunk);
+      if (jsonParts.length > 0) {
         let combinedReasoning = '';
         let combinedText = '';
         let lastUsage;
         for (let i = 0; i < jsonParts.length; i++) {
           let part = jsonParts[i];
-          part =
-            (i >= 1 ? '{' : '') + part + (i < jsonParts.length - 1 ? '}' : '');
           try {
             const chunk: BedrockChunk = JSON.parse(part);
             const content = extractChunkContent(chunk, rawChunk);
@@ -476,6 +474,23 @@ function parseChunk(rawChunk: string) {
     }
   }
   return null;
+}
+
+function splitJsonStrings(input: string): string[] {
+  const result: string[] = [];
+  let start = 0;
+  let balance = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+    if (char === '{') {
+      if (balance === 0) start = i;
+      balance++;
+    } else if (char === '}') {
+      balance--;
+      if (balance === 0) result.push(input.slice(start, i + 1));
+    }
+  }
+  return result;
 }
 
 /**

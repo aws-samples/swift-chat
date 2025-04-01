@@ -124,7 +124,12 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
 
     // Parse before and after text into tokens
     const beforeTokens = beforeFormula ? MarkedLexer(beforeFormula) : [];
-    const afterTokens = afterFormula ? MarkedLexer(afterFormula) : [];
+    let afterTokens;
+    if (afterFormula.includes('$')) {
+      afterTokens = afterFormula ? this.text(afterFormula) : [];
+    } else {
+      afterTokens = afterFormula ? MarkedLexer(afterFormula) : [];
+    }
 
     // Create LaTeX token
     const latexToken: CustomToken = {
@@ -151,11 +156,27 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
         ...beforeTokens.flatMap(token =>
           token.type === 'paragraph' ? token.tokens || [] : [token]
         ),
-        ...(isDisplayMode ? [{ type: 'br', raw: '  \n' }] : []),
+        ...(isDisplayMode ||
+        (beforeFormula.length > 1 && beforeFormula.endsWith('\n'))
+          ? [{ type: 'br', raw: '  \n' }]
+          : []),
         latexToken,
-        ...(isDisplayMode ? [{ type: 'br', raw: '  \n' }] : []),
-        ...afterTokens.flatMap(token =>
-          token.type === 'paragraph' ? token.tokens || [] : [token]
+        ...(isDisplayMode ||
+        (afterFormula.length > 1 && afterFormula.startsWith('\n'))
+          ? [{ type: 'br', raw: '  \n' }]
+          : []),
+        ...(Array.isArray(afterTokens) ? afterTokens : [afterTokens]).flatMap(
+          token => {
+            if (!token) return [];
+            if (
+              typeof token === 'object' &&
+              'tokens' in token &&
+              Array.isArray(token.tokens)
+            ) {
+              return token.tokens;
+            }
+            return [token];
+          }
         ),
       ],
     } as ReturnType<MarkedTokenizer<CustomToken>['text']>;
