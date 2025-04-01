@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { ChatMode, FileInfo, SystemPrompt } from '../../types/Chat.ts';
 import {

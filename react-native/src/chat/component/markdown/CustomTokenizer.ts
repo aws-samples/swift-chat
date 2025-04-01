@@ -172,7 +172,9 @@ export class CustomTokenizer extends MarkedTokenizer<CustomToken> {
           : []),
         ...(Array.isArray(afterTokens) ? afterTokens : [afterTokens]).flatMap(
           token => {
-            if (!token) return [];
+            if (!token) {
+              return [];
+            }
             if (
               typeof token === 'object' &&
               'tokens' in token &&

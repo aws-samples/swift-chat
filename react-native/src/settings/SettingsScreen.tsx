@@ -118,6 +118,7 @@ function SettingsScreen(): React.JSX.Element {
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
   const { sendEvent } = useAppContext();
+  const sendEventRef = useRef(sendEvent);
 
   const fetchAndSetModelNames = useCallback(async () => {
     controllerRef.current = new AbortController();
@@ -183,7 +184,7 @@ function SettingsScreen(): React.JSX.Element {
         updateTextModelUsageOrder(defaultMissMatchModel[0]);
       }
     }
-    sendEvent('modelChanged');
+    sendEventRef.current('modelChanged');
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
       saveAllModels(response);
     }

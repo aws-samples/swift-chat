@@ -146,6 +146,7 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
 
     return (
       <TouchableOpacity
+        // eslint-disable-next-line react-native/no-inline-styles
         style={[styles.modelItem, isLastItem && { borderBottomWidth: 0 }]}
         onPress={() => handleModelSelect(item)}>
         <View style={styles.modelItemContent}>
@@ -175,6 +176,7 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
               style={[
                 styles.modalContainer,
                 animatedStyle,
+                // eslint-disable-next-line react-native/no-inline-styles
                 {
                   position: 'absolute',
                   right: 10,

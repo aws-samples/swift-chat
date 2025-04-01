@@ -440,7 +440,7 @@ function parseChunk(rawChunk: string) {
         let combinedText = '';
         let lastUsage;
         for (let i = 0; i < jsonParts.length; i++) {
-          let part = jsonParts[i];
+          const part = jsonParts[i];
           try {
             const chunk: BedrockChunk = JSON.parse(part);
             const content = extractChunkContent(chunk, rawChunk);
@@ -483,11 +483,15 @@ function splitJsonStrings(input: string): string[] {
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
     if (char === '{') {
-      if (balance === 0) start = i;
+      if (balance === 0) {
+        start = i;
+      }
       balance++;
     } else if (char === '}') {
       balance--;
-      if (balance === 0) result.push(input.slice(start, i + 1));
+      if (balance === 0) {
+        result.push(input.slice(start, i + 1));
+      }
     }
   }
   return result;
