@@ -476,7 +476,7 @@ export function getModelOrder(): Model[] {
 }
 
 // Update model order when a model is used
-export function updateModelOrder(model: Model) {
+export function updateTextModelUsageOrder(model: Model) {
   const currentOrder = getModelOrder();
   const updatedOrder = [
     model,

@@ -232,11 +232,17 @@ function ChatScreen(): React.JSX.Element {
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
-      setTimeout(() => {
+      if (isMac) {
         setMessages(msg);
         setIsLoadingMessages(false);
         scrollToBottom();
-      }, 200);
+      } else {
+        setTimeout(() => {
+          setMessages(msg);
+          setIsLoadingMessages(false);
+          scrollToBottom();
+        }, 200);
+      }
     }
   }, [initialSessionId, mode, tapIndex]);
 
@@ -612,6 +618,7 @@ function ChatScreen(): React.JSX.Element {
                 props.currentMessage?.user._id !== 1
               }
               onRegenerate={() => {
+                setUserScrolled(false);
                 trigger(HapticFeedbackTypes.impactMedium);
                 const userMessageIndex = messageIndex + 1;
                 if (userMessageIndex < messages.length) {

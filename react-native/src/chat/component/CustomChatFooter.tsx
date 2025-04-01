@@ -29,9 +29,15 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
   const modelIconRef = useRef<View>(null);
   const iconPositionRef = useRef({ x: 0, y: 0 });
   const handleOpenModal = () => {
-    modelIconRef.current?.measure((x, y, width, height, pageX, pageY) => {
+    if (iconPositionRef.current.y === 0) {
+      modelIconRef.current?.measure((x, y, width, height, pageX, pageY) => {
+        iconPositionRef.current = { x: pageX, y: pageY + 10 };
+        setIconPosition(iconPositionRef.current);
+        setModalVisible(true);
+      });
+    } else {
       setModalVisible(true);
-    });
+    }
   };
   useEffect(() => {
     Keyboard.addListener('keyboardWillShow', () => {

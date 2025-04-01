@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingRight: 4,
+    paddingRight: 5,
   },
   icon: {
     width: 28,

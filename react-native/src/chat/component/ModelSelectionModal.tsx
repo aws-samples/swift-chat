@@ -21,7 +21,7 @@ import { Model, ModelTag } from '../../types/Chat';
 import {
   getTextModel,
   saveTextModel,
-  updateModelOrder,
+  updateTextModelUsageOrder,
   getMergedModelOrder,
 } from '../../storage/StorageUtils';
 import { DeepSeekModels } from '../../storage/Constants';
@@ -96,7 +96,7 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
     saveTextModel(model);
 
     // Update model order (move selected model to the top of history)
-    updateModelOrder(model);
+    updateTextModelUsageOrder(model);
 
     // Send model changed event
     sendEvent('modelChanged');

@@ -49,6 +49,7 @@ import {
   saveRegion,
   saveTextModel,
   saveThinkingEnabled,
+  updateTextModelUsageOrder,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -71,6 +72,7 @@ import {
 import CustomTextInput from './CustomTextInput.tsx';
 import { requestAllOllamaModels } from '../api/ollama-api.ts';
 import TabButton from './TabButton';
+import { useAppContext } from '../history/AppProvider.tsx';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -115,6 +117,7 @@ function SettingsScreen(): React.JSX.Element {
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
+  const { sendEvent } = useAppContext();
 
   const fetchAndSetModelNames = useCallback(async () => {
     controllerRef.current = new AbortController();
@@ -169,6 +172,7 @@ function SettingsScreen(): React.JSX.Element {
     if (targetModels && targetModels.length === 1) {
       setSelectedTextModel(targetModels[0]);
       saveTextModel(targetModels[0]);
+      updateTextModelUsageOrder(targetModels[0]);
     } else {
       const defaultMissMatchModel = response.textModel.filter(
         model => model.modelName === 'Claude 3 Sonnet'
@@ -176,8 +180,10 @@ function SettingsScreen(): React.JSX.Element {
       if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
         setSelectedTextModel(defaultMissMatchModel[0]);
         saveTextModel(defaultMissMatchModel[0]);
+        updateTextModelUsageOrder(defaultMissMatchModel[0]);
       }
     }
+    sendEvent('modelChanged');
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
       saveAllModels(response);
     }
@@ -460,9 +466,11 @@ function SettingsScreen(): React.JSX.Element {
               const selectedModel = textModels.find(
                 model => model.modelId === item.value
               );
-              setSelectedTextModel(selectedModel!);
               if (selectedModel) {
                 saveTextModel(selectedModel);
+                setSelectedTextModel(selectedModel!);
+                updateTextModelUsageOrder(selectedModel);
+                sendEvent('modelChanged');
               }
             }
           }}
