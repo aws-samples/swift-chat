@@ -25,6 +25,8 @@ type CallbackFunction = (
   usage?: Usage,
   reasoning?: string
 ) => void;
+const OpenRouterTag = ': OPENROUTER PROCESSING\n\n';
+
 export const invokeOpenAIWithCallBack = async (
   messages: BedrockMessage[],
   prompt: SystemPrompt | null,
@@ -32,6 +34,7 @@ export const invokeOpenAIWithCallBack = async (
   controller: AbortController,
   callback: CallbackFunction
 ) => {
+  const isOpenRouter = isOpenRouterRequest();
   const bodyObject = {
     model: getTextModel().modelId,
     messages: getOpenAIMessages(messages, prompt),
@@ -80,7 +83,10 @@ export const invokeOpenAIWithCallBack = async (
 
         try {
           const { done, value } = await reader.read();
-          const chunk = decoder.decode(value, { stream: true });
+          let chunk = decoder.decode(value, { stream: true });
+          if (isOpenRouter && chunk.startsWith(OpenRouterTag)) {
+            continue;
+          }
           const parsed = parseStreamData(chunk, lastChunk);
           if (parsed.error) {
             callback(
@@ -294,6 +300,10 @@ function getApiKey(): string {
   } else {
     return getOpenAIApiKey();
   }
+}
+
+function isOpenRouterRequest(): boolean {
+  return getOpenAICompatApiURL().startsWith('https://openrouter.ai/api');
 }
 
 function getApiURL(): string {

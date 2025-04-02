@@ -122,7 +122,12 @@ function SettingsScreen(): React.JSX.Element {
 
   const fetchAndSetModelNames = useCallback(async () => {
     controllerRef.current = new AbortController();
-    const ollamaModels = await requestAllOllamaModels();
+
+    let ollamaModels: Model[] = [];
+    if (ollamaApiUrl.length > 0) {
+      ollamaModels = await requestAllOllamaModels();
+    }
+
     const response = await requestAllModels();
     addBedrockPrefixToDeepseekModels(response.textModel);
     if (response.imageModel.length > 0) {
@@ -141,14 +146,14 @@ function SettingsScreen(): React.JSX.Element {
     }
     let openAICompatModelList: Model[] = [];
     if (openAICompatModels.length > 0) {
-      openAICompatModelList = openAICompatModels.split(',').map(
-        modelId =>
-          ({
-            modelId,
-            modelName: modelId,
-            modelTag: ModelTag.OpenAICompatible,
-          } as Model)
-      );
+      openAICompatModelList = openAICompatModels.split(',').map(modelId => {
+        const parts = modelId.split('/');
+        return {
+          modelId,
+          modelName: parts.length == 1 ? parts[1] : modelId,
+          modelTag: ModelTag.OpenAICompatible,
+        } as Model;
+      });
     }
     if (response.textModel.length === 0) {
       response.textModel = [

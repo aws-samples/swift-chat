@@ -276,6 +276,9 @@ export const invokeBedrockWithCallBack = async (
 };
 
 export const requestAllModels = async (): Promise<AllModel> => {
+  if (getApiUrl() === '') {
+    return { imageModel: [], textModel: [] };
+  }
   const controller = new AbortController();
   const url = getApiPrefix() + '/models';
   const bodyObject = {
