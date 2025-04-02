@@ -55,6 +55,11 @@ export const invokeOpenAIWithCallBack = async (
     signal: controller.signal,
     reactNative: { textStreaming: true },
   };
+  if (isOpenRouter) {
+    options.headers['HTTP-Referer' as keyof typeof options.headers] =
+      GITHUB_LINK;
+    options.headers['X-Title' as keyof typeof options.headers] = 'SwiftChat';
+  }
   const url = getApiURL();
   let completeMessage = '';
   let completeReasoning = '';
@@ -172,6 +177,9 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
     }
     if (dataChunk[0] === '\n') {
       dataChunk = dataChunk.slice(1);
+    }
+    if (!dataChunk.startsWith('data')) {
+      continue;
     }
     const cleanedData = dataChunk.replace(/^data: /, '');
     if (cleanedData.trim() === '[DONE]') {
