@@ -83,7 +83,7 @@ export const invokeOpenAIWithCallBack = async (
 
         try {
           const { done, value } = await reader.read();
-          let chunk = decoder.decode(value, { stream: true });
+          const chunk = decoder.decode(value, { stream: true });
           if (isOpenRouter && chunk.startsWith(OpenRouterTag)) {
             continue;
           }
@@ -181,7 +181,11 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
     try {
       const parsedData: ChatResponse = JSON.parse(cleanedData);
       if (parsedData.error) {
-        return { error: parsedData.error.message };
+        let errorMessage = parsedData.error?.message ?? '';
+        if (parsedData.error?.metadata?.raw) {
+          errorMessage += ':\n' + parsedData.error.metadata.raw;
+        }
+        return { error: errorMessage };
       }
       if (parsedData.detail) {
         return {
@@ -236,7 +240,10 @@ type ChatResponse = {
     prompt_cache_hit_tokens: number;
   };
   error?: {
-    message: string;
+    message?: string;
+    metadata?: {
+      raw?: string;
+    };
   };
   detail?: string;
 };

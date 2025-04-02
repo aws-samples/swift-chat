@@ -72,6 +72,7 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: 16,
     fontWeight: '500',
+    textAlign: 'center',
     color: '#333',
     transform: [{ scaleY: -1 }, { scaleX: isAndroid ? -1 : 1 }],
   },

@@ -30,7 +30,8 @@ import {
 } from '../chat/util/BedrockMessageConvertor.ts';
 import { invokeOpenAIWithCallBack } from './open-api.ts';
 import { invokeOllamaWithCallBack } from './ollama-api.ts';
-import { BedrockThinkingModels, DeepSeekModels } from '../storage/Constants.ts';
+import { BedrockThinkingModels } from '../storage/Constants.ts';
+import { getModelTag } from '../utils/ModelUtils.ts';
 
 type CallbackFunction = (
   result: string,
@@ -48,34 +49,27 @@ export const invokeBedrockWithCallBack = async (
   controller: AbortController,
   callback: CallbackFunction
 ) => {
-  const isDeepSeek = DeepSeekModels.some(
-    model => model.modelId === getTextModel().modelId
-  );
-  const isOpenAI =
-    getTextModel().modelTag === ModelTag.OpenAI ||
-    getTextModel().modelId.includes('gpt');
-  const isOllama =
-    getTextModel().modelTag === ModelTag.Ollama ||
-    getTextModel().modelId.startsWith('ollama-');
-  const isOpenAICompatible =
-    getTextModel().modelTag === ModelTag.OpenAICompatible;
-  if (
-    chatMode === ChatMode.Text &&
-    (isDeepSeek || isOpenAI || isOpenAICompatible || isOllama)
-  ) {
-    if (isDeepSeek && getDeepSeekApiKey().length === 0) {
+  const currentModelTag = getModelTag(getTextModel());
+  if (chatMode === ChatMode.Text && currentModelTag !== ModelTag.Bedrock) {
+    if (
+      currentModelTag === ModelTag.DeepSeek &&
+      getDeepSeekApiKey().length === 0
+    ) {
       callback('Please configure your DeepSeek API Key', true, true);
       return;
     }
-    if (isOpenAI && getOpenAIApiKey().length === 0) {
+    if (currentModelTag === ModelTag.OpenAI && getOpenAIApiKey().length === 0) {
       callback('Please configure your OpenAI API Key', true, true);
       return;
     }
-    if (isOpenAICompatible && getOpenAICompatApiURL().length === 0) {
+    if (
+      currentModelTag === ModelTag.OpenAICompatible &&
+      getOpenAICompatApiURL().length === 0
+    ) {
       callback('Please configure your OpenAI Compatible API URL', true, true);
       return;
     }
-    if (isOllama) {
+    if (currentModelTag === ModelTag.Ollama) {
       await invokeOllamaWithCallBack(
         messages,
         prompt,

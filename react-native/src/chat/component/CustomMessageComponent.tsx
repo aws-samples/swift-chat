@@ -37,9 +37,9 @@ import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
 import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
 import Markdown from './markdown/Markdown.tsx';
-import { DeepSeekModels } from '../../storage/Constants.ts';
 import ImageSpinner from './ImageSpinner.tsx';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
+import { getModelTagByUserName } from '../../utils/ModelUtils.ts';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
@@ -122,24 +122,18 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     }
     const user = currentMessage.user;
     const userName = user._id === 1 ? 'You' : user.name ?? 'Bedrock';
-    const isDeepSeek =
-      DeepSeekModels.some(model => model.modelName === userName) ||
-      user.modelTag === ModelTag.DeepSeek;
-    const isOpenAI =
-      userName.includes('GPT') || user.modelTag === ModelTag.OpenAI;
-    const isOpenAICompatible = user.modelTag === ModelTag.OpenAICompatible;
-    const isOllama =
-      userName.includes(':') || user.modelTag === ModelTag.Ollama;
+    const currentModelTag = getModelTagByUserName(user.modelTag, userName);
 
-    const modelIcon = isDeepSeek
-      ? require('../../assets/deepseek.png')
-      : isOpenAI
-      ? require('../../assets/openai.png')
-      : isOpenAICompatible
-      ? require('../../assets/openai_api.png')
-      : isOllama
-      ? require('../../assets/ollama_white.png')
-      : require('../../assets/bedrock.png');
+    const modelIcon =
+      currentModelTag === ModelTag.DeepSeek
+        ? require('../../assets/deepseek.png')
+        : currentModelTag === ModelTag.OpenAICompatible
+        ? require('../../assets/openai_api.png')
+        : currentModelTag === ModelTag.OpenAI
+        ? require('../../assets/openai.png')
+        : currentModelTag === ModelTag.Ollama
+        ? require('../../assets/ollama_white.png')
+        : require('../../assets/bedrock.png');
 
     const imgSource =
       currentMessage.user._id === 1

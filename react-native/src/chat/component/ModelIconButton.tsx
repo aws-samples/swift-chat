@@ -1,8 +1,8 @@
 import React from 'react';
 import { Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { ModelTag } from '../../types/Chat';
-import { DeepSeekModels } from '../../storage/Constants';
 import { getTextModel } from '../../storage/StorageUtils';
+import { getModelTag } from '../../utils/ModelUtils.ts';
 
 interface ModelIconButtonProps {
   onPress: () => void;
@@ -12,29 +12,18 @@ export const ModelIconButton: React.FC<ModelIconButtonProps> = ({
   onPress,
 }) => {
   // Directly get the current model on each render
-  const currentModel = getTextModel();
+  const currentModelTag = getModelTag(getTextModel());
 
-  const isDeepSeek = DeepSeekModels.some(
-    model => model.modelId === currentModel.modelId
-  );
-  const isOpenAICompatible =
-    currentModel.modelTag === ModelTag.OpenAICompatible;
-  const isOpenAI =
-    currentModel.modelTag === ModelTag.OpenAI ||
-    currentModel.modelId.includes('gpt');
-  const isOllama =
-    currentModel.modelTag === ModelTag.Ollama ||
-    currentModel.modelId.startsWith('ollama-');
-
-  const modelIcon = isDeepSeek
-    ? require('../../assets/deepseek.png')
-    : isOpenAICompatible
-    ? require('../../assets/openai_api.png')
-    : isOpenAI
-    ? require('../../assets/openai.png')
-    : isOllama
-    ? require('../../assets/ollama_white.png')
-    : require('../../assets/bedrock.png');
+  const modelIcon =
+    currentModelTag === ModelTag.DeepSeek
+      ? require('../../assets/deepseek.png')
+      : currentModelTag === ModelTag.OpenAICompatible
+      ? require('../../assets/openai_api.png')
+      : currentModelTag === ModelTag.OpenAI
+      ? require('../../assets/openai.png')
+      : currentModelTag === ModelTag.Ollama
+      ? require('../../assets/ollama_white.png')
+      : require('../../assets/bedrock.png');
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>

@@ -124,7 +124,7 @@ function SettingsScreen(): React.JSX.Element {
     controllerRef.current = new AbortController();
 
     let ollamaModels: Model[] = [];
-    if (ollamaApiUrl.length > 0) {
+    if (getOllamaApiUrl().length > 0) {
       ollamaModels = await requestAllOllamaModels();
     }
 
@@ -150,7 +150,7 @@ function SettingsScreen(): React.JSX.Element {
         const parts = modelId.split('/');
         return {
           modelId,
-          modelName: parts.length == 1 ? parts[1] : modelId,
+          modelName: parts.length === 2 ? parts[1] : modelId,
           modelTag: ModelTag.OpenAICompatible,
         } as Model;
       });

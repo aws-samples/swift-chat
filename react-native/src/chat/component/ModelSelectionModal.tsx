@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     width: 240,
-    maxHeight: MODAL_HEIGHT,
+    height: MODAL_HEIGHT,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
