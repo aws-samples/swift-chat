@@ -5,6 +5,8 @@ import {
   Dimensions,
   FlatList,
   Keyboard,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   SafeAreaView,
   StyleSheet,
@@ -71,6 +73,7 @@ const createBotMessage = (mode: string) => {
         mode === ChatMode.Text
           ? getTextModel().modelName
           : getImageModel().modelName,
+      modelTag: mode === ChatMode.Text ? getTextModel().modelTag : undefined,
     },
   };
 };
@@ -88,6 +91,7 @@ function ChatScreen(): React.JSX.Element {
   const modeRef = useRef(mode);
 
   const [messages, setMessages] = useState<SwiftChatMessage[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
   const [systemPrompt, setSystemPrompt] = useState<SystemPrompt | null>(
     getCurrentSystemPrompt
   );
@@ -97,6 +101,7 @@ function ChatScreen(): React.JSX.Element {
   );
   const [chatStatus, setChatStatus] = useState<ChatStatus>(ChatStatus.Init);
   const [usage, setUsage] = useState<Usage>();
+  const [userScrolled, setUserScrolled] = useState(false);
   const chatStatusRef = useRef(chatStatus);
   const messagesRef = useRef(messages);
   const bedrockMessages = useRef<BedrockMessage[]>([]);
@@ -217,6 +222,8 @@ function ChatScreen(): React.JSX.Element {
         return;
       }
       // click from history
+      setMessages([]);
+      setIsLoadingMessages(true);
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
       setUsage((msg[0] as SwiftChatMessage).usage);
@@ -225,9 +232,17 @@ function ChatScreen(): React.JSX.Element {
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
-
-      setMessages(msg);
-      scrollToBottom();
+      if (isMac) {
+        setMessages(msg);
+        setIsLoadingMessages(false);
+        scrollToBottom();
+      } else {
+        setTimeout(() => {
+          setMessages(msg);
+          setIsLoadingMessages(false);
+          scrollToBottom();
+        }, 200);
+      }
     }
   }, [initialSessionId, mode, tapIndex]);
 
@@ -359,13 +374,36 @@ function ChatScreen(): React.JSX.Element {
   });
 
   const scrollToTop = () => {
+    setUserScrolled(true);
     if (flatListRef.current) {
-      flatListRef.current.scrollToEnd();
+      if (messagesRef.current.length > 0) {
+        flatListRef.current.scrollToIndex({
+          index: messagesRef.current.length - 1,
+          animated: true,
+        });
+      }
     }
   };
   const scrollToBottom = () => {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  };
+
+  const handleUserScroll = (_: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (chatStatusRef.current === ChatStatus.Running) {
+      setUserScrolled(true);
+    }
+  };
+
+  const handleMomentumScrollEnd = (
+    endEvent: NativeSyntheticEvent<NativeScrollEvent>
+  ) => {
+    if (chatStatusRef.current === ChatStatus.Running && userScrolled) {
+      const { contentOffset } = endEvent.nativeEvent;
+      if (contentOffset.y > 0 && contentOffset.y < 100) {
+        scrollToBottom();
+      }
     }
   };
 
@@ -425,7 +463,11 @@ function ChatScreen(): React.JSX.Element {
                 const newMessages = [...prevMessages];
                 newMessages[0] = {
                   ...prevMessages[0],
-                  text: msg,
+                  text:
+                    isCanceled.current &&
+                    previousMessage.text === textPlaceholder
+                      ? 'Canceled...'
+                      : msg,
                   reasoning: reasoning,
                 };
                 return newMessages;
@@ -463,6 +505,8 @@ function ChatScreen(): React.JSX.Element {
 
   // handle onSend
   const onSend = useCallback((message: SwiftChatMessage[] = []) => {
+    // Reset user scroll state when sending a new message
+    setUserScrolled(false);
     setShowSystemPrompt(false);
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
@@ -517,7 +561,10 @@ function ChatScreen(): React.JSX.Element {
         alignTop={false}
         inverted={true}
         renderChatEmpty={() => (
-          <EmptyChatComponent chatMode={modeRef.current} />
+          <EmptyChatComponent
+            chatMode={modeRef.current}
+            isLoadingMessages={isLoadingMessages}
+          />
         )}
         alwaysShowSend={
           chatStatus !== ChatStatus.Init || selectedFiles.length > 0
@@ -556,12 +603,54 @@ function ChatScreen(): React.JSX.Element {
             isShowSystemPrompt={showSystemPrompt}
           />
         )}
-        renderMessage={props => (
-          <CustomMessageComponent {...props} chatStatus={chatStatus} />
-        )}
+        renderMessage={props => {
+          // Find the index of the current message in the messages array
+          const messageIndex = messages.findIndex(
+            msg => msg._id === props.currentMessage?._id
+          );
+
+          return (
+            <CustomMessageComponent
+              {...props}
+              chatStatus={chatStatus}
+              isLastAIMessage={
+                props.currentMessage?._id === messages[0]?._id &&
+                props.currentMessage?.user._id !== 1
+              }
+              onRegenerate={() => {
+                setUserScrolled(false);
+                trigger(HapticFeedbackTypes.impactMedium);
+                const userMessageIndex = messageIndex + 1;
+                if (userMessageIndex < messages.length) {
+                  // Reset bedrockMessages to only include the user's message
+                  getBedrockMessage(messages[userMessageIndex]).then(
+                    userMsg => {
+                      bedrockMessages.current = [userMsg];
+                      setChatStatus(ChatStatus.Running);
+                      setMessages(previousMessages => [
+                        createBotMessage(modeRef.current),
+                        ...previousMessages.slice(userMessageIndex),
+                      ]);
+                    }
+                  );
+                }
+              }}
+            />
+          );
+        }}
         listViewProps={{
           contentContainerStyle: styles.contentContainer,
           contentInset: { top: 2 },
+          onScrollBeginDrag: handleUserScroll,
+          onMomentumScrollEnd: handleMomentumScrollEnd,
+          ...(userScrolled && chatStatus === ChatStatus.Running
+            ? {
+                maintainVisibleContentPosition: {
+                  minIndexForVisible: 0,
+                  autoscrollToTopThreshold: 0,
+                },
+              }
+            : {}),
         }}
         scrollToBottom={true}
         scrollToBottomComponent={CustomScrollToBottomComponent}

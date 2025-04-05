@@ -5,7 +5,7 @@ export const CustomScrollToBottomComponent = (): React.ReactNode => {
   return (
     <View style={styles.scrollToBottomContainer}>
       <Image
-        source={require('../../assets/scroll-down.png')}
+        source={require('../../assets/scroll_down.png')}
         style={styles.scrollToBottomIcon}
       />
     </View>

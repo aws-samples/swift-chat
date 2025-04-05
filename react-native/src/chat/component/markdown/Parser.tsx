@@ -37,19 +37,40 @@ class Parser {
   }
 
   private _parse(tokens: Token[], styles?: ViewStyle | TextStyle | ImageStyle) {
-    let preToken: Token;
-    const elements: ReactNode[] = tokens.map(token => {
-      if (preToken && preToken.type === 'text' && token.type === 'custom') {
+    const elements: ReactNode[] = [];
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      if (
+        i + 1 < tokens.length &&
+        tokens[i + 1].type === 'custom' &&
+        token.type === 'text'
+      ) {
         if (
-          !preToken.raw.endsWith('\n') &&
-          (token as CustomToken)?.args?.displayMode === true
+          /^ +$/.test(token.raw) &&
+          (tokens[i + 1] as CustomToken)?.args?.displayMode === true
         ) {
-          (token as CustomToken).args!.displayMode = false;
+          // for empty string continue
+          continue;
         }
       }
-      preToken = token;
-      return this._parseToken(token, styles);
-    });
+      if (i > 0 && token.type === 'custom' && tokens[i - 1].type === 'text') {
+        if (
+          tokens[i - 1].raw.trim() !== '' &&
+          !tokens[i - 1].raw.endsWith('\n') &&
+          (token as CustomToken)?.args?.displayMode === true
+        ) {
+          elements.push(this._parseToken({ type: 'br', raw: '  \n' }, styles));
+          elements.push(this._parseToken(token, styles));
+          if (i < tokens.length - 1 && !tokens[i + 1].raw.includes('\n')) {
+            elements.push(
+              this._parseToken({ type: 'br', raw: '  \n' }, styles)
+            );
+          }
+          continue;
+        }
+      }
+      elements.push(this._parseToken(token, styles));
+    }
     return elements.filter(element => element !== null);
   }
 
@@ -59,6 +80,14 @@ class Parser {
   ): ReactNode {
     switch (token.type) {
       case 'paragraph': {
+        if (token.raw.startsWith('$') && token.raw.endsWith('$')) {
+          const sliceCount = token.raw.startsWith('$$') ? 2 : 1;
+          const children = this._parse(token.tokens ?? []);
+          return this.renderer.custom('latex', token.raw, children, {
+            text: token.raw.slice(sliceCount, token.raw.length - sliceCount),
+            displayMode: true,
+          });
+        }
         const children = this.getNormalizedSiblingNodesForBlockAndInlineTokens(
           token.tokens,
           this.styles.text
@@ -212,9 +241,6 @@ class Parser {
           ...styles,
         });
       case 'html': {
-        console.warn(
-          'react-native-marked: rendering html from markdown is not supported'
-        );
         return this.renderer.html(token.raw, {
           ...this.styles.text,
           ...styles,

@@ -7,10 +7,12 @@ import React, {
 } from 'react';
 import {
   Image,
+  NativeSyntheticEvent,
   Platform,
   StyleSheet,
   Text,
   TextInput,
+  TextInputSelectionChangeEventData,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -18,7 +20,12 @@ import Share from 'react-native-share';
 import { MessageProps } from 'react-native-gifted-chat';
 import { CustomMarkdownRenderer } from './markdown/CustomMarkdownRenderer.tsx';
 import { MarkedStyles } from 'react-native-marked/src/theme/types.ts';
-import { ChatStatus, PressMode, SwiftChatMessage } from '../../types/Chat.ts';
+import {
+  ChatStatus,
+  ModelTag,
+  PressMode,
+  SwiftChatMessage,
+} from '../../types/Chat.ts';
 import { trigger } from '../util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -29,38 +36,77 @@ import {
 import FileViewer from 'react-native-file-viewer';
 import { isMac } from '../../App.tsx';
 import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
-import { State, TapGestureHandler } from 'react-native-gesture-handler';
 import Markdown from './markdown/Markdown.tsx';
-import { DeepSeekModels } from '../../storage/Constants.ts';
-import { getTextModel } from '../../storage/StorageUtils.ts';
+import ImageSpinner from './ImageSpinner.tsx';
+import { State, TapGestureHandler } from 'react-native-gesture-handler';
+import { getModelTagByUserName } from '../../utils/ModelUtils.ts';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
+  isLastAIMessage?: boolean;
+  onRegenerate?: () => void;
 }
 
 const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   currentMessage,
   chatStatus,
+  isLastAIMessage,
+  onRegenerate,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [clickTitleCopied, setClickTitleCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const inputHeightRef = useRef(0);
+
+  const [inputHeight, setInputHeight] = useState(0);
   const chatStatusRef = useRef(chatStatus);
+  const textInputRef = useRef<TextInput>(null);
+  const [inputTextSelection, setInputTextSelection] = useState<
+    { start: number; end: number } | undefined
+  >(undefined);
+  const isLoading =
+    chatStatus === ChatStatus.Running && currentMessage?.text === '...';
+  const [forceShowButtons, setForceShowButtons] = useState(false);
 
   const setIsEditValue = useCallback(
     (value: boolean) => {
       if (chatStatus !== ChatStatus.Running) {
         setIsEdit(value);
+        if (!value) {
+          setInputTextSelection(undefined);
+        }
       }
     },
     [chatStatus]
   );
 
-  const handleCopy = useCallback(() => {
-    if (isEdit) {
-      setIsEditValue(false);
-      return;
+  // Use useEffect with setTimeout to ensure selection happens after TextInput is fully rendered
+  useEffect(() => {
+    if (isEdit && currentMessage?.text) {
+      const timer = setTimeout(() => {
+        textInputRef.current?.focus();
+        setInputTextSelection({
+          start: 0,
+          end: currentMessage.text.length,
+        });
+      }, 100);
+      return () => clearTimeout(timer);
     }
+  }, [isEdit, currentMessage?.text]);
+
+  const toggleButtons = useCallback(() => {
+    setForceShowButtons(prev => !prev);
+  }, []);
+
+  // Handle selection changes made by the user
+  const handleSelectionChange = useCallback(
+    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+      const { selection } = event.nativeEvent;
+      setInputTextSelection(selection);
+    },
+    []
+  );
+
+  const handleCopy = useCallback(() => {
     const copyText = currentMessage?.reasoning
       ? 'Reasoning: ' +
           currentMessage.reasoning +
@@ -68,31 +114,26 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           currentMessage?.text || ''
       : currentMessage?.text || '';
     Clipboard.setString(copyText);
-    setCopied(true);
-  }, [isEdit, setIsEditValue, currentMessage?.reasoning, currentMessage?.text]);
+  }, [currentMessage?.reasoning, currentMessage?.text]);
 
   const userInfo = useMemo(() => {
     if (!currentMessage) {
       return { userName: '', imgSource: null };
     }
+    const user = currentMessage.user;
+    const userName = user._id === 1 ? 'You' : user.name ?? 'Bedrock';
+    const currentModelTag = getModelTagByUserName(user.modelTag, userName);
 
-    const userName =
-      currentMessage.user._id === 1
-        ? 'You'
-        : currentMessage.user.name ?? 'Bedrock';
-    const isDeepSeek = DeepSeekModels.some(
-      model => model.modelId === getTextModel().modelId
-    );
-    const isOpenAI = userName.includes('GPT');
-    const isOllama = userName.includes(':');
-
-    const modelIcon = isDeepSeek
-      ? require('../../assets/deepseek.png')
-      : isOpenAI
-      ? require('../../assets/openai.png')
-      : isOllama
-      ? require('../../assets/ollama-white.png')
-      : require('../../assets/bedrock.png');
+    const modelIcon =
+      currentModelTag === ModelTag.DeepSeek
+        ? require('../../assets/deepseek.png')
+        : currentModelTag === ModelTag.OpenAICompatible
+        ? require('../../assets/openai_api.png')
+        : currentModelTag === ModelTag.OpenAI
+        ? require('../../assets/openai.png')
+        : currentModelTag === ModelTag.Ollama
+        ? require('../../assets/ollama_white.png')
+        : require('../../assets/bedrock.png');
 
     const imgSource =
       currentMessage.user._id === 1
@@ -112,21 +153,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   }, [userInfo]);
 
   const copyButton = useMemo(() => {
-    return (
-      <TouchableOpacity onPress={handleCopy} style={styles.copyContainer}>
-        <Image
-          source={
-            isEdit
-              ? require('../../assets/select.png')
-              : copied
-              ? require('../../assets/done.png')
-              : require('../../assets/copy_grey.png')
-          }
-          style={styles.copy}
-        />
-      </TouchableOpacity>
-    );
-  }, [isEdit, copied, handleCopy]);
+    return clickTitleCopied ? (
+      <Image source={require('../../assets/done.png')} style={styles.copy} />
+    ) : null;
+  }, [clickTitleCopied]);
 
   const handleImagePress = useCallback((pressMode: PressMode, url: string) => {
     if (pressMode === PressMode.Click) {
@@ -184,13 +214,11 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     );
   }, [currentMessage, customMarkdownRenderer, customTokenizer]);
 
-  const handleEdit = useCallback(() => {
-    setIsEditValue(!isEdit);
-  }, [isEdit, setIsEditValue]);
-
-  const onDoubleTap = useCallback(() => {
-    setIsEditValue(true);
-  }, [setIsEditValue]);
+  const handleShowButton = useCallback(() => {
+    if (!isLoading) {
+      toggleButtons();
+    }
+  }, [isLoading, toggleButtons]);
 
   useEffect(() => {
     if (copied) {
@@ -201,6 +229,17 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       return () => clearTimeout(timer);
     }
   }, [copied]);
+
+  useEffect(() => {
+    if (clickTitleCopied) {
+      handleCopy();
+      const timer = setTimeout(() => {
+        setClickTitleCopied(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [handleCopy, clickTitleCopied]);
 
   const messageContent = useMemo(() => {
     if (!currentMessage) {
@@ -222,54 +261,121 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     return <Text style={styles.questionText}>{currentMessage.text}</Text>;
   }, [currentMessage, customMarkdownRenderer, customTokenizer]);
 
+  const messageActionButtons = useMemo(() => {
+    return (
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity
+          onPress={() => {
+            handleCopy();
+            setCopied(true);
+          }}
+          style={styles.actionButton}>
+          <Image
+            source={
+              copied
+                ? require('../../assets/done.png')
+                : require('../../assets/copy_grey.png')
+            }
+            style={styles.actionButtonIcon}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setIsEditValue(!isEdit)}
+          style={styles.actionButton}>
+          <Image
+            source={
+              isEdit
+                ? require('../../assets/select.png')
+                : require('../../assets/select_grey.png')
+            }
+            style={styles.actionButtonIcon}
+          />
+        </TouchableOpacity>
+
+        {currentMessage?.user._id !== 1 && (
+          <TouchableOpacity onPress={onRegenerate} style={styles.actionButton}>
+            <Image
+              source={require('../../assets/refresh.png')}
+              style={styles.actionButtonIcon}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }, [
+    handleCopy,
+    copied,
+    isEdit,
+    onRegenerate,
+    setIsEditValue,
+    currentMessage,
+  ]);
+
   if (!currentMessage) {
     return null;
   }
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.header}
         activeOpacity={1}
-        onPress={handleEdit}>
+        onPress={() => setClickTitleCopied(true)}>
         {headerContent}
         {copyButton}
       </TouchableOpacity>
       <View style={styles.marked_box}>
-        {reasoningSection}
-        {!isEdit && (
+        {isLoading && (
+          <View style={styles.loading}>
+            <ImageSpinner
+              visible={true}
+              size={18}
+              source={require('../../assets/loading.png')}
+            />
+          </View>
+        )}
+        {!isLoading && reasoningSection}
+        {!isLoading && !isEdit && (
           <TapGestureHandler
             numberOfTaps={2}
             onHandlerStateChange={({ nativeEvent }) => {
               if (nativeEvent.state === State.ACTIVE) {
-                onDoubleTap();
+                handleShowButton();
               }
             }}>
-            <View
-              onLayout={event => {
-                inputHeightRef.current = event.nativeEvent.layout.height;
-              }}>
-              {messageContent}
-            </View>
+            <View>{messageContent}</View>
           </TapGestureHandler>
         )}
         {isEdit && (
           <TextInput
+            ref={textInputRef}
+            selection={inputTextSelection}
+            onSelectionChange={handleSelectionChange}
             editable={Platform.OS === 'android'}
             multiline
             showSoftInputOnFocus={false}
+            onContentSizeChange={event => {
+              const { height } = event.nativeEvent.contentSize;
+              setInputHeight(height);
+            }}
             style={[
               styles.inputText,
               // eslint-disable-next-line react-native/no-inline-styles
               {
-                height: inputHeightRef.current - 1,
                 fontWeight: isMac ? '300' : 'normal',
                 lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
-                paddingTop: Platform.OS === 'android' ? 7 : 5,
+                paddingTop: Platform.OS === 'android' ? 7 : 3,
+                marginBottom: -inputHeight * 0.138 + 8,
               },
-            ]}>
+            ]}
+            textAlignVertical="top">
             {currentMessage.text}
           </TextInput>
         )}
+        {((isLastAIMessage && chatStatus !== ChatStatus.Running) ||
+          forceShowButtons) &&
+          messageActionButtons}
         {currentMessage.image && (
           <CustomFileListComponent
             files={JSON.parse(currentMessage.image)}
@@ -306,9 +412,6 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     marginRight: 6,
   },
-  copyContainer: {
-    padding: 4,
-  },
   copy: {
     width: 18,
     height: 18,
@@ -325,7 +428,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     lineHeight: 24,
-    paddingVertical: 8,
+    paddingVertical: 6,
     color: '#333',
   },
   inputText: {
@@ -360,6 +463,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
+  loading: {
+    marginTop: 12,
+    marginBottom: 10,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginLeft: -8,
+    marginTop: -2,
+    marginBottom: 4,
+  },
+  actionButton: {
+    padding: 8,
+  },
+  actionButtonIcon: {
+    width: 16,
+    height: 16,
+  },
 });
 
 const customMarkedStyles: MarkedStyles = {
@@ -370,6 +492,7 @@ const customMarkedStyles: MarkedStyles = {
   h3: { fontSize: 20 },
   h4: { fontSize: 18 },
   blockquote: { marginVertical: 8 },
+  paragraph: { paddingVertical: 6 },
 };
 
 export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
@@ -378,6 +501,8 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
     prevProps.currentMessage?.image === nextProps.currentMessage?.image &&
     prevProps.currentMessage?.reasoning ===
       nextProps.currentMessage?.reasoning &&
-    prevProps.chatStatus === nextProps.chatStatus
+    prevProps.chatStatus === nextProps.chatStatus &&
+    prevProps.isLastAIMessage === nextProps.isLastAIMessage &&
+    prevProps.onRegenerate === nextProps.onRegenerate
   );
 });

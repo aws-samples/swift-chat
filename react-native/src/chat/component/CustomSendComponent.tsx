@@ -8,7 +8,7 @@ import {
   SwiftChatMessage,
 } from '../../types/Chat.ts';
 import { CustomAddFileComponent } from './CustomAddFileComponent.tsx';
-import { getImageModel, getTextModel } from '../../storage/StorageUtils.ts';
+import { getImageModel } from '../../storage/StorageUtils.ts';
 
 interface CustomSendComponentProps extends SendProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
@@ -35,7 +35,6 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       chatStatus === ChatStatus.Running;
   } else if (chatMode === ChatMode.Text) {
     isShowSending =
-      !isMultiModalModel() ||
       (text && text!.length > 0) ||
       selectedFiles.length > 0 ||
       chatStatus === ChatStatus.Running;
@@ -85,18 +84,6 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       />
     );
   }
-};
-
-const isMultiModalModel = (): boolean => {
-  const textModelId = getTextModel().modelId;
-  return (
-    textModelId.includes('claude-3') ||
-    textModelId.includes('nova-pro') ||
-    textModelId.includes('nova-lite') ||
-    textModelId.startsWith('ollama') ||
-    textModelId.startsWith('gpt') ||
-    textModelId.startsWith('deepseek')
-  );
 };
 
 const isModelSupportUploadImages = (chatMode: ChatMode): boolean => {

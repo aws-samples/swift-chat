@@ -3,6 +3,8 @@ import {
   BedrockChunk,
   ChatMode,
   ImageRes,
+  Model,
+  ModelTag,
   SystemPrompt,
   UpgradeInfo,
   Usage,
@@ -14,6 +16,7 @@ import {
   getImageModel,
   getImageSize,
   getOpenAIApiKey,
+  getOpenAICompatApiURL,
   getRegion,
   getTextModel,
   getThinkingEnabled,
@@ -27,7 +30,8 @@ import {
 } from '../chat/util/BedrockMessageConvertor.ts';
 import { invokeOpenAIWithCallBack } from './open-api.ts';
 import { invokeOllamaWithCallBack } from './ollama-api.ts';
-import { BedrockThinkingModels, DeepSeekModels } from '../storage/Constants.ts';
+import { BedrockThinkingModels } from '../storage/Constants.ts';
+import { getModelTag } from '../utils/ModelUtils.ts';
 
 type CallbackFunction = (
   result: string,
@@ -45,21 +49,27 @@ export const invokeBedrockWithCallBack = async (
   controller: AbortController,
   callback: CallbackFunction
 ) => {
-  const isDeepSeek = DeepSeekModels.some(
-    model => model.modelId === getTextModel().modelId
-  );
-  const isOpenAI = getTextModel().modelId.includes('gpt');
-  const isOllama = getTextModel().modelId.startsWith('ollama-');
-  if (chatMode === ChatMode.Text && (isDeepSeek || isOpenAI || isOllama)) {
-    if (isDeepSeek && getDeepSeekApiKey().length === 0) {
+  const currentModelTag = getModelTag(getTextModel());
+  if (chatMode === ChatMode.Text && currentModelTag !== ModelTag.Bedrock) {
+    if (
+      currentModelTag === ModelTag.DeepSeek &&
+      getDeepSeekApiKey().length === 0
+    ) {
       callback('Please configure your DeepSeek API Key', true, true);
       return;
     }
-    if (isOpenAI && getOpenAIApiKey().length === 0) {
+    if (currentModelTag === ModelTag.OpenAI && getOpenAIApiKey().length === 0) {
       callback('Please configure your OpenAI API Key', true, true);
       return;
     }
-    if (isOllama) {
+    if (
+      currentModelTag === ModelTag.OpenAICompatible &&
+      getOpenAICompatApiURL().length === 0
+    ) {
+      callback('Please configure your OpenAI Compatible API URL', true, true);
+      return;
+    }
+    if (currentModelTag === ModelTag.Ollama) {
       await invokeOllamaWithCallBack(
         messages,
         prompt,
@@ -260,6 +270,9 @@ export const invokeBedrockWithCallBack = async (
 };
 
 export const requestAllModels = async (): Promise<AllModel> => {
+  if (getApiUrl() === '') {
+    return { imageModel: [], textModel: [] };
+  }
   const controller = new AbortController();
   const url = getApiPrefix() + '/models';
   const bodyObject = {
@@ -283,7 +296,18 @@ export const requestAllModels = async (): Promise<AllModel> => {
       console.log(`HTTP error! status: ${response.status}`);
       return { imageModel: [], textModel: [] };
     }
-    return await response.json();
+    const allModel = await response.json();
+    allModel.imageModel.map((item: Model) => ({
+      modelId: item.modelId,
+      modelName: item.modelName,
+      modelTag: ModelTag.Bedrock,
+    }));
+    allModel.textModel.map((item: Model) => ({
+      modelId: item.modelId,
+      modelName: item.modelName,
+      modelTag: ModelTag.Bedrock,
+    }));
+    return allModel;
   } catch (error) {
     console.log('Error fetching models:', error);
     clearTimeout(timeoutId);
@@ -359,7 +383,13 @@ export const genImage = async (
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const response = await fetch(url, options);
     if (!response.ok) {
-      const errMsg = `HTTP error! status: ${response.status}`;
+      const responseJson = await response.json();
+      const errMsg = responseJson.detail.includes(
+        "You don't have access to the model"
+      )
+        ? responseJson.detail +
+          ' Please enable your `Nova Lite` model in the US region to support generating images with Chinese prompts.'
+        : responseJson.detail;
       console.log(errMsg);
       return {
         image: '',
@@ -401,15 +431,13 @@ function parseChunk(rawChunk: string) {
       const bedrockChunk: BedrockChunk = JSON.parse(rawChunk);
       return extractChunkContent(bedrockChunk, rawChunk);
     } catch (error) {
-      if (rawChunk.indexOf('}{') > 0) {
-        const jsonParts = rawChunk.split('}{');
+      const jsonParts = splitJsonStrings(rawChunk);
+      if (jsonParts.length > 0) {
         let combinedReasoning = '';
         let combinedText = '';
         let lastUsage;
         for (let i = 0; i < jsonParts.length; i++) {
-          let part = jsonParts[i];
-          part =
-            (i >= 1 ? '{' : '') + part + (i < jsonParts.length - 1 ? '}' : '');
+          const part = jsonParts[i];
           try {
             const chunk: BedrockChunk = JSON.parse(part);
             const content = extractChunkContent(chunk, rawChunk);
@@ -443,6 +471,27 @@ function parseChunk(rawChunk: string) {
     }
   }
   return null;
+}
+
+function splitJsonStrings(input: string): string[] {
+  const result: string[] = [];
+  let start = 0;
+  let balance = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+    if (char === '{') {
+      if (balance === 0) {
+        start = i;
+      }
+      balance++;
+    } else if (char === '}') {
+      balance--;
+      if (balance === 0) {
+        result.push(input.slice(start, i + 1));
+      }
+    }
+  }
+  return result;
 }
 
 /**

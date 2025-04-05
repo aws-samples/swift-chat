@@ -1,8 +1,10 @@
-import { SystemPrompt, Usage } from '../types/Chat.ts';
+import { ModelTag, SystemPrompt, Usage } from '../types/Chat.ts';
 import {
   getApiUrl,
   getDeepSeekApiKey,
   getOpenAIApiKey,
+  getOpenAICompatApiKey,
+  getOpenAICompatApiURL,
   getOpenAIProxyEnabled,
   getTextModel,
 } from '../storage/StorageUtils.ts';
@@ -23,6 +25,8 @@ type CallbackFunction = (
   usage?: Usage,
   reasoning?: string
 ) => void;
+const OpenRouterTag = ': OPENROUTER PROCESSING\n\n';
+
 export const invokeOpenAIWithCallBack = async (
   messages: BedrockMessage[],
   prompt: SystemPrompt | null,
@@ -30,6 +34,7 @@ export const invokeOpenAIWithCallBack = async (
   controller: AbortController,
   callback: CallbackFunction
 ) => {
+  const isOpenRouter = isOpenRouterRequest();
   const bodyObject = {
     model: getTextModel().modelId,
     messages: getOpenAIMessages(messages, prompt),
@@ -50,6 +55,11 @@ export const invokeOpenAIWithCallBack = async (
     signal: controller.signal,
     reactNative: { textStreaming: true },
   };
+  if (isOpenRouter) {
+    options.headers['HTTP-Referer' as keyof typeof options.headers] =
+      GITHUB_LINK;
+    options.headers['X-Title' as keyof typeof options.headers] = 'SwiftChat';
+  }
   const url = getApiURL();
   let completeMessage = '';
   let completeReasoning = '';
@@ -79,6 +89,9 @@ export const invokeOpenAIWithCallBack = async (
         try {
           const { done, value } = await reader.read();
           const chunk = decoder.decode(value, { stream: true });
+          if (isOpenRouter && chunk === OpenRouterTag) {
+            continue;
+          }
           const parsed = parseStreamData(chunk, lastChunk);
           if (parsed.error) {
             callback(
@@ -165,6 +178,9 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
     if (dataChunk[0] === '\n') {
       dataChunk = dataChunk.slice(1);
     }
+    if (!dataChunk.startsWith('data')) {
+      continue;
+    }
     const cleanedData = dataChunk.replace(/^data: /, '');
     if (cleanedData.trim() === '[DONE]') {
       continue;
@@ -173,7 +189,11 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
     try {
       const parsedData: ChatResponse = JSON.parse(cleanedData);
       if (parsedData.error) {
-        return { error: parsedData.error.message };
+        let errorMessage = parsedData.error?.message ?? '';
+        if (parsedData.error?.metadata?.raw) {
+          errorMessage += ':\n' + parsedData.error.metadata.raw;
+        }
+        return { error: errorMessage };
       }
       if (parsedData.detail) {
         return {
@@ -203,6 +223,8 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
     } catch (error) {
       if (lastChunk.length > 0) {
         return { error: error + cleanedData };
+      } else if (reason === '' && content === '') {
+        return { error: chunk };
       }
       if (reason || content) {
         return { reason, content, dataChunk, usage };
@@ -226,7 +248,10 @@ type ChatResponse = {
     prompt_cache_hit_tokens: number;
   };
   error?: {
-    message: string;
+    message?: string;
+    metadata?: {
+      raw?: string;
+    };
   };
   detail?: string;
 };
@@ -283,15 +308,23 @@ function getOpenAIMessages(
 }
 
 function getApiKey(): string {
-  if (getTextModel().modelId.includes('deepseek')) {
+  if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
+    return getOpenAICompatApiKey();
+  } else if (getTextModel().modelId.includes('deepseek')) {
     return getDeepSeekApiKey();
   } else {
     return getOpenAIApiKey();
   }
 }
 
+function isOpenRouterRequest(): boolean {
+  return getOpenAICompatApiURL().startsWith('https://openrouter.ai/api');
+}
+
 function getApiURL(): string {
-  if (getTextModel().modelId.includes('deepseek')) {
+  if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
+    return getOpenAICompatApiURL() + '/chat/completions';
+  } else if (getTextModel().modelId.includes('deepseek')) {
     return 'https://api.deepseek.com/chat/completions';
   } else {
     if (getOpenAIProxyEnabled()) {

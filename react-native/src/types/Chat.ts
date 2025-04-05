@@ -1,4 +1,5 @@
 import { IMessage } from 'react-native-gifted-chat';
+import { User } from 'react-native-gifted-chat/lib/Models';
 
 export type Chat = {
   id: number;
@@ -21,7 +22,16 @@ export interface EventData {
 export type Model = {
   modelId: string;
   modelName: string;
+  modelTag?: string;
 };
+
+export enum ModelTag {
+  Bedrock = 'Bedrock',
+  OpenAI = 'OpenAI',
+  OpenAICompatible = 'OpenAICompatible',
+  DeepSeek = 'DeepSeek',
+  Ollama = 'Ollama',
+}
 
 export type OllamaModel = {
   name: string;
@@ -100,6 +110,11 @@ export type UsagePrice = {
 export interface SwiftChatMessage extends IMessage {
   usage?: Usage;
   reasoning?: string;
+  user: SwiftChatUser;
+}
+
+interface SwiftChatUser extends User {
+  modelTag?: string;
 }
 
 export interface SystemPrompt {

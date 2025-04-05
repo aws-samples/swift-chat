@@ -61,9 +61,17 @@ function TokenUsageScreen(): React.JSX.Element {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         {modelUsage
-          .sort(
-            (a, b) => getUsagePrice(b).totalPrice - getUsagePrice(a).totalPrice
-          )
+          .sort((a, b) => {
+            const priceA = getUsagePrice(a).totalPrice;
+            const priceB = getUsagePrice(b).totalPrice;
+            if (priceA >= 0 && priceB >= 0) {
+              return priceB - priceA;
+            } else if (priceA < 0 && priceB < 0) {
+              return priceA - priceB;
+            } else {
+              return priceA < 0 ? 1 : -1;
+            }
+          })
           .map((usage, index) => {
             const usagePrice = getUsagePrice(usage);
             const isImageModel =
@@ -76,10 +84,11 @@ function TokenUsageScreen(): React.JSX.Element {
                 <View style={styles.modelHeader}>
                   <Text style={styles.modelName}>{usage.modelName}</Text>
                   <Text style={styles.totalPrice}>
-                    USD{' '}
-                    {usagePrice.totalPrice === 0
-                      ? '0.00'
-                      : usagePrice.totalPrice}
+                    {usagePrice.totalPrice < 0
+                      ? '--'
+                      : usagePrice.totalPrice === 0
+                      ? 'USD 0.00'
+                      : `USD ${usagePrice.totalPrice}`}
                   </Text>
                 </View>
 
@@ -124,7 +133,9 @@ function TokenUsageScreen(): React.JSX.Element {
                         Input: {usage.inputTokens.toLocaleString()}
                       </Text>
                       <Text style={styles.tokenText}>
-                        USD {usagePrice.inputPrice}
+                        {usagePrice.inputPrice < 0
+                          ? '--'
+                          : `USD ${usagePrice.inputPrice}`}
                       </Text>
                     </View>
                     <View style={styles.tokenInfo}>
@@ -132,7 +143,9 @@ function TokenUsageScreen(): React.JSX.Element {
                         Output: {usage.outputTokens.toLocaleString()}
                       </Text>
                       <Text style={styles.tokenText}>
-                        USD {usagePrice.outputPrice}
+                        {usagePrice.outputPrice < 0
+                          ? '--'
+                          : `USD ${usagePrice.outputPrice}`}
                       </Text>
                     </View>
                   </>
@@ -200,6 +213,10 @@ function TokenUsageScreen(): React.JSX.Element {
           <Text style={[styles.priceLink, styles.underline]}>
             OpenAI API Pricing
           </Text>
+        </Text>
+        <Text style={styles.priceLink}>
+          * Currently, usage price calculation is not supported for Ollama and
+          OpenAI Compatible models.
         </Text>
       </ScrollView>
     </SafeAreaView>
