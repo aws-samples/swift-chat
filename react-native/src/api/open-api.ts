@@ -89,7 +89,7 @@ export const invokeOpenAIWithCallBack = async (
         try {
           const { done, value } = await reader.read();
           const chunk = decoder.decode(value, { stream: true });
-          if (isOpenRouter && chunk.startsWith(OpenRouterTag)) {
+          if (isOpenRouter && chunk === OpenRouterTag) {
             continue;
           }
           const parsed = parseStreamData(chunk, lastChunk);
