@@ -48,7 +48,8 @@ export const getUsagePrice = (usage: Usage): UsagePrice => {
     usagePrice.inputPrice = Number(
       (
         (usage.inputTokens *
-          (ModelPrice.textModelPrices[usage.modelName]?.inputTokenPrice ?? 0)) /
+          (ModelPrice.textModelPrices[usage.modelName]?.inputTokenPrice ??
+            -1)) /
         1000
       ).toFixed(6)
     );
@@ -57,7 +58,7 @@ export const getUsagePrice = (usage: Usage): UsagePrice => {
       (
         (usage.outputTokens *
           (ModelPrice.textModelPrices[usage.modelName]?.outputTokenPrice ??
-            0)) /
+            -4)) /
         1000
       ).toFixed(6)
     );
@@ -318,6 +319,7 @@ type ImageModelPrices = {
 export function getTotalCost(usage: Usage[]) {
   return Number(
     usage
+      .filter(modelUsage => getUsagePrice(modelUsage).totalPrice > 0)
       .reduce((sum, model) => sum + getUsagePrice(model).totalPrice, 0)
       .toFixed(2)
   );
@@ -330,6 +332,7 @@ export function getTotalInputTokens(usage: Usage[]) {
 export function getTotalInputPrice(usage: Usage[]) {
   return Number(
     usage
+      .filter(modelUsage => getUsagePrice(modelUsage).inputPrice > 0)
       .reduce((sum, model) => sum + getUsagePrice(model).inputPrice, 0)
       .toFixed(6)
   );
@@ -342,6 +345,7 @@ export function getTotalOutputTokens(usage: Usage[]) {
 export function getTotalOutputPrice(usage: Usage[]) {
   return Number(
     usage
+      .filter(modelUsage => getUsagePrice(modelUsage).outputPrice > 0)
       .reduce((sum, model) => sum + getUsagePrice(model).outputPrice, 0)
       .toFixed(6)
   );
