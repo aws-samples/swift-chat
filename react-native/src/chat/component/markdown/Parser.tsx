@@ -46,9 +46,10 @@ class Parser {
         token.type === 'text'
       ) {
         if (
-          token.raw.trim() === '' &&
+          /^ +$/.test(token.raw) &&
           (tokens[i + 1] as CustomToken)?.args?.displayMode === true
         ) {
+          // for empty string continue
           continue;
         }
       }
