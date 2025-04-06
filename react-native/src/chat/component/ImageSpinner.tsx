@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  StyleSheet,
-  Image,
-  ImageSourcePropType,
-  View,
-  Platform,
-} from 'react-native';
+import { StyleSheet, Image, ImageSourcePropType, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -68,10 +62,7 @@ const ImageSpinner = ({
           style={{
             width: size,
             height: size,
-            transform: [
-              { scaleY: isRotate ? -1 : 1 },
-              { scaleX: Platform.OS === 'android' ? -1 : 1 },
-            ],
+            transform: [{ scaleY: isRotate ? -1 : 1 }, { scaleX: 1 }],
           }}
           resizeMode="contain"
         />

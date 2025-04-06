@@ -40,6 +40,7 @@ import Markdown from './markdown/Markdown.tsx';
 import ImageSpinner from './ImageSpinner.tsx';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
 import { getModelTagByUserName } from '../../utils/ModelUtils.ts';
+import { isAndroid } from '../../utils/PlatformUtils.ts';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
@@ -81,7 +82,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   // Use useEffect with setTimeout to ensure selection happens after TextInput is fully rendered
   useEffect(() => {
-    if (isEdit && currentMessage?.text) {
+    if (!isAndroid && isEdit && currentMessage?.text) {
       const timer = setTimeout(() => {
         textInputRef.current?.focus();
         setInputTextSelection({
@@ -366,7 +367,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                 fontWeight: isMac ? '300' : 'normal',
                 lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
                 paddingTop: Platform.OS === 'android' ? 7 : 3,
-                marginBottom: -inputHeight * 0.138 + 8,
+                marginBottom: -inputHeight * (isAndroid ? 0 : 0.138) + 8,
               },
             ]}
             textAlignVertical="top">

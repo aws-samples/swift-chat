@@ -38,6 +38,7 @@ import Disc from '@jsamr/counter-style/lib/es/presets/disc';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 import MathView from 'react-native-math-view';
+import { isAndroid } from '../../../utils/PlatformUtils.ts';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
 let mathViewIndex = 0;
@@ -143,7 +144,7 @@ export class CustomMarkdownRenderer
 
   getTextView(children: string | ReactNode[], styles?: TextStyle): ReactNode {
     return (
-      <Text selectable key={this.getKey()} style={styles}>
+      <Text selectable={!isAndroid} key={this.getKey()} style={styles}>
         {children}
       </Text>
     );

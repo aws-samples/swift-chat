@@ -168,7 +168,11 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
   }
 
   return (
-    <Modal transparent visible={visible} animationType="none">
+    <Modal
+      transparent
+      visible={visible}
+      animationType="none"
+      statusBarTranslucent={true}>
       <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
@@ -233,6 +237,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '500',
+    color: 'black',
   },
   closeButton: {
     width: 20,
@@ -246,6 +251,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 18,
     textAlign: 'center',
+    color: '#333',
   },
   modelList: {
     paddingRight: 8,
@@ -269,6 +275,7 @@ const styles = StyleSheet.create({
   modelName: {
     fontSize: 14,
     flex: 1,
+    color: '#333',
   },
   checkIcon: {
     width: 16,
