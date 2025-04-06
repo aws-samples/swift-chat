@@ -64,16 +64,6 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 <img src="assets/animations/video_summary.avif" width=24%>
 </div>
 
-
-**系统提示词助手**: 提供实用的内置系统提示词，同时支持添加、编辑、排序和删除系统提示词来构建你自己的助手
-
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/animations/prompt_translate.avif" width=24%>
-<img src="assets/animations/prompt_code.avif" width=24%>
-<img src="assets/animations/prompt_add_chef.avif" width=24%>
-<img src="assets/animations/prompt_edit.avif" width=24%>
-</div>
-
 **图像创作助手**：使用 Nova Canvas 进行图像生成、风格复制、背景移除与替换
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
@@ -82,6 +72,10 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 <img src="assets/animations/remove_background.avif" width=24%>
 <img src="assets/animations/replace_background.avif" width=24%>
 </div>
+
+**系统提示词助手**: 提供实用的内置系统提示词，同时支持添加、编辑、排序和删除系统提示词来构建你自己的助手
+
+![](assets/animations/english_teacher.avif)
 
 **丰富的 Markdown 支持**: 段落、代码块、表格、LaTeX 等
 
@@ -133,11 +127,11 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
     - **App Runner**
 
-      [![启动堆栈](assets/launch-stack.avif)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
     - **Lambda** (注意：仅供 AWS 客户使用)
 
-      [![启动堆栈](assets/launch-stack.avif)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. 点击 **下一步**，在"指定堆栈详细信息"页面中提供以下信息:
     - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。
@@ -214,10 +208,10 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 </details>
 
-### OpenAI Compatible
+### OpenAI API 兼容
 
 <details>
-<summary><b>🔧 配置 OpenAI Compatible 模型（点击展开）</b></summary>
+<summary><b>🔧 配置 OpenAI API 兼容模型（点击展开）</b></summary>
 
 1. 进入 **设置页面**，选择 **OpenAI** 标签。
 2. 在 **OpenAI Compatible** 下，输入以下信息：

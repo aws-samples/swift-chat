@@ -69,15 +69,6 @@ platforms.
 <img src="assets/animations/video_summary.avif" width=24%>
 </div>
 
-**System Prompt Assistant**: Useful Preset System Prompts with Full Management Capabilities (Add/Edit/Sort/Delete)
-
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/animations/prompt_translate.avif" width=24%>
-<img src="assets/animations/prompt_code.avif" width=24%>
-<img src="assets/animations/prompt_add_chef.avif" width=24%>
-<img src="assets/animations/prompt_edit.avif" width=24%>
-</div>
-
 **Creative Image Suite**: Generation, Style Replication, Background Removal & Replacement with Nova Canvas
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
@@ -86,6 +77,10 @@ platforms.
 <img src="assets/animations/remove_background.avif" width=24%>
 <img src="assets/animations/replace_background.avif" width=24%>
 </div>
+
+**System Prompt Assistant**: Useful Preset System Prompts with Full Management Capabilities (Add/Edit/Sort/Delete)
+
+![](assets/animations/english_teacher.avif)
 
 **Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX and More
 
@@ -149,11 +144,11 @@ enable your models.
 
     - **App Runner**
 
-      [![Launch Stack](assets/launch-stack.avif)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
     - **Lambda** (Note: For AWS customer use only)
 
-      [![Launch Stack](assets/launch-stack.avif)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. Click **Next**, On the "Specify stack details" page, provide the following information:
     - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
@@ -261,11 +256,6 @@ the **Use Proxy** option to forward your requests.
 We feature streamlined chat History, Settings pages, and intuitive Usage statistics:
 
 ![](assets/history_settings.avif)
-
-Similarly, for the Mac version, we not only support the display of history, but also added a permanent sidebar
-display mode after v1.9.0, Below is a demo animation for how to add custom system prompt.
-
-![](assets/animations/english_teacher.avif)
 
 ### Message Handling
 
