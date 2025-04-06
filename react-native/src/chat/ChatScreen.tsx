@@ -465,7 +465,8 @@ function ChatScreen(): React.JSX.Element {
                   ...prevMessages[0],
                   text:
                     isCanceled.current &&
-                    previousMessage.text === textPlaceholder
+                    (previousMessage.text === textPlaceholder ||
+                      previousMessage.text === '')
                       ? 'Canceled...'
                       : msg,
                   reasoning: reasoning,
