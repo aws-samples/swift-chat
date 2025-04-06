@@ -149,8 +149,8 @@ function SettingsScreen(): React.JSX.Element {
       openAICompatModelList = openAICompatModels.split(',').map(modelId => {
         const parts = modelId.split('/');
         return {
-          modelId,
-          modelName: parts.length === 2 ? parts[1] : modelId,
+          modelId: modelId.trim(),
+          modelName: (parts.length === 2 ? parts[1] : modelId).trim(),
           modelTag: ModelTag.OpenAICompatible,
         } as Model;
       });
