@@ -14,11 +14,17 @@
 [English](/README.md)
 
 SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https://reactnative.dev/)
-开发，并依托 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 提供强大支持，同时兼容 Ollama、DeepSeek 和 OpenAI
-等其他模型供应商。凭借其极简设计理念与坚实的隐私保护措施，该应用在 Android、iOS 和 macOS 平台上实现了实时流式对话及 AI
-图像生成功能。
+开发，并依托 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 提供强大支持，同时兼容 Ollama、DeepSeek、OpenAI 和 OpenAI API 兼容的其他模型供应商。
+凭借其极简设计理念与坚实的隐私保护措施，该应用在 Android、iOS 和 macOS 平台上实现了实时流式对话及 AI 图像生成功能。
 
-![](assets/promo.png)
+![](assets/promo.avif)
+
+### 新功能 🔥
+
+- 支持 OpenAI Compatible 模型。您现在可以通过 SwiftChat 使用 [easy-model-deployer](https://github.com/aws-samples/easy-model-deployer)、
+  OpenRouter 或任何 OpenAI API 兼容的模型。更多详情请查看 [配置 OpenAI Compatible](#openai-compatible) 部分（自 v2.2.0 起）。
+- 支持快速切换模型（自 v2.2.0 起）。
+- 支持 AI 内容的重新生成（自 v2.2.0 起）。
 
 **主要特点:**
 
@@ -32,52 +38,54 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 - 针对 iPad 和 Android 平板电脑进行 UI 优化
 - 快速启动和响应性能
 - 支持多种 AI 模型及切换 (
-  包括 [Amazon Bedrock](https://aws.amazon.com/bedrock/)，[Ollama](https://github.com/ollama/ollama)，[DeepSeek](https://www.deepseek.com/)
-  和 [OpenAI](https://openai.com/)，v1.10.0 的新功能 🎉)
-- 支持完全自定义的系统提示词助手 (v1.9.0 的新功能 🎉)
+  包括 [Amazon Bedrock](https://aws.amazon.com/bedrock/)，[Ollama](https://github.com/ollama/ollama)，[DeepSeek](https://www.deepseek.com/)，[OpenAI](https://openai.com/)
+  和 [OpenAI Compatible](#openai-compatible) 模型)
+- 支持完全自定义的系统提示词助手
 
-**Amazon Nova 功能支持**
+**Amazon Nova 系列功能支持**
 
-- 支持与 Amazon Nova Micro、Lite 和 Pro 进行流式对话
-- 支持 Nova Lite 和 Pro 对图片、文档及视频内容的理解
 - 支持直接在安卓和 iOS 设备上录制最长 30 秒的视频供 Nova 分析
 - 支持自动压缩上传超过 8MB 的高清视频（1080p/4K）
 - 支持通过自然语言让 Nova Canvas 生成图片，去除背景，替换背景，以及生成类似风格的图片
-- 支持 Amazon Nova 系列 LaTeX 公式渲染（行内混排和单独显示模式）
 
 ### 功能展示
+
+#### YouTube 视频
+
+[<img src="./assets/youtube.avif">](https://www.youtube.com/watch?v=rey05WzfEbM)
+> 视频中的内容为早期版本，其中UI，架构及不一致的地方请参考当前的文档。
 
 **多模态分析**：文本、图像、文档和视频
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/text_streaming.avif" width=24%>
-<img src="assets/avif/image_summary.avif" width=24%>
-<img src="assets/avif/doc_summary.avif" width=24%>
-<img src="assets/avif/video_summary.avif" width=24%>
+<img src="assets/animations/text_streaming.avif" width=24%>
+<img src="assets/animations/image_summary.avif" width=24%>
+<img src="assets/animations/doc_summary.avif" width=24%>
+<img src="assets/animations/video_summary.avif" width=24%>
 </div>
 
 
 **系统提示词助手**: 提供实用的内置系统提示词，同时支持添加、编辑、排序和删除系统提示词来构建你自己的助手
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/prompt_translate.avif" width=24%>
-<img src="assets/avif/prompt_code.avif" width=24%>
-<img src="assets/avif/prompt_add_chef.avif" width=24%>
-<img src="assets/avif/prompt_edit.avif" width=24%>
+<img src="assets/animations/prompt_translate.avif" width=24%>
+<img src="assets/animations/prompt_code.avif" width=24%>
+<img src="assets/animations/prompt_add_chef.avif" width=24%>
+<img src="assets/animations/prompt_edit.avif" width=24%>
 </div>
 
-**图像创作助手**：图像生成、风格复制、背景移除与替换
+**图像创作助手**：使用 Nova Canvas 进行图像生成、风格复制、背景移除与替换
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/gen_image.avif" width=24%>
-<img src="assets/avif/similar_style.avif" width=24%>
-<img src="assets/avif/remove_background.avif" width=24%>
-<img src="assets/avif/replace_background.avif" width=24%>
+<img src="assets/animations/gen_image.avif" width=24%>
+<img src="assets/animations/similar_style.avif" width=24%>
+<img src="assets/animations/remove_background.avif" width=24%>
+<img src="assets/animations/replace_background.avif" width=24%>
 </div>
 
 **丰富的 Markdown 支持**: 段落、代码块、表格、LaTeX 等
 
-![](assets/markdown_zh.png)
+![](assets/markdown_zh.avif)
 
 我们重新设计了用户界面，优化了字体大小和行间距，呈现出更优雅、清爽的视觉效果。这些功能也都完美适配了 Android 和 macOS
 的原生界面，确保了流畅的使用体验。
@@ -86,7 +94,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ## 架构
 
-![](/assets/architecture.png)
+![](/assets/architecture.avif)
 
 默认情况下，我们使用 **AWS App Runner**（通常用于托管 Python FastAPI 服务器），提供高性能、可扩展性和低延迟。
 
@@ -125,11 +133,11 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
     - **App Runner**
 
-      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      [![启动堆栈](assets/launch-stack.avif)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
     - **Lambda** (注意：仅供 AWS 客户使用)
 
-      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![启动堆栈](assets/launch-stack.avif)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. 点击 **下一步**，在"指定堆栈详细信息"页面中提供以下信息:
     - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。
@@ -164,6 +172,8 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ## 入门指南 - 使用其他模型提供商
 
+### Ollama
+
 <details>
 <summary><b>🔧 配置 Ollama（点击展开）</b></summary>
 
@@ -176,6 +186,8 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 </details>
 
+### DeepSeek
+
 <details>
 <summary><b>🔧 配置 DeepSeek（点击展开）</b></summary>
 
@@ -186,6 +198,8 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     - `DeepSeek-R1`
 
 </details>
+
+### OpenAI
 
 <details>
 <summary><b>🔧 配置 OpenAI（点击展开）</b></summary>
@@ -200,43 +214,53 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 </details>
 
+### OpenAI Compatible
+
+<details>
+<summary><b>🔧 配置 OpenAI Compatible 模型（点击展开）</b></summary>
+
+1. 进入 **设置页面**，选择 **OpenAI** 标签。
+2. 在 **OpenAI Compatible** 下，输入以下信息：
+    - 模型提供商的 `Base URL`
+    - 模型提供商的 `API Key`
+    - 您想使用的 `Model ID`（多个模型用英文逗号分隔）
+3. 从 **文本模型** 下拉列表中选择您的一个模型。
+
+</details>
+
 ## 详细功能
 
-**快捷工具**：代码复制、选择模式、页面滚动和 Token 使用统计
+**快捷工具**：代码文本复制、选择复制模式、模型切换，内容重新生成，页面滚动和 Token 使用统计
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/copy_code.avif" width=32%>
-<img src="assets/avif/select_mode.avif" width=32%>
-<img src="assets/avif/scroll_token.avif" width=32%>
+<img src="assets/animations/copy.avif" width=32%>
+<img src="assets/animations/regenerate.avif" width=32%>
+<img src="assets/animations/scroll_token.avif" width=32%>
 </div>
 
 我们还拥有简洁的历史记录，设置页面，和直观的 Usage 统计页面：
 
-![](assets/history_settings_zh.png)
+![](assets/history_settings_zh.avif)
 
 对于 Mac 版本，我们不仅支持历史记录的显示，还在 1.9.0 版本后添加了侧边栏固定显示模式，如下是在 Mac 上演示如何添加自定义系统提示词的动画。
 
-![](assets/avif/english_teacher.avif)
+![](assets/animations/english_teacher.avif)
 
 ### 消息处理
 
 - [x] 文本复制支持：
-    - 点击消息标题栏右侧的复制按钮
+    - 点击消息底部的复制按钮，或直接点击模型名称或用户标题部分
     - 点击代码块右上角的复制按钮
     - 在 macOS 上可直接选择并复制代码（iOS 上双击或长按）
-    - 长按文本复制整句（macOS 上点击右键）
-- [x] 通过点击消息标题或双击文本启用文本选择模式
+    - 长按文本复制单独一段（macOS 上点击右键）
+- [x] 通过点击选择按钮启用文本选择模式
 - [x] 历史消息按时间线展示
 - [x] 在历史记录中长按可删除消息
-- [x] 点击预览上传的文档和图片
-- [x] 同时支持问题和回答的 Markdown 格式显示
-- [x] 支持表格显示和代码语法高亮
-- [x] 每个会话最多支持上传 20 张图片和 5 个文档
+- [x] 点击预览文档、视频和图片
 
 ### 图片功能
 
 - [x] 支持使用中文生成图片（确保在所选区域启用了 `Amazon Nova Lite`）
-- [x] 支持点击查看和缩放生成的图片
 - [x] 长按图片可保存或分享
 - [x] 自动压缩上传图片以提升响应速度
 
@@ -246,13 +270,14 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 - [x] 支持 Android/iOS 设备横屏模式
 - [x] 双击标题栏回到顶部
 - [x] 点击底部箭头查看最新消息
-- [x] 点击聊天标题查看当前会话的 token 使用情况
+- [x] 点击聊天标题再次显示系统提示词和模型切换图标
+- [x] 双击聊天标题查看当前会话的 token 使用情况
 - [x] 在设置中查看详细的 token 使用情况和图片生成数量
 - [x] 应用内升级提示（Android 和 macOS）
 
 我们针对横屏做了相应优化，下图展示了通过横屏模式您可以很好地阅读表格和代码内容。
 
-![](assets/avif/landscape.avif)
+![](assets/animations/landscape.avif)
 
 ## 是什么让 SwiftChat 如此"迅速"?
 

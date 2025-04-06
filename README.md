@@ -15,10 +15,20 @@
 
 SwiftChat is a fast and responsive AI chat application developed with [React Native](https://reactnative.dev/) and
 powered by [Amazon Bedrock](https://aws.amazon.com/bedrock/), with compatibility extending to other model providers such
-as Ollama, DeepSeek, and OpenAI. With its minimalist design philosophy and robust privacy protection, it delivers
-real-time streaming conversations and AI image generation capabilities across Android, iOS, and macOS platforms.
+as Ollama, DeepSeek, OpenAI and OpenAI Compatible. With its minimalist design philosophy and robust privacy protection,
+it delivers real-time streaming conversations and AI image generation capabilities across Android, iOS, and macOS
+platforms.
 
-![](assets/promo.png)
+![](assets/promo.avif)
+
+### What's New 🔥
+
+- Support for OpenAI Compatible models. You can now
+  use [easy-model-deployer](https://github.com/aws-samples/easy-model-deployer),
+  OpenRouter, or any OpenAI-compatible model provider via SwiftChat. Please
+  check [Configure OpenAI Compatible](#openai-compatible) section for more details(From v2.2.0).
+- Support for quick model switching (From v2.2.0).
+- Support regeneration of AI responses (From v2.2.0).
 
 **Key Features:**
 
@@ -31,52 +41,55 @@ real-time streaming conversations and AI image generation capabilities across An
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
 - Multiple AI model
-  supported ([Amazon Bedrock](https://aws.amazon.com/bedrock/), [Ollama](https://github.com/ollama/ollama), [DeepSeek](https://www.deepseek.com/)
-  and [OpenAI](https://openai.com/), From v1.10.0 🎉)
-- Fully Customizable System Prompt Assistant (New feature from v1.9.0 🎉)
+  supported ([Amazon Bedrock](https://aws.amazon.com/bedrock/), [Ollama](https://github.com/ollama/ollama), [DeepSeek](https://www.deepseek.com/), [OpenAI](https://openai.com/)
+  and [OpenAI Compatible](#openai-compatible) Models)
+- Fully Customizable System Prompt Assistant
 
-**Supported Features For Amazon Nova**
+**Supported Features For Amazon Nova series**
 
-- Stream conversations with Amazon Nova Micro, Lite and Pro
-- Understand images, documents and videos with Nova Lite and Pro
 - Record 30-second videos directly on Android and iOS for Nova analysis
 - Upload large videos (1080p/4K) beyond 8MB with auto compression
 - Support using natural language to make Nova Canvas generate images, remove backgrounds, replace backgrounds, and
   create images in similar styles.
-- Support LaTeX formula rendering (inline and display modes) for Amazon Nova.
 
 ### Feature Showcase
+
+#### YouTube Video
+
+[<img src="./assets/youtube.avif">](https://www.youtube.com/watch?v=rey05WzfEbM)
+> The content in the video is an early version. For UI, architecture, and inconsistencies, please refer to the current 
+> documentation.
 
 **Comprehensive Multimodal Analysis**: Text, Image, Document and Video
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/text_streaming.avif" width=24%>
-<img src="assets/avif/image_summary.avif" width=24%>
-<img src="assets/avif/doc_summary.avif" width=24%>
-<img src="assets/avif/video_summary.avif" width=24%>
+<img src="assets/animations/text_streaming.avif" width=24%>
+<img src="assets/animations/image_summary.avif" width=24%>
+<img src="assets/animations/doc_summary.avif" width=24%>
+<img src="assets/animations/video_summary.avif" width=24%>
 </div>
 
 **System Prompt Assistant**: Useful Preset System Prompts with Full Management Capabilities (Add/Edit/Sort/Delete)
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/prompt_translate.avif" width=24%>
-<img src="assets/avif/prompt_code.avif" width=24%>
-<img src="assets/avif/prompt_add_chef.avif" width=24%>
-<img src="assets/avif/prompt_edit.avif" width=24%>
+<img src="assets/animations/prompt_translate.avif" width=24%>
+<img src="assets/animations/prompt_code.avif" width=24%>
+<img src="assets/animations/prompt_add_chef.avif" width=24%>
+<img src="assets/animations/prompt_edit.avif" width=24%>
 </div>
 
-**Creative Image Suite**: Generation, Style Replication, Background Removal & Replacement
+**Creative Image Suite**: Generation, Style Replication, Background Removal & Replacement with Nova Canvas
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/gen_image.avif" width=24%>
-<img src="assets/avif/similar_style.avif" width=24%>
-<img src="assets/avif/remove_background.avif" width=24%>
-<img src="assets/avif/replace_background.avif" width=24%>
+<img src="assets/animations/gen_image.avif" width=24%>
+<img src="assets/animations/similar_style.avif" width=24%>
+<img src="assets/animations/remove_background.avif" width=24%>
+<img src="assets/animations/replace_background.avif" width=24%>
 </div>
 
 **Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX and More
 
-![](assets/markdown.png)
+![](assets/markdown.avif)
 
 We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation.
 All of these features are also seamlessly displayed on Android and macOS with native UI
@@ -86,7 +99,7 @@ All of these features are also seamlessly displayed on Android and macOS with na
 
 ## Architecture
 
-![](/assets/architecture.png)
+![](/assets/architecture.avif)
 
 By default, we use **AWS App Runner**, which is commonly used to host Python FastAPI servers, offering high performance,
 scalability and low latency.
@@ -136,11 +149,11 @@ enable your models.
 
     - **App Runner**
 
-      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      [![Launch Stack](assets/launch-stack.avif)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
 
     - **Lambda** (Note: For AWS customer use only)
 
-      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      [![Launch Stack](assets/launch-stack.avif)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
 
 2. Click **Next**, On the "Specify stack details" page, provide the following information:
     - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
@@ -177,6 +190,8 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 ## Getting Started with Other Model Providers
 
+### Ollama
+
 <details>
 <summary><b>🔧 Configure Ollama (Click to expand)</b></summary>
 
@@ -190,6 +205,8 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 </details>
 
+### DeepSeek
+
 <details>
 <summary><b>🔧 Configure DeepSeek (Click to expand)</b></summary>
 
@@ -200,6 +217,8 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
     - `DeepSeek-R1`
 
 </details>
+
+### OpenAI
 
 <details>
 <summary><b>🔧 Configure OpenAI (Click to expand)</b></summary>
@@ -215,43 +234,54 @@ the **Use Proxy** option to forward your requests.
 
 </details>
 
+### OpenAI Compatible
+
+<details>
+<summary><b>🔧 Configure OpenAI Compatible models (Click to expand)</b></summary>
+
+1. Navigate to the **Settings Page** and select the **OpenAI** tab.
+2. Under **OpenAI Compatible**, enter the following information:
+    - `Base URL` of your model provider
+    - `API Key` of your model provider
+    - `Model ID` of the models you want to use (separate multiple models with commas)
+3. Select one of your models from the **Text Model** dropdown list.
+
+</details>
+
 ## Detailed Features
 
-**Quick Access Tools**: Code Copy, Selection Mode, Scroll Controls and Token Counter
+**Quick Access Tools**: Code & Content Copy, Selection Mode, Model Switch, Regenerate, Scroll Controls and Token Counter
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/avif/copy_code.avif" width=32%>
-<img src="assets/avif/select_mode.avif" width=32%>
-<img src="assets/avif/scroll_token.avif" width=32%>
+<img src="assets/animations/copy.avif" width=32%>
+<img src="assets/animations/regenerate.avif" width=32%>
+<img src="assets/animations/scroll_token.avif" width=32%>
 </div>
 
 We feature streamlined chat History, Settings pages, and intuitive Usage statistics:
 
-![](assets/history_settings.png)
+![](assets/history_settings.avif)
 
 Similarly, for the Mac version, we not only support the display of history, but also added a permanent sidebar
 display mode after v1.9.0, Below is a demo animation for how to add custom system prompt.
 
-![](assets/avif/english_teacher.avif)
+![](assets/animations/english_teacher.avif)
 
 ### Message Handling
 
 - [x] Text copy support:
-    - Copy button in message header
+    - Copy button at the bottom of messages, or directly click the model name or user title section.
     - Copy button in code blocks
     - Direct Select and copy code on macOS (double click or long click on iOS)
     - Long press text to copy entire sentence (Right-click on macOS)
-- [x] Text selection mode by tapping message title or double-clicking text
+- [x] Text selection mode by click selection button.
 - [x] Message timeline view in history
 - [x] Delete messages through long press in history
-- [x] Click to preview for uploaded documents and images
-- [x] Support Markdown format for both questions and answers
-- [x] Maximum 20 images and 5 documents per conversation
+- [x] Click to preview for documents videos and images
 
 ### Image Features
 
 - [x] Support image generation with Chinese prompts(Make sure `Amazon Nova Lite` is enabled in your selected region)
-- [x] View and zoom generated images
 - [x] Long press images to save or share
 - [x] Automatic image compression to improve response speed
 
@@ -261,15 +291,15 @@ display mode after v1.9.0, Below is a demo animation for how to add custom syste
 - [x] Support landscape mode on Android/iOS devices
 - [x] Double tap title bar to scroll to top
 - [x] Click bottom arrow to view latest messages
-- [x] View current session token usage by tapping Chat title
+- [x] Display system prompt and model switch icon again by clicking on the chat title
+- [x] View current session token usage by tapping twice Chat title
 - [x] Check detailed token usage and image generation count in Settings
 - [x] In-app upgrade notifications (Android & macOS)
 
 We have optimized the layout for landscape mode. As shown below, you can comfortably view table/code contents in
-landscape
-orientation.
+landscape orientation.
 
-![](assets/avif/landscape.avif)
+![](assets/animations/landscape.avif)
 
 ## What Makes SwiftChat Really "Swift"?
 
