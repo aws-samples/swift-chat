@@ -7,13 +7,16 @@ import {
   Model,
   SystemPrompt,
   Usage,
+  TokenResponse
 } from '../types/Chat.ts';
 import uuid from 'uuid';
 import {
   DefaultRegion,
+  DefaultVoiceSystemPrompts,
   getDefaultImageModels,
   getDefaultSystemPrompts,
   getDefaultTextModels,
+  VoiceIDList,
 } from './Constants.ts';
 
 export const storage = new MMKV();
@@ -54,10 +57,13 @@ const imageSizeKey = keyPrefix + 'imageSizeKey';
 const modelUsageKey = keyPrefix + 'modelUsageKey';
 const systemPromptsKey = keyPrefix + 'systemPromptsKey';
 const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
+const currentVoiceSystemPromptKey = keyPrefix + 'currentVoiceSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
 const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
 const modelOrderKey = keyPrefix + 'modelOrderKey';
+const voiceIdKey = keyPrefix + 'voiceIdKey';
+const tokenInfoKey = keyPrefix + 'tokenInfo';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -361,6 +367,14 @@ export function getImageSize() {
   return storage.getString(imageSizeKey) ?? getAllImageSize()[1];
 }
 
+export function saveVoiceId(voiceId: string) {
+  storage.set(voiceIdKey, voiceId);
+}
+
+export function getVoiceId() {
+  return storage.getString(voiceIdKey) ?? VoiceIDList[0].voiceId;
+}
+
 export function getModelUsage(): Usage[] {
   const usage = storage.getString(modelUsageKey);
   return usage ? JSON.parse(usage) : [];
@@ -400,21 +414,62 @@ export function getCurrentSystemPrompt(): SystemPrompt | null {
   return null;
 }
 
-export function saveSystemPrompts(prompts: SystemPrompt[]) {
+export function saveCurrentVoiceSystemPrompt(prompts: SystemPrompt | null) {
+  storage.set(
+    currentVoiceSystemPromptKey,
+    prompts ? JSON.stringify(prompts) : ''
+  );
+}
+
+export function getCurrentVoiceSystemPrompt(): SystemPrompt | null {
+  const promptString = storage.getString(currentVoiceSystemPromptKey) ?? '';
+  if (promptString.length > 0) {
+    return JSON.parse(promptString) as SystemPrompt;
+  }
+  return null;
+}
+
+export function saveSystemPrompts(prompts: SystemPrompt[], type?: string) {
+  // get all prompt
   currentSystemPrompts = prompts;
+  const promptsString = storage.getString(systemPromptsKey) ?? '';
+  let allPrompts: SystemPrompt[] = [];
+
+  if (promptsString.length > 0) {
+    allPrompts = JSON.parse(promptsString) as SystemPrompt[];
+  }
+  const updatedPrompts = [
+    ...allPrompts.filter(p => p.promptType !== type),
+    ...prompts,
+  ];
+  storage.set(systemPromptsKey, JSON.stringify(updatedPrompts));
+}
+
+export function saveAllSystemPrompts(prompts: SystemPrompt[]) {
   storage.set(systemPromptsKey, JSON.stringify(prompts));
 }
 
-export function getSystemPrompts(): SystemPrompt[] {
-  if (currentSystemPrompts) {
+export function getSystemPrompts(type?: string): SystemPrompt[] {
+  if (currentSystemPrompts && currentSystemPrompts[0].promptType === type) {
     return currentSystemPrompts;
   }
   const promptsString = storage.getString(systemPromptsKey) ?? '';
   if (promptsString.length > 0) {
     currentSystemPrompts = JSON.parse(promptsString) as SystemPrompt[];
+    if (
+      currentSystemPrompts.filter(p => p.promptType === 'voice').length === 0
+    ) {
+      currentSystemPrompts = currentSystemPrompts.concat(
+        DefaultVoiceSystemPrompts
+      );
+      saveAllSystemPrompts(currentSystemPrompts);
+    }
   } else {
     currentSystemPrompts = getDefaultSystemPrompts();
   }
+  currentSystemPrompts = type
+    ? currentSystemPrompts.filter(p => p.promptType === type)
+    : currentSystemPrompts.filter(p => p.promptType === undefined);
   return currentSystemPrompts;
 }
 
@@ -506,4 +561,28 @@ export function getMergedModelOrder(): Model[] {
   });
 
   return mergedModels;
+}
+
+// token related methods
+export function saveTokenInfo(tokenInfo: TokenResponse) {
+  encryptStorage.set(tokenInfoKey, JSON.stringify(tokenInfo));
+}
+
+export function getTokenInfo(): TokenResponse | null {
+  const tokenInfoStr = encryptStorage.getString(tokenInfoKey);
+  if (tokenInfoStr) {
+    return JSON.parse(tokenInfoStr) as TokenResponse;
+  }
+  return null;
+}
+
+export function isTokenValid(): boolean {
+  const tokenInfo = getTokenInfo();
+  if (!tokenInfo) {
+    return false;
+  }
+  
+  const expirationDate = new Date(tokenInfo.expiration);
+  const now = new Date();
+  return expirationDate > now;
 }

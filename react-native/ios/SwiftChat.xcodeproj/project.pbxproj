@@ -13,6 +13,15 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		3A19D3892CCE980A001797C6 /* TestAddBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A19D3882CCE980A001797C6 /* TestAddBridge.swift */; };
 		3A22BD7A2D44D84300749246 /* PlatformModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A22BD792D44D84300749246 /* PlatformModule.m */; };
+		3A29EA052DB08DA8005C9FD9 /* japan16k.raw in Resources */ = {isa = PBXBuildFile; fileRef = 3A29EA032DB08DA8005C9FD9 /* japan16k.raw */; };
+		3A29EA072DB08DB6005C9FD9 /* InvokeModelWithBidirectionalStreamTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A29EA062DB08DB6005C9FD9 /* InvokeModelWithBidirectionalStreamTest.swift */; };
+		3A6846882DA8F8AA003CFBEC /* AWSBedrockRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 3A6846872DA8F8AA003CFBEC /* AWSBedrockRuntime */; };
+		3A6846A62DA8FBBE003CFBEC /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6846A22DA8FBBE003CFBEC /* AudioManager.swift */; };
+		3A6846A72DA8FBBE003CFBEC /* ConversationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6846A32DA8FBBE003CFBEC /* ConversationManager.swift */; };
+		3A6846A82DA8FBBE003CFBEC /* NovaSonicService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6846A42DA8FBBE003CFBEC /* NovaSonicService.swift */; };
+		3A6846A92DA8FBBE003CFBEC /* VoiceChatModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A68469F2DA8FBBE003CFBEC /* VoiceChatModule.swift */; };
+		3A6846AA2DA8FBBE003CFBEC /* VoiceChatModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A68469E2DA8FBBE003CFBEC /* VoiceChatModule.m */; };
+		3AABB2382DB734F4002D1D04 /* japan16k.raw in Resources */ = {isa = PBXBuildFile; fileRef = 3AABB2362DB734F4002D1D04 /* japan16k.raw */; };
 		7923F2A519E6BC533C0F2749 /* libPods-SwiftChat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E954E88951117AE160D5618 /* libPods-SwiftChat.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A98E989882C3A293A3C38335 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D25C7B4CE6B3F2BED0CFCE0 /* PrivacyInfo.xcprivacy */; };
@@ -48,7 +57,15 @@
 		3A19D3882CCE980A001797C6 /* TestAddBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestAddBridge.swift; sourceTree = "<group>"; };
 		3A22BD782D44D84300749246 /* PlatformModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlatformModule.h; sourceTree = "<group>"; };
 		3A22BD792D44D84300749246 /* PlatformModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PlatformModule.m; sourceTree = "<group>"; };
+		3A29EA032DB08DA8005C9FD9 /* japan16k.raw */ = {isa = PBXFileReference; lastKnownFileType = file; path = japan16k.raw; sourceTree = "<group>"; };
+		3A29EA062DB08DB6005C9FD9 /* InvokeModelWithBidirectionalStreamTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvokeModelWithBidirectionalStreamTest.swift; sourceTree = "<group>"; };
+		3A68469E2DA8FBBE003CFBEC /* VoiceChatModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VoiceChatModule.m; sourceTree = "<group>"; };
+		3A68469F2DA8FBBE003CFBEC /* VoiceChatModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatModule.swift; sourceTree = "<group>"; };
+		3A6846A22DA8FBBE003CFBEC /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		3A6846A32DA8FBBE003CFBEC /* ConversationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationManager.swift; sourceTree = "<group>"; };
+		3A6846A42DA8FBBE003CFBEC /* NovaSonicService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaSonicService.swift; sourceTree = "<group>"; };
 		3A93A5722C932FC600C9F56C /* SwiftChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = SwiftChat.entitlements; path = SwiftChat/SwiftChat.entitlements; sourceTree = "<group>"; };
+		3AABB2362DB734F4002D1D04 /* japan16k.raw */ = {isa = PBXFileReference; lastKnownFileType = file; path = japan16k.raw; sourceTree = "<group>"; };
 		5D25C7B4CE6B3F2BED0CFCE0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = SwiftChat/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		7C30B51B80BE1F65F927C2DD /* Pods-SwiftChat-SwiftChatTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftChat-SwiftChatTests.release.xcconfig"; path = "Target Support Files/Pods-SwiftChat-SwiftChatTests/Pods-SwiftChat-SwiftChatTests.release.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = SwiftChat/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -69,6 +86,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A6846882DA8F8AA003CFBEC /* AWSBedrockRuntime in Frameworks */,
 				7923F2A519E6BC533C0F2749 /* libPods-SwiftChat.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -79,7 +97,9 @@
 		00E356EF1AD99517003FC87E /* SwiftChatTests */ = {
 			isa = PBXGroup;
 			children = (
+				3A29EA062DB08DB6005C9FD9 /* InvokeModelWithBidirectionalStreamTest.swift */,
 				00E356F21AD99517003FC87E /* SwiftChatTests.m */,
+				3A29EA042DB08DA8005C9FD9 /* Resources */,
 				00E356F01AD99517003FC87E /* Supporting Files */,
 			);
 			path = SwiftChatTests;
@@ -96,6 +116,9 @@
 		13B07FAE1A68108700A75B9A /* SwiftChat */ = {
 			isa = PBXGroup;
 			children = (
+				3AABB2372DB734F4002D1D04 /* Resources */,
+				3A6846A12DA8FBBE003CFBEC /* Modules */,
+				3A6846A52DA8FBBE003CFBEC /* Services */,
 				3A22BD782D44D84300749246 /* PlatformModule.h */,
 				3A22BD792D44D84300749246 /* PlatformModule.m */,
 				3A19D3882CCE980A001797C6 /* TestAddBridge.swift */,
@@ -121,6 +144,49 @@
 				2010B02A49BCFD048093BFF4 /* libPods-SwiftChat-SwiftChatTests.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3A29EA042DB08DA8005C9FD9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				3A29EA032DB08DA8005C9FD9 /* japan16k.raw */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		3A6846A02DA8FBBE003CFBEC /* VoiceChat */ = {
+			isa = PBXGroup;
+			children = (
+				3A68469E2DA8FBBE003CFBEC /* VoiceChatModule.m */,
+				3A68469F2DA8FBBE003CFBEC /* VoiceChatModule.swift */,
+			);
+			path = VoiceChat;
+			sourceTree = "<group>";
+		};
+		3A6846A12DA8FBBE003CFBEC /* Modules */ = {
+			isa = PBXGroup;
+			children = (
+				3A6846A02DA8FBBE003CFBEC /* VoiceChat */,
+			);
+			path = Modules;
+			sourceTree = "<group>";
+		};
+		3A6846A52DA8FBBE003CFBEC /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				3A6846A22DA8FBBE003CFBEC /* AudioManager.swift */,
+				3A6846A32DA8FBBE003CFBEC /* ConversationManager.swift */,
+				3A6846A42DA8FBBE003CFBEC /* NovaSonicService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		3AABB2372DB734F4002D1D04 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				3AABB2362DB734F4002D1D04 /* japan16k.raw */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -220,6 +286,7 @@
 				TargetAttributes = {
 					00E356ED1AD99517003FC87E = {
 						CreatedOnToolsVersion = 6.2;
+						LastSwiftMigration = 1620;
 						TestTargetID = 13B07F861A680F5B00A75B9A;
 					};
 					13B07F861A680F5B00A75B9A = {
@@ -236,6 +303,9 @@
 				Base,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
+			packageReferences = (
+				3A6846862DA8F8AA003CFBEC /* XCRemoteSwiftPackageReference "aws-sdk-swift" */,
+			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -251,6 +321,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A29EA052DB08DA8005C9FD9 /* japan16k.raw in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +329,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3AABB2382DB734F4002D1D04 /* japan16k.raw in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				A98E989882C3A293A3C38335 /* PrivacyInfo.xcprivacy in Resources */,
@@ -403,6 +475,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				00E356F31AD99517003FC87E /* SwiftChatTests.m in Sources */,
+				3A29EA072DB08DB6005C9FD9 /* InvokeModelWithBidirectionalStreamTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -412,6 +485,11 @@
 			files = (
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				3A6846A62DA8FBBE003CFBEC /* AudioManager.swift in Sources */,
+				3A6846A72DA8FBBE003CFBEC /* ConversationManager.swift in Sources */,
+				3A6846A82DA8FBBE003CFBEC /* NovaSonicService.swift in Sources */,
+				3A6846A92DA8FBBE003CFBEC /* VoiceChatModule.swift in Sources */,
+				3A6846AA2DA8FBBE003CFBEC /* VoiceChatModule.m in Sources */,
 				3A22BD7A2D44D84300749246 /* PlatformModule.m in Sources */,
 				3A19D3892CCE980A001797C6 /* TestAddBridge.swift in Sources */,
 			);
@@ -434,6 +512,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -452,6 +531,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftChat.app/SwiftChat";
 			};
 			name = Debug;
@@ -462,6 +543,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = SwiftChatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
@@ -477,6 +559,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftChat.app/SwiftChat";
 			};
 			name = Release;
@@ -745,6 +828,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3A6846862DA8F8AA003CFBEC /* XCRemoteSwiftPackageReference "aws-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/awslabs/aws-sdk-swift.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 1.2.58;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3A6846872DA8F8AA003CFBEC /* AWSBedrockRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A6846862DA8F8AA003CFBEC /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSBedrockRuntime;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

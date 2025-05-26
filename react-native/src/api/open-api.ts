@@ -224,6 +224,9 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
       if (lastChunk.length > 0) {
         return { error: error + cleanedData };
       } else if (reason === '' && content === '') {
+        if (dataChunk === 'data: ') {
+          return { reason, content, dataChunk, usage };
+        }
         return { error: chunk };
       }
       if (reason || content) {

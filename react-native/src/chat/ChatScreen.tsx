@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { GiftedChat } from 'react-native-gifted-chat';
+import { Composer, GiftedChat } from 'react-native-gifted-chat';
 import {
   AppState,
   Dimensions,
@@ -12,8 +12,10 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
+import { voiceChatService } from './service/VoiceChatService';
+import AudioWaveformComponent from './component/AudioWaveformComponent';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import { invokeBedrockWithCallBack as invokeBedrockWithCallBack } from '../api/bedrock-api';
+import { invokeBedrockWithCallBack as invokeBedrockWithCallBack, requestToken } from '../api/bedrock-api';
 import CustomMessageComponent from './component/CustomMessageComponent.tsx';
 import { CustomScrollToBottomComponent } from './component/CustomScrollToBottomComponent.tsx';
 import { EmptyChatComponent } from './component/EmptyChatComponent.tsx';
@@ -22,11 +24,14 @@ import uuid from 'uuid';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import {
   getCurrentSystemPrompt,
+  getCurrentVoiceSystemPrompt,
   getImageModel,
   getMessagesBySessionId,
   getSessionId,
   getTextModel,
+  isTokenValid,
   saveCurrentSystemPrompt,
+  saveCurrentVoiceSystemPrompt,
   saveMessageList,
   saveMessages,
   updateTotalUsage,
@@ -89,12 +94,14 @@ function ChatScreen(): React.JSX.Element {
   const tapIndex = route.params?.tapIndex;
   const mode = route.params?.mode ?? currentMode;
   const modeRef = useRef(mode);
+  const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
 
   const [messages, setMessages] = useState<SwiftChatMessage[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
   const [systemPrompt, setSystemPrompt] = useState<SystemPrompt | null>(
-    getCurrentSystemPrompt
+    isNovaSonic ? getCurrentVoiceSystemPrompt : getCurrentSystemPrompt
   );
+  const [audioVolume, setAudioVolume] = useState<number>(1); // Audio volume level (1-10)
   const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(true);
   const [screenDimensions, setScreenDimensions] = useState(
     Dimensions.get('window')
@@ -118,6 +125,10 @@ function ChatScreen(): React.JSX.Element {
   const usageRef = useRef(usage);
   const systemPromptRef = useRef(systemPrompt);
   const drawerTypeRef = useRef(drawerType);
+  const inputAudioLevelRef = useRef(1);
+  const outputAudioLevelRef = useRef(1);
+  const isVoiceLoading = useRef(false);
+  const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
 
   // update refs value with state
   useEffect(() => {
@@ -136,6 +147,51 @@ function ChatScreen(): React.JSX.Element {
       setShowSystemPrompt(false);
     }
   }, [selectedFiles]);
+
+  // Initialize voice chat service
+  useEffect(() => {
+    // Set up voice chat service callbacks
+    voiceChatService.setCallbacks(
+      // Handle transcript received
+      (role, text) => {
+        handleVoiceChatTranscript(role, text);
+      },
+      // Handle state changed
+      (state, error) => {
+        if (error) {
+          console.log(state, error);
+        }
+      },
+      // Handle error
+      message => {
+        handleVoiceChatTranscript('ASSISTANT', message);
+        setAudioVolume(1);
+        inputAudioLevelRef.current = 1;
+        outputAudioLevelRef.current = 1;
+        setChatStatus(ChatStatus.Init);
+        console.log('Voice chat error:', message);
+      },
+      // Handle audio level changes
+      (source, level) => {
+        if (source === 'microphone') {
+          inputAudioLevelRef.current = level;
+        } else {
+          outputAudioLevelRef.current = level;
+        }
+        const maxLevel = Math.max(
+          inputAudioLevelRef.current,
+          outputAudioLevelRef.current
+        );
+        setAudioVolume(maxLevel);
+      }
+    );
+
+    // Clean up on unmount
+    return () => {
+      voiceChatService.cleanup();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // start new chat
   const startNewChat = useRef(
@@ -229,6 +285,7 @@ function ChatScreen(): React.JSX.Element {
       setUsage((msg[0] as SwiftChatMessage).usage);
       setSystemPrompt(null);
       saveCurrentSystemPrompt(null);
+      saveCurrentVoiceSystemPrompt(null);
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
@@ -326,6 +383,11 @@ function ChatScreen(): React.JSX.Element {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
         if (chatStatusRef.current === ChatStatus.Running) {
           saveCurrentMessages();
+        }
+      }
+      if(nextAppState === 'active'){
+        if(!isTokenValid()){
+          requestToken().then();
         }
       }
     };
@@ -541,6 +603,40 @@ function ChatScreen(): React.JSX.Element {
     });
   };
 
+  // Handle voice chat transcript
+  const handleVoiceChatTranscript = (role: string, text: string) => {
+    const userId = role === 'USER' ? 1 : BOT_ID;
+    if (
+      messagesRef.current.length > 0 &&
+      messagesRef.current[0].user._id === userId
+    ) {
+      setMessages(previousMessages => {
+        const newMessages = [...previousMessages];
+        if (!newMessages[0].text.includes(text)) {
+          newMessages[0] = {
+            ...newMessages[0],
+            text: newMessages[0].text + text,
+          };
+        }
+        return newMessages;
+      });
+    } else {
+      const newMessage: SwiftChatMessage = {
+        _id: uuid.v4(),
+        text: text,
+        createdAt: new Date(),
+        user: {
+          _id: userId,
+          name: role === 'USER' ? 'You' : getTextModel().modelName,
+          modelTag: role === 'USER' ? undefined : getTextModel().modelTag,
+        },
+      };
+
+      setMessages(previousMessages => [newMessage, ...previousMessages]);
+    }
+    saveCurrentMessages();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <GiftedChat
@@ -570,19 +666,67 @@ function ChatScreen(): React.JSX.Element {
         alwaysShowSend={
           chatStatus !== ChatStatus.Init || selectedFiles.length > 0
         }
+        renderComposer={props => {
+          if (isNovaSonic && mode === ChatMode.Text) {
+            return (
+              <AudioWaveformComponent
+                volume={audioVolume} // Use real-time audio volume level
+              />
+            );
+          }
+
+          // Default input box
+          return <Composer {...props} />;
+        }}
         renderSend={props => (
           <CustomSendComponent
             {...props}
             chatStatus={chatStatus}
             chatMode={mode}
             selectedFiles={selectedFiles}
+            isShowLoading={isShowVoiceLoading}
             onStopPress={() => {
               trigger(HapticFeedbackTypes.notificationWarning);
-              isCanceled.current = true;
-              controllerRef.current?.abort();
+              if (isNovaSonic) {
+                // End voice chat conversation
+                if(isVoiceLoading.current){
+                  return
+                }
+                isVoiceLoading.current = true
+                setIsShowVoiceLoading(true);
+                voiceChatService.endConversation().then(() => {
+                  setAudioVolume(1);
+                  inputAudioLevelRef.current = 1;
+                  outputAudioLevelRef.current = 1;
+                  setChatStatus(ChatStatus.Init);
+                  isVoiceLoading.current = false
+                  setIsShowVoiceLoading(false)
+                  trigger(HapticFeedbackTypes.impactMedium)
+                });
+              } else {
+                isCanceled.current = true;
+                controllerRef.current?.abort();
+              }
             }}
             onFileSelected={files => {
               handleNewFileSelected(files);
+            }}
+            onVoiceChatToggle={() => {
+              if(isVoiceLoading.current){
+                return
+              }
+              isVoiceLoading.current = true
+              setIsShowVoiceLoading(true)
+              voiceChatService.startConversation().then(success => {
+                if (!success) {
+                  setChatStatus(ChatStatus.Init);
+                } else {
+                  setChatStatus(ChatStatus.Running);
+                }
+                isVoiceLoading.current = false
+                setIsShowVoiceLoading(false)
+                trigger(HapticFeedbackTypes.impactMedium)
+              });
             }}
           />
         )}
@@ -598,7 +742,19 @@ function ChatScreen(): React.JSX.Element {
             }}
             onSystemPromptUpdated={prompt => {
               setSystemPrompt(prompt);
-              saveCurrentSystemPrompt(prompt);
+              if (isNovaSonic) {
+                saveCurrentVoiceSystemPrompt(prompt);
+                if(chatStatus === ChatStatus.Running){
+                  voiceChatService.endConversation().then(() => {
+                    setAudioVolume(1);
+                    inputAudioLevelRef.current = 1;
+                    outputAudioLevelRef.current = 1;
+                    setChatStatus(ChatStatus.Init);
+                  });
+                }
+              } else {
+                saveCurrentSystemPrompt(prompt);
+              }
             }}
             chatMode={modeRef.current}
             isShowSystemPrompt={showSystemPrompt}

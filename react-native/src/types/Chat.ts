@@ -122,6 +122,8 @@ export interface SystemPrompt {
   name: string;
   prompt: string;
   includeHistory: boolean;
+  promptType?: string; // 'voice' or undefined
+  allowInterruption?: boolean;
 }
 
 export interface BedrockChunk {
@@ -142,3 +144,10 @@ export interface Delta {
 export interface ReasoningContent {
   text: string;
 }
+
+export type TokenResponse = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken: string;
+  expiration: string;
+};

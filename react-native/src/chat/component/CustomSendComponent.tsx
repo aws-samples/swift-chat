@@ -1,6 +1,7 @@
 import { Send, SendProps } from 'react-native-gifted-chat';
 import React from 'react';
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import ImageSpinner from './ImageSpinner';
 import {
   ChatMode,
   ChatStatus,
@@ -8,25 +9,30 @@ import {
   SwiftChatMessage,
 } from '../../types/Chat.ts';
 import { CustomAddFileComponent } from './CustomAddFileComponent.tsx';
-import { getImageModel } from '../../storage/StorageUtils.ts';
+import { getImageModel, getTextModel } from '../../storage/StorageUtils.ts';
 
 interface CustomSendComponentProps extends SendProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
   chatMode: ChatMode;
   selectedFiles: FileInfo[];
+  isShowLoading?: boolean;
   onStopPress: () => void;
   onFileSelected: (files: FileInfo[]) => void;
+  onVoiceChatToggle?: () => void;
 }
 
 const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   chatStatus,
   chatMode,
   selectedFiles,
+  isShowLoading: isShowLoading = false,
   onStopPress,
   onFileSelected,
+  onVoiceChatToggle,
   ...props
 }) => {
   const { text } = props;
+  const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
   let isShowSending = false;
   if (chatMode === ChatMode.Image) {
     isShowSending =
@@ -34,10 +40,11 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       (text && text!.length > 0) ||
       chatStatus === ChatStatus.Running;
   } else if (chatMode === ChatMode.Text) {
-    isShowSending =
-      (text && text!.length > 0) ||
+    isShowSending = 
+      ((text && text!.length > 0) ||
       selectedFiles.length > 0 ||
-      chatStatus === ChatStatus.Running;
+      chatStatus === ChatStatus.Running) 
+      && !isNovaSonic
   }
   if (isShowSending) {
     return (
@@ -74,15 +81,53 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       </Send>
     );
   } else {
-    return (
-      <CustomAddFileComponent
-        {...props}
-        onFileSelected={files => {
-          onFileSelected(files);
-        }}
-        chatMode={chatMode}
-      />
-    );
+    if (isNovaSonic && chatMode === ChatMode.Text) {
+      if (isShowLoading) {
+        return (
+          <View style={styles.loadingContainer}>
+            <ImageSpinner
+              source={require('../../assets/loading.png')}
+              visible={true}
+              size={26}
+            />
+          </View>
+        );
+      }
+      return (
+        <>
+         {chatStatus === ChatStatus.Running && (
+            <View style={styles.micContainer}>
+              <TouchableOpacity
+                style={styles.stopContainer}
+                onPress={() => onStopPress()}>
+                <View style={styles.circle} />
+                <View style={styles.rectangle} />
+              </TouchableOpacity>
+            </View>
+          )}
+          {chatStatus !== ChatStatus.Running && (
+            <TouchableOpacity
+              style={styles.micContainer}
+              onPress={onVoiceChatToggle}>
+              <Image
+                source={require('../../assets/mic.png')}
+                style={styles.sendButton}
+              />
+            </TouchableOpacity>
+          )}
+        </>
+      );
+    } else {
+      return (
+        <CustomAddFileComponent
+          {...props}
+          onFileSelected={files => {
+            onFileSelected(files);
+          }}
+          chatMode={chatMode}
+        />
+      );
+    }
   }
 };
 
@@ -121,6 +166,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-end',
+  },
+  micContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    height: 44,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    marginLeft: 10,
+    height: 44,
   },
   sendButton: {
     width: 26,

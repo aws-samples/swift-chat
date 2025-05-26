@@ -59,6 +59,10 @@ class ModelsRequest(BaseModel):
     region: str
 
 
+class TokenRequest(BaseModel):
+    region: str
+
+
 class UpgradeRequest(BaseModel):
     os: str
     version: str
@@ -197,6 +201,28 @@ async def gen_image(request: ImageRequest,
     if (ref_images is None or model_id.startswith("stability.")) and contains_chinese(prompt):
         prompt = get_english_prompt(client, prompt)
     return get_image(client, model_id, prompt, ref_images, width, height)
+
+
+@app.post("/api/token")
+async def get_token(request: TokenRequest,
+                   _: Annotated[str, Depends(verify_api_key)]):
+    region = request.region
+    try:
+        sts_client = boto3.client('sts', region_name=region)
+        response = sts_client.get_session_token(
+            DurationSeconds=3600
+        )
+        credentials = response['Credentials']
+        
+        return {
+            "accessKeyId": credentials['AccessKeyId'],
+            "secretAccessKey": credentials['SecretAccessKey'],
+            "sessionToken": credentials['SessionToken'],
+            "expiration": credentials['Expiration'].isoformat()
+        }
+    except Exception as e:
+        print(f"Error getting temporary token: {e}")
+        return {"error": str(e)}
 
 
 @app.post("/api/models")

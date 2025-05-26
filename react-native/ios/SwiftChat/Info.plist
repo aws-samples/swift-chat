@@ -34,7 +34,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Support take photos and summarize it</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Support record videos and summarize it</string>
+	<string>Support record videos, voice chat, and summarize content</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Support choose pictures and summarize it</string>
 	<key>UILaunchStoryboardName</key>

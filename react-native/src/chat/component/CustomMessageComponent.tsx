@@ -117,6 +117,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     Clipboard.setString(copyText);
   }, [currentMessage?.reasoning, currentMessage?.text]);
 
+  const currentUser = currentMessage?.user;
+  const showRefresh =
+    currentUser?._id !== 1 && !currentUser?.name?.includes('Nova Sonic');
+
   const userInfo = useMemo(() => {
     if (!currentMessage) {
       return { userName: '', imgSource: null };
@@ -294,7 +298,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           />
         </TouchableOpacity>
 
-        {currentMessage?.user._id !== 1 && (
+        {showRefresh && (
           <TouchableOpacity onPress={onRegenerate} style={styles.actionButton}>
             <Image
               source={require('../../assets/refresh.png')}
@@ -304,14 +308,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         )}
       </View>
     );
-  }, [
-    handleCopy,
-    copied,
-    isEdit,
-    onRegenerate,
-    setIsEditValue,
-    currentMessage,
-  ]);
+  }, [handleCopy, copied, isEdit, onRegenerate, setIsEditValue, showRefresh]);
 
   if (!currentMessage) {
     return null;

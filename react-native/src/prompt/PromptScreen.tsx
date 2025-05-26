@@ -15,7 +15,7 @@ import { RouteParamList } from '../types/RouteTypes.ts';
 import { SystemPrompt } from '../types/Chat.ts';
 import { showInfo } from '../chat/util/ToastUtils.ts';
 import { useAppContext } from '../history/AppProvider.tsx';
-import { getPromptId } from '../storage/StorageUtils.ts';
+import { getPromptId, getTextModel } from '../storage/StorageUtils.ts';
 import { HeaderLeftView } from './HeaderLeftView.tsx';
 import { isMac } from '../App.tsx';
 
@@ -26,6 +26,7 @@ const MAX_NAME_LENGTH = 20;
 function PromptScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<PromptScreenRouteProp>();
+  const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
   const isAddMode = route.params.prompt === undefined;
   const [currentPrompt, setCurrentPrompt] = useState<SystemPrompt>(
     isAddMode
@@ -34,6 +35,8 @@ function PromptScreen(): React.JSX.Element {
           name: '',
           prompt: '',
           includeHistory: false,
+          allowInterruption: true,
+          promptType: isNovaSonic ? 'voice' : undefined,
         }
       : route.params.prompt
   );
@@ -63,7 +66,6 @@ function PromptScreen(): React.JSX.Element {
       showInfo('Please enter system prompt');
       return;
     }
-
     sendEvent(isAddMode ? 'onPromptAdd' : 'onPromptUpdate', {
       prompt: currentPrompt,
     });
@@ -93,12 +95,16 @@ function PromptScreen(): React.JSX.Element {
           }}
         />
         <View style={styles.switchContainer}>
-          <Text style={styles.label}>Include Chat History</Text>
+          <Text style={styles.label}>{isNovaSonic?"Allow Interruption":"Include Chat History"}</Text>
           <Switch
             style={[isMac ? styles.switch : {}]}
-            value={currentPrompt.includeHistory}
+            value={isNovaSonic ? currentPrompt.allowInterruption : currentPrompt.includeHistory}
             onValueChange={value => {
-              setCurrentPrompt({ ...currentPrompt, includeHistory: value });
+              if(isNovaSonic) {
+                setCurrentPrompt({ ...currentPrompt, allowInterruption: value });
+              } else {
+                setCurrentPrompt({ ...currentPrompt, includeHistory: value });
+              }
             }}
           />
         </View>

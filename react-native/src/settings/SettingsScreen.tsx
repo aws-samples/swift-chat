@@ -34,6 +34,7 @@ import {
   getRegion,
   getTextModel,
   getThinkingEnabled,
+  getVoiceId,
   isNewStabilityImageModel,
   saveAllModels,
   saveDeepSeekApiKey,
@@ -48,9 +49,9 @@ import {
   saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
-  saveThinkingEnabled,
+  saveThinkingEnabled, saveVoiceId,
   updateTextModelUsageOrder,
-} from '../storage/StorageUtils.ts';
+} from "../storage/StorageUtils.ts";
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';
@@ -65,9 +66,11 @@ import {
 } from './ModelPrice.ts';
 import {
   BedrockThinkingModels,
+  BedrockVoiceModels,
   DefaultTextModel,
   getAllRegions,
   getDefaultApiKeyModels,
+  VoiceIDList,
 } from '../storage/Constants.ts';
 import CustomTextInput from './CustomTextInput.tsx';
 import { requestAllOllamaModels } from '../api/ollama-api.ts';
@@ -117,6 +120,7 @@ function SettingsScreen(): React.JSX.Element {
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
+  const [voiceId, setVoiceId] = useState(getVoiceId);
   const { sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
 
@@ -316,6 +320,10 @@ function SettingsScreen(): React.JSX.Element {
     label: size,
     value: size,
   }));
+  const voiceIDData: DropdownItem[] = VoiceIDList.map(voice => ({
+    label: voice.voiceName,
+    value: voice.voiceId,
+  }));
 
   const toggleOpenAIProxy = (value: boolean) => {
     setOpenAIProxyEnabled(value);
@@ -492,6 +500,22 @@ function SettingsScreen(): React.JSX.Element {
                 onValueChange={toggleThinking}
               />
             </View>
+          )}
+
+        {selectedTextModel &&
+          BedrockVoiceModels.includes(selectedTextModel.modelName) && (
+            <CustomDropdown
+              label="Voice ID"
+              data={voiceIDData}
+              value={voiceId}
+              onChange={(item: DropdownItem) => {
+                if (item.value !== '') {
+                  setVoiceId(item.value);
+                  saveVoiceId(item.value);
+                }
+              }}
+              placeholder="Select Voice ID"
+            />
           )}
 
         <CustomDropdown

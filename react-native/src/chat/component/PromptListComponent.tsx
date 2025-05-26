@@ -13,7 +13,10 @@ import { useNavigation } from '@react-navigation/native';
 import { SystemPrompt } from '../../types/Chat.ts';
 import {
   getCurrentSystemPrompt,
+  getCurrentVoiceSystemPrompt,
   getSystemPrompts,
+  getTextModel,
+  isTokenValid,
   savePromptId,
   saveSystemPrompts,
 } from '../../storage/StorageUtils.ts';
@@ -25,6 +28,7 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../../types/RouteTypes.ts';
 import { useAppContext } from '../../history/AppProvider.tsx';
 import Dialog from 'react-native-dialog';
+import { requestToken } from '../../api/bedrock-api.ts';
 
 interface PromptListProps {
   onSelectPrompt: (prompt: SystemPrompt | null) => void;
@@ -35,11 +39,14 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   onSelectPrompt,
 }) => {
   const navigation = useNavigation<NavigationProp>();
+  const [isNovaSonic, setIsNovaSonic] = useState(getTextModel().modelId.includes('nova-sonic'));
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<SystemPrompt | null>(
-    getCurrentSystemPrompt
+    isNovaSonic ? getCurrentVoiceSystemPrompt : getCurrentSystemPrompt
   );
-  const [prompts, setPrompts] = useState<SystemPrompt[]>(getSystemPrompts);
+  const [prompts, setPrompts] = useState<SystemPrompt[]>(
+    getSystemPrompts(isNovaSonic ? 'voice' : undefined)
+  );
   const rawListRef = useRef<FlatList<SystemPrompt>>(null);
   const { event, sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
@@ -58,18 +65,32 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   };
 
   useEffect(() => {
-    const newPrompt = event?.params?.prompt;
-    if (newPrompt) {
-      if (event?.event === 'onPromptUpdate') {
+    if (!event) return;
+
+    if (event.event === 'modelChanged') {
+      const newIsNovaSonic = getTextModel().modelId.includes('nova-sonic');
+      setIsNovaSonic(newIsNovaSonic);
+      setSelectedPrompt(newIsNovaSonic ? getCurrentVoiceSystemPrompt() : getCurrentSystemPrompt());
+      setPrompts(getSystemPrompts(newIsNovaSonic ? 'voice' : undefined));
+      sendEventRef.current('');
+      if(newIsNovaSonic){
+        if(!isTokenValid()){
+          requestToken().then();
+        }
+      }
+    } else if (event.params?.prompt) {
+      const newPrompt = event.params.prompt;
+      const promptType = isNovaSonic ? "voice" : undefined
+      if (event.event === 'onPromptUpdate') {
         const newPrompts = prompts.map(prompt =>
           prompt.id === newPrompt.id ? newPrompt : prompt
         );
         setPrompts(newPrompts);
-        saveSystemPrompts(newPrompts);
-      } else if (event?.event === 'onPromptAdd') {
+        saveSystemPrompts(newPrompts, promptType );
+      } else if (event.event === 'onPromptAdd') {
         const newPrompts = [...prompts, newPrompt];
         setPrompts(newPrompts);
-        saveSystemPrompts(newPrompts);
+        saveSystemPrompts(newPrompts, promptType);
         savePromptId(newPrompt.id);
         scrollToEnd();
       }
@@ -99,7 +120,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
       onSelectPrompt(null);
     }
     setPrompts(newPrompts);
-    saveSystemPrompts(newPrompts);
+    saveSystemPrompts(newPrompts, isNovaSonic ? "voice" : undefined);
     deletePromptIdRef.current = 0;
   };
 
@@ -160,7 +181,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
         keyExtractor={item => item.id.toString()}
         onDragEnd={({ data }) => {
           setPrompts(data);
-          saveSystemPrompts(data);
+          saveSystemPrompts(data, isNovaSonic ? "voice" : undefined);
         }}
         containerStyle={styles.scrollContent}
         showsHorizontalScrollIndicator={false}

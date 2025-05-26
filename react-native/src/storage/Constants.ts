@@ -1,6 +1,7 @@
 import { Model, ModelTag, SystemPrompt } from '../types/Chat.ts';
 import { getDeepSeekApiKey, getOpenAIApiKey } from './StorageUtils.ts';
 
+// AWS credentials - empty by default, to be filled by user
 const RegionList = [
   'us-west-2',
   'us-east-1',
@@ -40,6 +41,7 @@ export const DeepSeekModels = [
 ];
 
 export const BedrockThinkingModels = ['Claude 3.7 Sonnet'];
+export const BedrockVoiceModels = ['Nova Sonic'];
 
 export const DefaultTextModel = [
   {
@@ -54,6 +56,40 @@ const DefaultImageModel = {
   modelId: 'stability.sd3-5-large-v1:0',
   modelTag: ModelTag.Bedrock,
 };
+
+export const VoiceIDList = [
+  {
+    voiceName: 'Matthew (American English)',
+    voiceId: 'matthew',
+  },
+  {
+    voiceName: 'Tiffany (American English)',
+    voiceId: 'tiffany',
+  },
+  {
+    voiceName: 'Amy (British English)',
+    voiceId: 'amy',
+  },
+];
+
+export const DefaultVoiceSystemPrompts = [
+  {
+    id: -4,
+    name: 'SentencePractice',
+    prompt:
+      'Please tell the user that you are their English speaking coach. Your main responsibility is to have the user read common English sentences with you. After the user speaks, first score them from 1-10, with 10 being the best. If the score is below 5, tell the user how to correct their pronunciation and ask them to repeat. If the score is above 5, continue with the next common English phrase. Keep your responses short, usually within five sentences.',
+    includeHistory: true,
+    promptType: 'voice',
+  },
+  {
+    id: -5,
+    name: 'LearningWords',
+    prompt:
+      'Please inform the user that you are their English speaking coach. Your main responsibility is to have users read common English words with you and tell them the meaning. After they speak, first score them from 1-10, with 10 being the best. If the score is below 5, tell them how to correct their pronunciation and ask them to repeat. If the score is above 5, continue with the next common English word. Keep your responses short, typically within five sentences.',
+    includeHistory: true,
+    promptType: 'voice',
+  },
+];
 
 const DefaultSystemPrompts = [
   {
@@ -84,7 +120,10 @@ Stay focused on practical improvements only.`,
       'You are an AI assistant with a passion for creative writing and storytelling. Your task is to collaborate with users to create engaging stories, offering imaginative plot twists and dynamic character development. Encourage the user to contribute their ideas and build upon them to create a captivating narrative.',
     includeHistory: true,
   },
+  ...DefaultVoiceSystemPrompts,
 ];
+
+export const DefaultVoicePrompt = 'You are a friendly assistant. The user and you will engage in a spoken dialog exchanging the transcripts of a natural real-time conversation. Keep your responses short, generally two or three sentences for chatty scenarios.';
 
 export function getAllRegions() {
   return RegionList;

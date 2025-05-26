@@ -6,6 +6,7 @@ import {
   Model,
   ModelTag,
   SystemPrompt,
+  TokenResponse,
   UpgradeInfo,
   Usage,
 } from '../types/Chat.ts';
@@ -20,6 +21,7 @@ import {
   getRegion,
   getTextModel,
   getThinkingEnabled,
+  saveTokenInfo,
 } from '../storage/StorageUtils.ts';
 import { saveImageToLocal } from '../chat/util/FileUtils.ts';
 import {
@@ -40,7 +42,7 @@ type CallbackFunction = (
   usage?: Usage,
   reasoning?: string
 ) => void;
-export const isDev = false;
+export const isDev = true;
 export const invokeBedrockWithCallBack = async (
   messages: BedrockMessage[],
   chatMode: ChatMode,
@@ -312,6 +314,45 @@ export const requestAllModels = async (): Promise<AllModel> => {
     console.log('Error fetching models:', error);
     clearTimeout(timeoutId);
     return { imageModel: [], textModel: [] };
+  }
+};
+
+export const requestToken = async (): Promise<TokenResponse | null> => {
+  if (getApiUrl() === '') {
+    return null;
+  }
+  
+  const url = getApiPrefix() + '/token';
+  const bodyObject = {
+    region: getRegion(),
+  };
+  
+  const options = {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      Authorization: 'Bearer ' + getApiKey(),
+    },
+    body: JSON.stringify(bodyObject),
+    reactNative: { textStreaming: true },
+  };
+  
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      console.log(`HTTP error! status: ${response.status}`);
+      return null;
+    }
+    
+    const tokenResponse = await response.json() as TokenResponse;
+    console.log("token:"+JSON.stringify(tokenResponse,null,2))
+    // Store token information
+    saveTokenInfo(tokenResponse);
+    return tokenResponse;
+  } catch (error) {
+    console.log('Error fetching token:', error);
+    return null;
   }
 };
 
