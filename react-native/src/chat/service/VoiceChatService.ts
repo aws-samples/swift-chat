@@ -133,8 +133,8 @@ export class VoiceChatService {
           }
           return false;
         }
-        if(tokenResponse.error) {
-            if (this.onErrorCallback) {
+        if (tokenResponse.error) {
+          if (this.onErrorCallback) {
             this.onErrorCallback(tokenResponse.error);
           }
           return false;
