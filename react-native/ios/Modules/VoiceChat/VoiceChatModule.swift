@@ -47,7 +47,7 @@ class VoiceChatModule: RCTEventEmitter {
           let accessKey = config["accessKey"] as? String,
           let secretKey = config["secretKey"] as? String
     else {
-      reject("INVALID_CONFIG", "Invalid configuration provided", nil)
+      reject("INVALID_CONFIG", "Invalid credential provided", nil)
       return
     }
     

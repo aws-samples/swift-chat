@@ -205,15 +205,20 @@ async def gen_image(request: ImageRequest,
 
 @app.post("/api/token")
 async def get_token(request: TokenRequest,
-                   _: Annotated[str, Depends(verify_api_key)]):
+                    _: Annotated[str, Depends(verify_api_key)]):
     region = request.region
     try:
+        client_role_arn = os.environ.get('CLIENT_ROLE_ARN')
+        if not client_role_arn:
+            return {"error": "CLIENT_ROLE_ARN environment variable not set"}
         sts_client = boto3.client('sts', region_name=region)
-        response = sts_client.get_session_token(
+        session_name = f"SwiftChatClient-{int(time.time())}"
+        response = sts_client.assume_role(
+            RoleArn=client_role_arn,
+            RoleSessionName=session_name,
             DurationSeconds=3600
         )
         credentials = response['Credentials']
-        
         return {
             "accessKeyId": credentials['AccessKeyId'],
             "secretAccessKey": credentials['SecretAccessKey'],
@@ -221,7 +226,7 @@ async def get_token(request: TokenRequest,
             "expiration": credentials['Expiration'].isoformat()
         }
     except Exception as e:
-        print(f"Error getting temporary token: {e}")
+        print(f"Error assuming role: {e}")
         return {"error": str(e)}
 
 

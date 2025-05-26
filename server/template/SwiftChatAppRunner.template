@@ -21,6 +21,49 @@
     }
   },
   "Resources": {
+    "ClientAccessRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "AppRunnerExecutionRole8F10060A",
+                    "Arn"
+                  ]
+                }
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/AmazonBedrockReadOnly"
+        ],
+        "Policies": [
+          {
+            "PolicyName": "BedrockInvokeAccess",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "bedrock:InvokeModel",
+                    "bedrock:InvokeModelWithResponseStream"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
     "AppRunnerExecutionRole8F10060A": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -79,9 +122,14 @@
               "Resource": "*"
             },
             {
-              "Action": "sts:GetSessionToken",
+              "Action": "sts:AssumeRole",
               "Effect": "Allow",
-              "Resource": "*"
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ClientAccessRole",
+                  "Arn"
+                ]
+              }
             }
           ],
           "Version": "2012-10-17"
@@ -260,6 +308,15 @@
                   "Value": {
                     "Ref": "ApiKeyParam"
                   }
+                },
+                {
+                  "Name": "CLIENT_ROLE_ARN",
+                  "Value": {
+                    "Fn::GetAtt": [
+                      "ClientAccessRole",
+                      "Arn"
+                    ]
+                  }
                 }
               ]
             },
@@ -313,6 +370,15 @@
               ]
             }
           ]
+        ]
+      }
+    },
+    "ClientRoleARN": {
+      "Description": "ARN of the role that can be assumed by clients",
+      "Value": {
+        "Fn::GetAtt": [
+          "ClientAccessRole",
+          "Arn"
         ]
       }
     }

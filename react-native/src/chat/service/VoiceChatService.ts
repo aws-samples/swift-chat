@@ -129,7 +129,13 @@ export class VoiceChatService {
         const tokenResponse = await requestToken();
         if (!tokenResponse) {
           if (this.onErrorCallback) {
-            this.onErrorCallback('Failed to get AWS credentials');
+            this.onErrorCallback('Failed to get credentials');
+          }
+          return false;
+        }
+        if(tokenResponse.error) {
+            if (this.onErrorCallback) {
+            this.onErrorCallback(tokenResponse.error);
           }
           return false;
         }
