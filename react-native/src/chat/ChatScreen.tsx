@@ -15,7 +15,10 @@ import {
 import { voiceChatService } from './service/VoiceChatService';
 import AudioWaveformComponent from './component/AudioWaveformComponent';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
-import { invokeBedrockWithCallBack as invokeBedrockWithCallBack, requestToken } from '../api/bedrock-api';
+import {
+  invokeBedrockWithCallBack as invokeBedrockWithCallBack,
+  requestToken,
+} from '../api/bedrock-api';
 import CustomMessageComponent from './component/CustomMessageComponent.tsx';
 import { CustomScrollToBottomComponent } from './component/CustomScrollToBottomComponent.tsx';
 import { EmptyChatComponent } from './component/EmptyChatComponent.tsx';
@@ -385,8 +388,8 @@ function ChatScreen(): React.JSX.Element {
           saveCurrentMessages();
         }
       }
-      if(nextAppState === 'active'){
-        if(!isTokenValid()){
+      if (nextAppState === 'active') {
+        if (!isTokenValid()) {
           requestToken().then();
         }
       }
@@ -689,19 +692,19 @@ function ChatScreen(): React.JSX.Element {
               trigger(HapticFeedbackTypes.notificationWarning);
               if (isNovaSonic) {
                 // End voice chat conversation
-                if(isVoiceLoading.current){
-                  return
+                if (isVoiceLoading.current) {
+                  return;
                 }
-                isVoiceLoading.current = true
+                isVoiceLoading.current = true;
                 setIsShowVoiceLoading(true);
                 voiceChatService.endConversation().then(() => {
                   setAudioVolume(1);
                   inputAudioLevelRef.current = 1;
                   outputAudioLevelRef.current = 1;
                   setChatStatus(ChatStatus.Init);
-                  isVoiceLoading.current = false
-                  setIsShowVoiceLoading(false)
-                  trigger(HapticFeedbackTypes.impactMedium)
+                  isVoiceLoading.current = false;
+                  setIsShowVoiceLoading(false);
+                  trigger(HapticFeedbackTypes.impactMedium);
                 });
               } else {
                 isCanceled.current = true;
@@ -712,20 +715,20 @@ function ChatScreen(): React.JSX.Element {
               handleNewFileSelected(files);
             }}
             onVoiceChatToggle={() => {
-              if(isVoiceLoading.current){
-                return
+              if (isVoiceLoading.current) {
+                return;
               }
-              isVoiceLoading.current = true
-              setIsShowVoiceLoading(true)
+              isVoiceLoading.current = true;
+              setIsShowVoiceLoading(true);
               voiceChatService.startConversation().then(success => {
                 if (!success) {
                   setChatStatus(ChatStatus.Init);
                 } else {
                   setChatStatus(ChatStatus.Running);
                 }
-                isVoiceLoading.current = false
-                setIsShowVoiceLoading(false)
-                trigger(HapticFeedbackTypes.impactMedium)
+                isVoiceLoading.current = false;
+                setIsShowVoiceLoading(false);
+                trigger(HapticFeedbackTypes.impactMedium);
               });
             }}
           />
@@ -744,7 +747,7 @@ function ChatScreen(): React.JSX.Element {
               setSystemPrompt(prompt);
               if (isNovaSonic) {
                 saveCurrentVoiceSystemPrompt(prompt);
-                if(chatStatus === ChatStatus.Running){
+                if (chatStatus === ChatStatus.Running) {
                   voiceChatService.endConversation().then(() => {
                     setAudioVolume(1);
                     inputAudioLevelRef.current = 1;

@@ -150,4 +150,5 @@ export type TokenResponse = {
   secretAccessKey: string;
   sessionToken: string;
   expiration: string;
+  error: string;
 };

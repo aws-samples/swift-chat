@@ -42,7 +42,7 @@ type CallbackFunction = (
   usage?: Usage,
   reasoning?: string
 ) => void;
-export const isDev = true;
+export const isDev = false;
 export const invokeBedrockWithCallBack = async (
   messages: BedrockMessage[],
   chatMode: ChatMode,
@@ -321,12 +321,12 @@ export const requestToken = async (): Promise<TokenResponse | null> => {
   if (getApiUrl() === '') {
     return null;
   }
-  
+
   const url = getApiPrefix() + '/token';
   const bodyObject = {
     region: getRegion(),
   };
-  
+
   const options = {
     method: 'POST',
     headers: {
@@ -337,16 +337,16 @@ export const requestToken = async (): Promise<TokenResponse | null> => {
     body: JSON.stringify(bodyObject),
     reactNative: { textStreaming: true },
   };
-  
+
   try {
     const response = await fetch(url, options);
     if (!response.ok) {
       console.log(`HTTP error! status: ${response.status}`);
       return null;
     }
-    
-    const tokenResponse = await response.json() as TokenResponse;
-    console.log("token:"+JSON.stringify(tokenResponse,null,2))
+
+    const tokenResponse = (await response.json()) as TokenResponse;
+    console.log('token:' + JSON.stringify(tokenResponse, null, 2));
     // Store token information
     saveTokenInfo(tokenResponse);
     return tokenResponse;

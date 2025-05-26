@@ -1,16 +1,17 @@
-import { NativeModules, NativeEventEmitter } from 'react-native';
 import {
-  DefaultVoicePrompt,
-} from '../../storage/Constants';
-import { 
-  getCurrentVoiceSystemPrompt, 
-  getVoiceId, 
-  isTokenValid, 
-  getTokenInfo, 
-  getRegion
+  NativeModules,
+  NativeEventEmitter,
+  EmitterSubscription,
+} from 'react-native';
+import { DefaultVoicePrompt } from '../../storage/Constants';
+import {
+  getCurrentVoiceSystemPrompt,
+  getVoiceId,
+  isTokenValid,
+  getTokenInfo,
+  getRegion,
 } from '../../storage/StorageUtils.ts';
 import { requestToken } from '../../api/bedrock-api.ts';
-import { SystemPrompt } from '../../types/Chat.ts';
 
 const { VoiceChatModule } = NativeModules;
 const voiceChatEmitter = VoiceChatModule
@@ -21,7 +22,7 @@ type ConversationState = 'idle' | 'listening' | 'speaking' | 'error';
 
 export class VoiceChatService {
   private isInitialized = false;
-  private subscriptions: any[] = [];
+  private subscriptions: EmitterSubscription[] = [];
   private onTranscriptReceivedCallback?: (role: string, text: string) => void;
   private onStateChangedCallback?: (
     state: ConversationState,
@@ -133,7 +134,7 @@ export class VoiceChatService {
           return false;
         }
       }
-      
+
       // Get token info
       const tokenInfo = getTokenInfo();
       if (!tokenInfo) {
@@ -142,7 +143,7 @@ export class VoiceChatService {
         }
         return false;
       }
-      
+
       // Create config with token info
       const config = {
         region: getRegion(),
@@ -154,9 +155,10 @@ export class VoiceChatService {
       await VoiceChatModule.initialize(config);
       this.isInitialized = true;
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (this.onErrorCallback) {
-        this.onErrorCallback(`Initialization failed: ${err.message}`);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        this.onErrorCallback(`Initialization failed: ${errorMessage}`);
       }
       return false;
     }
@@ -187,11 +189,16 @@ export class VoiceChatService {
       // Start conversation with system prompt and voice ID
       const systemPrompt = voiceSystemPrompt?.prompt ?? DefaultVoicePrompt;
       const voiceId = getVoiceId();
-      await VoiceChatModule.startConversation(systemPrompt, voiceId, voiceSystemPrompt?.allowInterruption ?? true);
+      await VoiceChatModule.startConversation(
+        systemPrompt,
+        voiceId,
+        voiceSystemPrompt?.allowInterruption ?? true
+      );
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (this.onErrorCallback) {
-        this.onErrorCallback(`Operation failed: ${err.message}`);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        this.onErrorCallback(`Operation failed: ${errorMessage}`);
       }
       return false;
     }
@@ -209,9 +216,10 @@ export class VoiceChatService {
     try {
       await VoiceChatModule.endConversation();
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (this.onErrorCallback) {
-        this.onErrorCallback(`Failed to end conversation: ${err.message}`);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        this.onErrorCallback(`Failed to end conversation: ${errorMessage}`);
       }
       return false;
     }

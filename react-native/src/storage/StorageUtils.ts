@@ -7,7 +7,7 @@ import {
   Model,
   SystemPrompt,
   Usage,
-  TokenResponse
+  TokenResponse,
 } from '../types/Chat.ts';
 import uuid from 'uuid';
 import {
@@ -581,7 +581,7 @@ export function isTokenValid(): boolean {
   if (!tokenInfo) {
     return false;
   }
-  
+
   const expirationDate = new Date(tokenInfo.expiration);
   const now = new Date();
   return expirationDate > now;

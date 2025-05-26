@@ -39,7 +39,9 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   onSelectPrompt,
 }) => {
   const navigation = useNavigation<NavigationProp>();
-  const [isNovaSonic, setIsNovaSonic] = useState(getTextModel().modelId.includes('nova-sonic'));
+  const [isNovaSonic, setIsNovaSonic] = useState(
+    getTextModel().modelId.includes('nova-sonic')
+  );
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<SystemPrompt | null>(
     isNovaSonic ? getCurrentVoiceSystemPrompt : getCurrentSystemPrompt
@@ -65,28 +67,34 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   };
 
   useEffect(() => {
-    if (!event) return;
+    if (!event) {
+      return;
+    }
 
     if (event.event === 'modelChanged') {
       const newIsNovaSonic = getTextModel().modelId.includes('nova-sonic');
       setIsNovaSonic(newIsNovaSonic);
-      setSelectedPrompt(newIsNovaSonic ? getCurrentVoiceSystemPrompt() : getCurrentSystemPrompt());
+      setSelectedPrompt(
+        newIsNovaSonic
+          ? getCurrentVoiceSystemPrompt()
+          : getCurrentSystemPrompt()
+      );
       setPrompts(getSystemPrompts(newIsNovaSonic ? 'voice' : undefined));
       sendEventRef.current('');
-      if(newIsNovaSonic){
-        if(!isTokenValid()){
+      if (newIsNovaSonic) {
+        if (!isTokenValid()) {
           requestToken().then();
         }
       }
     } else if (event.params?.prompt) {
       const newPrompt = event.params.prompt;
-      const promptType = isNovaSonic ? "voice" : undefined
+      const promptType = isNovaSonic ? 'voice' : undefined;
       if (event.event === 'onPromptUpdate') {
         const newPrompts = prompts.map(prompt =>
           prompt.id === newPrompt.id ? newPrompt : prompt
         );
         setPrompts(newPrompts);
-        saveSystemPrompts(newPrompts, promptType );
+        saveSystemPrompts(newPrompts, promptType);
       } else if (event.event === 'onPromptAdd') {
         const newPrompts = [...prompts, newPrompt];
         setPrompts(newPrompts);
@@ -96,7 +104,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
       }
       sendEventRef.current('');
     }
-  }, [event, prompts]);
+  }, [event, prompts, isNovaSonic]);
 
   const handlePromptSelect = (prompt: SystemPrompt) => {
     if (isEditMode) {
@@ -120,7 +128,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
       onSelectPrompt(null);
     }
     setPrompts(newPrompts);
-    saveSystemPrompts(newPrompts, isNovaSonic ? "voice" : undefined);
+    saveSystemPrompts(newPrompts, isNovaSonic ? 'voice' : undefined);
     deletePromptIdRef.current = 0;
   };
 
@@ -181,7 +189,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
         keyExtractor={item => item.id.toString()}
         onDragEnd={({ data }) => {
           setPrompts(data);
-          saveSystemPrompts(data, isNovaSonic ? "voice" : undefined);
+          saveSystemPrompts(data, isNovaSonic ? 'voice' : undefined);
         }}
         containerStyle={styles.scrollContent}
         showsHorizontalScrollIndicator={false}

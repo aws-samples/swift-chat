@@ -95,13 +95,22 @@ function PromptScreen(): React.JSX.Element {
           }}
         />
         <View style={styles.switchContainer}>
-          <Text style={styles.label}>{isNovaSonic?"Allow Interruption":"Include Chat History"}</Text>
+          <Text style={styles.label}>
+            {isNovaSonic ? 'Allow Interruption' : 'Include Chat History'}
+          </Text>
           <Switch
             style={[isMac ? styles.switch : {}]}
-            value={isNovaSonic ? currentPrompt.allowInterruption : currentPrompt.includeHistory}
+            value={
+              isNovaSonic
+                ? currentPrompt.allowInterruption
+                : currentPrompt.includeHistory
+            }
             onValueChange={value => {
-              if(isNovaSonic) {
-                setCurrentPrompt({ ...currentPrompt, allowInterruption: value });
+              if (isNovaSonic) {
+                setCurrentPrompt({
+                  ...currentPrompt,
+                  allowInterruption: value,
+                });
               } else {
                 setCurrentPrompt({ ...currentPrompt, includeHistory: value });
               }

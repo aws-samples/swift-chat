@@ -40,11 +40,11 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       (text && text!.length > 0) ||
       chatStatus === ChatStatus.Running;
   } else if (chatMode === ChatMode.Text) {
-    isShowSending = 
+    isShowSending =
       ((text && text!.length > 0) ||
-      selectedFiles.length > 0 ||
-      chatStatus === ChatStatus.Running) 
-      && !isNovaSonic
+        selectedFiles.length > 0 ||
+        chatStatus === ChatStatus.Running) &&
+      !isNovaSonic;
   }
   if (isShowSending) {
     return (
@@ -95,7 +95,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       }
       return (
         <>
-         {chatStatus === ChatStatus.Running && (
+          {chatStatus === ChatStatus.Running && (
             <View style={styles.micContainer}>
               <TouchableOpacity
                 style={styles.stopContainer}

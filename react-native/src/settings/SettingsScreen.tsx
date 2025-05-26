@@ -49,9 +49,10 @@ import {
   saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
-  saveThinkingEnabled, saveVoiceId,
+  saveThinkingEnabled,
+  saveVoiceId,
   updateTextModelUsageOrder,
-} from "../storage/StorageUtils.ts";
+} from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';

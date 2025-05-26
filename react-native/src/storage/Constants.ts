@@ -123,7 +123,8 @@ Stay focused on practical improvements only.`,
   ...DefaultVoiceSystemPrompts,
 ];
 
-export const DefaultVoicePrompt = 'You are a friendly assistant. The user and you will engage in a spoken dialog exchanging the transcripts of a natural real-time conversation. Keep your responses short, generally two or three sentences for chatty scenarios.';
+export const DefaultVoicePrompt =
+  'You are a friendly assistant. The user and you will engage in a spoken dialog exchanging the transcripts of a natural real-time conversation. Keep your responses short, generally two or three sentences for chatty scenarios.';
 
 export function getAllRegions() {
   return RegionList;
