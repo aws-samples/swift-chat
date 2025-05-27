@@ -172,7 +172,7 @@ class NovaSonicService {
     }
     
     // MARK: - Session Management
-  func startSession(systemPrompt: String, voiceId: String, allowInterruption: Bool) async throws {
+    func startSession(systemPrompt: String, voiceId: String, allowInterruption: Bool) async throws {
         if client == nil {
             try initializeClient()
         }
@@ -195,13 +195,13 @@ class NovaSonicService {
             let events = prepareEvents(systemPrompt: systemPrompt, voiceId: voiceId)
             print("Prepare all events success")
             
-            // ensure that SessionStart is the frist event
+            // Ensure that SessionStart is the first event
             for event in events {
                 print("Send event:\n" + event)
                 sendEvent(eventJson: event)
             }
             
-            // wait all preamble event are sent，then set isActive to true
+            // Wait until all preamble events are sent, then set isActive to true
             isActive = true
             try await startAudioInput()
             
@@ -469,8 +469,8 @@ class NovaSonicService {
         
         // Log event type for debugging
         let eventType = event.keys.first ?? "unknown"
-        if(eventType != "audioOutput"){
-          print("eventType: "+eventType)
+        if eventType != "audioOutput" {
+            print("eventType: " + eventType)
         }
         // Handle content start event
         if let contentStart = event["contentStart"] as? [String: Any] {
@@ -500,9 +500,9 @@ class NovaSonicService {
             var content = textOutput["content"] as? String {
             if content.contains("{ \"interrupted\" : true }") {
                 audioManager.setBargeIn(true)
-                if(allowInterruption){
+                if allowInterruption {
                     content = "\n**[interrupted]**"
-                }else{
+                } else {
                     content = ""
                 }
             }

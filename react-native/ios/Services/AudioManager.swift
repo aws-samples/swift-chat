@@ -87,7 +87,7 @@ class AudioManager: NSObject {
     
     // MARK: - Audio Setup
       
-    func setAllowInterruption(_ allowInterruption: Bool){
+    func setAllowInterruption(_ allowInterruption: Bool) {
         self.allowInterruption = allowInterruption
     }
   
@@ -109,7 +109,7 @@ class AudioManager: NSObject {
         audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: iOSAudioFormat)
         audioEngine.connect(audioEngine.mainMixerNode, to: audioEngine.outputNode, format: nil)
         
-        // 启用语音处理（回声消除）
+        // Enable voice processing (echo cancellation)
         do {
             try audioEngine.inputNode.setVoiceProcessingEnabled(true)
             print("Voice processing enabled successfully")
@@ -175,7 +175,7 @@ class AudioManager: NSObject {
             guard let self = self else { return }
             self.bargeIn = value
             
-            // 如果设置为打断状态，立即处理队列
+            // If set to interrupt state, process queue immediately
             if value {
                 self.processQueue()
             }
@@ -258,7 +258,7 @@ class AudioManager: NSObject {
     }
     
     private func processQueue() {
-        // 检查是否需要打断
+        // Check if interruption is needed
         if bargeIn {
             print("Barge-in detected. Clearing audio queue.")
             audioDataQueue.removeAll()
@@ -274,7 +274,7 @@ class AudioManager: NSObject {
       
         guard !audioDataQueue.isEmpty else {
             isProcessingQueue = false
-            if isPlaying, isAudioContentEnd{
+            if isPlaying, isAudioContentEnd {
                 self.onAudioEnd()
             }
             return
@@ -285,7 +285,7 @@ class AudioManager: NSObject {
         // Process up to 10 audio data blocks at once
         let batchSize = min(10, audioDataQueue.count)
         var combinedData = Data()
-        print("handle batchSize: ",batchSize)
+        print("handle batchSize: ", batchSize)
         // Combine multiple audio data blocks
         for _ in 0..<batchSize {
             let audioData = audioDataQueue.removeFirst()
@@ -320,13 +320,13 @@ class AudioManager: NSObject {
         }
     }
   
-    func onAudioEnd(){
+    func onAudioEnd() {
         isPlaying = false
         lastOutputLevel = 1
         onAudioLevelChanged?("speaker", 1)
     }
   
-    func onContentEnd(){
+    func onContentEnd() {
         self.isAudioContentEnd = true
     }
     
