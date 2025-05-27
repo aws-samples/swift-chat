@@ -271,9 +271,12 @@ class AudioManager: NSObject {
             
             return
         }
-        
+      
         guard !audioDataQueue.isEmpty else {
             isProcessingQueue = false
+            if isPlaying, isAudioContentEnd{
+                self.onAudioEnd()
+            }
             return
         }
         
@@ -287,9 +290,6 @@ class AudioManager: NSObject {
         for _ in 0..<batchSize {
             let audioData = audioDataQueue.removeFirst()
             combinedData.append(audioData)
-        }
-        if isPlaying, isAudioContentEnd,audioDataQueue.isEmpty{
-            self.onAudioEnd()
         }
         
         // Convert combined audio data to buffer with sample rate conversion
@@ -401,7 +401,6 @@ class AudioManager: NSObject {
         
         // Ensure audio session is active
         if !audioSession.isInputAvailable {
-            print("audioSession isInputAvailable=false")
             throw AudioError.recordingFailed("Audio input is not available")
         }
         
@@ -413,7 +412,10 @@ class AudioManager: NSObject {
         inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] (buffer, time) in
             guard let self = self, self.isCapturing else { return }
             
-            if isPlaying, !allowInterruption{
+            if isPlaying, !allowInterruption {
+                if self.lastInputLevel != 1 {
+                    self.onAudioLevelChanged?("microphone", 1)
+                }
                 return
             }
             // Calculate audio level from input buffer

@@ -84,7 +84,11 @@ export class VoiceChatService {
         'onError',
         event => {
           if (this.onErrorCallback) {
-            this.onErrorCallback(event.message);
+            let errorMsg = event.message
+            if(event.message.includes("The operation couldn’t be completed.")&& event.message.includes("NO_ERROR")){
+              errorMsg = '\nNO_ERROR: The operation couldn’t be completed.'
+            }
+            this.onErrorCallback(errorMsg);
           }
         }
       );

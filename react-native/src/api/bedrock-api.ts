@@ -346,8 +346,6 @@ export const requestToken = async (): Promise<TokenResponse | null> => {
     }
 
     const tokenResponse = (await response.json()) as TokenResponse;
-    console.log('token:' + JSON.stringify(tokenResponse, null, 2));
-    // Store token information
     saveTokenInfo(tokenResponse);
     return tokenResponse;
   } catch (error) {

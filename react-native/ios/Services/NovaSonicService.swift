@@ -529,7 +529,6 @@ class NovaSonicService {
             // Check if audio data is valid (non-zero)
             if audioData.count > 0 {
                 // Send to audio manager
-                print("🔊 NovaSonic: Sending audio chunk: \(audioData.count) bytes")
                 onAudioReceived?(audioData)
             } else {
                 print("⚠️ NovaSonic: Received empty audio data")
