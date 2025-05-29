@@ -22,7 +22,8 @@ class AudioManager: NSObject {
   
     private var isAudioContentEnd = false
     private var isPlaying = false
-    
+    private var isActive = false
+
     // Barge-in related
     private var bargeIn = false
   
@@ -84,13 +85,16 @@ class AudioManager: NSObject {
     deinit {
         audioEngine.stop()
     }
-    
-    // MARK: - Audio Setup
-      
+
     func setAllowInterruption(_ allowInterruption: Bool) {
         self.allowInterruption = allowInterruption
     }
-  
+
+    func setIsActive(_ isActive: Bool) {
+        self.isActive = isActive
+    }
+
+    // MARK: - Audio Setup
     private func setupAudio() {
         // Setup audio session with speaker output
         do {
@@ -231,18 +235,13 @@ class AudioManager: NSObject {
     
     func playAudio(data: Data) throws {
         // Ensure engine is running
+        if !isActive {
+          print("playAudio skipped, session not Active")
+          return
+        }
         isPlaying = true
         isAudioContentEnd = false
-        if !audioEngine.isRunning {
-            do {
-                try audioEngine.start()
-                onPlaybackStateChanged?(true)
-            } catch {
-                print("Failed to start audio engine: \(error)")
-                throw AudioError.playbackFailed("Failed to start audio engine: \(error.localizedDescription)")
-            }
-        }
-        
+
         // Process audio on dedicated queue
         audioQueue.async { [weak self] in
             guard let self = self else { return }
@@ -285,7 +284,6 @@ class AudioManager: NSObject {
         // Process up to 10 audio data blocks at once
         let batchSize = min(10, audioDataQueue.count)
         var combinedData = Data()
-        print("handle batchSize: ", batchSize)
         // Combine multiple audio data blocks
         for _ in 0..<batchSize {
             let audioData = audioDataQueue.removeFirst()
@@ -397,7 +395,6 @@ class AudioManager: NSObject {
             @unknown default:
                 throw AudioError.microphoneAccessDenied("Unknown microphone permission status")
         }
-        
         
         // Ensure audio session is active
         if !audioSession.isInputAvailable {

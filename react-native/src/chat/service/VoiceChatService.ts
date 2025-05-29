@@ -84,9 +84,17 @@ export class VoiceChatService {
         'onError',
         event => {
           if (this.onErrorCallback) {
-            let errorMsg = event.message
-            if(event.message.includes("The operation couldn’t be completed.")&& event.message.includes("NO_ERROR")){
-              errorMsg = '\nNO_ERROR: The operation couldn’t be completed.'
+            let errorMsg = event.message;
+            if (event.message.includes('The network connection was lost')) {
+              errorMsg = '\n**The network connection was lost**';
+            } else if (
+              event.message.includes('Timed out waiting for input events')
+            ) {
+              errorMsg = '\n**Timed out waiting for input events**';
+            } else if (
+              event.message.includes('The operation couldn’t be completed.')
+            ) {
+              errorMsg = '\n**The operation couldn’t be completed.**';
             }
             this.onErrorCallback(errorMsg);
           }

@@ -15,6 +15,7 @@ interface CustomComposerProps {
   files: FileInfo[];
   onFileUpdated: (files: FileInfo[], isUpdate?: boolean) => void;
   onSystemPromptUpdated: (prompt: SystemPrompt | null) => void;
+  onSwitchedToTextModel: () => void;
   chatMode: ChatMode;
   isShowSystemPrompt: boolean;
 }
@@ -23,6 +24,7 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
   files,
   onFileUpdated,
   onSystemPromptUpdated,
+  onSwitchedToTextModel,
   chatMode,
   isShowSystemPrompt,
 }) => {
@@ -83,6 +85,9 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
                 <PromptListComponent
                   onSelectPrompt={prompt => {
                     onSystemPromptUpdated(prompt);
+                  }}
+                  onSwitchedToTextModel={() => {
+                    onSwitchedToTextModel();
                   }}
                 />
                 <View ref={modelIconRef} collapsable={false}>

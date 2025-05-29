@@ -161,19 +161,18 @@ class ConversationManager {
         do {
             try audioManager.playAudio(data: audioData)
         } catch {
-            print("❌ Error playing audio in AudioManager: \(error.localizedDescription)")
+            print("❌ Error playing audio in AudioManager: \(error)")
             handleError(error)
         }
     }
     
     private func handleError(_ error: Error) {
-        print("❌ ConversationManager error: \(error.localizedDescription)")
+        print("❌ ConversationManager error: \(error)")
         updateState(.error)
         onError?(error)
     }
     
     private func updateState(_ newState: ConversationState) {
-        print("🔄 ConversationManager state changed: \(state.rawValue) -> \(newState.rawValue)")
         state = newState
         onStateChanged?(newState, nil)
     }

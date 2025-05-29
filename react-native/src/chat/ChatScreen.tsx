@@ -167,12 +167,15 @@ function ChatScreen(): React.JSX.Element {
       },
       // Handle error
       message => {
-        handleVoiceChatTranscript('ASSISTANT', message);
-        setAudioVolume(1);
-        inputAudioLevelRef.current = 1;
-        outputAudioLevelRef.current = 1;
-        setChatStatus(ChatStatus.Init);
-        console.log('Voice chat error:', message);
+        if (getTextModel().modelId.includes('nova-sonic')) {
+          handleVoiceChatTranscript('ASSISTANT', message);
+          setAudioVolume(1);
+          inputAudioLevelRef.current = 1;
+          outputAudioLevelRef.current = 1;
+          setChatStatus(ChatStatus.Init);
+          saveCurrentMessages();
+          console.log('Voice chat error:', message);
+        }
       },
       // Handle audio level changes
       (source, level) => {
@@ -193,7 +196,6 @@ function ChatScreen(): React.JSX.Element {
     return () => {
       voiceChatService.cleanup();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // start new chat
@@ -607,6 +609,23 @@ function ChatScreen(): React.JSX.Element {
   };
 
   // Handle voice chat transcript
+  // End voice conversation and reset audio levels
+  const endVoiceConversation = useCallback(async () => {
+    if (isVoiceLoading.current) {
+      return Promise.resolve(false);
+    }
+    isVoiceLoading.current = true;
+    setIsShowVoiceLoading(true);
+    await voiceChatService.endConversation();
+    setAudioVolume(1);
+    inputAudioLevelRef.current = 1;
+    outputAudioLevelRef.current = 1;
+    setChatStatus(ChatStatus.Init);
+    isVoiceLoading.current = false;
+    setIsShowVoiceLoading(false);
+    return true;
+  }, []);
+
   const handleVoiceChatTranscript = (role: string, text: string) => {
     const userId = role === 'USER' ? 1 : BOT_ID;
     if (
@@ -637,7 +656,6 @@ function ChatScreen(): React.JSX.Element {
 
       setMessages(previousMessages => [newMessage, ...previousMessages]);
     }
-    saveCurrentMessages();
   };
 
   return (
@@ -692,20 +710,12 @@ function ChatScreen(): React.JSX.Element {
               trigger(HapticFeedbackTypes.notificationWarning);
               if (isNovaSonic) {
                 // End voice chat conversation
-                if (isVoiceLoading.current) {
-                  return;
-                }
-                isVoiceLoading.current = true;
-                setIsShowVoiceLoading(true);
-                voiceChatService.endConversation().then(() => {
-                  setAudioVolume(1);
-                  inputAudioLevelRef.current = 1;
-                  outputAudioLevelRef.current = 1;
-                  setChatStatus(ChatStatus.Init);
-                  isVoiceLoading.current = false;
-                  setIsShowVoiceLoading(false);
-                  trigger(HapticFeedbackTypes.impactMedium);
+                endVoiceConversation().then(success => {
+                  if (success) {
+                    trigger(HapticFeedbackTypes.impactMedium);
+                  }
                 });
+                saveCurrentMessages();
               } else {
                 isCanceled.current = true;
                 controllerRef.current?.abort();
@@ -748,16 +758,14 @@ function ChatScreen(): React.JSX.Element {
               if (isNovaSonic) {
                 saveCurrentVoiceSystemPrompt(prompt);
                 if (chatStatus === ChatStatus.Running) {
-                  voiceChatService.endConversation().then(() => {
-                    setAudioVolume(1);
-                    inputAudioLevelRef.current = 1;
-                    outputAudioLevelRef.current = 1;
-                    setChatStatus(ChatStatus.Init);
-                  });
+                  endVoiceConversation().then();
                 }
               } else {
                 saveCurrentSystemPrompt(prompt);
               }
+            }}
+            onSwitchedToTextModel={() => {
+              endVoiceConversation().then();
             }}
             chatMode={modeRef.current}
             isShowSystemPrompt={showSystemPrompt}

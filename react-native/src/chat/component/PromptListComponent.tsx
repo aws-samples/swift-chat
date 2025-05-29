@@ -32,11 +32,13 @@ import { requestToken } from '../../api/bedrock-api.ts';
 
 interface PromptListProps {
   onSelectPrompt: (prompt: SystemPrompt | null) => void;
+  onSwitchedToTextModel: () => void;
 }
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 export const PromptListComponent: React.FC<PromptListProps> = ({
   onSelectPrompt,
+  onSwitchedToTextModel,
 }) => {
   const navigation = useNavigation<NavigationProp>();
   const [isNovaSonic, setIsNovaSonic] = useState(
@@ -73,12 +75,15 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
 
     if (event.event === 'modelChanged') {
       const newIsNovaSonic = getTextModel().modelId.includes('nova-sonic');
+      if (isNovaSonic && !newIsNovaSonic) {
+        onSwitchedToTextModel();
+      }
       setIsNovaSonic(newIsNovaSonic);
-      setSelectedPrompt(
-        newIsNovaSonic
-          ? getCurrentVoiceSystemPrompt()
-          : getCurrentSystemPrompt()
-      );
+      const newPrompt = newIsNovaSonic
+        ? getCurrentVoiceSystemPrompt()
+        : getCurrentSystemPrompt();
+      setSelectedPrompt(newPrompt);
+      onSelectPrompt(newPrompt);
       setPrompts(getSystemPrompts(newIsNovaSonic ? 'voice' : undefined));
       sendEventRef.current('');
       if (newIsNovaSonic) {
@@ -95,6 +100,9 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
         );
         setPrompts(newPrompts);
         saveSystemPrompts(newPrompts, promptType);
+        if (selectedPrompt?.id === newPrompt.id) {
+          onSelectPrompt(newPrompt);
+        }
       } else if (event.event === 'onPromptAdd') {
         const newPrompts = [...prompts, newPrompt];
         setPrompts(newPrompts);
@@ -104,7 +112,14 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
       }
       sendEventRef.current('');
     }
-  }, [event, prompts, isNovaSonic]);
+  }, [
+    event,
+    prompts,
+    isNovaSonic,
+    onSelectPrompt,
+    selectedPrompt?.id,
+    onSwitchedToTextModel,
+  ]);
 
   const handlePromptSelect = (prompt: SystemPrompt) => {
     if (isEditMode) {

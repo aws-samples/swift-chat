@@ -197,12 +197,11 @@ class NovaSonicService {
             
             // Ensure that SessionStart is the first event
             for event in events {
-                print("Send event:\n" + event)
                 sendEvent(eventJson: event)
             }
             
             // Wait until all preamble events are sent, then set isActive to true
-            isActive = true
+            setIsSessionActive(true)
             try await startAudioInput()
             
             // Move API call to background task to avoid blocking
@@ -224,7 +223,7 @@ class NovaSonicService {
                     // Start processing responses
                     await processResponses(from: outputStream)
                 } catch {
-                    isActive = false
+                    setIsSessionActive(false)
                     onError?(NovaSonicError.streamInitializationFailed("Failed to start session: \(error.localizedDescription)"))
                 }
             }
@@ -232,7 +231,7 @@ class NovaSonicService {
             print("after startSession")
             onStateChanged?("idle", nil)
         } catch {
-            isActive = false
+            setIsSessionActive(false)
             onError?(NovaSonicError.streamInitializationFailed("Failed to start session: \(error.localizedDescription)"))
             throw NovaSonicError.streamInitializationFailed("Failed to start session: \(error.localizedDescription)")
         }
@@ -308,19 +307,29 @@ class NovaSonicService {
         events.append(systemContentStartEvent)
         
         // System Prompt Text Input
-        let escapedPrompt = systemPrompt.replacingOccurrences(of: "\"", with: "\\\"")
-        let systemPromptEvent = """
-        {
-          "event": {
-            "textInput": {
-              "promptName": "\(promptName)",
-              "contentName": "\(contentName)",
-              "content": "\(escapedPrompt)",
-              "role": "SYSTEM"
+        let eventDict: [String: Any] = [
+            "event": [
+                "textInput": [
+                    "promptName": promptName,
+                    "contentName": contentName,
+                    "content": systemPrompt,
+                    "role": "SYSTEM"
+                ]
+            ]
+        ]
+        let systemPromptEvent: String
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: eventDict)
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                systemPromptEvent = jsonString
+            } else {
+                print("Error: Failed to convert JSON data to string")
+                systemPromptEvent = "{}"
             }
-          }
+        } catch {
+            print("Error serializing JSON: \(error)")
+            systemPromptEvent = "{}"
         }
-        """
         events.append(systemPromptEvent)
         
         // System Content End Event
@@ -565,7 +574,12 @@ class NovaSonicService {
             inputContinuation?.finish()
         }
         
-        isActive = false
+        setIsSessionActive(false)
         onStateChanged?("idle", nil)
+    }
+  
+    func setIsSessionActive(_ isSessionActive: Bool){
+        isActive = isSessionActive
+        audioManager.setIsActive(isActive)
     }
 }
