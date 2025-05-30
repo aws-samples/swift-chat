@@ -81,6 +81,10 @@ export class VoiceChatService {
             ) {
               errorMsg =
                 '\n**The system encountered an unexpected error during processing. Try your request again.**';
+            } else if (
+              errorMsg.includes('closed stream. HTTP/2 error code: NO_ERROR')
+            ) {
+              errorMsg = '\n**Stream Closed With NO_ERROR**';
             }
             this.onErrorCallback(errorMsg);
           }

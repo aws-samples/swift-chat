@@ -300,7 +300,7 @@ class AudioManager: NSObject {
             })
             
             // Start playback if not already playing
-            if !playerNode.isPlaying {
+            if !playerNode.isPlaying && audioEngine.isRunning {
                 playerNode.play()
             }
         } else {
