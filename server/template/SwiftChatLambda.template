@@ -262,15 +262,6 @@
           "FunctionUrl"
         ]
       }
-    },
-    "ClientRoleARN": {
-      "Description": "ARN of the role that can be assumed by clients",
-      "Value": {
-        "Fn::GetAtt": [
-          "ClientAccessRole",
-          "Arn"
-        ]
-      }
     }
   },
   "Conditions": {
