@@ -24,4 +24,8 @@ RCT_EXTERN_METHOD(startConversation:(NSString *)systemPrompt
 RCT_EXTERN_METHOD(endConversation:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(updateCredentials:(NSDictionary *)config
+                  withResolver:(RCTPromiseResolveBlock)resolve
+                  withRejecter:(RCTPromiseRejectBlock)reject)
+
 @end

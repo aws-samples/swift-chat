@@ -23,6 +23,10 @@ class ConversationManager {
     
     // MARK: - Initialization
     
+    func updateCredentials(region: String, accessKey: String, secretKey: String, sessionToken: String? = nil) {
+        novaSonicService?.updateCredentials(accessKey: accessKey, secretKey: secretKey, sessionToken: sessionToken)
+    }
+    
     func initialize(region: String, accessKey: String, secretKey: String, sessionToken: String? = nil) async throws {
         guard !isInitialized else { return }
         // Initialize NovaSonic service

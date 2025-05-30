@@ -356,46 +356,46 @@ class AudioManager: NSObject {
         if !audioSession.isInputAvailable {
             throw AudioError.recordingFailed("Audio input is not available")
         }
-        
-        // Get input node
-        let inputNode = audioEngine.inputNode
-        let inputFormat = inputNode.outputFormat(forBus: 0)
-        let bufferSize: AVAudioFrameCount = 1024
-        print("Start Listening...")
-        inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] (buffer, time) in
-            guard let self = self, self.isCapturing else { return }
-            if isPlaying, !allowInterruption {
-                if self.lastInputLevel != 1 {
-                    self.onAudioLevelChanged?("microphone", 1)
-                }
-                return
-            }
-            // Calculate audio level from input buffer
-            var level = self.calculateAudioLevel(buffer: buffer)
-            level = min(1, level * 1.5)
-            let normalizedLevel = self.normalizeToScale(level: level)
-            
-            // Only send callback if level changed
-            if normalizedLevel != self.lastInputLevel {
-                self.lastInputLevel = normalizedLevel
-                self.onAudioLevelChanged?("microphone", normalizedLevel)
-            }
-            // Convert buffer to target format (16kHz, 16-bit PCM)
-            if let convertedBuffer = self.convertInputBufferToNovaSonicFormat(buffer, sourceFormat: buffer.format) {
-                // Convert the converted buffer to Data
-                if let data = self.bufferToData(convertedBuffer) {
-                    // Send data through callback in background thread
-                    self.onAudioCaptured?(data)
-                }
-            }
-        }
         do {
+            // Get input node
+            let inputNode = audioEngine.inputNode
+            let inputFormat = inputNode.outputFormat(forBus: 0)
+            let bufferSize: AVAudioFrameCount = 1024
+            print("Start Listening...")
+            inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] (buffer, time) in
+                guard let self = self, self.isCapturing else { return }
+                if isPlaying, !allowInterruption {
+                    if self.lastInputLevel != 1 {
+                        self.onAudioLevelChanged?("microphone", 1)
+                    }
+                    return
+                }
+                // Calculate audio level from input buffer
+                var level = self.calculateAudioLevel(buffer: buffer)
+                level = min(1, level * 1.5)
+                let normalizedLevel = self.normalizeToScale(level: level)
+                
+                // Only send callback if level changed
+                if normalizedLevel != self.lastInputLevel {
+                    self.lastInputLevel = normalizedLevel
+                    self.onAudioLevelChanged?("microphone", normalizedLevel)
+                }
+                // Convert buffer to target format (16kHz, 16-bit PCM)
+                if let convertedBuffer = self.convertInputBufferToNovaSonicFormat(buffer, sourceFormat: buffer.format) {
+                    // Convert the converted buffer to Data
+                    if let data = self.bufferToData(convertedBuffer) {
+                        // Send data through callback in background thread
+                        self.onAudioCaptured?(data)
+                    }
+                }
+            }
             try audioEngine.start()
+            isCapturing = true
             print("Audio engine started successfully")
         } catch {
-            print("Failed to start audio engine: \(error)")
+            print("Failed to start audio engine or install tap: \(error)")
+            onError?(AudioError.recordingFailed("Recording error: \(error)"))
         }
-        isCapturing = true
     }
     
     // Convert device input buffer format(48kHz) to nova sonic target format (16kHz)

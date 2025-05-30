@@ -83,6 +83,14 @@ class NovaSonicService {
     
     // MARK: - Client Initialization
     
+    func updateCredentials(accessKey: String, secretKey: String, sessionToken: String?) {
+        self.accessKey = accessKey
+        self.secretKey = secretKey
+        self.sessionToken = sessionToken
+        client = nil
+        try? initializeClient()
+    }
+    
     func initializeClient() throws {
         guard !accessKey.isEmpty && !secretKey.isEmpty else {
             throw NovaSonicError.invalidCredentials

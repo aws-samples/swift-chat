@@ -118,6 +118,33 @@ class VoiceChatModule: RCTEventEmitter {
         }
     }
     
+    @objc(updateCredentials:withResolver:withRejecter:)
+    func updateCredentials(_ config: [String: Any],
+                           resolve: @escaping RCTPromiseResolveBlock,
+                           reject: @escaping RCTPromiseRejectBlock)
+    {
+        guard let region = config["region"] as? String,
+              let accessKey = config["accessKey"] as? String,
+              let secretKey = config["secretKey"] as? String
+        else {
+            reject("INVALID_CONFIG", "Invalid credential provided", nil)
+            return
+        }
+        
+        // Get sessionToken (optional)
+        let sessionToken = config["sessionToken"] as? String
+        
+        // Update credentials
+        conversationManager.updateCredentials(
+            region: region,
+            accessKey: accessKey,
+            secretKey: secretKey,
+            sessionToken: sessionToken
+        )
+        
+        resolve(["success": true])
+    }
+    
     // MARK: - Private Methods
     
     private func setupCallbacks() {

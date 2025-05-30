@@ -63,7 +63,7 @@ export class VoiceChatService {
         'onError',
         event => {
           if (this.onErrorCallback) {
-            let errorMsg = event.message ?? "";
+            let errorMsg = event.message ?? '';
             if (errorMsg.includes('The network connection was lost')) {
               errorMsg = '\n**The network connection was lost**';
             } else if (
@@ -74,6 +74,13 @@ export class VoiceChatService {
               errorMsg.includes('The operation couldn’t be completed.')
             ) {
               errorMsg = '\n**The operation couldn’t be completed.**';
+            } else if (
+              errorMsg.includes(
+                'The system encountered an unexpected error during processing. Try your request again.'
+              )
+            ) {
+              errorMsg =
+                '\n**The system encountered an unexpected error during processing. Try your request again.**';
             }
             this.onErrorCallback(errorMsg);
           }
@@ -98,6 +105,50 @@ export class VoiceChatService {
   }
 
   /**
+   * Get new AWS credentials configuration, requesting a new token if needed
+   * @param forceRefresh Whether to force a token refresh regardless of validity
+   * @returns Promise<object | null> Configuration object with AWS credentials or null if not available
+   */
+  private async getNewConfig(
+    forceRefresh: boolean = false
+  ): Promise<object | null> {
+    // Check if token is valid or force refresh is requested
+    if (forceRefresh || !isTokenValid()) {
+      // Request new token
+      const tokenResponse = await requestToken();
+      if (!tokenResponse) {
+        if (this.onErrorCallback) {
+          this.onErrorCallback('Failed to get credentials');
+        }
+        return null;
+      }
+      if (tokenResponse.error) {
+        if (this.onErrorCallback) {
+          this.onErrorCallback(tokenResponse.error);
+        }
+        return null;
+      }
+    }
+
+    // Get token info
+    const tokenInfo = getTokenInfo();
+    if (!tokenInfo) {
+      if (this.onErrorCallback) {
+        this.onErrorCallback('AWS credentials not available');
+      }
+      return null;
+    }
+
+    // Create and return config
+    return {
+      region: getRegion(),
+      accessKey: tokenInfo.accessKeyId,
+      secretKey: tokenInfo.secretAccessKey,
+      sessionToken: tokenInfo.sessionToken,
+    };
+  }
+
+  /**
    * Initialize voice chat module with AWS credentials
    * @returns Promise<boolean> True if initialization is successful
    */
@@ -114,39 +165,11 @@ export class VoiceChatService {
     }
 
     try {
-      // Check if token is valid, if not, request a new one
-      if (!isTokenValid()) {
-        const tokenResponse = await requestToken();
-        if (!tokenResponse) {
-          if (this.onErrorCallback) {
-            this.onErrorCallback('Failed to get credentials');
-          }
-          return false;
-        }
-        if (tokenResponse.error) {
-          if (this.onErrorCallback) {
-            this.onErrorCallback(tokenResponse.error);
-          }
-          return false;
-        }
-      }
-
-      // Get token info
-      const tokenInfo = getTokenInfo();
-      if (!tokenInfo) {
-        if (this.onErrorCallback) {
-          this.onErrorCallback('AWS credentials not available');
-        }
+      // Get credentials config (will request new token if needed)
+      const config = await this.getNewConfig();
+      if (!config) {
         return false;
       }
-
-      // Create config with token info
-      const config = {
-        region: getRegion(),
-        accessKey: tokenInfo.accessKeyId,
-        secretKey: tokenInfo.secretAccessKey,
-        sessionToken: tokenInfo.sessionToken,
-      };
 
       await VoiceChatModule.initialize(config);
       this.isInitialized = true;
@@ -179,6 +202,16 @@ export class VoiceChatService {
         const initSuccess = await this.initialize();
         if (!initSuccess) {
           return false;
+        }
+      } else {
+        // Check if token is valid
+        if (!isTokenValid()) {
+          // Get updated config and update credentials
+          const config = await this.getNewConfig();
+          if (!config) {
+            return false;
+          }
+          await VoiceChatModule.updateCredentials(config);
         }
       }
 
