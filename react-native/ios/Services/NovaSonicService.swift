@@ -41,11 +41,9 @@ class NovaSonicService {
     
     // Audio manager
     public var audioManager = AudioManager()
-    private var isCapturingAudio = false
     
     // Callbacks
     var onTranscriptReceived: ((String, String) -> Void)? // (role, text)
-    var onStateChanged: ((String, String?) -> Void)? // (state, error?)
     var onAudioReceived: ((Data) -> Void)?
     var onError: ((Error) -> Void)?
     
@@ -66,20 +64,20 @@ class NovaSonicService {
         audioManager.onAudioCaptured = { [weak self] audioData in
             guard let self = self else { return }
             // If active session, send to stream
-            if self.isActive && self.isCapturingAudio {
+            if self.isActive {
                 Task {
                     do {
                         try await self.sendAudioChunk(audioData: audioData)
                     } catch {
                         print("Error sending audio chunk: \(error)")
-                        self.onError?(NovaSonicError.audioProcessingError("Failed to send audio chunk: \(error.localizedDescription)"))
+                        self.onError?(NovaSonicError.audioProcessingError("Failed to send audio chunk: \(error)"))
                     }
                 }
             }
         }
         
         audioManager.onError = { [weak self] error in
-            self?.onError?(NovaSonicError.microphoneError("Audio manager error: \(error.localizedDescription)"))
+            self?.onError?(NovaSonicError.microphoneError("Audio manager error: \(error)"))
         }
     }
     
@@ -128,11 +126,9 @@ class NovaSonicService {
         
         do {
             try audioManager.startCapturing()
-            isCapturingAudio = true
-            onStateChanged?("listening", nil)
             print("Started audio input from microphone")
         } catch {
-            throw NovaSonicError.microphoneError("Failed to start audio input: \(error.localizedDescription)")
+            throw NovaSonicError.microphoneError("Failed to start audio input: \(error)")
         }
     }
     
@@ -148,27 +144,6 @@ class NovaSonicService {
         // Create audio input event
         let audioEvent = createAudioInputEvent(base64Audio: audioData.base64EncodedString())
         sendEvent(eventJson: audioEvent)
-    }
-    
-    func endAudioInput() async throws {
-        guard isActive else {
-            return
-        }
-        
-        // Stop microphone capture
-        if isCapturingAudio {
-            audioManager.stopCapturing()
-            isCapturingAudio = false
-        }
-        
-        // Send content end event
-        if inputContinuation != nil {
-            let contentEndEvent = createContentEndEvent()
-            sendEvent(eventJson: contentEndEvent)
-            print("Sent content end event")
-        }
-        
-        onStateChanged?("processing", nil)
     }
     
     // MARK: - Session Management
@@ -224,16 +199,15 @@ class NovaSonicService {
                     await processResponses(from: outputStream)
                 } catch {
                     setIsSessionActive(false)
-                    onError?(NovaSonicError.streamInitializationFailed("Failed to start session: \(error.localizedDescription)"))
+                    onError?(NovaSonicError.streamInitializationFailed("Failed to start session: \(error)"))
                 }
             }
             
             print("after startSession")
-            onStateChanged?("idle", nil)
         } catch {
             setIsSessionActive(false)
-            onError?(NovaSonicError.streamInitializationFailed("Failed to start session: \(error.localizedDescription)"))
-            throw NovaSonicError.streamInitializationFailed("Failed to start session: \(error.localizedDescription)")
+            onError?(NovaSonicError.streamInitializationFailed("Failed to start session: \(error)"))
+            throw NovaSonicError.streamInitializationFailed("Failed to start session: \(error)")
         }
     }
     
@@ -438,6 +412,9 @@ class NovaSonicService {
         
         do {
             for try await response in stream {
+                if !isActive {
+                  break
+                }
                 switch response {
                     case .chunk(let payload):
                         // Process response data
@@ -456,7 +433,6 @@ class NovaSonicService {
             print("🔍 NovaSonic: Stream completed normally. Total audio chunks: \(totalAudioChunks)")
         } catch {
             print("❌ NovaSonic: Stream error: \(error)")
-            onStateChanged?("error", "\(error)")
             onError?(NovaSonicError.streamError("Error processing responses: \(error)"))
         }
     }
@@ -476,30 +452,6 @@ class NovaSonicService {
             return
         }
         
-        // Log event type for debugging
-        let eventType = event.keys.first ?? "unknown"
-        if eventType != "audioOutput" {
-            print("eventType: " + eventType)
-        }
-        // Handle content start event
-        if let contentStart = event["contentStart"] as? [String: Any] {
-            if let role = contentStart["role"] as? String {
-                // Check for speculative content
-                var isSpeculative = false
-                if let additionalFields = contentStart["additionalModelFields"] as? String,
-                   let additionalData = additionalFields.data(using: String.Encoding.utf8),
-                   let additionalJson = try? JSONSerialization.jsonObject(with: additionalData) as? [String: Any],
-                   let generationStage = additionalJson["generationStage"] as? String,
-                   generationStage == "SPECULATIVE" {
-                    isSpeculative = true
-                }
-                
-                if role == "ASSISTANT" && !isSpeculative {
-                    onStateChanged?("speaking", nil)
-                }
-            }
-        }
-      
         if event["contentEnd"] is [String: Any] {
             audioManager.onContentEnd()
         }
@@ -546,36 +498,40 @@ class NovaSonicService {
     }
     
     // MARK: - Cleanup
+  
+    
+    func endAudioInput() async throws {
+        guard isActive else {
+            return
+        }
+        // Stop microphone capture
+        audioManager.stopCapturing()
+        
+        // Send content end event
+        if inputContinuation != nil {
+            let contentEndEvent = createContentEndEvent()
+            sendEvent(eventJson: contentEndEvent)
+            print("Sent content end event")
+        }
+    }
+  
     func endSession() async throws {
         guard isActive else {
             return
         }
-        
-        // Stop microphone capture if active
-        if isCapturingAudio {
-            audioManager.stopCapturing()
-            isCapturingAudio = false
-            print("Stopped microphone capture")
-        }
-        
-        // Close input stream if still active
+        // send end events
         if inputContinuation != nil {
-            // Send prompt end event
             let promptEndEvent = createPromptEndEvent()
             sendEvent(eventJson: promptEndEvent)
             print("Sent prompt end event")
-            
             // Send session end event
             let sessionEndEvent = createSessionEndEvent()
             sendEvent(eventJson: sessionEndEvent)
             print("Sent session end event")
-            
             // Close input stream
             inputContinuation?.finish()
         }
-        
         setIsSessionActive(false)
-        onStateChanged?("idle", nil)
     }
   
     func setIsSessionActive(_ isSessionActive: Bool){

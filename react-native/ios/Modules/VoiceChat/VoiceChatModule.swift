@@ -18,7 +18,6 @@ class VoiceChatModule: RCTEventEmitter {
     override func supportedEvents() -> [String] {
         return [
             "onTranscriptReceived",
-            "onStateChanged",
             "onError",
             "onAudioLevelChanged"
         ]
@@ -71,7 +70,7 @@ class VoiceChatModule: RCTEventEmitter {
                 }
             } catch {
                 DispatchQueue.main.async {
-                    reject("INIT_ERROR", "Failed to initialize: \(error.localizedDescription)", error)
+                    reject("INIT_ERROR", "Failed to initialize: \(error)", error)
                 }
             }
         }
@@ -94,7 +93,7 @@ class VoiceChatModule: RCTEventEmitter {
                 }
             } catch {
                 DispatchQueue.main.async {
-                    reject("CONVERSATION_ERROR", "Failed to start conversation: \(error.localizedDescription)", error)
+                    reject("CONVERSATION_ERROR", "Failed to start conversation: \(error)", error)
                 }
             }
         }
@@ -113,7 +112,7 @@ class VoiceChatModule: RCTEventEmitter {
                 }
             } catch {
                 DispatchQueue.main.async {
-                    reject("CONVERSATION_ERROR", "Failed to end conversation: \(error.localizedDescription)", error)
+                    reject("CONVERSATION_ERROR", "Failed to end conversation: \(error)", error)
                 }
             }
         }
@@ -122,21 +121,6 @@ class VoiceChatModule: RCTEventEmitter {
     // MARK: - Private Methods
     
     private func setupCallbacks() {
-        // Handle state changes
-        conversationManager.onStateChanged = { [weak self] state, errorMessage in
-            guard let self = self, self.hasListeners else { return }
-            
-            DispatchQueue.main.async {
-                self.sendEvent(
-                    withName: "onStateChanged",
-                    body: [
-                        "state": state.rawValue,
-                        "error": errorMessage
-                    ]
-                )
-            }
-        }
-        
         // Handle transcripts
         conversationManager.onTranscriptReceived = { [weak self] role, text in
             guard let self = self, self.hasListeners else { return }
@@ -160,7 +144,7 @@ class VoiceChatModule: RCTEventEmitter {
                 self.sendEvent(
                     withName: "onError",
                     body: [
-                        "message": error.localizedDescription
+                        "message": "\(error)"
                     ]
                 )
             }

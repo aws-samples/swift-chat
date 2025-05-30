@@ -159,12 +159,6 @@ function ChatScreen(): React.JSX.Element {
       (role, text) => {
         handleVoiceChatTranscript(role, text);
       },
-      // Handle state changed
-      (state, error) => {
-        if (error) {
-          console.log(state, error);
-        }
-      },
       // Handle error
       message => {
         if (getTextModel().modelId.includes('nova-sonic')) {

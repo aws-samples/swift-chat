@@ -20,7 +20,7 @@ class AudioManager: NSObject {
     // Microphone capture related
     private var isCapturing = false
   
-    private var isAudioContentEnd = false
+    private var isAudioContentEnd = true
     private var isPlaying = false
     private var isActive = false
 
@@ -68,8 +68,6 @@ class AudioManager: NSObject {
     ]
     
     // Callbacks
-    var onRecordingStateChanged: ((Bool) -> Void)?
-    var onPlaybackStateChanged: ((Bool) -> Void)?
     var onError: ((Error) -> Void)?
     var onAudioCaptured: ((Data) -> Void)?  // New callback for captured audio data
     var onAudioLevelChanged: ((String, Int) -> Void)? // Callback for audio level changes (source, level 1-10)
@@ -91,6 +89,10 @@ class AudioManager: NSObject {
     }
 
     func setIsActive(_ isActive: Bool) {
+        if !isActive {
+            isAudioContentEnd = true
+            onAudioEnd()
+        }
         self.isActive = isActive
     }
 
@@ -107,12 +109,10 @@ class AudioManager: NSObject {
         } catch {
             print("Failed to setup audio session: \(error)")
         }
-        
         // Setup audio engine with explicit format
         audioEngine.attach(playerNode)
         audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: iOSAudioFormat)
         audioEngine.connect(audioEngine.mainMixerNode, to: audioEngine.outputNode, format: nil)
-        
         // Enable voice processing (echo cancellation)
         do {
             try audioEngine.inputNode.setVoiceProcessingEnabled(true)
@@ -123,7 +123,6 @@ class AudioManager: NSObject {
         
         // Set player node volume higher (for playback volume)
         playerNode.volume = 2.0
-        
         // Pre-create converter for better performance
         converter = AVAudioConverter(from: outputFormat, to: iOSAudioFormat)
     }
@@ -145,7 +144,6 @@ class AudioManager: NSObject {
             }
             
             if recorder.record() {
-                onRecordingStateChanged?(true)
                 return fileURL
             } else {
                 throw AudioError.recordingFailed("Failed to start recording")
@@ -154,7 +152,7 @@ class AudioManager: NSObject {
             if let audioError = error as? AudioError {
                 throw audioError
             } else {
-                throw AudioError.recordingFailed("Recording error: \(error.localizedDescription)")
+                throw AudioError.recordingFailed("Recording error: \(error)")
             }
         }
     }
@@ -167,8 +165,6 @@ class AudioManager: NSObject {
         let fileURL = recorder.url
         recorder.stop()
         audioRecorder = nil
-        onRecordingStateChanged?(false)
-        
         return fileURL
     }
     
@@ -187,7 +183,6 @@ class AudioManager: NSObject {
     }
     
     // MARK: - Playback
-    
     // Helper method to convert nova sonic output format(24kHz) audio data to a buffer with iOS Format(48kHz)
     private func convertOutputAudioToBuffer(data: Data) -> AVAudioPCMBuffer? {
         // Create input buffer with 24kHz format (data.count / 2 because each sample is 2 bytes)
@@ -235,10 +230,6 @@ class AudioManager: NSObject {
     
     func playAudio(data: Data) throws {
         // Ensure engine is running
-        if !isActive {
-          print("playAudio skipped, session not Active")
-          return
-        }
         isPlaying = true
         isAudioContentEnd = false
 
@@ -318,45 +309,12 @@ class AudioManager: NSObject {
         }
     }
   
-    func onAudioEnd() {
-        isPlaying = false
-        lastOutputLevel = 1
-        onAudioLevelChanged?("speaker", 1)
-    }
-  
-    func onContentEnd() {
-        self.isAudioContentEnd = true
-    }
-    
-    func stopPlayback() {
-        audioQueue.async { [weak self] in
-            guard let self = self else { return }
-            
-            // Clear queue
-            self.audioDataQueue.removeAll()
-            self.isProcessingQueue = false
-            
-            if self.playerNode.isPlaying {
-                self.playerNode.stop()
-            }
-            self.onPlaybackStateChanged?(false)
-        }
-    }
-    
-    func deactivateAudioSession() throws {
-        do {
-            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-            throw AudioError.audioSessionFailed("Failed to deactivate audio session: \(error.localizedDescription)")
-        }
-    }
-    
     func readAudioChunk(from url: URL, chunkSize: Int = 1024) -> Data? {
         do {
             let data = try Data(contentsOf: url)
             return data
         } catch {
-            onError?(AudioError.playbackFailed("Failed to read audio file: \(error.localizedDescription)"))
+            onError?(AudioError.playbackFailed("Failed to read audio file: \(error)"))
             return nil
         }
     }
@@ -368,9 +326,7 @@ class AudioManager: NSObject {
             audioEngine.inputNode.removeTap(onBus: 0)
             audioEngine.stop()
         }
-        
         setupAudio()
-        print("Prepare capture audio")
         // Check microphone permission
         switch audioSession.recordPermission {
             case .denied:
@@ -408,7 +364,6 @@ class AudioManager: NSObject {
         print("Start Listening...")
         inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] (buffer, time) in
             guard let self = self, self.isCapturing else { return }
-            
             if isPlaying, !allowInterruption {
                 if self.lastInputLevel != 1 {
                     self.onAudioLevelChanged?("microphone", 1)
@@ -441,7 +396,6 @@ class AudioManager: NSObject {
             print("Failed to start audio engine: \(error)")
         }
         isCapturing = true
-        onRecordingStateChanged?(true)
     }
     
     // Convert device input buffer format(48kHz) to nova sonic target format (16kHz)
@@ -477,15 +431,49 @@ class AudioManager: NSObject {
         return outputBuffer
     }
     
+    // MARK: - Handle End Conversation
     func stopCapturing() {
         guard isCapturing else { return }
         
         // Remove tap
         audioEngine.inputNode.removeTap(onBus: 0)
         isCapturing = false
-        onRecordingStateChanged?(false)
         audioEngine.stop()
         print("Microphone capturing stopped")
+    }
+    
+    func onAudioEnd() {
+        isPlaying = false
+        lastOutputLevel = 1
+        onAudioLevelChanged?("speaker", 1)
+    }
+
+    func onContentEnd() {
+        self.isAudioContentEnd = true
+    }
+    
+    func stopPlayback() {
+      // Clear queue
+      audioQueue.async { [weak self] in
+          guard let self = self else { return }
+          
+          // Clear queue
+          self.audioDataQueue.removeAll()
+          self.isProcessingQueue = false
+          
+          if self.playerNode.isPlaying {
+              self.playerNode.stop()
+          }
+          print("Audio playback stopped")
+      }
+    }
+    
+    func deactivateAudioSession() throws {
+        do {
+            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            throw AudioError.audioSessionFailed("Failed to deactivate audio session: \(error)")
+        }
     }
     
     // Calculate audio level from buffer (0.0-1.0 range)
@@ -548,15 +536,13 @@ extension AudioManager: AVAudioRecorderDelegate {
         if !flag {
             onError?(AudioError.recordingFailed("Recording finished unsuccessfully"))
         }
-        onRecordingStateChanged?(false)
     }
     
     func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         if let error = error {
-            onError?(AudioError.recordingFailed("Recording error: \(error.localizedDescription)"))
+            onError?(AudioError.recordingFailed("Recording error: \(error)"))
         } else {
             onError?(AudioError.recordingFailed("Unknown recording error occurred"))
         }
-        onRecordingStateChanged?(false)
     }
 }

@@ -18,16 +18,10 @@ const voiceChatEmitter = VoiceChatModule
   ? new NativeEventEmitter(VoiceChatModule)
   : null;
 
-type ConversationState = 'idle' | 'listening' | 'speaking' | 'error';
-
 export class VoiceChatService {
   private isInitialized = false;
   private subscriptions: EmitterSubscription[] = [];
   private onTranscriptReceivedCallback?: (role: string, text: string) => void;
-  private onStateChangedCallback?: (
-    state: ConversationState,
-    error?: string
-  ) => void;
   private onErrorCallback?: (message: string) => void;
   private onAudioLevelChangedCallback?: (source: string, level: number) => void;
 
@@ -38,18 +32,15 @@ export class VoiceChatService {
   /**
    * Set callbacks for voice chat events
    * @param onTranscriptReceived Callback when transcript is received
-   * @param onStateChanged Callback when state changes
    * @param onError Callback when error occurs
    * @param onAudioLevelChanged Callback when audio level changes
    */
   public setCallbacks(
     onTranscriptReceived?: (role: string, text: string) => void,
-    onStateChanged?: (state: ConversationState, error?: string) => void,
     onError?: (message: string) => void,
     onAudioLevelChanged?: (source: string, level: number) => void
   ) {
     this.onTranscriptReceivedCallback = onTranscriptReceived;
-    this.onStateChangedCallback = onStateChanged;
     this.onErrorCallback = onError;
     this.onAudioLevelChangedCallback = onAudioLevelChanged;
   }
@@ -68,31 +59,19 @@ export class VoiceChatService {
         }
       );
 
-      const stateSubscription = voiceChatEmitter.addListener(
-        'onStateChanged',
-        event => {
-          if (this.onStateChangedCallback) {
-            this.onStateChangedCallback(
-              event.state as ConversationState,
-              event.error
-            );
-          }
-        }
-      );
-
       const errorSubscription = voiceChatEmitter.addListener(
         'onError',
         event => {
           if (this.onErrorCallback) {
-            let errorMsg = event.message;
-            if (event.message.includes('The network connection was lost')) {
+            let errorMsg = event.message ?? "";
+            if (errorMsg.includes('The network connection was lost')) {
               errorMsg = '\n**The network connection was lost**';
             } else if (
-              event.message.includes('Timed out waiting for input events')
+              errorMsg.includes('Timed out waiting for input events')
             ) {
               errorMsg = '\n**Timed out waiting for input events**';
             } else if (
-              event.message.includes('The operation couldn’t be completed.')
+              errorMsg.includes('The operation couldn’t be completed.')
             ) {
               errorMsg = '\n**The operation couldn’t be completed.**';
             }
@@ -112,7 +91,6 @@ export class VoiceChatService {
 
       this.subscriptions = [
         transcriptSubscription,
-        stateSubscription,
         errorSubscription,
         audioLevelSubscription,
       ];
