@@ -108,7 +108,8 @@ Remember: ALWAYS start with a score after the user speaks`,
   {
     id: -6,
     name: 'Story',
-    prompt: 'You are a storytelling expert. Please first ask the user what type of story they would like to hear, and then tell that story with emotion and expressiveness.',
+    prompt:
+      'You are a storytelling expert. Please first ask the user what type of story they would like to hear, and then tell that story with emotion and expressiveness.',
     includeHistory: true,
     promptType: 'voice',
     allowInterruption: true,
