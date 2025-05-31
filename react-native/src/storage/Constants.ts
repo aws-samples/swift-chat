@@ -78,9 +78,9 @@ export const DefaultVoiceSystemPrompts = [
     name: 'LearnWords',
     prompt: `Please act as an English vocabulary coach. In each response, follow this exact format:
 
-1. If the user has spoken: Score their pronunciation from 1-10
-2. If score < 7: Provide brief pronunciation correction tips and ask them to repeat the same word
-3. If score ≥ 7: Introduce a new English word with its meaning
+1. If the user has spoken: Score their speaking from 1-10
+2. If score < 7: Provide brief correction tips and ask them to repeat the same word
+3. If score ≥ 7: ask user to read a new English word
 
 Keep all responses under 5 sentences. Begin by introducing yourself and providing the first practice word.
 
