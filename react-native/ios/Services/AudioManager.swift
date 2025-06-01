@@ -272,8 +272,8 @@ class AudioManager: NSObject {
         
         isProcessingQueue = true
         
-        // Process up to 10 audio data blocks at once
-        let batchSize = min(10, audioDataQueue.count)
+        // Process up to 20 audio data blocks at once
+        let batchSize = min(20, audioDataQueue.count)
         var combinedData = Data()
         // Combine multiple audio data blocks
         for _ in 0..<batchSize {
@@ -359,10 +359,13 @@ class AudioManager: NSObject {
         do {
             // Get input node
             let inputNode = audioEngine.inputNode
-            let inputFormat = inputNode.outputFormat(forBus: 0)
+            let singleChannelFormat = AVAudioFormat(
+                standardFormatWithSampleRate: inputNode.outputFormat(forBus: 0).sampleRate,
+                channels: 1
+            )
             let bufferSize: AVAudioFrameCount = 1024
             print("Start Listening...")
-            inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { [weak self] (buffer, time) in
+            inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: singleChannelFormat) { [weak self] (buffer, time) in
                 guard let self = self, self.isCapturing else { return }
                 if isPlaying, !allowInterruption {
                     if self.lastInputLevel != 1 {
