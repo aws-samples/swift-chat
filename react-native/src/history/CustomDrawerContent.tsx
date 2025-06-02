@@ -130,7 +130,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[isMac ? styles.macContainer : styles.safeArea]}>
       <FlatList
         data={groupChatHistory}
         style={styles.flatList}
@@ -202,7 +202,11 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
                   setShowDialog(true);
                   deleteIdRef.current = item.id;
                 }}
-                style={[styles.touch, isSelected && styles.touchSelected]}>
+                style={[
+                  styles.touch,
+                  isSelected &&
+                    (isMac ? styles.macTouchSelected : styles.touchSelected),
+                ]}>
                 <Text numberOfLines={1} style={styles.title}>
                   {item.title}
                 </Text>
@@ -248,6 +252,10 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  macContainer: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
+  },
   settingsTouch: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -288,6 +296,9 @@ const styles = StyleSheet.create({
   touchSelected: {
     backgroundColor: '#F5F5F5',
   },
+  macTouchSelected: {
+    backgroundColor: '#ECECEC',
+  },
   sectionContainer: {
     paddingHorizontal: 8,
     marginHorizontal: 12,
@@ -305,17 +316,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     color: 'black',
-  },
-  rightAction: {
-    backgroundColor: 'red',
-    justifyContent: 'center',
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  actionText: {
-    color: 'white',
-    fontWeight: 'bold',
-    padding: 20,
   },
 });
 
