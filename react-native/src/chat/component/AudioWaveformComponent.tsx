@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
-  Easing,
-  useAnimatedStyle,
   useSharedValue,
+  useAnimatedStyle,
   withTiming,
+  withSequence,
+  Easing,
 } from 'react-native-reanimated';
 import { isMac } from '../../App.tsx';
 
@@ -12,13 +13,19 @@ interface AudioWaveformProps {
   volume?: number; // Volume level between 1-10
 }
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const minWidth = screenWidth > screenHeight ? screenHeight : screenWidth;
+const isPad = minWidth > 434;
+
 const AudioWaveformComponent: React.FC<AudioWaveformProps> = ({
   volume = 1,
 }) => {
   const [colorOffset, setColorOffset] = useState(0);
-  const barCount = isMac ? 48 : 32;
-  // Single shared value for all bars
-  const barHeights = useSharedValue(Array(barCount).fill(0.3));
+  const barCountRef = useRef(isMac || isPad ? 48 : 32);
+  const barValues = Array(barCountRef.current)
+    .fill(0)
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    .map(() => useSharedValue(0.3));
 
   // Gradient colors from blue to green to purple
   const gradientColors = [
@@ -83,18 +90,16 @@ const AudioWaveformComponent: React.FC<AudioWaveformProps> = ({
 
   // Update waveform when volume changes
   useEffect(() => {
-    const newHeights = [...barHeights.value];
-
     // Special handling for volume=1 (silent or not recording)
     if (volume === 1) {
-      const minHeight = 0.05;
-      for (let i = 0; i < barCount; i++) {
-        newHeights[i] = minHeight;
-      }
+      barValues.forEach(bar => {
+        // Fixed low height for all bars
+        const minHeight = 0.05;
 
-      barHeights.value = withTiming(newHeights, {
-        duration: 300,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        bar.value = withTiming(minHeight, {
+          duration: 300,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        });
       });
       return;
     }
@@ -102,65 +107,54 @@ const AudioWaveformComponent: React.FC<AudioWaveformProps> = ({
     // For volume > 1, animate based on volume level
     const baseIntensity = volume / 10;
 
-    // First phase: set random heights for each bar
-    for (let i = 0; i < barCount; i++) {
+    barValues.forEach((bar, index) => {
       const centerEffect =
-        1 - Math.abs((i - barCount / 2) / (barCount / 2)) * 0.5;
-      newHeights[i] =
+        1 -
+        Math.abs(
+          (index - barCountRef.current / 2) / (barCountRef.current / 2)
+        ) *
+          0.5;
+      const randomHeight =
         (Math.random() * 0.6 + 0.2) * baseIntensity * centerEffect;
-    }
+      const delay = index * 10;
 
-    // Apply first phase animation with longer duration
-    barHeights.value = withTiming(newHeights, {
-      duration: 280,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      bar.value = withSequence(
+        withTiming(randomHeight, {
+          duration: 180 + delay,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        }),
+        withTiming(0.05 + Math.random() * 0.15 * baseIntensity, {
+          duration: 220 + delay,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        })
+      );
     });
+  }, [barValues, volume]);
 
-    // Use setTimeout to execute second phase animation
-    setTimeout(() => {
-      const secondPhaseHeights = [...barHeights.value];
-
-      for (let i = 0; i < barCount; i++) {
-        secondPhaseHeights[i] = 0.05 + Math.random() * 0.15 * baseIntensity;
-      }
-
-      // Apply second phase animation with longer duration
-      barHeights.value = withTiming(secondPhaseHeights, {
-        duration: 400,
-        easing: Easing.bezier(0.3, 0.1, 0.4, 1),
-      });
-    }, 500);
-  }, [barHeights, volume, barCount]);
-
-  // Create a function that returns animated style based on index
-  const getAnimatedStyle = (index: number) => {
+  const animatedBarStyles = barValues.map(bar =>
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useAnimatedStyle(() => ({
-      height: `${barHeights.value[index] * 100}%`,
-      opacity: 0.7 + barHeights.value[index] * 0.3,
-    }));
-  };
+    useAnimatedStyle(() => ({
+      height: `${bar.value * 100}%`,
+      opacity: 0.7 + bar.value * 0.3,
+    }))
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.waveformContainer}>
-        {Array(barCount)
-          .fill(0)
-          .map((_, index) => (
-            <Animated.View
-              key={index}
-              style={[
-                styles.bar,
-                getAnimatedStyle(index),
-                {
-                  backgroundColor:
-                    gradientColors[
-                      (index + colorOffset) % gradientColors.length
-                    ],
-                },
-              ]}
-            />
-          ))}
+        {barValues.map((_, index) => (
+          <Animated.View
+            key={index}
+            style={[
+              styles.bar,
+              animatedBarStyles[index],
+              {
+                backgroundColor:
+                  gradientColors[(index + colorOffset) % gradientColors.length],
+              },
+            ]}
+          />
+        ))}
       </View>
     </View>
   );
