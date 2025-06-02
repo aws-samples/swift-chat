@@ -152,6 +152,7 @@ function SettingsScreen(): React.JSX.Element {
     let openAICompatModelList: Model[] = [];
     if (openAICompatModels.length > 0) {
       openAICompatModelList = openAICompatModels.split(',').map(modelId => {
+        modelId = modelId.trim().replace(/(\r\n|\n|\r)/gm, '');
         const parts = modelId.split('/');
         return {
           modelId: modelId.trim(),
@@ -227,7 +228,7 @@ function SettingsScreen(): React.JSX.Element {
     if (apiUrl === getApiUrl() && apiKey === getApiKey()) {
       return;
     }
-    saveKeys(apiUrl, apiKey);
+    saveKeys(apiUrl.trim(), apiKey.trim());
     fetchAndSetModelNames().then();
     fetchUpgradeInfo().then();
   }, [apiUrl, apiKey, fetchAndSetModelNames]);
@@ -398,16 +399,6 @@ function SettingsScreen(): React.JSX.Element {
               placeholder="Enter OpenAI API Key"
               secureTextEntry={true}
             />
-            {apiKey.length > 0 && apiUrl.length > 0 && (
-              <View style={styles.proxySwitchContainer}>
-                <Text style={styles.proxyLabel}>Use Proxy</Text>
-                <Switch
-                  style={[isMac ? styles.switch : {}]}
-                  value={openAIProxyEnabled}
-                  onValueChange={toggleOpenAIProxy}
-                />
-              </View>
-            )}
             <Text style={[styles.label, styles.middleLabel]}>
               OpenAI Compatible
             </Text>
@@ -431,7 +422,18 @@ function SettingsScreen(): React.JSX.Element {
               onChangeText={setOpenAICompatModels}
               placeholder="Enter Model IDs, split by comma"
               secureTextEntry={false}
+              numberOfLines={4}
             />
+            {apiKey.length > 0 && apiUrl.length > 0 && (
+              <View style={styles.proxySwitchContainer}>
+                <Text style={styles.proxyLabel}>Use Proxy</Text>
+                <Switch
+                  style={[isMac ? styles.switch : {}]}
+                  value={openAIProxyEnabled}
+                  onValueChange={toggleOpenAIProxy}
+                />
+              </View>
+            )}
           </>
         );
       default:
@@ -685,7 +687,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   thinkingSwitchContainer: {
     flexDirection: 'row',

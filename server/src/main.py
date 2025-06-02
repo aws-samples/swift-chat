@@ -291,24 +291,31 @@ async def upgrade(request: UpgradeRequest,
     return {"needUpgrade": need_upgrade, "version": new_version, "url": url}
 
 
-@app.post("/api/gpt")
-async def converse_gpt(request: GPTRequest, raw_request: FastAPIRequest):
+@app.post("/api/openai")
+async def converse_openai(request: GPTRequest, raw_request: FastAPIRequest):
     auth_header = raw_request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid auth header")
     openai_api_key = auth_header.split(" ")[1]
+    request_url = raw_request.headers.get("request_url")
+    if not request_url or not request_url.startswith("http"):
+        raise HTTPException(status_code=401, detail="Invalid request url")
+    http_referer = raw_request.headers.get("HTTP-Referer")
+    x_title = raw_request.headers.get("X-Title")
 
     async def event_generator():
         async with httpx.AsyncClient() as client:
             try:
                 async with client.stream(
                         "POST",
-                        "https://api.openai.com/v1/chat/completions",
+                        request_url,
                         json=request.model_dump(),
                         headers={
                             "Authorization": f"Bearer {openai_api_key}",
                             "Content-Type": "application/json",
-                            "Accept": "text/event-stream"
+                            "Accept": "text/event-stream",
+                            **({"HTTP-Referer": http_referer} if http_referer else {}),
+                            **({"X-Title": x_title} if x_title else {})
                         }
                 ) as response:
                     async for line in response.aiter_bytes():

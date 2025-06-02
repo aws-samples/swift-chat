@@ -14,6 +14,7 @@ interface CustomTextInputProps {
   onChangeText: (text: string) => void;
   placeholder: string;
   secureTextEntry?: boolean;
+  numberOfLines?: number;
 }
 
 const CustomTextInput: React.FC<CustomTextInputProps> = ({
@@ -22,6 +23,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   onChangeText,
   placeholder,
   secureTextEntry = false,
+  numberOfLines = 1,
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -34,8 +36,14 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, secureTextEntry && styles.inputPadding]}
+          style={{
+            ...styles.input,
+            ...(secureTextEntry && styles.inputPadding),
+            ...(numberOfLines > 1 && { lineHeight: 22 }),
+          }}
           value={value}
+          numberOfLines={numberOfLines}
+          multiline={numberOfLines > 1}
           onChangeText={onChangeText}
           placeholder={placeholder}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
@@ -81,11 +89,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   input: {
-    height: 44,
+    minHeight: 44,
+    maxHeight: 160,
     borderColor: 'gray',
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 10,
+    paddingVertical: 12,
     color: 'black',
     flex: 1,
   },

@@ -55,6 +55,10 @@ export const invokeOpenAIWithCallBack = async (
     signal: controller.signal,
     reactNative: { textStreaming: true },
   };
+  const requestUrl = getRequestURL();
+  if (requestUrl.length > 0) {
+    options.headers['request_url' as keyof typeof options.headers] = requestUrl;
+  }
   if (isOpenRouter) {
     options.headers['HTTP-Referer' as keyof typeof options.headers] =
       GITHUB_LINK;
@@ -209,6 +213,9 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
       if (parsedData.choices[0]?.delta?.reasoning_content) {
         reason += parsedData.choices[0].delta.reasoning_content;
       }
+      if (parsedData.choices[0]?.delta?.reasoning) {
+        reason += parsedData.choices[0].delta.reasoning;
+      }
 
       if (parsedData.usage) {
         usage = {
@@ -221,17 +228,10 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
         };
       }
     } catch (error) {
-      if (lastChunk.length > 0) {
-        return { error: error + cleanedData };
-      } else if (reason === '' && content === '') {
-        if (dataChunk === 'data: ') {
-          return { reason, content, dataChunk, usage };
-        }
-        return { error: chunk };
-      }
-      if (reason || content) {
-        return { reason, content, dataChunk, usage };
-      }
+      reason = '';
+      content = '';
+      dataChunk = lastChunk + chunk;
+      return { reason, content, dataChunk, usage };
     }
   }
   return { reason, content, usage };
@@ -242,6 +242,7 @@ type ChatResponse = {
     delta: {
       content: string;
       reasoning_content: string;
+      reasoning: string;
     };
   }>;
   usage?: {
@@ -324,14 +325,28 @@ function isOpenRouterRequest(): boolean {
   return getOpenAICompatApiURL().startsWith('https://openrouter.ai/api');
 }
 
-function getApiURL(): string {
+function getRequestURL(): string {
   if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
     return getOpenAICompatApiURL() + '/chat/completions';
+  } else if (getTextModel().modelId.includes('deepseek')) {
+    return '';
+  } else {
+    return 'https://api.openai.com/v1/chat/completions';
+  }
+}
+
+function getApiURL(): string {
+  if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
+    if (getOpenAIProxyEnabled()) {
+      return (isDev ? 'http://localhost:8080' : getApiUrl()) + '/api/openai';
+    } else {
+      return getOpenAICompatApiURL() + '/chat/completions';
+    }
   } else if (getTextModel().modelId.includes('deepseek')) {
     return 'https://api.deepseek.com/chat/completions';
   } else {
     if (getOpenAIProxyEnabled()) {
-      return (isDev ? 'http://localhost:8080' : getApiUrl()) + '/api/gpt';
+      return (isDev ? 'http://localhost:8080' : getApiUrl()) + '/api/openai';
     } else {
       return 'https://api.openai.com/v1/chat/completions';
     }
