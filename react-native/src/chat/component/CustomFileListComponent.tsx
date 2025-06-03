@@ -275,6 +275,8 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
         ...styles.containerStyle,
         ...(mode === DisplayMode.Display && {
           paddingHorizontal: 0,
+          width: files.length > 3 ? undefined : '100%',
+          justifyContent: 'flex-end',
         }),
       }}
       showsHorizontalScrollIndicator={false}

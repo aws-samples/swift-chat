@@ -113,6 +113,21 @@ export class VoiceChatService {
    * @returns Promise<object | null> Configuration object with AWS credentials or null if not available
    */
   private async getNewConfig(): Promise<object | null> {
+    // Request new token
+    const tokenResponse = await requestToken();
+    console.log('new token:', tokenResponse);
+    if (!tokenResponse) {
+      if (this.onErrorCallback) {
+        this.onErrorCallback('Failed to get credentials');
+      }
+      return null;
+    }
+    if (tokenResponse.error) {
+      if (this.onErrorCallback) {
+        this.onErrorCallback(tokenResponse.error);
+      }
+      return null;
+    }
     // Get token info
     const tokenInfo = getTokenInfo();
     if (!tokenInfo) {

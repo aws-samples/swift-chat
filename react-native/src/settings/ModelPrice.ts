@@ -94,6 +94,18 @@ export const ModelPrice: ModelPriceType = {
       inputTokenPrice: 0.00055,
       outputTokenPrice: 0.00219,
     },
+    'GPT-4.1': {
+      inputTokenPrice: 0.002,
+      outputTokenPrice: 0.008,
+    },
+    'GPT-4.1-mini': {
+      inputTokenPrice: 0.0004,
+      outputTokenPrice: 0.0016,
+    },
+    'GPT-4.1-nano': {
+      inputTokenPrice: 0.0001,
+      outputTokenPrice: 0.0004,
+    },
     'GPT-4o': {
       inputTokenPrice: 0.0025,
       outputTokenPrice: 0.01,

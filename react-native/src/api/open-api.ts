@@ -25,7 +25,7 @@ type CallbackFunction = (
   usage?: Usage,
   reasoning?: string
 ) => void;
-const OpenRouterTag = ': OPENROUTER PROCESSING\n\n';
+const OpenRouterTag = ': OPENROUTER PROCESSING';
 
 export const invokeOpenAIWithCallBack = async (
   messages: BedrockMessage[],
@@ -55,9 +55,10 @@ export const invokeOpenAIWithCallBack = async (
     signal: controller.signal,
     reactNative: { textStreaming: true },
   };
-  const requestUrl = getRequestURL();
-  if (requestUrl.length > 0) {
-    options.headers['request_url' as keyof typeof options.headers] = requestUrl;
+  const proxyRequestUrl = getProxyRequestURL();
+  if (proxyRequestUrl.length > 0) {
+    options.headers['request_url' as keyof typeof options.headers] =
+      proxyRequestUrl;
   }
   if (isOpenRouter) {
     options.headers['HTTP-Referer' as keyof typeof options.headers] =
@@ -93,7 +94,7 @@ export const invokeOpenAIWithCallBack = async (
         try {
           const { done, value } = await reader.read();
           const chunk = decoder.decode(value, { stream: true });
-          if (isOpenRouter && chunk === OpenRouterTag) {
+          if (isOpenRouter && chunk === OpenRouterTag + '\n\n') {
             continue;
           }
           const parsed = parseStreamData(chunk, lastChunk);
@@ -182,18 +183,18 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
     if (dataChunk[0] === '\n') {
       dataChunk = dataChunk.slice(1);
     }
-    if (!dataChunk.startsWith('data')) {
-      continue;
-    }
     const cleanedData = dataChunk.replace(/^data: /, '');
     if (cleanedData.trim() === '[DONE]') {
+      continue;
+    }
+    if (cleanedData.trim() === OpenRouterTag) {
       continue;
     }
 
     try {
       const parsedData: ChatResponse = JSON.parse(cleanedData);
       if (parsedData.error) {
-        let errorMessage = parsedData.error?.message ?? '';
+        let errorMessage = '**Error:** ' + (parsedData.error?.message ?? '');
         if (parsedData.error?.metadata?.raw) {
           errorMessage += ':\n' + parsedData.error.metadata.raw;
         }
@@ -228,10 +229,17 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
         };
       }
     } catch (error) {
-      reason = '';
-      content = '';
-      dataChunk = lastChunk + chunk;
-      return { reason, content, dataChunk, usage };
+      if (lastChunk.length > 0) {
+        return { reason, content, dataChunk, usage };
+      } else if (reason === '' && content === '') {
+        if (dataChunk === 'data: ') {
+          return { reason, content, dataChunk, usage };
+        }
+        return { error: chunk };
+      }
+      if (reason || content) {
+        return { reason, content, dataChunk, usage };
+      }
     }
   }
   return { reason, content, usage };
@@ -322,10 +330,13 @@ function getApiKey(): string {
 }
 
 function isOpenRouterRequest(): boolean {
-  return getOpenAICompatApiURL().startsWith('https://openrouter.ai/api');
+  return (
+    getTextModel().modelTag === ModelTag.OpenAICompatible &&
+    getOpenAICompatApiURL().startsWith('https://openrouter.ai/api')
+  );
 }
 
-function getRequestURL(): string {
+function getProxyRequestURL(): string {
   if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
     return getOpenAICompatApiURL() + '/chat/completions';
   } else if (getTextModel().modelId.includes('deepseek')) {

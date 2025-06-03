@@ -19,6 +19,17 @@ const RegionList = [
 export const DefaultRegion = 'us-west-2';
 
 export const GPTModels = [
+  { modelName: 'GPT-4.1', modelId: 'gpt-4.1', modelTag: ModelTag.OpenAI },
+  {
+    modelName: 'GPT-4.1-mini',
+    modelId: 'gpt-4.1-mini',
+    modelTag: ModelTag.OpenAI,
+  },
+  {
+    modelName: 'GPT-4.1-nano',
+    modelId: 'gpt-4.1-nano',
+    modelTag: ModelTag.OpenAI,
+  },
   { modelName: 'GPT-4o', modelId: 'gpt-4o', modelTag: ModelTag.OpenAI },
   {
     modelName: 'GPT-4o mini',
