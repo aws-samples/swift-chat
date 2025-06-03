@@ -97,7 +97,9 @@ function ChatScreen(): React.JSX.Element {
   const tapIndex = route.params?.tapIndex;
   const mode = route.params?.mode ?? currentMode;
   const modeRef = useRef(mode);
-  const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
+  const isNovaSonic =
+    getTextModel().modelId.includes('nova-sonic') &&
+    modeRef.current === ChatMode.Text;
 
   const [messages, setMessages] = useState<SwiftChatMessage[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
@@ -133,6 +135,23 @@ function ChatScreen(): React.JSX.Element {
   const isVoiceLoading = useRef(false);
   const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
 
+  // End voice conversation and reset audio levels
+  const endVoiceConversation = useCallback(async () => {
+    if (isVoiceLoading.current) {
+      return Promise.resolve(false);
+    }
+    isVoiceLoading.current = true;
+    setIsShowVoiceLoading(true);
+    await voiceChatService.endConversation();
+    setAudioVolume(1);
+    inputAudioLevelRef.current = 1;
+    outputAudioLevelRef.current = 1;
+    setChatStatus(ChatStatus.Init);
+    isVoiceLoading.current = false;
+    setIsShowVoiceLoading(false);
+    return true;
+  }, []);
+
   // update refs value with state
   useEffect(() => {
     messagesRef.current = messages;
@@ -163,10 +182,7 @@ function ChatScreen(): React.JSX.Element {
       message => {
         if (getTextModel().modelId.includes('nova-sonic')) {
           handleVoiceChatTranscript('ASSISTANT', message);
-          setAudioVolume(1);
-          inputAudioLevelRef.current = 1;
-          outputAudioLevelRef.current = 1;
-          setChatStatus(ChatStatus.Init);
+          endVoiceConversation().then();
           saveCurrentMessages();
           console.log('Voice chat error:', message);
         }
@@ -190,7 +206,7 @@ function ChatScreen(): React.JSX.Element {
     return () => {
       voiceChatService.cleanup();
     };
-  }, []);
+  }, [endVoiceConversation]);
 
   // start new chat
   const startNewChat = useRef(
@@ -601,24 +617,6 @@ function ChatScreen(): React.JSX.Element {
       return checkFileNumberLimit(prevFiles, files);
     });
   };
-
-  // Handle voice chat transcript
-  // End voice conversation and reset audio levels
-  const endVoiceConversation = useCallback(async () => {
-    if (isVoiceLoading.current) {
-      return Promise.resolve(false);
-    }
-    isVoiceLoading.current = true;
-    setIsShowVoiceLoading(true);
-    await voiceChatService.endConversation();
-    setAudioVolume(1);
-    inputAudioLevelRef.current = 1;
-    outputAudioLevelRef.current = 1;
-    setChatStatus(ChatStatus.Init);
-    isVoiceLoading.current = false;
-    setIsShowVoiceLoading(false);
-    return true;
-  }, []);
 
   const handleVoiceChatTranscript = (role: string, text: string) => {
     const userId = role === 'USER' ? 1 : BOT_ID;

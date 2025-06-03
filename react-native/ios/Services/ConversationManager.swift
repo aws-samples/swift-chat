@@ -57,10 +57,6 @@ class ConversationManager {
         }
         
         novaSonicService?.onError = { [weak self] error in
-            // end conversation
-            Task{
-                try await self?.endConversation()
-            }
             self?.handleError(error)
         }
     }

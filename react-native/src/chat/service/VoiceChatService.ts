@@ -115,7 +115,6 @@ export class VoiceChatService {
   private async getNewConfig(): Promise<object | null> {
     // Request new token
     const tokenResponse = await requestToken();
-    console.log('new token:', tokenResponse);
     if (!tokenResponse) {
       if (this.onErrorCallback) {
         this.onErrorCallback('Failed to get credentials');
