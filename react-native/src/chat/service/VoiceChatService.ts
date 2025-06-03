@@ -110,30 +110,9 @@ export class VoiceChatService {
 
   /**
    * Get new AWS credentials configuration, requesting a new token if needed
-   * @param forceRefresh Whether to force a token refresh regardless of validity
    * @returns Promise<object | null> Configuration object with AWS credentials or null if not available
    */
-  private async getNewConfig(
-    forceRefresh: boolean = false
-  ): Promise<object | null> {
-    // Check if token is valid or force refresh is requested
-    if (forceRefresh || !isTokenValid()) {
-      // Request new token
-      const tokenResponse = await requestToken();
-      if (!tokenResponse) {
-        if (this.onErrorCallback) {
-          this.onErrorCallback('Failed to get credentials');
-        }
-        return null;
-      }
-      if (tokenResponse.error) {
-        if (this.onErrorCallback) {
-          this.onErrorCallback(tokenResponse.error);
-        }
-        return null;
-      }
-    }
-
+  private async getNewConfig(): Promise<object | null> {
     // Get token info
     const tokenInfo = getTokenInfo();
     if (!tokenInfo) {
@@ -142,7 +121,6 @@ export class VoiceChatService {
       }
       return null;
     }
-
     // Create and return config
     return {
       region: getRegion(),

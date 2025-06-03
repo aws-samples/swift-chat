@@ -582,7 +582,7 @@ export function isTokenValid(): boolean {
     return false;
   }
 
-  const expirationDate = new Date(tokenInfo.expiration);
-  const now = new Date();
+  const expirationDate = new Date(tokenInfo.expiration).getTime();
+  const now = new Date().getTime();
   return expirationDate > now;
 }
