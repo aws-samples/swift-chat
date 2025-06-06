@@ -622,7 +622,8 @@ function ChatScreen(): React.JSX.Element {
     const userId = role === 'USER' ? 1 : BOT_ID;
     if (
       messagesRef.current.length > 0 &&
-      messagesRef.current[0].user._id === userId
+      messagesRef.current[0].user._id === userId &&
+      messagesRef.current[0].user.name?.includes('Nova Sonic')
     ) {
       setMessages(previousMessages => {
         const newMessages = [...previousMessages];

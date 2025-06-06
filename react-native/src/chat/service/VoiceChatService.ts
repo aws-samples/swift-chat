@@ -12,6 +12,7 @@ import {
   getRegion,
 } from '../../storage/StorageUtils.ts';
 import { requestToken } from '../../api/bedrock-api.ts';
+import { TokenResponse } from '../../types/Chat.ts';
 
 const { VoiceChatModule } = NativeModules;
 const voiceChatEmitter = VoiceChatModule
@@ -112,27 +113,30 @@ export class VoiceChatService {
    * Get new AWS credentials configuration, requesting a new token if needed
    * @returns Promise<object | null> Configuration object with AWS credentials or null if not available
    */
-  private async getNewConfig(): Promise<object | null> {
+  private async getValidConfig(): Promise<object | null> {
     // Request new token
-    const tokenResponse = await requestToken();
-    if (!tokenResponse) {
-      if (this.onErrorCallback) {
-        this.onErrorCallback('Failed to get credentials');
+    let tokenInfo: TokenResponse | null;
+    if (!isTokenValid()) {
+      tokenInfo = await requestToken();
+      if (!tokenInfo) {
+        if (this.onErrorCallback) {
+          this.onErrorCallback('Failed to get credentials');
+        }
       }
-      return null;
-    }
-    if (tokenResponse.error) {
-      if (this.onErrorCallback) {
-        this.onErrorCallback(tokenResponse.error);
+      if (tokenInfo?.error) {
+        if (this.onErrorCallback) {
+          this.onErrorCallback(tokenInfo.error);
+        }
       }
-      return null;
+    } else {
+      tokenInfo = getTokenInfo();
+      if (!tokenInfo) {
+        if (this.onErrorCallback) {
+          this.onErrorCallback('AWS credentials not available');
+        }
+      }
     }
-    // Get token info
-    const tokenInfo = getTokenInfo();
     if (!tokenInfo) {
-      if (this.onErrorCallback) {
-        this.onErrorCallback('AWS credentials not available');
-      }
       return null;
     }
     // Create and return config
@@ -155,18 +159,16 @@ export class VoiceChatService {
       }
       return false;
     }
-
     if (this.isInitialized) {
       return true;
     }
 
     try {
       // Get credentials config (will request new token if needed)
-      const config = await this.getNewConfig();
+      const config = await this.getValidConfig();
       if (!config) {
         return false;
       }
-
       await VoiceChatModule.initialize(config);
       this.isInitialized = true;
       return true;
@@ -200,15 +202,11 @@ export class VoiceChatService {
           return false;
         }
       } else {
-        // Check if token is valid
-        if (!isTokenValid()) {
-          // Get updated config and update credentials
-          const config = await this.getNewConfig();
-          if (!config) {
-            return false;
-          }
-          await VoiceChatModule.updateCredentials(config);
+        const config = await this.getValidConfig();
+        if (!config) {
+          return false;
         }
+        await VoiceChatModule.updateCredentials(config);
       }
 
       // Start conversation with system prompt and voice ID
