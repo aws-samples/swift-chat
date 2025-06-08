@@ -490,6 +490,11 @@ function parseChunk(rawChunk: string) {
           }
         } catch (innerError) {
           console.log('DataChunk parse error:' + innerError, part);
+          return {
+            reasoning: combinedReasoning,
+            text: rawChunk,
+            usage: lastUsage,
+          };
         }
       }
       return {

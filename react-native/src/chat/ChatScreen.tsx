@@ -43,6 +43,7 @@ import {
   ChatMode,
   ChatStatus,
   FileInfo,
+  Metrics,
   SwiftChatMessage,
   SystemPrompt,
   Usage,
@@ -502,6 +503,8 @@ function ChatScreen(): React.JSX.Element {
       }
       controllerRef.current = new AbortController();
       isCanceled.current = false;
+      const startRequestTime = new Date().getTime();
+      let latencyMs = 0;
       invokeBedrockWithCallBack(
         bedrockMessages.current,
         modeRef.current,
@@ -518,7 +521,11 @@ function ChatScreen(): React.JSX.Element {
           if (chatStatusRef.current !== ChatStatus.Running) {
             return;
           }
+          if (latencyMs === 0) {
+            latencyMs = new Date().getTime() - startRequestTime;
+          }
           const updateMessage = () => {
+            let metrics: Metrics;
             if (usageInfo) {
               setUsage(prevUsage => ({
                 modelName: usageInfo.modelName,
@@ -530,6 +537,15 @@ function ChatScreen(): React.JSX.Element {
                   (prevUsage?.totalTokens || 0) + usageInfo.totalTokens,
               }));
               updateTotalUsage(usageInfo);
+              const speed = (
+                usageInfo.totalTokens /
+                ((new Date().getTime() - startRequestTime) / 1000)
+              ).toFixed(2);
+              metrics = {
+                latencyMs: latencyMs.toString(),
+                speed: speed,
+              };
+              console.log(metrics);
             }
             const previousMessage = messagesRef.current[0];
             if (
@@ -547,6 +563,7 @@ function ChatScreen(): React.JSX.Element {
                       ? 'Canceled...'
                       : msg,
                   reasoning: reasoning,
+                  metrics: metrics,
                 };
                 return newMessages;
               });

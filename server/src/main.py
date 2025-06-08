@@ -143,7 +143,7 @@ async def create_bedrock_command(request: ConverseRequest) -> tuple[boto3.client
 
 
 @app.post("/api/converse/v3")
-async def converse_v2(request: ConverseRequest,
+async def converse_v3(request: ConverseRequest,
                       _: Annotated[str, Depends(verify_api_key)]):
     try:
         client, command = await create_bedrock_command(request)

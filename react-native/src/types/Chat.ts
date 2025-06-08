@@ -111,6 +111,7 @@ export interface SwiftChatMessage extends IMessage {
   usage?: Usage;
   reasoning?: string;
   user: SwiftChatUser;
+  metrics?: Metrics;
 }
 
 interface SwiftChatUser extends User {
@@ -152,3 +153,8 @@ export type TokenResponse = {
   expiration: string;
   error: string;
 };
+
+export interface Metrics {
+  latencyMs: string;
+  speed: string;
+}
