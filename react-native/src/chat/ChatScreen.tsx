@@ -546,7 +546,7 @@ function ChatScreen(): React.JSX.Element {
               const renderSec =
                 (new Date().getTime() - startRequestTime - latencyMs) / 1000;
               const speed = usageInfo.totalTokens / renderSec;
-              if (!metrics) {
+              if (!metrics && modeRef.current === ChatMode.Text) {
                 metrics = {
                   latencyMs: (latencyMs / 1000).toFixed(2),
                   speed: speed.toFixed(speed > 100 ? 1 : 2),

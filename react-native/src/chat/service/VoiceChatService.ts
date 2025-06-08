@@ -67,6 +67,8 @@ export class VoiceChatService {
             let errorMsg = event.message ?? '';
             if (errorMsg.includes('The network connection was lost')) {
               errorMsg = '\n**The network connection was lost**';
+            } else if (errorMsg.includes('The request timed out.')) {
+              errorMsg = '\n**The request timed out.**';
             } else if (
               errorMsg.includes('Timed out waiting for input events')
             ) {
