@@ -284,7 +284,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const messageActionButtons = useMemo(() => {
     const metricsText = currentMessage?.metrics
-      ? `latency ${currentMessage.metrics.latencyMs}ms | ${currentMessage.metrics.speed} token/s`
+      ? `latency ${currentMessage.metrics.latencyMs}s | ${currentMessage.metrics.speed} tok/s`
       : null;
     return (
       <View

@@ -5,6 +5,7 @@ import {
   Dimensions,
   FlatList,
   Keyboard,
+  LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Platform,
@@ -134,6 +135,8 @@ function ChatScreen(): React.JSX.Element {
   const inputAudioLevelRef = useRef(1);
   const outputAudioLevelRef = useRef(1);
   const isVoiceLoading = useRef(false);
+  const contentHeightRef = useRef(0);
+  const containerHeightRef = useRef(0);
   const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
 
   // End voice conversation and reset audio levels
@@ -537,14 +540,13 @@ function ChatScreen(): React.JSX.Element {
                   (prevUsage?.totalTokens || 0) + usageInfo.totalTokens,
               }));
               updateTotalUsage(usageInfo);
-              const speed = (
-                usageInfo.totalTokens /
-                ((new Date().getTime() - startRequestTime - latencyMs) / 1000)
-              ).toFixed(2);
+              const renderSec =
+                (new Date().getTime() - startRequestTime - latencyMs) / 1000;
+              const speed = usageInfo.totalTokens / renderSec;
               if (!metrics) {
                 metrics = {
-                  latencyMs: latencyMs.toString(),
-                  speed: speed,
+                  latencyMs: (latencyMs / 1000).toFixed(2),
+                  speed: speed.toFixed(speed > 100 ? 1 : 2),
                 };
               }
             }
@@ -821,9 +823,17 @@ function ChatScreen(): React.JSX.Element {
         listViewProps={{
           contentContainerStyle: styles.contentContainer,
           contentInset: { top: 2 },
+          onLayout: (layoutEvent: LayoutChangeEvent) => {
+            containerHeightRef.current = layoutEvent.nativeEvent.layout.height;
+          },
+          onContentSizeChange: (_width: number, height: number) => {
+            contentHeightRef.current = height;
+          },
           onScrollBeginDrag: handleUserScroll,
           onMomentumScrollEnd: handleMomentumScrollEnd,
-          ...(userScrolled && chatStatus === ChatStatus.Running
+          ...(userScrolled &&
+          chatStatus === ChatStatus.Running &&
+          contentHeightRef.current > containerHeightRef.current
             ? {
                 maintainVisibleContentPosition: {
                   minIndexForVisible: 0,
