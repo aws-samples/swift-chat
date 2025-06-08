@@ -298,6 +298,9 @@ function ChatScreen(): React.JSX.Element {
       }
       // click from history
       setMessages([]);
+      if (isNovaSonic) {
+        endVoiceConversation().then();
+      }
       setIsLoadingMessages(true);
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
@@ -320,7 +323,7 @@ function ChatScreen(): React.JSX.Element {
         }, 200);
       }
     }
-  }, [initialSessionId, mode, tapIndex]);
+  }, [initialSessionId, mode, tapIndex, isNovaSonic, endVoiceConversation]);
 
   // deleteChat listener
   useEffect(() => {
@@ -643,8 +646,7 @@ function ChatScreen(): React.JSX.Element {
     const userId = role === 'USER' ? 1 : BOT_ID;
     if (
       messagesRef.current.length > 0 &&
-      messagesRef.current[0].user._id === userId &&
-      messagesRef.current[0].user.name?.includes('Nova Sonic')
+      messagesRef.current[0].user._id === userId
     ) {
       setMessages(previousMessages => {
         const newMessages = [...previousMessages];
