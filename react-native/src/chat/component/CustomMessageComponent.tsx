@@ -283,52 +283,71 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   ]);
 
   const messageActionButtons = useMemo(() => {
+    const metricsText = currentMessage?.metrics
+      ? `latency ${currentMessage.metrics.latencyMs}ms | ${currentMessage.metrics.speed} token/s`
+      : null;
     return (
       <View
         style={{
           ...styles.actionButtonsContainer,
-          ...(isUser.current && { justifyContent: 'flex-end' }),
+          ...{ justifyContent: isUser.current ? 'flex-end' : 'space-between' },
         }}>
-        <TouchableOpacity
-          onPress={() => {
-            handleCopy();
-            setCopied(true);
-          }}
-          style={styles.actionButton}>
-          <Image
-            source={
-              copied
-                ? require('../../assets/done.png')
-                : require('../../assets/copy_grey.png')
-            }
-            style={styles.actionButtonIcon}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setIsEditValue(!isEdit)}
-          style={styles.actionButton}>
-          <Image
-            source={
-              isEdit
-                ? require('../../assets/select.png')
-                : require('../../assets/select_grey.png')
-            }
-            style={styles.actionButtonIcon}
-          />
-        </TouchableOpacity>
-
-        {showRefresh && (
-          <TouchableOpacity onPress={onRegenerate} style={styles.actionButton}>
+        <View style={styles.actionButtonInnerContainer}>
+          <TouchableOpacity
+            onPress={() => {
+              handleCopy();
+              setCopied(true);
+            }}
+            style={styles.actionButton}>
             <Image
-              source={require('../../assets/refresh.png')}
+              source={
+                copied
+                  ? require('../../assets/done.png')
+                  : require('../../assets/copy_grey.png')
+              }
               style={styles.actionButtonIcon}
             />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setIsEditValue(!isEdit)}
+            style={styles.actionButton}>
+            <Image
+              source={
+                isEdit
+                  ? require('../../assets/select.png')
+                  : require('../../assets/select_grey.png')
+              }
+              style={styles.actionButtonIcon}
+            />
+          </TouchableOpacity>
+
+          {showRefresh && (
+            <TouchableOpacity
+              onPress={onRegenerate}
+              style={styles.actionButton}>
+              <Image
+                source={require('../../assets/refresh.png')}
+                style={styles.actionButtonIcon}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {metricsText && !isUser.current && (
+          <Text style={styles.metricsText}>{metricsText}</Text>
         )}
       </View>
     );
-  }, [handleCopy, copied, isEdit, onRegenerate, setIsEditValue, showRefresh]);
+  }, [
+    handleCopy,
+    copied,
+    isEdit,
+    onRegenerate,
+    setIsEditValue,
+    showRefresh,
+    currentMessage?.metrics,
+  ]);
 
   if (!currentMessage) {
     return null;
@@ -383,7 +402,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                 fontWeight: isMac ? '300' : 'normal',
                 lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
                 paddingTop: Platform.OS === 'android' ? 7 : 3,
-                marginBottom: -inputHeight * (isAndroid ? 0 : 0.138) + 8,
+                marginBottom: -inputHeight * (isAndroid ? 0 : isMac ? 0.115 : 0.138) + (isMac ? 10 : 8),
               },
               ...(isUser.current && {
                 flex: 1,
@@ -496,11 +515,14 @@ const styles = StyleSheet.create({
   },
   actionButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     alignItems: 'center',
     marginLeft: -8,
     marginTop: -2,
     marginBottom: 4,
+  },
+  actionButtonInnerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   actionButton: {
     padding: 8,
@@ -508,6 +530,11 @@ const styles = StyleSheet.create({
   actionButtonIcon: {
     width: 16,
     height: 16,
+  },
+  metricsText: {
+    fontSize: 12,
+    color: '#999',
+    marginRight: 4,
   },
 });
 

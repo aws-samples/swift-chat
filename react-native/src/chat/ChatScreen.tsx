@@ -505,6 +505,7 @@ function ChatScreen(): React.JSX.Element {
       isCanceled.current = false;
       const startRequestTime = new Date().getTime();
       let latencyMs = 0;
+      let metrics: Metrics | undefined;
       invokeBedrockWithCallBack(
         bedrockMessages.current,
         modeRef.current,
@@ -525,7 +526,6 @@ function ChatScreen(): React.JSX.Element {
             latencyMs = new Date().getTime() - startRequestTime;
           }
           const updateMessage = () => {
-            let metrics: Metrics;
             if (usageInfo) {
               setUsage(prevUsage => ({
                 modelName: usageInfo.modelName,
@@ -539,18 +539,20 @@ function ChatScreen(): React.JSX.Element {
               updateTotalUsage(usageInfo);
               const speed = (
                 usageInfo.totalTokens /
-                ((new Date().getTime() - startRequestTime) / 1000)
+                ((new Date().getTime() - startRequestTime - latencyMs) / 1000)
               ).toFixed(2);
-              metrics = {
-                latencyMs: latencyMs.toString(),
-                speed: speed,
-              };
-              console.log(metrics);
+              if (!metrics) {
+                metrics = {
+                  latencyMs: latencyMs.toString(),
+                  speed: speed,
+                };
+              }
             }
             const previousMessage = messagesRef.current[0];
             if (
               previousMessage.text !== msg ||
-              previousMessage.reasoning !== reasoning
+              previousMessage.reasoning !== reasoning ||
+              (!previousMessage.metrics && metrics)
             ) {
               setMessages(prevMessages => {
                 const newMessages = [...prevMessages];
