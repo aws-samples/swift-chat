@@ -142,7 +142,7 @@ async def create_bedrock_command(request: ConverseRequest) -> tuple[boto3.client
     return client, command
 
 
-@app.post("/api/converse/v2")
+@app.post("/api/converse/v3")
 async def converse_v2(request: ConverseRequest,
                       _: Annotated[str, Depends(verify_api_key)]):
     try:
@@ -153,6 +153,26 @@ async def converse_v2(request: ConverseRequest,
                 response = client.converse_stream(**command)
                 for item in response['stream']:
                     yield json.dumps(item) + '\n\n'
+            except Exception as err:
+                yield f"Error: {str(err)}"
+
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+    except Exception as error:
+        return PlainTextResponse(f"Error: {str(error)}", status_code=500)
+
+
+@app.post("/api/converse/v2")
+async def converse_v2(request: ConverseRequest,
+                      _: Annotated[str, Depends(verify_api_key)]):
+    try:
+        client, command = await create_bedrock_command(request)
+
+        def event_generator():
+            try:
+                response = client.converse_stream(**command)
+                for item in response['stream']:
+                    yield json.dumps(item)
             except Exception as err:
                 yield f"Error: {str(err)}"
 
