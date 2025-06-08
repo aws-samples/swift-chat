@@ -152,32 +152,7 @@ async def converse_v2(request: ConverseRequest,
             try:
                 response = client.converse_stream(**command)
                 for item in response['stream']:
-                    yield json.dumps(item)
-            except Exception as err:
-                yield f"Error: {str(err)}"
-
-        return StreamingResponse(event_generator(), media_type="text/event-stream")
-
-    except Exception as error:
-        return PlainTextResponse(f"Error: {str(error)}", status_code=500)
-
-
-@app.post("/api/converse")
-async def converse(request: ConverseRequest,
-                   _: Annotated[str, Depends(verify_api_key)]):
-    try:
-        client, command = await create_bedrock_command(request)
-
-        def event_generator():
-            try:
-                response = client.converse_stream(**command)
-                for item in response['stream']:
-                    if "contentBlockDelta" in item:
-                        text = item["contentBlockDelta"].get("delta", {}).get("text", "")
-                        if text:
-                            yield text
-                    elif "metadata" in item:
-                        yield "\n" + json.dumps(item["metadata"]["usage"])
+                    yield json.dumps(item) + '\n\n'
             except Exception as err:
                 yield f"Error: {str(err)}"
 
