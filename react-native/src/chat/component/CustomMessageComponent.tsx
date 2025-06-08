@@ -402,7 +402,9 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                 fontWeight: isMac ? '300' : 'normal',
                 lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
                 paddingTop: Platform.OS === 'android' ? 7 : 3,
-                marginBottom: -inputHeight * (isAndroid ? 0 : isMac ? 0.115 : 0.138) + (isMac ? 10 : 8),
+                marginBottom:
+                  -inputHeight * (isAndroid ? 0 : isMac ? 0.115 : 0.138) +
+                  (isMac ? 10 : 8),
               },
               ...(isUser.current && {
                 flex: 1,
