@@ -6,6 +6,7 @@ import {
   View,
   TouchableOpacity,
   Image,
+  Platform,
 } from 'react-native';
 
 interface CustomTextInputProps {
@@ -42,7 +43,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
             ...(numberOfLines > 1 && { lineHeight: 22 }),
           }}
           value={value}
-          numberOfLines={numberOfLines}
+          numberOfLines={Platform.OS === 'ios' ? numberOfLines : undefined}
           multiline={numberOfLines > 1}
           onChangeText={onChangeText}
           placeholder={placeholder}

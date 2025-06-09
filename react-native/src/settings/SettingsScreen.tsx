@@ -135,6 +135,11 @@ function SettingsScreen(): React.JSX.Element {
 
     const response = await requestAllModels();
     addBedrockPrefixToDeepseekModels(response.textModel);
+    if (Platform.OS === 'android') {
+      response.textModel = response.textModel.filter(
+        model => model.modelName !== 'Nova Sonic'
+      );
+    }
     if (response.imageModel.length > 0) {
       setImageModels(response.imageModel);
       const imageModel = getImageModel();
@@ -475,7 +480,7 @@ function SettingsScreen(): React.JSX.Element {
 
         <Text style={[styles.label, styles.middleLabel]}>Select Model</Text>
         <CustomDropdown
-          label="Text Model"
+          label="Chat Model"
           data={textModelsData}
           value={selectedTextModel.modelId}
           onChange={(item: DropdownItem) => {

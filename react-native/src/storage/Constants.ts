@@ -98,7 +98,7 @@ Keep all responses under 5 sentences. Begin by introducing yourself and providin
 Remember: ALWAYS start with a score after the user speaks`,
     includeHistory: true,
     promptType: 'voice',
-    allowInterruption: true,
+    allowInterruption: false,
   },
   {
     id: -5,
@@ -114,7 +114,7 @@ Keep all responses under 5 sentences. Begin by introducing yourself and providin
 Remember: ALWAYS start with a score after the user speaks`,
     includeHistory: true,
     promptType: 'voice',
-    allowInterruption: true,
+    allowInterruption: false,
   },
   {
     id: -6,
