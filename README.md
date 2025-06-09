@@ -16,21 +16,23 @@
 SwiftChat is a fast and responsive AI chat application developed with [React Native](https://reactnative.dev/) and
 powered by [Amazon Bedrock](https://aws.amazon.com/bedrock/), with compatibility extending to other model providers such
 as Ollama, DeepSeek, OpenAI and OpenAI Compatible. With its minimalist design philosophy and robust privacy protection,
-it delivers real-time streaming conversations and AI image generation capabilities across Android, iOS, and macOS
-platforms.
+it delivers real-time streaming conversations, AI image generation and voice conversation assistant capabilities
+across Android, iOS, and macOS platforms.
 
 ![](assets/promo.avif)
 
 ### What's New 🔥
 
+- 🚀 Support Speech to Speech By Amazon Nova Sonic on Apple Platform. Check [How to Use](#amazon-nova-sonic) for
+  more details. (From v2.3.0).
+- Support Request Latency and token response speed display (From v2.3.0).
+- Change to new bubble format UI for user question (From v2.3.0).
 - Support for OpenAI Compatible models. You can now
   use [easy-model-deployer](https://github.com/aws-samples/easy-model-deployer),
   OpenRouter, or any OpenAI-compatible model provider via SwiftChat. Please
   check [Configure OpenAI Compatible](#openai-compatible) section for more details(From v2.2.0).
-- Support for quick model switching (From v2.2.0).
-- Support regeneration of AI responses (From v2.2.0).
 
-**Key Features:**
+### Key Features
 
 - Real-time streaming chat with AI
 - Rich Markdown Support: Tables, Code Blocks, LaTeX and More
@@ -45,7 +47,43 @@ platforms.
   and [OpenAI Compatible](#openai-compatible) Models)
 - Fully Customizable System Prompt Assistant
 
-**Supported Features For Amazon Nova series**
+### Amazon Nova Series Features
+
+#### Amazon Nova Sonic Speech to Speech Model
+
+**Usage Guide**
+
+1. Amazon Nova Sonic model is supported starting from v2.3.0. If you have deployed it before, You Need to:
+    * [Update CloudFormation](#upgrade-cloudformation) Stack
+    * [Update API](#upgrade-api)
+    * [Upgrade your App](#-quick-download) to v2.3.0 or later
+
+   If you have not Deployed your CloudFormation Stack please
+   finish [Getting Started with Amazon Bedrock](#getting-started-with-amazon-bedrock) section.
+2. Switch the **Region** to `us-east-1` in the settings page and select the `Nova Sonic` under **Chat Model**.
+3. Return to Chat page, select a system prompt or directly click the microphone icon to start your conversation.
+
+**Features for Speech to Speech**
+
+1. Built-in spoken language practice for words and sentences, as well as storytelling scenarios. You can also add
+   **Custom System Prompts** for voice chatting in different scenarios.
+2. Support **Barge In** by default, Also you can disable in system prompt.
+3. Support **Echo Cancellation**, You can talk directly to the device without wearing headphones.
+4. Support **Voice Waveform** to display volume level.
+
+**General Talk**
+
+https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4
+
+**Learn Sentences**
+
+https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838
+
+**Telling Story on Mac**
+
+https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
+
+#### Other Features
 
 - Record 30-second videos directly on Android and iOS for Nova analysis
 - Upload large videos (1080p/4K) beyond 8MB with auto compression
@@ -57,7 +95,7 @@ platforms.
 #### YouTube Video
 
 [<img src="./assets/youtube.avif">](https://www.youtube.com/watch?v=rey05WzfEbM)
-> The content in the video is an early version. For UI, architecture, and inconsistencies, please refer to the current 
+> The content in the video is an early version. For UI, architecture, and inconsistencies, please refer to the current
 > documentation.
 
 **Comprehensive Multimodal Analysis**: Text, Image, Document and Video
@@ -111,7 +149,7 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 Ensure you have access to Amazon Bedrock foundation models. SwiftChat default settings are:
 
 - Region: `us-west-2`
-- Text Model: `Amazon Nova Pro`
+- Chat Model: `Amazon Nova Pro`
 - Image Model: `Stable Diffusion 3.5 Large`
 
 If you are using the image generation feature, please make sure you have enabled access to the `Amazon Nova Lite` model.
@@ -195,7 +233,7 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
     ```bash
     http://localhost:11434
     ```
-3. Once the correct Server URL is entered, you can select your desired Ollama models from the **Text Model** dropdown
+3. Once the correct Server URL is entered, you can select your desired Ollama models from the **Chat Model** dropdown
    list.
 
 </details>
@@ -207,7 +245,7 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 1. Go to the **Settings Page** and select the **DeepSeek** tab.
 2. Input your DeepSeek API Key.
-3. Choose DeepSeek models from the **Text Model** dropdown list. Currently, the following DeepSeek models are supported:
+3. Choose DeepSeek models from the **Chat Model** dropdown list. Currently, the following DeepSeek models are supported:
     - `DeepSeek-V3`
     - `DeepSeek-R1`
 
@@ -220,9 +258,12 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 
 1. Navigate to the **Settings Page** and select the **OpenAI** tab.
 2. Enter your OpenAI API Key.
-3. Select OpenAI models from the **Text Model** dropdown list. The following OpenAI models are currently supported:
+3. Select OpenAI models from the **Chat Model** dropdown list. The following OpenAI models are currently supported:
     - `GPT-4o`
     - `GPT-4o mini`
+    - `GPT-4.1`
+    - `GPT-4.1 mini`
+    - `GPT-4.1 nano`
 
 Additionally, if you have deployed the [ClickStream Server](#step-2-deploy-stack-and-get-your-api-url), you can enable
 the **Use Proxy** option to forward your requests.
@@ -239,7 +280,7 @@ the **Use Proxy** option to forward your requests.
     - `Base URL` of your model provider
     - `API Key` of your model provider
     - `Model ID` of the models you want to use (separate multiple models with commas)
-3. Select one of your models from the **Text Model** dropdown list.
+3. Select one of your models from the **Chat Model** dropdown list.
 
 </details>
 
@@ -378,6 +419,26 @@ the [release notes](https://github.com/aws-samples/swift-chat/releases) to see i
   find and open `swiftchat-api`, click top right **Deploy** button.
 - **For Lambda**: Click and open [Lambda Services](https://console.aws.amazon.com/lambda/home#/functions), find and open
   your Lambda which start with `SwiftChatLambda-xxx`, click the **Deploy new image** button and click Save.
+
+### Upgrade CloudFormation
+
+1. Click and open [CloudFormation](https://console.aws.amazon.com/cloudformation), switch to the region which you
+   have deployed the **SwiftChatAPI** stack.
+2. Select the **SwiftChatAPI** Stack, click **Update stack** -> **Make a direct update**
+3. On the **Update stack** Page, select **Replace existing template** under the **Amazon S3 URL**, then input the
+   following template url.
+
+   For App Runner
+    ```
+    https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template
+    ``` 
+   For Lambda
+    ```
+    https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template
+    ``` 
+4. Click the **Next** button and continue click **Next** button. On the **Configure stack options** page,
+   check `I acknowledge that AWS CloudFormation might create IAM resources.` then click **Next** and *Submit* button to
+   update your CloudFormation Template.
 
 ## Security
 

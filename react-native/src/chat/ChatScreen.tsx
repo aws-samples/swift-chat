@@ -649,6 +649,9 @@ function ChatScreen(): React.JSX.Element {
       messagesRef.current.length > 0 &&
       messagesRef.current[0].user._id === userId
     ) {
+      if (userId === 1) {
+        text = ' ' + text;
+      }
       setMessages(previousMessages => {
         const newMessages = [...previousMessages];
         if (!newMessages[0].text.includes(text)) {
