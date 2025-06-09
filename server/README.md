@@ -15,35 +15,7 @@ export API_URL=<API URL>
 export API_KEY=<API Key>
 ```
 
-1. `/api/converse`
-
-   ```bash
-   curl -N "${API_URL}/api/converse" \
-   --header 'Content-Type: application/json' \
-   --header "Authorization: Bearer ${API_KEY}" \
-   --data '{
-     "messages": [
-       {
-         "role": "user",
-         "content": [
-           {
-             "text": "Hi"
-           }
-         ]
-       }
-     ],
-     "modelId": "anthropic.claude-3-5-sonnet-20240620-v1:0",
-     "region": "us-west-2"
-   }'
-   ```
-
-   This API is used to implement streaming conversations, and it only returns the text and token usage for display.
-
-   The `messages` under body fully complies with the messages structure specification in Amazon
-   Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
-   API. You can also add `image` or `document` according to the specification to support multimodal conversations.
-
-2. `/api/converse/v2`
+1. `/api/converse/v3`
 
    ```bash
    curl -N "${API_URL}/api/converse" \
@@ -69,14 +41,14 @@ export API_KEY=<API Key>
    }'
    ```
 
-   This API is used to implement streaming conversations for v2, and it returns the raw Amazon Bedrock response json string,
+   This API is used to implement streaming conversations for v2, and it returns the raw Amazon Bedrock response json string chunk splited by `\n\n`,
    you need to parse it for display.
 
    The `messages` under body fully complies with the messages structure specification in Amazon
    Bedrock [converse stream](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock-runtime/client/converse_stream.html)
    API. You can also add `image` or `document` according to the specification to support multimodal conversations.
 
-3. `/api/image`
+2. `/api/image`
 
    ```bash
    curl "${API_URL}/api/image" \
@@ -93,7 +65,7 @@ export API_KEY=<API Key>
 
    This API is used to generate images and returns a base64 encoded string of the image.
 
-4. `/api/models`
+3. `/api/models`
 
    ```bash
    curl "${API_URL}/api/models" \
@@ -108,7 +80,7 @@ export API_KEY=<API Key>
    This API is used to get a list of all streaming-supported text models and image generation models in the specified
    region.
 
-5. `/api/upgrade`
+4. `/api/upgrade`
    ```bash
    curl "${API_URL}/api/upgrade" \
    --header 'Content-Type: application/json' \

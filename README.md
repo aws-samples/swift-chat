@@ -80,7 +80,7 @@ https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4
 
 https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838
 
-**Telling Story on Mac**
+**Telling Story on Mac (With barge in feature)**
 
 https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
 
