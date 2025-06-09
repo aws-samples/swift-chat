@@ -68,8 +68,9 @@ across Android, iOS, and macOS platforms.
 1. Built-in spoken language practice for words and sentences, as well as storytelling scenarios. You can also add
    **Custom System Prompts** for voice chatting in different scenarios.
 2. Support **Barge In** by default, Also you can disable in system prompt.
-3. Support **Echo Cancellation**, You can talk directly to the device without wearing headphones.
-4. Support **Voice Waveform** to display volume level.
+3. Support selecting voices in the settings page, including American/British English, and options for male and female voices.
+4. Support **Echo Cancellation**, You can talk directly to the device without wearing headphones.
+5. Support **Voice Waveform** to display volume level.
 
 **General Talk**
 
