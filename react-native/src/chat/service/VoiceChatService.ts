@@ -67,16 +67,18 @@ export class VoiceChatService {
             let errorMsg = event.message ?? '';
             if (errorMsg.includes('The network connection was lost')) {
               errorMsg = '\n**The network connection was lost**';
-            } else if (errorMsg.includes('The request timed out.')) {
-              errorMsg = '\n**The request timed out.**';
+            } else if (errorMsg.includes('The request timed out')) {
+              errorMsg = '\n**The request timed out**';
+            } else if (errorMsg.includes('messages cannot be null or empty')) {
+              errorMsg = '\n**Messages cannot be null or empty**';
             } else if (
               errorMsg.includes('Timed out waiting for input events')
             ) {
               errorMsg = '\n**Timed out waiting for input events**';
             } else if (
-              errorMsg.includes('The operation couldn’t be completed.')
+              errorMsg.includes('The operation couldn’t be completed')
             ) {
-              errorMsg = '\n**The operation couldn’t be completed.**';
+              errorMsg = '\n**The operation couldn’t be completed**';
             } else if (
               errorMsg.includes(
                 'The system encountered an unexpected error during processing. Try your request again.'

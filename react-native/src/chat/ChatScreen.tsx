@@ -137,6 +137,7 @@ function ChatScreen(): React.JSX.Element {
   const isVoiceLoading = useRef(false);
   const contentHeightRef = useRef(0);
   const containerHeightRef = useRef(0);
+  const isNovaSonicRef = useRef(isNovaSonic);
   const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
 
   // End voice conversation and reset audio levels
@@ -298,7 +299,7 @@ function ChatScreen(): React.JSX.Element {
       }
       // click from history
       setMessages([]);
-      if (isNovaSonic) {
+      if (isNovaSonicRef.current) {
         endVoiceConversation().then();
       }
       setIsLoadingMessages(true);
@@ -323,7 +324,7 @@ function ChatScreen(): React.JSX.Element {
         }, 200);
       }
     }
-  }, [initialSessionId, mode, tapIndex, isNovaSonic, endVoiceConversation]);
+  }, [initialSessionId, mode, tapIndex, endVoiceConversation]);
 
   // deleteChat listener
   useEffect(() => {
@@ -545,7 +546,7 @@ function ChatScreen(): React.JSX.Element {
               updateTotalUsage(usageInfo);
               const renderSec =
                 (new Date().getTime() - startRequestTime - latencyMs) / 1000;
-              const speed = usageInfo.totalTokens / renderSec;
+              const speed = usageInfo.outputTokens / renderSec;
               if (!metrics && modeRef.current === ChatMode.Text) {
                 metrics = {
                   latencyMs: (latencyMs / 1000).toFixed(2),
