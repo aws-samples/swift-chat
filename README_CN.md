@@ -55,7 +55,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     * [升级您的应用](#-快速下载) 到 v2.3.0 或更高版本
 
    如果您尚未部署 CloudFormation 堆栈，请完成 [Amazon Bedrock 入门](#入门指南---使用-amazon-bedrock-上的模型) 部分。
-2. 在设置页面将 **区域** 切换到 `us-east-1`，并在 **聊天模型** 下选择 `Nova Sonic`。
+2. 在设置页面将 **区域** 切换到 `us-east-1`，并在 **Chat Model** 下选择 `Nova Sonic`。
 3. 返回聊天页面，选择系统提示词或直接点击麦克风图标开始对话。
 
 **语音对话功能**
@@ -212,7 +212,7 @@ https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
     ```bash
     http://localhost:11434
     ```
-3. 输入正确的服务器 URL 后，您可以从 **聊天模型** 下拉列表中选择所需的 Ollama 模型。
+3. 输入正确的服务器 URL 后，您可以从 **Chat Model** 下拉列表中选择所需的 Ollama 模型。
 
 </details>
 
@@ -223,7 +223,7 @@ https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
 
 1. 进入 **设置页面**，选择 **DeepSeek** 标签。
 2. 输入您的 DeepSeek API 密钥。
-3. 从 **聊天模型** 下拉列表中选择 DeepSeek 模型。目前支持以下 DeepSeek 模型：
+3. 从 **Chat Model** 下拉列表中选择 DeepSeek 模型。目前支持以下 DeepSeek 模型：
     - `DeepSeek-V3`
     - `DeepSeek-R1`
 
@@ -236,7 +236,7 @@ https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
 
 1. 进入 **设置页面**，选择 **OpenAI** 标签。
 2. 输入您的 OpenAI API 密钥。
-3. 从 **聊天模型** 下拉列表中选择 OpenAI 模型。目前支持以下 OpenAI 模型：
+3. 从 **Chat Model** 下拉列表中选择 OpenAI 模型。目前支持以下 OpenAI 模型：
     - `GPT-4o`
     - `GPT-4o mini`
     - `GPT-4.1`
@@ -257,7 +257,7 @@ https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
     - 模型提供商的 `Base URL`
     - 模型提供商的 `API Key`
     - 您想使用的 `Model ID`（多个模型用英文逗号分隔）
-3. 从 **聊天模型** 下拉列表中选择您的一个模型。
+3. 从 **Chat Model** 下拉列表中选择您的一个模型。
 
 </details>
 
