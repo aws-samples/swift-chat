@@ -51,7 +51,11 @@ export const DeepSeekModels = [
   },
 ];
 
-export const BedrockThinkingModels = ['Claude 3.7 Sonnet'];
+export const BedrockThinkingModels = [
+  'Claude 3.7 Sonnet',
+  'Claude Sonnet 4',
+  'Claude Opus 4',
+];
 export const BedrockVoiceModels = ['Nova Sonic'];
 
 export const DefaultTextModel = [

@@ -1,12 +1,10 @@
 name: Release Template
 
 on:
-  workflow_dispatch:
-    inputs:
-      reason:
-        description: 'the reason for triggering this workflow'
-        required: false
-        default: 'manually publish the ecr images and templates'
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 jobs:
   release_template:
     runs-on: ubuntu-latest

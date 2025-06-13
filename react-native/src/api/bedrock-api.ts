@@ -299,12 +299,12 @@ export const requestAllModels = async (): Promise<AllModel> => {
       return { imageModel: [], textModel: [] };
     }
     const allModel = await response.json();
-    allModel.imageModel.map((item: Model) => ({
+    allModel.imageModel = allModel.imageModel.map((item: Model) => ({
       modelId: item.modelId,
       modelName: item.modelName,
       modelTag: ModelTag.Bedrock,
     }));
-    allModel.textModel.map((item: Model) => ({
+    allModel.textModel = allModel.textModel.map((item: Model) => ({
       modelId: item.modelId,
       modelName: item.modelName,
       modelTag: ModelTag.Bedrock,
