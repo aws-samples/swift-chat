@@ -44,7 +44,8 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       ((text && text!.length > 0) ||
         selectedFiles.length > 0 ||
         chatStatus === ChatStatus.Running) &&
-      !isNovaSonic;
+      !isNovaSonic &&
+      !isShowLoading;
   }
   if (isShowSending) {
     return (
@@ -81,7 +82,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       </Send>
     );
   } else {
-    if (isNovaSonic && chatMode === ChatMode.Text) {
+    if ((isNovaSonic || isShowLoading) && chatMode === ChatMode.Text) {
       if (isShowLoading) {
         return (
           <View style={styles.loadingContainer}>

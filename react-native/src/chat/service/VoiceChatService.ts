@@ -34,15 +34,22 @@ export class VoiceChatService {
    * Set callbacks for voice chat events
    * @param onTranscriptReceived Callback when transcript is received
    * @param onError Callback when error occurs
-   * @param onAudioLevelChanged Callback when audio level changes
    */
   public setCallbacks(
     onTranscriptReceived?: (role: string, text: string) => void,
-    onError?: (message: string) => void,
-    onAudioLevelChanged?: (source: string, level: number) => void
+    onError?: (message: string) => void
   ) {
     this.onTranscriptReceivedCallback = onTranscriptReceived;
     this.onErrorCallback = onError;
+  }
+
+  /**
+   * Set OnAudioLevelCallback for voice chat events
+   * @param onAudioLevelChanged Callback when audio level changes
+   */
+  public setOnAudioLevelCallbacks(
+    onAudioLevelChanged?: (source: string, level: number) => void
+  ) {
     this.onAudioLevelChangedCallback = onAudioLevelChanged;
   }
 
