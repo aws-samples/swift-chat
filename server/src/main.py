@@ -249,7 +249,10 @@ async def get_models(request: ModelsRequest,
                     if ("TEXT" in model.get("outputModalities", []) and
                             model.get("responseStreamingSupported")):
                         if need_cross_region:
-                            model_id = region.split("-")[0] + "." + model["modelId"]
+                            region_prefix = region.split("-")[0]
+                            if region_prefix == 'ap':
+                                region_prefix = 'apac'
+                            model_id = region_prefix + "." + model["modelId"]
                         else:
                             model_id = model["modelId"]
                         text_model.append({
