@@ -136,7 +136,6 @@ function ChatScreen(): React.JSX.Element {
   const isVoiceLoading = useRef(false);
   const contentHeightRef = useRef(0);
   const containerHeightRef = useRef(0);
-  const isNovaSonicRef = useRef(isNovaSonic);
   const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
   const audioWaveformRef = useRef<AudioWaveformRef>(null);
 
@@ -289,9 +288,7 @@ function ChatScreen(): React.JSX.Element {
       }
       // click from history
       setMessages([]);
-      if (isNovaSonicRef.current) {
-        endVoiceConversationRef.current?.();
-      }
+      endVoiceConversationRef.current?.();
       setIsLoadingMessages(true);
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
