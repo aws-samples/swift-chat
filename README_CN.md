@@ -25,7 +25,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 - 支持请求延迟和 token 响应速度显示（自 v2.3.0 起）。
 - 用户问题展示为新的气泡 UI 格式（自 v2.3.0 起）。
 - 支持 OpenAI Compatible 模型。您现在可以通过 SwiftChat 使用 [easy-model-deployer](https://github.com/aws-samples/easy-model-deployer)、
-  OpenRouter 或任何 OpenAI API 兼容的模型。更多详情请查看 [配置 OpenAI Compatible](#openai-compatible) 部分（自 v2.2.0 起）。
+  OpenRouter 或任何 OpenAI API 兼容的模型。更多详情请查看 [配置 OpenAI Compatible](#openai-api-兼容) 部分（自 v2.2.0 起）。
 
 ### 主要特点
 

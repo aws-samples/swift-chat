@@ -23,7 +23,7 @@ across Android, iOS, and macOS platforms.
 
 ### What's New 🔥
 
-- 🚀 Support Speech to Speech By Amazon Nova Sonic on Apple Platform. Check [How to Use](#amazon-nova-sonic) for
+- 🚀 Support Speech to Speech By Amazon Nova Sonic on Apple Platform. Check [How to Use](#amazon-nova-sonic-speech-to-speech-model) for
   more details. (From v2.3.0).
 - Support Request Latency and token response speed display (From v2.3.0).
 - Change to new bubble format UI for user question (From v2.3.0).
