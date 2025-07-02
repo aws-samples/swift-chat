@@ -744,7 +744,7 @@ const createStyles = (colors: ColorScheme) =>
       width: 16,
       height: 16,
       transform: [{ scaleX: -1 }],
-      opacity: 0.4,
+      opacity: 0.6,
       marginLeft: 4,
     },
     versionContainer: {

@@ -26,6 +26,7 @@ import {
 } from '../../storage/StorageUtils';
 import { DeepSeekModels } from '../../storage/Constants';
 import { useTheme, ColorScheme } from '../../theme';
+import { getModelIcon } from '../../utils/ModelUtils.ts';
 
 interface ModelSelectionModalProps {
   visible: boolean;
@@ -114,27 +115,6 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
     });
   };
 
-  const getModelIcon = (model: Model) => {
-    const isDeepSeek = DeepSeekModels.some(m => m.modelId === model.modelId);
-    const isOpenAICompatible = model.modelTag === ModelTag.OpenAICompatible;
-    const isOpenAI =
-      model.modelTag === ModelTag.OpenAI || model.modelId.includes('gpt');
-    const isOllama =
-      model.modelTag === ModelTag.Ollama || model.modelId.startsWith('ollama-');
-
-    return isDeepSeek
-      ? require('../../assets/deepseek.png')
-      : isOpenAICompatible
-      ? require('../../assets/openai_api.png')
-      : isOpenAI
-      ? require('../../assets/openai.png')
-      : isOllama
-      ? require('../../assets/ollama_white.png')
-      : isDark
-      ? require('../../assets/bedrock_dark.png')
-      : require('../../assets/bedrock.png');
-  };
-
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -155,7 +135,10 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
         style={[styles.modelItem, isLastItem && { borderBottomWidth: 0 }]}
         onPress={() => handleModelSelect(item)}>
         <View style={styles.modelItemContent}>
-          <Image source={getModelIcon(item)} style={styles.modelIcon} />
+          <Image
+            source={getModelIcon(item.modelTag ?? '', item.modelId, isDark)}
+            style={styles.modelIcon}
+          />
           <Text style={styles.modelName}>{item.modelName}</Text>
           {isSelected && (
             <Image

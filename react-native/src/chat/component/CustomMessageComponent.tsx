@@ -40,7 +40,7 @@ import { CustomTokenizer } from './markdown/CustomTokenizer.ts';
 import Markdown from './markdown/Markdown.tsx';
 import ImageSpinner from './ImageSpinner.tsx';
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
-import { getModelTagByUserName } from '../../utils/ModelUtils.ts';
+import { getModelIcon, getModelTagByUserName } from '../../utils/ModelUtils.ts';
 import { isAndroid } from '../../utils/PlatformUtils.ts';
 import { useAppContext } from '../../history/AppProvider.tsx';
 import { useTheme, ColorScheme } from '../../theme';
@@ -145,18 +145,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     const userName = user.name ?? 'Bedrock';
     const currentModelTag = getModelTagByUserName(user.modelTag, userName);
 
-    const modelIcon =
-      currentModelTag === ModelTag.DeepSeek
-        ? require('../../assets/deepseek.png')
-        : currentModelTag === ModelTag.OpenAICompatible
-        ? require('../../assets/openai_api.png')
-        : currentModelTag === ModelTag.OpenAI
-        ? require('../../assets/openai.png')
-        : currentModelTag === ModelTag.Ollama
-        ? require('../../assets/ollama_white.png')
-        : isDark
-        ? require('../../assets/bedrock_dark.png')
-        : require('../../assets/bedrock.png');
+    const modelIcon = getModelIcon(currentModelTag, undefined, isDark);
     return { userName, modelIcon };
   }, [currentMessage, isDark]);
 

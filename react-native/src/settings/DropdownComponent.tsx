@@ -129,7 +129,6 @@ const createStyles = (colors: ColorScheme) =>
       fontSize: 14,
       color: colors.text,
       borderRadius: 4,
-      backgroundColor: colors.inputBackground,
     },
     containerStyle: {
       backgroundColor: colors.background,
