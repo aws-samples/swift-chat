@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
+import { useTheme, ColorScheme } from '../../theme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,6 +27,7 @@ const isPad = minWidth > 434;
 
 const AudioWaveformComponent = React.forwardRef<AudioWaveformRef>(
   (props, ref) => {
+    const { colors } = useTheme();
     const [colorOffset, setColorOffset] = useState(0);
     const barCountRef = useRef(isMac || isPad ? 48 : 32);
     const barValues = Array(barCountRef.current)
@@ -182,6 +184,8 @@ const AudioWaveformComponent = React.forwardRef<AudioWaveformRef>(
       }))
     );
 
+    const styles = createStyles(colors);
+
     return (
       <View style={styles.container}>
         <View style={styles.waveformContainer}>
@@ -206,37 +210,39 @@ const AudioWaveformComponent = React.forwardRef<AudioWaveformRef>(
   }
 );
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    height: 44,
-    paddingHorizontal: 16,
-  },
-  waveformContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: '100%',
-    width: '100%',
-  },
-  bar: {
-    width: 3,
-    borderRadius: 3,
-    minHeight: 1,
-  },
-  baselineContainer: {
-    position: 'absolute',
-    bottom: '50%',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  baseline: {
-    height: 1,
-    width: '95%',
-    backgroundColor: 'rgba(120, 120, 255, 0.3)',
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      height: 44,
+      paddingHorizontal: 16,
+      backgroundColor: colors.background,
+    },
+    waveformContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      height: '100%',
+      width: '100%',
+    },
+    bar: {
+      width: 3,
+      borderRadius: 3,
+      minHeight: 1,
+    },
+    baselineContainer: {
+      position: 'absolute',
+      bottom: '50%',
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+    },
+    baseline: {
+      height: 1,
+      width: '95%',
+      backgroundColor: 'rgba(120, 120, 255, 0.3)',
+    },
+  });
 
 export default AudioWaveformComponent;

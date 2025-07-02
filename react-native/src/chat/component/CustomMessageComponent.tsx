@@ -43,6 +43,7 @@ import { State, TapGestureHandler } from 'react-native-gesture-handler';
 import { getModelTagByUserName } from '../../utils/ModelUtils.ts';
 import { isAndroid } from '../../utils/PlatformUtils.ts';
 import { useAppContext } from '../../history/AppProvider.tsx';
+import { useTheme, ColorScheme } from '../../theme';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
@@ -58,6 +59,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   isLastAIMessage,
   onRegenerate,
 }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [copied, setCopied] = useState(false);
   const [clickTitleCopied, setClickTitleCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
@@ -71,7 +74,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const isLoading =
     chatStatus === ChatStatus.Running && currentMessage?.text === '...';
   const [forceShowButtons, setForceShowButtons] = useState(false);
-  const isUser = useRef(currentMessage?.user._id === 1);
+  const isUser = useRef(currentMessage?.user?._id === 1);
   const { drawerType } = useAppContext();
   const chatScreenWidth =
     isMac && drawerType === 'permanent' ? screenWidth - 300 : screenWidth;
@@ -130,8 +133,13 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     !isUser.current && !currentUser?.name?.includes('Nova Sonic');
 
   const userInfo = useMemo(() => {
-    if (!currentMessage) {
-      return { userName: '', imgSource: null };
+    if (!currentMessage || !currentMessage.user) {
+      return {
+        userName: '',
+        modelIcon: isDark
+          ? require('../../assets/bedrock_dark.png')
+          : require('../../assets/bedrock.png'),
+      };
     }
     const user = currentMessage.user;
     const userName = user.name ?? 'Bedrock';
@@ -146,9 +154,11 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         ? require('../../assets/openai.png')
         : currentModelTag === ModelTag.Ollama
         ? require('../../assets/ollama_white.png')
+        : isDark
+        ? require('../../assets/bedrock_dark.png')
         : require('../../assets/bedrock.png');
     return { userName, modelIcon };
-  }, [currentMessage]);
+  }, [currentMessage, isDark]);
 
   const headerContent = useMemo(() => {
     return (
@@ -157,13 +167,20 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         <Text style={styles.name}>{userInfo.userName}</Text>
       </>
     );
-  }, [userInfo]);
+  }, [userInfo, styles.avatar, styles.name]);
 
   const copyButton = useMemo(() => {
     return clickTitleCopied ? (
-      <Image source={require('../../assets/done.png')} style={styles.copy} />
+      <Image
+        source={
+          isDark
+            ? require('../../assets/done_dark.png')
+            : require('../../assets/done.png')
+        }
+        style={styles.copy}
+      />
     ) : null;
-  }, [clickTitleCopied]);
+  }, [clickTitleCopied, isDark, styles.copy]);
 
   const handleImagePress = useCallback((pressMode: PressMode, url: string) => {
     if (pressMode === PressMode.Click) {
@@ -182,8 +199,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   }, []);
 
   const customMarkdownRenderer = useMemo(
-    () => new CustomMarkdownRenderer(handleImagePress),
-    [handleImagePress]
+    () => new CustomMarkdownRenderer(handleImagePress, colors, isDark),
+    [handleImagePress, colors, isDark]
   );
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
@@ -208,7 +225,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             value={currentMessage.reasoning}
             flatListProps={{
               style: {
-                backgroundColor: '#f3f3f3',
+                backgroundColor: colors.reasoningBackground,
               },
             }}
             styles={customMarkedStyles}
@@ -219,7 +236,16 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         </View>
       </View>
     );
-  }, [currentMessage, customMarkdownRenderer, customTokenizer]);
+  }, [
+    currentMessage,
+    customMarkdownRenderer,
+    customTokenizer,
+    colors.reasoningBackground,
+    styles.reasoningContainer,
+    styles.reasoningHeader,
+    styles.reasoningTitle,
+    styles.reasoningContent,
+  ]);
 
   const handleShowButton = useCallback(() => {
     if (!isLoading) {
@@ -280,6 +306,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     customMarkdownRenderer,
     customTokenizer,
     chatScreenWidth,
+    styles.questionText,
   ]);
 
   const messageActionButtons = useMemo(() => {
@@ -302,7 +329,9 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             <Image
               source={
                 copied
-                  ? require('../../assets/done.png')
+                  ? isDark
+                    ? require('../../assets/done_dark.png')
+                    : require('../../assets/done.png')
                   : require('../../assets/copy_grey.png')
               }
               style={styles.actionButtonIcon}
@@ -315,7 +344,9 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             <Image
               source={
                 isEdit
-                  ? require('../../assets/select.png')
+                  ? isDark
+                    ? require('../../assets/select_dark.png')
+                    : require('../../assets/select.png')
                   : require('../../assets/select_grey.png')
               }
               style={styles.actionButtonIcon}
@@ -347,6 +378,12 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     setIsEditValue,
     showRefresh,
     currentMessage?.metrics,
+    isDark,
+    styles.actionButtonsContainer,
+    styles.actionButtonInnerContainer,
+    styles.actionButton,
+    styles.actionButtonIcon,
+    styles.metricsText,
   ]);
 
   if (!currentMessage) {
@@ -430,115 +467,116 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    marginLeft: 12,
-    marginVertical: 4,
-  },
-  marked_box: {
-    marginLeft: 28,
-    marginRight: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 0,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    marginRight: 6,
-  },
-  copy: {
-    width: 18,
-    height: 18,
-    marginRight: 20,
-    marginLeft: 'auto',
-  },
-  name: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'black',
-  },
-  questionText: {
-    flex: 1,
-    alignSelf: 'flex-end',
-    backgroundColor: '#f2f2f2',
-    borderRadius: 22,
-    overflow: 'hidden',
-    marginVertical: 8,
-    paddingHorizontal: 16,
-    lineHeight: 24,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#333',
-  },
-  inputText: {
-    fontSize: 16,
-    lineHeight: 26,
-    textAlignVertical: 'top',
-    marginTop: 1,
-    padding: 0,
-    fontWeight: '300',
-    color: '#333',
-    letterSpacing: 0,
-  },
-  reasoningContainer: {
-    marginBottom: 8,
-    borderRadius: 8,
-    backgroundColor: '#f3f3f3',
-    overflow: 'hidden',
-    marginTop: 8,
-  },
-  reasoningHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#eaeaea',
-  },
-  reasoningTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#333',
-  },
-  reasoningContent: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  loading: {
-    marginTop: 12,
-    marginBottom: 10,
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: -8,
-    marginTop: -2,
-    marginBottom: 4,
-  },
-  actionButtonInnerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionButton: {
-    padding: 8,
-  },
-  actionButtonIcon: {
-    width: 16,
-    height: 16,
-  },
-  metricsText: {
-    fontSize: 12,
-    color: '#999',
-    marginRight: 4,
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      marginLeft: 12,
+      marginVertical: 4,
+    },
+    marked_box: {
+      marginLeft: 28,
+      marginRight: 16,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 0,
+    },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    avatar: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      marginRight: 6,
+    },
+    copy: {
+      width: 18,
+      height: 18,
+      marginRight: 20,
+      marginLeft: 'auto',
+    },
+    name: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    questionText: {
+      flex: 1,
+      alignSelf: 'flex-end',
+      backgroundColor: colors.messageBackground,
+      borderRadius: 22,
+      overflow: 'hidden',
+      marginVertical: 8,
+      paddingHorizontal: 16,
+      lineHeight: 24,
+      paddingVertical: 10,
+      fontSize: 16,
+      color: colors.text,
+    },
+    inputText: {
+      fontSize: 16,
+      lineHeight: 26,
+      textAlignVertical: 'top',
+      marginTop: 1,
+      padding: 0,
+      fontWeight: '300',
+      color: colors.text,
+      letterSpacing: 0,
+    },
+    reasoningContainer: {
+      marginBottom: 8,
+      borderRadius: 8,
+      backgroundColor: colors.reasoningBackground,
+      overflow: 'hidden',
+      marginTop: 8,
+    },
+    reasoningHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 8,
+      backgroundColor: colors.borderLight,
+    },
+    reasoningTitle: {
+      fontSize: 15,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    reasoningContent: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    loading: {
+      marginTop: 12,
+      marginBottom: 10,
+    },
+    actionButtonsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: -8,
+      marginTop: -2,
+      marginBottom: 4,
+    },
+    actionButtonInnerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    actionButton: {
+      padding: 8,
+    },
+    actionButtonIcon: {
+      width: 16,
+      height: 16,
+    },
+    metricsText: {
+      fontSize: 12,
+      color: colors.textTertiary,
+      marginRight: 4,
+    },
+  });
 
 const customMarkedStyles: MarkedStyles = {
   table: { marginVertical: 4 },

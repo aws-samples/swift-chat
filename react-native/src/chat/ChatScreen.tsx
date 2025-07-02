@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Composer, GiftedChat } from 'react-native-gifted-chat';
+import { Composer, GiftedChat, InputToolbar } from 'react-native-gifted-chat';
 import {
   AppState,
   Dimensions,
@@ -17,7 +17,7 @@ import { voiceChatService } from './service/VoiceChatService';
 import AudioWaveformComponent, {
   AudioWaveformRef,
 } from './component/AudioWaveformComponent';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { useTheme, ColorScheme } from '../theme';
 import {
   invokeBedrockWithCallBack as invokeBedrockWithCallBack,
   requestToken,
@@ -95,6 +95,7 @@ type ChatScreenRouteProp = RouteProp<RouteParamList, 'Bedrock'>;
 let currentMode = ChatMode.Text;
 
 function ChatScreen(): React.JSX.Element {
+  const { colors, isDark } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<ChatScreenRouteProp>();
   const initialSessionId = route.params?.sessionId;
@@ -254,12 +255,16 @@ function ChatScreen(): React.JSX.Element {
               startNewChat.current();
             }
           }}
-          imageSource={require('../assets/edit.png')}
+          imageSource={
+            isDark
+              ? require('../assets/edit_dark.png')
+              : require('../assets/edit.png')
+          }
         />
       ),
     };
     navigation.setOptions(headerOptions);
-  }, [usage, navigation, mode, systemPrompt, showSystemPrompt]);
+  }, [usage, navigation, mode, systemPrompt, showSystemPrompt, isDark]);
 
   // sessionId changes (start new chat or click another session)
   useEffect(() => {
@@ -665,6 +670,8 @@ function ChatScreen(): React.JSX.Element {
     }
   };
 
+  const styles = createStyles(colors);
+
   return (
     <SafeAreaView style={styles.container}>
       <GiftedChat
@@ -700,7 +707,9 @@ function ChatScreen(): React.JSX.Element {
           }
 
           // Default input box
-          return <Composer {...props} />;
+          return (
+            <Composer {...props} textInputStyle={styles.composerTextInput} />
+          );
         }}
         renderSend={props => (
           <CustomSendComponent
@@ -834,11 +843,20 @@ function ChatScreen(): React.JSX.Element {
         scrollToBottom={true}
         scrollToBottomComponent={CustomScrollToBottomComponent}
         scrollToBottomStyle={scrollStyle.scrollToBottomContainerStyle}
+        renderInputToolbar={props => (
+          <InputToolbar
+            {...props}
+            containerStyle={{
+              backgroundColor: colors.background,
+              borderTopColor: colors.textTertiary,
+            }}
+          />
+        )}
         textInputProps={{
           ...styles.textInputStyle,
           ...{
             fontWeight: isMac ? '300' : 'normal',
-            color: 'black',
+            color: colors.text,
           },
         }}
         maxComposerHeight={isMac ? 360 : 200}
@@ -871,21 +889,26 @@ function ChatScreen(): React.JSX.Element {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  contentContainer: {
-    paddingTop: 15,
-    paddingBottom: 15,
-    flexGrow: 1,
-    justifyContent: 'flex-end',
-  },
-  textInputStyle: {
-    marginLeft: 14,
-    lineHeight: 22,
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    contentContainer: {
+      paddingTop: 15,
+      paddingBottom: 15,
+      flexGrow: 1,
+      justifyContent: 'flex-end',
+    },
+    textInputStyle: {
+      marginLeft: 14,
+      lineHeight: 22,
+    },
+    composerTextInput: {
+      backgroundColor: colors.background,
+      color: colors.text,
+    },
+  });
 
 export default ChatScreen;

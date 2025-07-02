@@ -8,11 +8,18 @@ import React, {
 import { View, Animated, Easing, Image, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useAppContext } from '../../history/AppProvider.tsx';
+import { useTheme } from '../../theme';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
-const ProgressCircle = ({ progressAnim }: { progressAnim: Animated.Value }) => {
+const ProgressCircle = ({
+  progressAnim,
+  isDark,
+}: {
+  progressAnim: Animated.Value;
+  isDark: boolean;
+}) => {
   const size = 28;
   const strokeWidth = 2;
   const radius = useMemo(() => (size - strokeWidth) / 2, [size, strokeWidth]);
@@ -24,7 +31,7 @@ const ProgressCircle = ({ progressAnim }: { progressAnim: Animated.Value }) => {
   return (
     <Svg width={size} height={size}>
       <Circle
-        stroke="#e6e6e6"
+        stroke={isDark ? '#333333' : '#e6e6e6'}
         fill="none"
         cx={size / 2}
         cy={size / 2}
@@ -32,7 +39,7 @@ const ProgressCircle = ({ progressAnim }: { progressAnim: Animated.Value }) => {
         strokeWidth={strokeWidth}
       />
       <AnimatedCircle
-        stroke="#333333"
+        stroke={isDark ? '#e6e6e6' : '#333333'}
         fill="none"
         cx={size / 2}
         cy={size / 2}
@@ -52,6 +59,7 @@ const ImageProgressBar = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showFinishImage, setShowFinishImage] = useState(false);
   const { event } = useAppContext();
+  const { isDark } = useTheme();
 
   const startProgressAnimation = useRef(
     useCallback(
@@ -94,16 +102,24 @@ const ImageProgressBar = () => {
 
   return (
     <View style={styles.container}>
-      <ProgressCircle progressAnim={progressAnim} />
+      <ProgressCircle progressAnim={progressAnim} isDark={isDark} />
       {!showFinishImage && (
         <Image
-          source={require('../../assets/image_progress.png')}
+          source={
+            isDark
+              ? require('../../assets/image_progress_dark.png')
+              : require('../../assets/image_progress.png')
+          }
           style={styles.image}
         />
       )}
       {showFinishImage && (
         <AnimatedImage
-          source={require('../../assets/done.png')}
+          source={
+            isDark
+              ? require('../../assets/done_dark.png')
+              : require('../../assets/done.png')
+          }
           style={[styles.image, { opacity: fadeAnim }]}
         />
       )}

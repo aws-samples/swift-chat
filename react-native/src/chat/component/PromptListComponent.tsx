@@ -29,6 +29,7 @@ import { RouteParamList } from '../../types/RouteTypes.ts';
 import { useAppContext } from '../../history/AppProvider.tsx';
 import Dialog from 'react-native-dialog';
 import { requestToken } from '../../api/bedrock-api.ts';
+import { useTheme, ColorScheme } from '../../theme';
 
 interface PromptListProps {
   onSelectPrompt: (prompt: SystemPrompt | null) => void;
@@ -40,6 +41,8 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   onSelectPrompt,
   onSwitchedToTextModel,
 }) => {
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors);
   const navigation = useNavigation<NavigationProp>();
   const [isNovaSonic, setIsNovaSonic] = useState(
     getTextModel().modelId.includes('nova-sonic')
@@ -223,7 +226,11 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
           style={styles.doneButton}
           onPress={() => setIsEditMode(false)}>
           <Image
-            source={require('../../assets/done.png')}
+            source={
+              isDark
+                ? require('../../assets/done_dark.png')
+                : require('../../assets/done.png')
+            }
             style={styles.doneImage}
           />
         </TouchableOpacity>
@@ -249,100 +256,101 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    height: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  promptButton: {
-    height: 36,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: '#E8E8E8',
-    borderRadius: 8,
-    marginLeft: 8,
-    borderWidth: 1.3,
-    borderColor: '#E8E8E8',
-  },
-  firstButton: {
-    marginLeft: 10,
-  },
-  lastButton: {
-    marginRight: 10,
-  },
-  selectedPromptButton: {
-    backgroundColor: '#E8E8E8',
-    borderColor: 'black',
-  },
-  promptText: {
-    fontSize: 14,
-    marginTop: Platform.OS === 'android' ? -2 : 0,
-    color: '#333',
-  },
-  selectedPromptText: {
-    color: 'black',
-  },
-  addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 20,
-    marginTop: 17,
-    marginLeft: 8,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.3,
-    borderColor: '#666',
-  },
-  addText: {
-    fontSize: 20,
-    color: '#666',
-    marginTop: -1.5,
-  },
-  doneButton: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 16,
-  },
-  doneImage: {
-    width: 20,
-    height: 20,
-  },
-  promptContainer: {
-    alignSelf: 'center',
-    marginTop: 6,
-  },
-  deleteTouchable: {
-    position: 'absolute',
-    right: -8,
-    top: -8,
-    zIndex: 1,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteLayout: {
-    width: 16,
-    height: 16,
-    backgroundColor: '#666',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteText: {
-    color: '#fff',
-    fontSize: 12,
-    marginTop: -1.8,
-    marginRight: -0.5,
-    fontWeight: 'normal',
-  },
-  draggingPrompt: {
-    opacity: 0.9,
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      height: 60,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    scrollContent: {
+      flex: 1,
+    },
+    promptButton: {
+      height: 36,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      backgroundColor: colors.promptButtonBackground,
+      borderRadius: 8,
+      marginLeft: 8,
+      borderWidth: 1.3,
+      borderColor: colors.promptButtonBorder,
+    },
+    firstButton: {
+      marginLeft: 10,
+    },
+    lastButton: {
+      marginRight: 10,
+    },
+    selectedPromptButton: {
+      backgroundColor: colors.promptButtonBackground,
+      borderColor: colors.promptSelectedBorder,
+    },
+    promptText: {
+      fontSize: 14,
+      marginTop: Platform.OS === 'android' ? -2 : 0,
+      color: colors.promptText,
+    },
+    selectedPromptText: {
+      color: colors.text,
+    },
+    addButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 20,
+      marginTop: 17,
+      marginLeft: 8,
+      backgroundColor: colors.promptAddButtonBackground,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1.3,
+      borderColor: colors.promptAddButtonBorder,
+    },
+    addText: {
+      fontSize: 20,
+      color: colors.promptAddText,
+      marginTop: -1.5,
+    },
+    doneButton: {
+      paddingHorizontal: 20,
+      paddingTop: 24,
+      paddingBottom: 16,
+    },
+    doneImage: {
+      width: 20,
+      height: 20,
+    },
+    promptContainer: {
+      alignSelf: 'center',
+      marginTop: 6,
+    },
+    deleteTouchable: {
+      position: 'absolute',
+      right: -8,
+      top: -8,
+      zIndex: 1,
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    deleteLayout: {
+      width: 16,
+      height: 16,
+      backgroundColor: colors.promptDeleteBackground,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    deleteText: {
+      color: colors.promptDeleteText,
+      fontSize: 12,
+      marginTop: -1.8,
+      marginRight: -0.5,
+      fontWeight: 'normal',
+    },
+    draggingPrompt: {
+      opacity: 0.9,
+    },
+  });

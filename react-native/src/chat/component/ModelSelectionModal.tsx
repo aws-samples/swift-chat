@@ -25,6 +25,7 @@ import {
   getMergedModelOrder,
 } from '../../storage/StorageUtils';
 import { DeepSeekModels } from '../../storage/Constants';
+import { useTheme, ColorScheme } from '../../theme';
 
 interface ModelSelectionModalProps {
   visible: boolean;
@@ -43,6 +44,8 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
     y: 70,
   },
 }) => {
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors);
   const { sendEvent } = useAppContext();
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model>(getTextModel());
@@ -127,6 +130,8 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
       ? require('../../assets/openai.png')
       : isOllama
       ? require('../../assets/ollama_white.png')
+      : isDark
+      ? require('../../assets/bedrock_dark.png')
       : require('../../assets/bedrock.png');
   };
 
@@ -154,7 +159,11 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
           <Text style={styles.modelName}>{item.modelName}</Text>
           {isSelected && (
             <Image
-              source={require('../../assets/done.png')}
+              source={
+                isDark
+                  ? require('../../assets/done_dark.png')
+                  : require('../../assets/done.png')
+              }
               style={styles.checkIcon}
             />
           )}
@@ -211,74 +220,75 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 12,
-    width: 240,
-    height: MODAL_HEIGHT,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'black',
-  },
-  closeButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#E8E8E8',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontSize: 16,
-    lineHeight: 18,
-    textAlign: 'center',
-    color: '#333',
-  },
-  modelList: {
-    paddingRight: 8,
-  },
-  modelItem: {
-    paddingVertical: 8,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#E8E8E8',
-  },
-  modelItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 2,
-  },
-  modelIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-  modelName: {
-    fontSize: 14,
-    flex: 1,
-    color: '#333',
-  },
-  checkIcon: {
-    width: 16,
-    height: 16,
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    },
+    modalContainer: {
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      padding: 12,
+      width: 240,
+      height: MODAL_HEIGHT,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    closeButton: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    closeButtonText: {
+      fontSize: 16,
+      lineHeight: 18,
+      textAlign: 'center',
+      color: colors.textSecondary,
+    },
+    modelList: {
+      paddingRight: 8,
+    },
+    modelItem: {
+      paddingVertical: 8,
+      borderBottomWidth: 0.5,
+      borderBottomColor: colors.borderLight,
+    },
+    modelItemContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingTop: 2,
+    },
+    modelIcon: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      marginRight: 10,
+    },
+    modelName: {
+      fontSize: 14,
+      flex: 1,
+      color: colors.text,
+    },
+    checkIcon: {
+      width: 16,
+      height: 16,
+    },
+  });

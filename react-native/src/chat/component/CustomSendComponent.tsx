@@ -10,6 +10,7 @@ import {
 } from '../../types/Chat.ts';
 import { CustomAddFileComponent } from './CustomAddFileComponent.tsx';
 import { getImageModel, getTextModel } from '../../storage/StorageUtils.ts';
+import { useTheme, ColorScheme } from '../../theme';
 
 interface CustomSendComponentProps extends SendProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
@@ -32,6 +33,8 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   ...props
 }) => {
   const { text } = props;
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
   let isShowSending = false;
   if (chatMode === ChatMode.Image) {
@@ -140,53 +143,54 @@ const isModelSupportUploadImages = (chatMode: ChatMode): boolean => {
   );
 };
 
-const styles = StyleSheet.create({
-  stopContainer: {
-    marginRight: 15,
-    marginLeft: 10,
-    width: 26,
-    height: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  circle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'black',
-    position: 'absolute',
-  },
-  rectangle: {
-    width: 10,
-    height: 10,
-    backgroundColor: 'white',
-    borderRadius: 2,
-    position: 'absolute',
-  },
-  sendContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-  },
-  micContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    height: 44,
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-    marginLeft: 10,
-    height: 44,
-  },
-  sendButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 15,
-    marginRight: 15,
-    marginLeft: 10,
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    stopContainer: {
+      marginRight: 15,
+      marginLeft: 10,
+      width: 26,
+      height: 26,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    circle: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: colors.text,
+      position: 'absolute',
+    },
+    rectangle: {
+      width: 10,
+      height: 10,
+      backgroundColor: colors.surface,
+      borderRadius: 2,
+      position: 'absolute',
+    },
+    sendContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      alignSelf: 'flex-end',
+    },
+    micContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      alignSelf: 'flex-end',
+      height: 44,
+    },
+    loadingContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 15,
+      marginLeft: 10,
+      height: 44,
+    },
+    sendButton: {
+      width: 26,
+      height: 26,
+      borderRadius: 15,
+      marginRight: 15,
+      marginLeft: 10,
+    },
+  });
 export default CustomSendComponent;

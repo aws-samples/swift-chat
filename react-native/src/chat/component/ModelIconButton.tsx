@@ -3,6 +3,7 @@ import { Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { ModelTag } from '../../types/Chat';
 import { getTextModel } from '../../storage/StorageUtils';
 import { getModelTag } from '../../utils/ModelUtils.ts';
+import { useTheme } from '../../theme';
 
 interface ModelIconButtonProps {
   onPress: () => void;
@@ -12,6 +13,7 @@ export const ModelIconButton: React.FC<ModelIconButtonProps> = ({
   onPress,
 }) => {
   // Directly get the current model on each render
+  const { isDark } = useTheme();
   const currentModelTag = getModelTag(getTextModel());
 
   const modelIcon =
@@ -23,6 +25,8 @@ export const ModelIconButton: React.FC<ModelIconButtonProps> = ({
       ? require('../../assets/openai.png')
       : currentModelTag === ModelTag.Ollama
       ? require('../../assets/ollama_white.png')
+      : isDark
+      ? require('../../assets/bedrock_dark.png')
       : require('../../assets/bedrock.png');
 
   return (

@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import type { RendererInterface } from 'react-native-marked';
 import { Renderer } from 'react-native-marked';
-import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { github, vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Cell, Table, TableWrapper } from 'react-native-table-component';
 import RNFS from 'react-native-fs';
 import MDSvg from 'react-native-marked/src/components/MDSvg.tsx';
@@ -39,6 +39,7 @@ import Disc from '@jsamr/counter-style/lib/es/presets/disc';
 // @ts-expect-error
 import MathView from 'react-native-math-view';
 import { isAndroid } from '../../../utils/PlatformUtils.ts';
+import { ColorScheme } from '../../../theme';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
 let mathViewIndex = 0;
@@ -50,11 +51,14 @@ function getMathKey() {
 
 interface CopyButtonProps {
   onCopy: () => void;
+  colors: ColorScheme;
+  isDark: boolean;
 }
 
 export const CopyButton: React.FC<CopyButtonProps> = React.memo(
-  ({ onCopy }) => {
+  ({ onCopy, colors, isDark }) => {
     const [copied, setCopied] = useState(false);
+    const styles = createCustomStyles(colors);
 
     const handleCopy = useCallback(() => {
       onCopy();
@@ -64,9 +68,13 @@ export const CopyButton: React.FC<CopyButtonProps> = React.memo(
     // UseMemo to memoize the image source to prevent flickering
     const imageSource = useMemo(() => {
       return copied
-        ? require('../../../assets/done.png')
+        ? isDark
+          ? require('../../../assets/done_dark.png')
+          : require('../../../assets/done.png')
+        : isDark
+        ? require('../../../assets/copy_grey.png')
         : require('../../../assets/copy.png');
-    }, [copied]);
+    }, [copied, isDark]);
 
     useEffect(() => {
       if (copied) {
@@ -78,10 +86,8 @@ export const CopyButton: React.FC<CopyButtonProps> = React.memo(
       }
     }, [copied]);
     return (
-      <TouchableOpacity
-        style={customStyles.copyButtonLayout}
-        onPress={handleCopy}>
-        <Image source={imageSource} style={customStyles.copyButton} />
+      <TouchableOpacity style={styles.copyButtonLayout} onPress={handleCopy}>
+        <Image source={imageSource} style={styles.copyButton} />
       </TouchableOpacity>
     );
   },
@@ -89,34 +95,48 @@ export const CopyButton: React.FC<CopyButtonProps> = React.memo(
 );
 
 const MemoizedCodeHighlighter = React.memo(
-  ({ text, language }: { text: string; language?: string }) => {
+  ({
+    text,
+    language,
+    colors,
+    isDark,
+  }: {
+    text: string;
+    language?: string;
+    colors: ColorScheme;
+    isDark: boolean;
+  }) => {
+    const styles = createCustomStyles(colors);
     const handleCopy = useCallback(() => {
       Clipboard.setString(text);
     }, [text]);
+
+    const hljsStyle = isDark ? vs2015 : github;
+
     return (
-      <View style={customStyles.container}>
-        <View style={customStyles.header}>
-          <Text style={customStyles.headerText}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>
             {language === '' ? 'code' : language}
           </Text>
-          <CopyButton onCopy={handleCopy} />
+          <CopyButton onCopy={handleCopy} colors={colors} isDark={isDark} />
         </View>
-        <Suspense
-          fallback={<Text style={customStyles.loading}>Loading...</Text>}>
+        <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
           <CustomCodeHighlighter
-            hljsStyle={github}
+            hljsStyle={hljsStyle}
             scrollViewProps={{
               contentContainerStyle: {
                 padding: 12,
                 minWidth: '100%',
                 borderBottomLeftRadius: 8,
                 borderBottomRightRadius: 8,
+                backgroundColor: colors.codeBackground,
               },
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-expect-error
-              backgroundColor: '#F8F8F8',
+              backgroundColor: colors.codeBackground,
             }}
-            textStyle={customStyles.text}
+            textStyle={styles.text}
             language={language ?? 'code'}>
             {text}
           </CustomCodeHighlighter>
@@ -126,7 +146,9 @@ const MemoizedCodeHighlighter = React.memo(
   },
   (prevProps, nextProps) =>
     prevProps.text === nextProps.text &&
-    prevProps.language === nextProps.language
+    prevProps.language === nextProps.language &&
+    prevProps.colors === nextProps.colors &&
+    prevProps.isDark === nextProps.isDark
 );
 
 export class CustomMarkdownRenderer
@@ -135,11 +157,19 @@ export class CustomMarkdownRenderer
 {
   private width = Dimensions.get('window').width;
   private height = Dimensions.get('window').height;
+  private colors: ColorScheme;
+  private styles: ReturnType<typeof createCustomStyles>;
+  private isDark: boolean;
 
   constructor(
-    private onImagePress: (pressMode: PressMode, url: string) => void
+    private onImagePress: (pressMode: PressMode, url: string) => void,
+    colors: ColorScheme,
+    isDark: boolean
   ) {
     super();
+    this.colors = colors;
+    this.isDark = isDark;
+    this.styles = createCustomStyles(colors);
   }
 
   getTextView(children: string | ReactNode[], styles?: TextStyle): ReactNode {
@@ -163,7 +193,7 @@ export class CustomMarkdownRenderer
   codespan(text: string, styles?: TextStyle): ReactNode {
     return this.getTextView(text, {
       ...styles,
-      ...customStyles.codeSpanText,
+      ...this.styles.codeSpanText,
     });
   }
 
@@ -229,7 +259,7 @@ export class CustomMarkdownRenderer
       : uri;
     return (
       <TouchableOpacity
-        style={customStyles.imageContainer}
+        style={this.styles.imageContainer}
         activeOpacity={0.8}
         onPress={() => this.onImagePress(PressMode.Click, imgUrl)}
         onLongPress={() => this.onImagePress(PressMode.LongPress, imgUrl)}
@@ -238,7 +268,7 @@ export class CustomMarkdownRenderer
           key={key}
           uri={imgUrl}
           alt={alt}
-          style={{ ...style, ...customStyles.imageStyle }}
+          style={{ ...style, ...this.styles.imageStyle }}
         />
       </TouchableOpacity>
     );
@@ -256,6 +286,8 @@ export class CustomMarkdownRenderer
           key={this.getKey()}
           text={text}
           language={language}
+          colors={this.colors}
+          isDark={this.isDark}
         />
       );
     } else {
@@ -275,13 +307,16 @@ export class CustomMarkdownRenderer
 
     const headerTableStyle = {
       ...rowStyle,
-      backgroundColor: '#f5f5f5',
+      backgroundColor: this.colors.surface,
     };
 
     return (
-      <ScrollView horizontal={true} style={customStyles.tableScroll}>
+      <ScrollView horizontal={true} style={this.styles.tableScroll}>
         <Table
-          borderStyle={{ borderWidth, borderColor }}
+          borderStyle={{
+            borderWidth,
+            borderColor: this.isDark ? this.colors.borderLight : borderColor,
+          }}
           style={tableStyleRest}>
           <TableWrapper style={headerTableStyle}>
             {header.map((headerCol, index) => {
@@ -299,7 +334,7 @@ export class CustomMarkdownRenderer
               return (
                 <Cell
                   width={widthArr[index]}
-                  style={customStyles.cell}
+                  style={this.styles.cell}
                   key={`${index}`}
                   data={<View style={cellStyle}>{headerCol}</View>}
                 />
@@ -313,7 +348,7 @@ export class CustomMarkdownRenderer
                   return (
                     <Cell
                       width={widthArr[cellIndex]}
-                      style={customStyles.cell}
+                      style={this.styles.cell}
                       key={`${cellIndex}`}
                       data={<View style={cellStyle}>{cellData}</View>}
                     />
@@ -360,11 +395,11 @@ export class CustomMarkdownRenderer
         <MathView
           key={getMathKey()}
           math={text}
-          renderError={() => this.getTextView(_raw, customStyles.text)}
+          renderError={() => this.getTextView(_raw, this.styles.text)}
           style={
             isDisplayMode
-              ? customStyles.displayMathView
-              : customStyles.inlineMathView
+              ? this.styles.displayMathView
+              : this.styles.inlineMathView
           }
         />
       );
@@ -373,7 +408,7 @@ export class CustomMarkdownRenderer
         <View
           key={getMathKey()}
           style={
-            isDisplayMode ? customStyles.displayMath : customStyles.inlineMath
+            isDisplayMode ? this.styles.displayMath : this.styles.inlineMath
           }>
           {isDisplayMode ? (
             <ScrollView
@@ -412,73 +447,80 @@ const getTableWidthArr = (
     });
 };
 
-const customStyles = StyleSheet.create({
-  text: {
-    fontSize: 12,
-    paddingVertical: 1.3,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
-  },
-  codeSpanText: {
-    fontStyle: 'normal',
-    backgroundColor: '#f5f5f5',
-    fontSize: 16,
-  },
-  imageContainer: {
-    marginVertical: 4,
-    maxWidth: 400,
-    maxHeight: 400,
-  },
-  imageStyle: {
-    borderRadius: 8,
-  },
-  container: {
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#F9F9F9',
-    marginVertical: 6,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#eaeaea',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-  },
-  headerText: {
-    fontWeight: '500',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    color: '#333333',
-  },
-  copyButtonLayout: {
-    padding: 10,
-    marginLeft: 'auto',
-  },
-  copyButton: {
-    width: 18,
-    height: 18,
-  },
-  loading: {
-    padding: 12,
-  },
-  cell: {
-    minHeight: 32,
-  },
-  displayMath: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    width: '100%',
-  },
-  inlineMath: {
-    marginTop: Platform.OS === 'android' ? 0 : 2,
-    maxHeight: 24,
-  },
-  displayMathView: {
-    marginVertical: 0,
-    alignSelf: 'center',
-  },
-  tableScroll: {
-    marginVertical: 4,
-  },
-  inlineMathView: {},
-});
+const createCustomStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    text: {
+      fontSize: 12,
+      paddingVertical: 1.3,
+      fontFamily: Platform.OS === 'ios' ? 'Menlo-Regular' : 'monospace',
+      color: colors.text,
+    },
+    codeSpanText: {
+      fontStyle: 'normal',
+      backgroundColor: colors.input,
+      fontSize: 16,
+      color: colors.text,
+    },
+    imageContainer: {
+      marginVertical: 4,
+      maxWidth: 400,
+      maxHeight: 400,
+    },
+    imageStyle: {
+      borderRadius: 8,
+    },
+    container: {
+      borderRadius: 8,
+      overflow: 'hidden',
+      backgroundColor: colors.input,
+      marginVertical: 6,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.borderLight,
+      borderTopLeftRadius: 8,
+      borderTopRightRadius: 8,
+    },
+    headerText: {
+      fontWeight: '500',
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      color: colors.text,
+    },
+    copyButtonLayout: {
+      padding: 10,
+      marginLeft: 'auto',
+    },
+    copyButton: {
+      width: 18,
+      height: 18,
+    },
+    loading: {
+      padding: 12,
+      color: colors.text,
+    },
+    cell: {
+      minHeight: 32,
+    },
+    displayMath: {
+      alignItems: 'center',
+      paddingVertical: 12,
+      width: '100%',
+    },
+    inlineMath: {
+      marginTop: Platform.OS === 'android' ? 0 : 2,
+      maxHeight: 24,
+    },
+    displayMathView: {
+      marginVertical: 0,
+      alignSelf: 'center',
+      color: colors.text,
+    },
+    tableScroll: {
+      marginVertical: 4,
+    },
+    inlineMathView: {
+      color: colors.text,
+    },
+  });
