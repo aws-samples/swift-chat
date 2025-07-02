@@ -17,14 +17,13 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import { Model, ModelTag } from '../../types/Chat';
+import { Model } from '../../types/Chat';
 import {
   getTextModel,
   saveTextModel,
   updateTextModelUsageOrder,
   getMergedModelOrder,
 } from '../../storage/StorageUtils';
-import { DeepSeekModels } from '../../storage/Constants';
 import { useTheme, ColorScheme } from '../../theme';
 import { getModelIcon } from '../../utils/ModelUtils.ts';
 

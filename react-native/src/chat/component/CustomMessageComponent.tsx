@@ -21,12 +21,7 @@ import Share from 'react-native-share';
 import { MessageProps } from 'react-native-gifted-chat';
 import { CustomMarkdownRenderer } from './markdown/CustomMarkdownRenderer.tsx';
 import { MarkedStyles } from 'react-native-marked/src/theme/types.ts';
-import {
-  ChatStatus,
-  ModelTag,
-  PressMode,
-  SwiftChatMessage,
-} from '../../types/Chat.ts';
+import { ChatStatus, PressMode, SwiftChatMessage } from '../../types/Chat.ts';
 import { trigger } from '../util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
