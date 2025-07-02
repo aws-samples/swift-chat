@@ -2,13 +2,10 @@ import React from 'react';
 import { TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../types/RouteTypes.ts';
-import { useTheme } from '../theme';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
-export const HeaderLeftView = (navigation: NavigationProp) => {
-  const { isDark } = useTheme();
-
+export const HeaderLeftView = (navigation: NavigationProp, isDark: boolean) => {
   return (
     <TouchableOpacity
       onPress={() => navigation.goBack()}

@@ -29,7 +29,7 @@ function PromptScreen(): React.JSX.Element {
   const route = useRoute<PromptScreenRouteProp>();
   const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
   const isAddMode = route.params.prompt === undefined;
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
   const [currentPrompt, setCurrentPrompt] = useState<SystemPrompt>(
     isAddMode
@@ -46,8 +46,8 @@ function PromptScreen(): React.JSX.Element {
   const { sendEvent } = useAppContext();
 
   const headerLeft = useCallback(
-    () => HeaderLeftView(navigation),
-    [navigation]
+    () => HeaderLeftView(navigation, isDark),
+    [navigation, isDark]
   );
   React.useLayoutEffect(() => {
     const headerOption = {

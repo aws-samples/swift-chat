@@ -33,7 +33,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   ...props
 }) => {
   const { text } = props;
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
   const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
   let isShowSending = false;
@@ -77,7 +77,11 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
           )}
           {chatStatus !== ChatStatus.Running && (
             <Image
-              source={require('../../assets/send.png')}
+              source={
+                isDark
+                  ? require('../../assets/send_dark.png')
+                  : require('../../assets/send.png')
+              }
               style={styles.sendButton}
             />
           )}

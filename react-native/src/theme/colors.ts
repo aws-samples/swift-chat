@@ -143,7 +143,7 @@ export const darkColors: ColorScheme = {
   promptScreenSaveButtonText: '#ffffff',
   textDarkGray: '#cccccc',
   inputToolbarBorder: '#cccccc',
-  fileListBackground: '#1a1a1a',
+  fileListBackground: '#000000',
   fileItemBorder: '#cccccc',
   addButtonBackground: '#333333',
 };

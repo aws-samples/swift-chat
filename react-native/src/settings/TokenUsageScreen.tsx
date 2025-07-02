@@ -32,12 +32,12 @@ type NavigationProp = DrawerNavigationProp<RouteParamList>;
 function TokenUsageScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp>();
   const [modelUsage, setModelUsage] = React.useState<Usage[]>([]);
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const headerLeft = useCallback(
-    () => HeaderLeftView(navigation),
-    [navigation]
+    () => HeaderLeftView(navigation, isDark),
+    [navigation, isDark]
   );
   React.useLayoutEffect(() => {
     const headerOption = {
