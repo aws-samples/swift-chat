@@ -240,6 +240,31 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
 const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
 export const IMAGE_FORMATS = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
 export const VIDEO_FORMATS = ['mp4', 'mov', 'mkv', 'webm'];
+export const EXTRA_DOCUMENT_FORMATS = [
+  'json',
+  'py',
+  'ts',
+  'tsx',
+  'js',
+  'kt',
+  'java',
+  'swift',
+  'c',
+  'm',
+  'h',
+  'sh',
+  'cpp',
+  'rs',
+  'go',
+  'class',
+  'cs',
+  'php',
+  'rb',
+  'dart',
+  'sql',
+  'css',
+  'yaml',
+];
 export const DOCUMENT_FORMATS = [
   'pdf',
   'csv',
@@ -250,6 +275,7 @@ export const DOCUMENT_FORMATS = [
   'html',
   'txt',
   'md',
+  ...EXTRA_DOCUMENT_FORMATS,
 ];
 
 export const getFileType = (format: string) => {

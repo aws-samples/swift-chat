@@ -118,7 +118,11 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
               style={styles.micContainer}
               onPress={onVoiceChatToggle}>
               <Image
-                source={require('../../assets/mic.png')}
+                source={
+                  isDark
+                    ? require('../../assets/mic_dark.png')
+                    : require('../../assets/mic.png')
+                }
                 style={styles.sendButton}
               />
             </TouchableOpacity>

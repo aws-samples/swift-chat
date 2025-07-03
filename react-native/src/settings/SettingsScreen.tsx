@@ -770,7 +770,7 @@ const createStyles = (colors: ColorScheme) =>
       marginTop: 10,
     },
     providerSettingsWrapper: {
-      backgroundColor: colors.card,
+      backgroundColor: colors.background,
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: 8,
