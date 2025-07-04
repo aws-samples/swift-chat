@@ -46,6 +46,7 @@ export interface ColorScheme {
   fileListBackground: string;
   fileItemBorder: string;
   addButtonBackground: string;
+  chatScreenSplit: string;
 }
 
 export const lightColors: ColorScheme = {
@@ -96,6 +97,7 @@ export const lightColors: ColorScheme = {
   fileListBackground: '#ffffff',
   fileItemBorder: '#e0e0e0',
   addButtonBackground: '#f0f0f0',
+  chatScreenSplit: '#c7c7c7',
 };
 
 export const darkColors: ColorScheme = {
@@ -127,7 +129,7 @@ export const darkColors: ColorScheme = {
   messageBackground: '#2a2a2a',
   reasoningBackground: '#2a2a2a',
   inputBorder: '#555555',
-  drawerBackground: '#0c0c0c',
+  drawerBackground: '#000000',
   drawerBackgroundMac: '#0c0c0c',
   promptButtonBackground: '#333333',
   promptButtonBorder: '#333333',
@@ -146,4 +148,5 @@ export const darkColors: ColorScheme = {
   fileListBackground: '#000000',
   fileItemBorder: '#cccccc',
   addButtonBackground: '#333333',
+  chatScreenSplit: '#404040',
 };

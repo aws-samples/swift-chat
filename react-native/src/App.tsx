@@ -32,17 +32,20 @@ const renderCustomDrawerContent = (
 
 const DrawerNavigator = () => {
   const { drawerType } = useAppContext();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   return (
     <Drawer.Navigator
       initialRouteName="Bedrock"
       screenOptions={{
+        overlayColor: isDark ? 'rgba(255, 255, 255, 0.1)' : undefined,
         headerTintColor: colors.text,
         headerTitleAlign: 'center',
         drawerStyle: { width: width, backgroundColor: colors.background },
         headerStyle: {
           height: isMac ? 66 : undefined,
           backgroundColor: colors.background,
+          borderBottomWidth: isDark ? 0.3 : undefined,
+          borderBottomColor: isDark ? colors.chatScreenSplit : undefined,
         },
         drawerType: isMac ? drawerType : 'slide',
       }}

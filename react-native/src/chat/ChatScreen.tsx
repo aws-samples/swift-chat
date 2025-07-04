@@ -848,7 +848,7 @@ function ChatScreen(): React.JSX.Element {
             {...props}
             containerStyle={{
               backgroundColor: colors.background,
-              borderTopColor: colors.textTertiary,
+              borderTopColor: colors.chatScreenSplit,
             }}
           />
         )}
