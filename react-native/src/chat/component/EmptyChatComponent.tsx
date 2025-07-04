@@ -56,7 +56,7 @@ export const EmptyChatComponent = ({
           <ImageSpinner
             visible={true}
             size={24}
-            isRotate={true}
+            isRotate={!isAndroid}
             source={require('../../assets/loading.png')}
           />
         ) : (

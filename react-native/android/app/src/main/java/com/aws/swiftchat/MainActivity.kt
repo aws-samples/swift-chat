@@ -1,5 +1,6 @@
 package com.aws.swiftchat
 
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import com.facebook.react.ReactActivity
@@ -17,7 +18,29 @@ class MainActivity : ReactActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(null)
-        window.navigationBarColor = Color.WHITE
+        updateNavigationBarColor()
+    }
+
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateNavigationBarColor()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateNavigationBarColor()
+    }
+
+    private fun updateNavigationBarColor() {
+        val isDarkMode =
+            resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+
+        runOnUiThread {
+            window.navigationBarColor = if (isDarkMode) Color.BLACK else Color.WHITE
+            // Force update for all child windows (including modals)
+            window.decorView.requestLayout()
+        }
     }
 
     /**

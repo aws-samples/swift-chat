@@ -19,6 +19,7 @@ import { isMac } from '../../App.tsx';
 import { getTextModel } from '../../storage/StorageUtils.ts';
 import { showInfo } from '../util/ToastUtils.ts';
 import { useTheme } from '../../theme';
+import { isAndroid } from '../../utils/PlatformUtils.ts';
 
 interface CustomRenderActionsProps {
   onFileSelected: (files: FileInfo[]) => void;
@@ -232,7 +233,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
         'Choose From Files': handleChooseFiles,
         Cancel: () => {},
       }}
-      optionTintColor={colors.text}
+      optionTintColor={isAndroid ? colors.background : colors.text}
     />
   );
 };
