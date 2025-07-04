@@ -43,10 +43,6 @@ const DrawerNavigator = () => {
         drawerStyle: {
           width: width,
           backgroundColor: colors.background,
-          shadowColor: isDark ? colors.background : undefined, // 在暗黑模式下使用背景色
-          shadowOpacity: isDark ? 0 : undefined, // 在暗黑模式下禁用阴影
-          elevation: isDark ? 0 : undefined, // Android上禁用阴影
-          borderRightWidth: 0, // 确保没有右边框
         },
         headerStyle: {
           height: isMac ? 66 : undefined,
