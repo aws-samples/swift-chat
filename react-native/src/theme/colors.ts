@@ -130,7 +130,7 @@ export const darkColors: ColorScheme = {
   reasoningBackground: '#2a2a2a',
   inputBorder: '#555555',
   drawerBackground: '#000000',
-  drawerBackgroundMac: '#0c0c0c',
+  drawerBackgroundMac: '#000000',
   promptButtonBackground: '#333333',
   promptButtonBorder: '#333333',
   promptText: '#cccccc',

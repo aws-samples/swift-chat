@@ -15,7 +15,7 @@ import Toast from 'react-native-toast-message';
 import TokenUsageScreen from './settings/TokenUsageScreen.tsx';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
-import { isMacCatalyst } from './utils/PlatformUtils';
+import { isAndroid, isMacCatalyst } from './utils/PlatformUtils';
 import { ThemeProvider, useTheme } from './theme';
 
 export const isMac = isMacCatalyst;
@@ -43,6 +43,8 @@ const DrawerNavigator = () => {
         drawerStyle: {
           width: width,
           backgroundColor: colors.background,
+          borderRightWidth: isMac ? 1 : isAndroid ? 0.3 : 0,
+          borderRightColor: colors.border,
         },
         headerStyle: {
           height: isMac ? 66 : undefined,
