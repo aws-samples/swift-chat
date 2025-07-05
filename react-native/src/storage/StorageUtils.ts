@@ -450,7 +450,11 @@ export function saveAllSystemPrompts(prompts: SystemPrompt[]) {
 }
 
 export function getSystemPrompts(type?: string): SystemPrompt[] {
-  if (currentSystemPrompts && currentSystemPrompts[0].promptType === type) {
+  if (
+    currentSystemPrompts &&
+    currentSystemPrompts.length > 0 &&
+    currentSystemPrompts[0].promptType === type
+  ) {
     return currentSystemPrompts;
   }
   const promptsString = storage.getString(systemPromptsKey) ?? '';
@@ -466,10 +470,19 @@ export function getSystemPrompts(type?: string): SystemPrompt[] {
     }
   } else {
     currentSystemPrompts = getDefaultSystemPrompts();
+    saveAllSystemPrompts(currentSystemPrompts);
   }
   currentSystemPrompts = type
     ? currentSystemPrompts.filter(p => p.promptType === type)
     : currentSystemPrompts.filter(p => p.promptType === undefined);
+  if (currentSystemPrompts.length === 0) {
+    // fix the crash issue
+    currentSystemPrompts = getDefaultSystemPrompts();
+    currentSystemPrompts = type
+      ? currentSystemPrompts.filter(p => p.promptType === type)
+      : currentSystemPrompts.filter(p => p.promptType === undefined);
+    saveAllSystemPrompts(getDefaultSystemPrompts());
+  }
   return currentSystemPrompts;
 }
 

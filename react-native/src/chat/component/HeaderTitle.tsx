@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import { Usage } from '../../types/Chat.ts';
+import { useTheme, ColorScheme } from '../../theme';
 
 interface HeaderTitleProps {
   title: string;
@@ -18,6 +19,8 @@ const HeaderTitle: React.FC<HeaderTitleProps> = ({
   onShowSystemPrompt,
   isShowSystemPrompt,
 }) => {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [showUsage, setShowUsage] = useState(false);
   const doubleTapRef = useRef();
 
@@ -59,24 +62,25 @@ const HeaderTitle: React.FC<HeaderTitleProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  headerTitleStyle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: 'black',
-  },
-  usageText: {
-    fontSize: 10,
-    color: '#666',
-    marginLeft: 4,
-    fontWeight: '400',
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+    },
+    headerTitleStyle: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    usageText: {
+      fontSize: 10,
+      color: colors.textSecondary,
+      marginLeft: 4,
+      fontWeight: '400',
+    },
+  });
 
 export default HeaderTitle;

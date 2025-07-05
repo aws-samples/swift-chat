@@ -15,7 +15,8 @@ import Toast from 'react-native-toast-message';
 import TokenUsageScreen from './settings/TokenUsageScreen.tsx';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
-import { isMacCatalyst } from './utils/PlatformUtils';
+import { isAndroid, isMacCatalyst } from './utils/PlatformUtils';
+import { ThemeProvider, useTheme } from './theme';
 
 export const isMac = isMacCatalyst;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -31,14 +32,26 @@ const renderCustomDrawerContent = (
 
 const DrawerNavigator = () => {
   const { drawerType } = useAppContext();
+  const { colors, isDark } = useTheme();
   return (
     <Drawer.Navigator
       initialRouteName="Bedrock"
       screenOptions={{
-        headerTintColor: 'black',
+        overlayColor: isDark ? 'rgba(255, 255, 255, 0.1)' : undefined,
+        headerTintColor: colors.text,
         headerTitleAlign: 'center',
-        drawerStyle: { width: width },
-        headerStyle: { height: isMac ? 66 : undefined },
+        drawerStyle: {
+          width: width,
+          backgroundColor: colors.background,
+          borderRightWidth: isMac ? 1 : isAndroid ? 0.3 : 0,
+          borderRightColor: colors.border,
+        },
+        headerStyle: {
+          height: isMac ? 66 : undefined,
+          backgroundColor: colors.background,
+          borderBottomWidth: isDark ? 0.3 : undefined,
+          borderBottomColor: isDark ? colors.chatScreenSplit : undefined,
+        },
         drawerType: isMac ? drawerType : 'slide',
       }}
       drawerContent={renderCustomDrawerContent}>
@@ -48,6 +61,7 @@ const DrawerNavigator = () => {
   );
 };
 const AppNavigator = () => {
+  const { colors } = useTheme();
   return (
     <Stack.Navigator initialRouteName="Drawer" screenOptions={{}}>
       <Stack.Screen
@@ -62,8 +76,11 @@ const AppNavigator = () => {
           title: 'Usage',
           contentStyle: {
             height: isMac ? 66 : undefined,
+            backgroundColor: colors.background,
           },
           headerTitleAlign: 'center',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
         }}
       />
       <Stack.Screen
@@ -71,26 +88,45 @@ const AppNavigator = () => {
         component={PromptScreen}
         options={{
           title: 'System Prompt',
-          contentStyle: { height: isMac ? 66 : undefined },
+          contentStyle: {
+            height: isMac ? 66 : undefined,
+            backgroundColor: colors.background,
+          },
           headerTitleAlign: 'center',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
         }}
       />
     </Stack.Navigator>
   );
 };
 
+const AppWithTheme = () => {
+  const { colors, isDark } = useTheme();
+  return (
+    <>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
+      <NavigationContainer
+        onStateChange={_ => {
+          Keyboard.dismiss();
+        }}>
+        <AppNavigator />
+      </NavigationContainer>
+    </>
+  );
+};
+
 const App = () => {
   return (
     <>
-      <AppProvider>
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-        <NavigationContainer
-          onStateChange={_ => {
-            Keyboard.dismiss();
-          }}>
-          <AppNavigator />
-        </NavigationContainer>
-      </AppProvider>
+      <ThemeProvider>
+        <AppProvider>
+          <AppWithTheme />
+        </AppProvider>
+      </ThemeProvider>
       <Toast />
     </>
   );

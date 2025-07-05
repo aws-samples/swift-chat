@@ -18,6 +18,7 @@ import { getFullFileUrl, saveFile } from '../util/FileUtils.ts';
 import { getVideoMetaData, Video } from 'react-native-compressor';
 import * as Progress from 'react-native-progress';
 import { showInfo } from '../util/ToastUtils.ts';
+import { ColorScheme, useTheme } from '../../theme';
 
 interface CustomFileProps {
   files: FileInfo[];
@@ -41,7 +42,14 @@ const openInFileViewer = (url: string) => {
     });
 };
 
-const CircularProgress = ({ progress }: { progress: number }) => {
+const CircularProgress = ({
+  progress,
+  colors,
+}: {
+  progress: number;
+  colors: ColorScheme;
+}) => {
+  const styles = getStyles(colors);
   return (
     <View style={styles.progressContainer}>
       <Progress.Pie
@@ -59,6 +67,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
   onFileUpdated,
   mode = DisplayMode.Edit,
 }) => {
+  const { colors, isDark } = useTheme();
   const [visible, setIsVisible] = useState(false);
   const [index, setIndex] = useState<number>(0);
   const [imageUrls, setImageUrls] = useState<ImageSource[]>([]);
@@ -243,7 +252,10 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
                 />
               )}
               {isVideo && isFileCompressing && (
-                <CircularProgress progress={compressionProgress} />
+                <CircularProgress
+                  progress={compressionProgress}
+                  colors={colors}
+                />
               )}
             </View>
           ) : (
@@ -253,7 +265,11 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
               </Text>
               <View style={styles.formatContainer}>
                 <Image
-                  source={require('./../../assets/document.png')}
+                  source={
+                    isDark
+                      ? require('./../../assets/document_dark.png')
+                      : require('./../../assets/document.png')
+                  }
                   style={styles.formatIcon}
                 />
                 <Text style={styles.fileFormat}>
@@ -267,6 +283,8 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
     );
   };
 
+  const styles = getStyles(colors);
+
   return (
     <ScrollView
       horizontal
@@ -275,7 +293,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
         ...styles.containerStyle,
         ...(mode === DisplayMode.Display && {
           paddingHorizontal: 0,
-          width: files.length > 3 ? undefined : '100%',
+          width: files.length > 2 ? undefined : '100%',
           justifyContent: 'flex-end',
         }),
       }}
@@ -305,112 +323,113 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  scrollView: {
-    paddingVertical: 8,
-    backgroundColor: 'white',
-  },
-  containerStyle: {
-    paddingHorizontal: 12,
-  },
-  fileItem: {
-    width: 72,
-    height: 72,
-    marginRight: 8,
-    borderRadius: 8,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  deleteTouchable: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 1,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteLayout: {
-    width: 20,
-    height: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  deleteText: {
-    color: '#fff',
-    fontSize: 16,
-    marginTop: -1.5,
-    marginRight: -0.5,
-    fontWeight: 'normal',
-  },
-  thumbnailContainer: {
-    position: 'relative',
-    width: '100%',
-    height: '100%',
-  },
-  thumbnail: {
-    width: '100%',
-    height: '100%',
-  },
-  playIcon: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -16,
-    marginLeft: -16,
-    width: 32,
-    height: 32,
-  },
-  filePreview: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    padding: 8,
-  },
-  formatContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  formatIcon: {
-    width: 16,
-    height: 16,
-    marginRight: 4,
-  },
-  fileName: {
-    fontSize: 12,
-    color: '#333',
-    paddingRight: 12,
-  },
-  fileFormat: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-  },
-  addButton: {
-    width: 72,
-    height: 72,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressContainer: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -16,
-    marginLeft: -16,
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const getStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    scrollView: {
+      paddingVertical: 8,
+      backgroundColor: colors.fileListBackground,
+    },
+    containerStyle: {
+      paddingHorizontal: 12,
+    },
+    fileItem: {
+      width: 72,
+      height: 72,
+      marginRight: 8,
+      borderRadius: 8,
+      overflow: 'hidden',
+      position: 'relative',
+    },
+    deleteTouchable: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      zIndex: 1,
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    deleteLayout: {
+      width: 20,
+      height: 20,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    deleteText: {
+      color: '#fff',
+      fontSize: 16,
+      marginTop: -1.5,
+      marginRight: -0.5,
+      fontWeight: 'normal',
+    },
+    thumbnailContainer: {
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+    },
+    thumbnail: {
+      width: '100%',
+      height: '100%',
+    },
+    playIcon: {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      marginTop: -16,
+      marginLeft: -16,
+      width: 32,
+      height: 32,
+    },
+    filePreview: {
+      width: '100%',
+      height: '100%',
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.fileItemBorder,
+      borderRadius: 8,
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      padding: 8,
+    },
+    formatContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    formatIcon: {
+      width: 16,
+      height: 16,
+      marginRight: 4,
+    },
+    fileName: {
+      fontSize: 12,
+      color: colors.text,
+      paddingRight: 12,
+    },
+    fileFormat: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    addButton: {
+      width: 72,
+      height: 72,
+      backgroundColor: colors.addButtonBackground,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    progressContainer: {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      marginTop: -16,
+      marginLeft: -16,
+      width: 32,
+      height: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });

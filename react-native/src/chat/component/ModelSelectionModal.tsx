@@ -17,14 +17,15 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import { Model, ModelTag } from '../../types/Chat';
+import { Model } from '../../types/Chat';
 import {
   getTextModel,
   saveTextModel,
   updateTextModelUsageOrder,
   getMergedModelOrder,
 } from '../../storage/StorageUtils';
-import { DeepSeekModels } from '../../storage/Constants';
+import { useTheme, ColorScheme } from '../../theme';
+import { getModelIcon } from '../../utils/ModelUtils.ts';
 
 interface ModelSelectionModalProps {
   visible: boolean;
@@ -43,6 +44,8 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
     y: 70,
   },
 }) => {
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors);
   const { sendEvent } = useAppContext();
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model>(getTextModel());
@@ -111,25 +114,6 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
     });
   };
 
-  const getModelIcon = (model: Model) => {
-    const isDeepSeek = DeepSeekModels.some(m => m.modelId === model.modelId);
-    const isOpenAICompatible = model.modelTag === ModelTag.OpenAICompatible;
-    const isOpenAI =
-      model.modelTag === ModelTag.OpenAI || model.modelId.includes('gpt');
-    const isOllama =
-      model.modelTag === ModelTag.Ollama || model.modelId.startsWith('ollama-');
-
-    return isDeepSeek
-      ? require('../../assets/deepseek.png')
-      : isOpenAICompatible
-      ? require('../../assets/openai_api.png')
-      : isOpenAI
-      ? require('../../assets/openai.png')
-      : isOllama
-      ? require('../../assets/ollama_white.png')
-      : require('../../assets/bedrock.png');
-  };
-
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -150,11 +134,18 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
         style={[styles.modelItem, isLastItem && { borderBottomWidth: 0 }]}
         onPress={() => handleModelSelect(item)}>
         <View style={styles.modelItemContent}>
-          <Image source={getModelIcon(item)} style={styles.modelIcon} />
+          <Image
+            source={getModelIcon(item.modelTag ?? '', item.modelId, isDark)}
+            style={styles.modelIcon}
+          />
           <Text style={styles.modelName}>{item.modelName}</Text>
           {isSelected && (
             <Image
-              source={require('../../assets/done.png')}
+              source={
+                isDark
+                  ? require('../../assets/done_dark.png')
+                  : require('../../assets/done.png')
+              }
               style={styles.checkIcon}
             />
           )}
@@ -211,74 +202,75 @@ export const ModelSelectionModal: React.FC<ModelSelectionModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 12,
-    width: 240,
-    height: MODAL_HEIGHT,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'black',
-  },
-  closeButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#E8E8E8',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontSize: 16,
-    lineHeight: 18,
-    textAlign: 'center',
-    color: '#333',
-  },
-  modelList: {
-    paddingRight: 8,
-  },
-  modelItem: {
-    paddingVertical: 8,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#E8E8E8',
-  },
-  modelItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 2,
-  },
-  modelIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-  modelName: {
-    fontSize: 14,
-    flex: 1,
-    color: '#333',
-  },
-  checkIcon: {
-    width: 16,
-    height: 16,
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    },
+    modalContainer: {
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      padding: 12,
+      width: 240,
+      height: MODAL_HEIGHT,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    closeButton: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    closeButtonText: {
+      fontSize: 16,
+      lineHeight: 18,
+      textAlign: 'center',
+      color: colors.textSecondary,
+    },
+    modelList: {
+      paddingRight: 8,
+    },
+    modelItem: {
+      paddingVertical: 8,
+      borderBottomWidth: 0.5,
+      borderBottomColor: colors.borderLight,
+    },
+    modelItemContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingTop: 2,
+    },
+    modelIcon: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      marginRight: 10,
+    },
+    modelName: {
+      fontSize: 14,
+      flex: 1,
+      color: colors.text,
+    },
+    checkIcon: {
+      width: 16,
+      height: 16,
+    },
+  });

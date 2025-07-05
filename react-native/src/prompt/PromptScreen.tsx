@@ -18,6 +18,7 @@ import { useAppContext } from '../history/AppProvider.tsx';
 import { getPromptId, getTextModel } from '../storage/StorageUtils.ts';
 import { HeaderLeftView } from './HeaderLeftView.tsx';
 import { isMac } from '../App.tsx';
+import { useTheme, ColorScheme } from '../theme';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 type PromptScreenRouteProp = RouteProp<RouteParamList, 'Prompt'>;
@@ -28,6 +29,8 @@ function PromptScreen(): React.JSX.Element {
   const route = useRoute<PromptScreenRouteProp>();
   const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
   const isAddMode = route.params.prompt === undefined;
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors);
   const [currentPrompt, setCurrentPrompt] = useState<SystemPrompt>(
     isAddMode
       ? {
@@ -43,8 +46,8 @@ function PromptScreen(): React.JSX.Element {
   const { sendEvent } = useAppContext();
 
   const headerLeft = useCallback(
-    () => HeaderLeftView(navigation),
-    [navigation]
+    () => HeaderLeftView(navigation, isDark),
+    [navigation, isDark]
   );
   React.useLayoutEffect(() => {
     const headerOption = {
@@ -80,6 +83,7 @@ function PromptScreen(): React.JSX.Element {
         <TextInput
           style={[styles.input, isMac && styles.macInput]}
           placeholder="Prompt name"
+          placeholderTextColor={colors.placeholder}
           value={currentPrompt.name}
           onChangeText={text => {
             setCurrentPrompt({ ...currentPrompt, name: text });
@@ -88,6 +92,7 @@ function PromptScreen(): React.JSX.Element {
         <TextInput
           style={[styles.input, styles.contentInput, isMac && styles.macInput]}
           placeholder="Systrem prompt"
+          placeholderTextColor={colors.placeholder}
           value={currentPrompt.prompt}
           multiline
           onChangeText={text => {
@@ -134,60 +139,63 @@ function calculateTextLength(str: string) {
   return chineseCount * 2 + nonChineseCount;
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  container: {
-    flex: 1,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    backgroundColor: '#fff',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  contentInput: {
-    minHeight: 180,
-    maxHeight: 560,
-    textAlignVertical: 'top',
-  },
-  macInput: {
-    fontWeight: '300',
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  switch: {
-    marginRight: -14,
-    width: 32,
-    height: 32,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'black',
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 36,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+      paddingVertical: 20,
+      paddingHorizontal: 24,
+      backgroundColor: colors.background,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.promptScreenInputBorder,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 16,
+      backgroundColor: colors.inputBackground,
+      color: colors.text,
+    },
+    contentInput: {
+      minHeight: 180,
+      maxHeight: 560,
+      textAlignVertical: 'top',
+    },
+    macInput: {
+      fontWeight: '300',
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    switch: {
+      marginRight: -14,
+      width: 32,
+      height: 32,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    saveButton: {
+      backgroundColor: colors.promptScreenSaveButton,
+      padding: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginBottom: 36,
+    },
+    saveButtonText: {
+      color: colors.promptScreenSaveButtonText,
+      fontSize: 16,
+      fontWeight: '500',
+    },
+  });
 
 export default PromptScreen;

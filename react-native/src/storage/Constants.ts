@@ -5,14 +5,19 @@ import { getDeepSeekApiKey, getOpenAIApiKey } from './StorageUtils.ts';
 const RegionList = [
   'us-west-2',
   'us-east-1',
+  'us-east-2',
   'ap-south-1',
   'ap-southeast-1',
   'ap-southeast-2',
   'ap-northeast-1',
+  'ap-northeast-2',
+  'ap-northeast-3',
   'ca-central-1',
   'eu-central-1',
+  'eu-west-1',
   'eu-west-2',
   'eu-west-3',
+  'eu-north-1',
   'sa-east-1',
 ];
 
@@ -51,7 +56,11 @@ export const DeepSeekModels = [
   },
 ];
 
-export const BedrockThinkingModels = ['Claude 3.7 Sonnet'];
+export const BedrockThinkingModels = [
+  'Claude 3.7 Sonnet',
+  'Claude Sonnet 4',
+  'Claude Opus 4',
+];
 export const BedrockVoiceModels = ['Nova Sonic'];
 
 export const DefaultTextModel = [
@@ -80,6 +89,14 @@ export const VoiceIDList = [
   {
     voiceName: 'Amy (British English)',
     voiceId: 'amy',
+  },
+  {
+    voiceName: 'Lupe (Spanish)',
+    voiceId: 'lupe',
+  },
+  {
+    voiceName: 'Carlos (Spanish)',
+    voiceId: 'carlos',
   },
 ];
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   Animated,
   Linking,
@@ -25,16 +25,19 @@ import {
   getUsagePrice,
 } from './ModelPrice.ts';
 import { HeaderLeftView } from '../prompt/HeaderLeftView.tsx';
+import { useTheme, ColorScheme } from '../theme';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
 function TokenUsageScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp>();
   const [modelUsage, setModelUsage] = React.useState<Usage[]>([]);
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const headerLeft = useCallback(
-    () => HeaderLeftView(navigation),
-    [navigation]
+    () => HeaderLeftView(navigation, isDark),
+    [navigation, isDark]
   );
   React.useLayoutEffect(() => {
     const headerOption = {
@@ -223,95 +226,96 @@ function TokenUsageScreen(): React.JSX.Element {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  container: {
-    paddingTop: 8,
-    paddingHorizontal: 16,
-    paddingBottom: 60,
-  },
-  usageItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  modelName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'black',
-  },
-  tokenInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  tokenText: {
-    fontSize: 14,
-    color: 'grey',
-  },
-  totalContainer: {
-    marginTop: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'black',
-  },
-  totalText: {
-    fontSize: 14,
-    color: 'grey',
-  },
-  modelHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  totalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  totalPrice: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  pricingContainer: {
-    marginTop: 16,
-  },
-  firstPriceLink: {
-    marginTop: 16,
-    fontSize: 12,
-    color: 'grey',
-    paddingVertical: 4,
-    textAlign: 'left',
-  },
-  priceLink: {
-    marginTop: 4,
-    fontSize: 12,
-    color: 'grey',
-    paddingVertical: 4,
-    textAlign: 'left',
-  },
-  underline: {
-    textDecorationLine: 'underline',
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      paddingTop: 8,
+      paddingHorizontal: 16,
+      paddingBottom: 60,
+    },
+    usageItem: {
+      paddingVertical: 12,
+      paddingHorizontal: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modelName: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    tokenInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 4,
+    },
+    tokenText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    totalContainer: {
+      marginTop: 20,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+    },
+    totalLabel: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    totalText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    modelHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    totalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    totalPrice: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    totalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    pricingContainer: {
+      marginTop: 16,
+    },
+    firstPriceLink: {
+      marginTop: 16,
+      fontSize: 12,
+      color: colors.textSecondary,
+      paddingVertical: 4,
+      textAlign: 'left',
+    },
+    priceLink: {
+      marginTop: 4,
+      fontSize: 12,
+      color: colors.textSecondary,
+      paddingVertical: 4,
+      textAlign: 'left',
+    },
+    underline: {
+      textDecorationLine: 'underline',
+    },
+  });
 
 export default TokenUsageScreen;

@@ -27,10 +27,12 @@ import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src';
 import { groupMessagesByDate } from './HistoryGroupUtil.ts';
 import { isMac } from '../App.tsx';
 import { DrawerActions } from '@react-navigation/native';
+import { useTheme, ColorScheme } from '../theme';
 
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   navigation,
 }) => {
+  const { colors, isDark } = useTheme();
   const [groupChatHistory, setGroupChatHistory] = useState<Chat[]>([]);
   const groupChatHistoryRef = useRef(groupChatHistory);
   const chatHistoryRef = useRef(getMessageList());
@@ -129,6 +131,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
     deleteIdRef.current = 0;
   };
 
+  const styles = createStyles(colors);
+
   return (
     <SafeAreaView style={[isMac ? styles.macContainer : styles.safeArea]}>
       <FlatList
@@ -148,7 +152,11 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
                 });
               }}>
               <Image
-                source={require('../assets/bedrock.png')}
+                source={
+                  isDark
+                    ? require('../assets/bedrock_dark.png')
+                    : require('../assets/bedrock.png')
+                }
                 style={styles.settingsLeftImg}
               />
               <Text style={styles.settingsText}>Chat</Text>
@@ -164,7 +172,11 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
                 });
               }}>
               <Image
-                source={require('../assets/image.png')}
+                source={
+                  isDark
+                    ? require('../assets/image_dark.png')
+                    : require('../assets/image.png')
+                }
                 style={styles.settingsLeftImg}
               />
               <Text style={styles.settingsText}>Image</Text>
@@ -222,7 +234,11 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
           navigation.navigate('Settings');
         }}>
         <Image
-          source={require('../assets/settings.png')}
+          source={
+            isDark
+              ? require('../assets/settings_dark.png')
+              : require('../assets/settings.png')
+          }
           style={styles.settingsLeftImg}
         />
         <Text style={styles.settingsText}>Settings</Text>
@@ -248,75 +264,77 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  macContainer: {
-    flex: 1,
-    backgroundColor: '#F9F9F9',
-  },
-  settingsTouch: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginVertical: 12,
-    paddingHorizontal: 18,
-  },
-  settingsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingsText: {
-    fontSize: 16,
-    marginHorizontal: 8,
-    fontWeight: '500',
-    color: 'black',
-  },
-  settingsLeftImg: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
-  settingsRightImg: {
-    width: 16,
-    height: 16,
-    marginRight: 8,
-  },
-  flatList: {
-    marginVertical: 4,
-  },
-  touch: {
-    paddingHorizontal: 8,
-    paddingVertical: 12,
-    marginHorizontal: 12,
-    marginVertical: 2,
-    borderRadius: 8,
-  },
-  touchSelected: {
-    backgroundColor: '#F5F5F5',
-  },
-  macTouchSelected: {
-    backgroundColor: '#ECECEC',
-  },
-  sectionContainer: {
-    paddingHorizontal: 8,
-    marginHorizontal: 12,
-    marginVertical: 12,
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: '#e0e0e0',
-  },
-  sectionText: {
-    marginTop: 17,
-    fontSize: 14,
-    color: 'grey',
-  },
-  title: {
-    fontSize: 16,
-    color: 'black',
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.drawerBackground,
+    },
+    macContainer: {
+      flex: 1,
+      backgroundColor: colors.drawerBackgroundMac,
+    },
+    settingsTouch: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      marginVertical: 12,
+      paddingHorizontal: 18,
+    },
+    settingsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    settingsText: {
+      fontSize: 16,
+      marginHorizontal: 8,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    settingsLeftImg: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+    },
+    settingsRightImg: {
+      width: 16,
+      height: 16,
+      marginRight: 8,
+    },
+    flatList: {
+      marginVertical: 4,
+    },
+    touch: {
+      paddingHorizontal: 8,
+      paddingVertical: 12,
+      marginHorizontal: 12,
+      marginVertical: 2,
+      borderRadius: 8,
+    },
+    touchSelected: {
+      backgroundColor: colors.selectedBackground,
+    },
+    macTouchSelected: {
+      backgroundColor: colors.selectedBackgroundMac,
+    },
+    sectionContainer: {
+      paddingHorizontal: 8,
+      marginHorizontal: 12,
+      marginVertical: 12,
+    },
+    sectionDivider: {
+      height: 1,
+      backgroundColor: colors.border,
+    },
+    sectionText: {
+      marginTop: 17,
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    title: {
+      fontSize: 16,
+      color: colors.text,
+    },
+  });
 
 export default CustomDrawerContent;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Composer, GiftedChat } from 'react-native-gifted-chat';
+import { Composer, GiftedChat, InputToolbar } from 'react-native-gifted-chat';
 import {
   AppState,
   Dimensions,
@@ -14,8 +14,10 @@ import {
   TextInput,
 } from 'react-native';
 import { voiceChatService } from './service/VoiceChatService';
-import AudioWaveformComponent from './component/AudioWaveformComponent';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import AudioWaveformComponent, {
+  AudioWaveformRef,
+} from './component/AudioWaveformComponent';
+import { useTheme, ColorScheme } from '../theme';
 import {
   invokeBedrockWithCallBack as invokeBedrockWithCallBack,
   requestToken,
@@ -93,6 +95,7 @@ type ChatScreenRouteProp = RouteProp<RouteParamList, 'Bedrock'>;
 let currentMode = ChatMode.Text;
 
 function ChatScreen(): React.JSX.Element {
+  const { colors, isDark } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<ChatScreenRouteProp>();
   const initialSessionId = route.params?.sessionId;
@@ -108,7 +111,6 @@ function ChatScreen(): React.JSX.Element {
   const [systemPrompt, setSystemPrompt] = useState<SystemPrompt | null>(
     isNovaSonic ? getCurrentVoiceSystemPrompt : getCurrentSystemPrompt
   );
-  const [audioVolume, setAudioVolume] = useState<number>(1); // Audio volume level (1-10)
   const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(true);
   const [screenDimensions, setScreenDimensions] = useState(
     Dimensions.get('window')
@@ -132,30 +134,31 @@ function ChatScreen(): React.JSX.Element {
   const usageRef = useRef(usage);
   const systemPromptRef = useRef(systemPrompt);
   const drawerTypeRef = useRef(drawerType);
-  const inputAudioLevelRef = useRef(1);
-  const outputAudioLevelRef = useRef(1);
   const isVoiceLoading = useRef(false);
   const contentHeightRef = useRef(0);
   const containerHeightRef = useRef(0);
-  const isNovaSonicRef = useRef(isNovaSonic);
   const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
+  const audioWaveformRef = useRef<AudioWaveformRef>(null);
 
-  // End voice conversation and reset audio levels
+  const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
+
   const endVoiceConversation = useCallback(async () => {
+    audioWaveformRef.current?.resetAudioLevels();
     if (isVoiceLoading.current) {
       return Promise.resolve(false);
     }
     isVoiceLoading.current = true;
     setIsShowVoiceLoading(true);
     await voiceChatService.endConversation();
-    setAudioVolume(1);
-    inputAudioLevelRef.current = 1;
-    outputAudioLevelRef.current = 1;
     setChatStatus(ChatStatus.Init);
     isVoiceLoading.current = false;
     setIsShowVoiceLoading(false);
     return true;
   }, []);
+
+  useEffect(() => {
+    endVoiceConversationRef.current = endVoiceConversation;
+  }, [endVoiceConversation]);
 
   // update refs value with state
   useEffect(() => {
@@ -187,23 +190,10 @@ function ChatScreen(): React.JSX.Element {
       message => {
         if (getTextModel().modelId.includes('nova-sonic')) {
           handleVoiceChatTranscript('ASSISTANT', message);
-          endVoiceConversation().then();
+          endVoiceConversationRef.current?.();
           saveCurrentMessages();
           console.log('Voice chat error:', message);
         }
-      },
-      // Handle audio level changes
-      (source, level) => {
-        if (source === 'microphone') {
-          inputAudioLevelRef.current = level;
-        } else {
-          outputAudioLevelRef.current = level;
-        }
-        const maxLevel = Math.max(
-          inputAudioLevelRef.current,
-          outputAudioLevelRef.current
-        );
-        setAudioVolume(maxLevel);
       }
     );
 
@@ -211,7 +201,7 @@ function ChatScreen(): React.JSX.Element {
     return () => {
       voiceChatService.cleanup();
     };
-  }, [endVoiceConversation]);
+  }, []);
 
   // start new chat
   const startNewChat = useRef(
@@ -265,12 +255,16 @@ function ChatScreen(): React.JSX.Element {
               startNewChat.current();
             }
           }}
-          imageSource={require('../assets/edit.png')}
+          imageSource={
+            isDark
+              ? require('../assets/edit_dark.png')
+              : require('../assets/edit.png')
+          }
         />
       ),
     };
     navigation.setOptions(headerOptions);
-  }, [usage, navigation, mode, systemPrompt, showSystemPrompt]);
+  }, [usage, navigation, mode, systemPrompt, showSystemPrompt, isDark]);
 
   // sessionId changes (start new chat or click another session)
   useEffect(() => {
@@ -299,9 +293,7 @@ function ChatScreen(): React.JSX.Element {
       }
       // click from history
       setMessages([]);
-      if (isNovaSonicRef.current) {
-        endVoiceConversation().then();
-      }
+      endVoiceConversationRef.current?.();
       setIsLoadingMessages(true);
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
@@ -324,7 +316,7 @@ function ChatScreen(): React.JSX.Element {
         }, 200);
       }
     }
-  }, [initialSessionId, mode, tapIndex, endVoiceConversation]);
+  }, [initialSessionId, mode, tapIndex]);
 
   // deleteChat listener
   useEffect(() => {
@@ -678,6 +670,8 @@ function ChatScreen(): React.JSX.Element {
     }
   };
 
+  const styles = createStyles(colors);
+
   return (
     <SafeAreaView style={styles.container}>
       <GiftedChat
@@ -709,15 +703,13 @@ function ChatScreen(): React.JSX.Element {
         }
         renderComposer={props => {
           if (isNovaSonic && mode === ChatMode.Text) {
-            return (
-              <AudioWaveformComponent
-                volume={audioVolume} // Use real-time audio volume level
-              />
-            );
+            return <AudioWaveformComponent ref={audioWaveformRef} />;
           }
 
           // Default input box
-          return <Composer {...props} />;
+          return (
+            <Composer {...props} textInputStyle={styles.composerTextInput} />
+          );
         }}
         renderSend={props => (
           <CustomSendComponent
@@ -778,14 +770,14 @@ function ChatScreen(): React.JSX.Element {
               if (isNovaSonic) {
                 saveCurrentVoiceSystemPrompt(prompt);
                 if (chatStatus === ChatStatus.Running) {
-                  endVoiceConversation().then();
+                  endVoiceConversationRef.current?.();
                 }
               } else {
                 saveCurrentSystemPrompt(prompt);
               }
             }}
             onSwitchedToTextModel={() => {
-              endVoiceConversation().then();
+              endVoiceConversationRef.current?.();
             }}
             chatMode={modeRef.current}
             isShowSystemPrompt={showSystemPrompt}
@@ -851,11 +843,20 @@ function ChatScreen(): React.JSX.Element {
         scrollToBottom={true}
         scrollToBottomComponent={CustomScrollToBottomComponent}
         scrollToBottomStyle={scrollStyle.scrollToBottomContainerStyle}
+        renderInputToolbar={props => (
+          <InputToolbar
+            {...props}
+            containerStyle={{
+              backgroundColor: colors.background,
+              borderTopColor: colors.chatScreenSplit,
+            }}
+          />
+        )}
         textInputProps={{
           ...styles.textInputStyle,
           ...{
             fontWeight: isMac ? '300' : 'normal',
-            color: 'black',
+            color: colors.text,
           },
         }}
         maxComposerHeight={isMac ? 360 : 200}
@@ -888,21 +889,26 @@ function ChatScreen(): React.JSX.Element {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  contentContainer: {
-    paddingTop: 15,
-    paddingBottom: 15,
-    flexGrow: 1,
-    justifyContent: 'flex-end',
-  },
-  textInputStyle: {
-    marginLeft: 14,
-    lineHeight: 22,
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    contentContainer: {
+      paddingTop: 15,
+      paddingBottom: 15,
+      flexGrow: 1,
+      justifyContent: 'flex-end',
+    },
+    textInputStyle: {
+      marginLeft: 14,
+      lineHeight: 22,
+    },
+    composerTextInput: {
+      backgroundColor: colors.background,
+      color: colors.text,
+    },
+  });
 
 export default ChatScreen;

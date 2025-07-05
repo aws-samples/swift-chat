@@ -8,6 +8,7 @@ import {
   Image,
   Platform,
 } from 'react-native';
+import { useTheme, ColorScheme } from '../theme';
 
 interface CustomTextInputProps {
   label: string;
@@ -26,11 +27,14 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   secureTextEntry = false,
   numberOfLines = 1,
 }) => {
+  const { colors, isDark } = useTheme();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
+
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.container}>
@@ -56,7 +60,11 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
             <Image
               source={
                 isPasswordVisible
-                  ? require('../assets/eye_close.png')
+                  ? isDark
+                    ? require('../assets/eye_close_dark.png')
+                    : require('../assets/eye_close.png')
+                  : isDark
+                  ? require('../assets/eye_dark.png')
                   : require('../assets/eye.png')
               }
               style={styles.eyeIcon}
@@ -68,54 +76,56 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  label: {
-    position: 'absolute',
-    backgroundColor: 'white',
-    color: 'black',
-    left: 8,
-    top: -8,
-    zIndex: 999,
-    paddingHorizontal: 4,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  input: {
-    minHeight: 44,
-    maxHeight: 160,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    color: 'black',
-    flex: 1,
-  },
-  inputPadding: {
-    paddingRight: 40,
-  },
-  eyeButton: {
-    position: 'absolute',
-    right: 0,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-  },
-  eyeIcon: {
-    width: 16,
-    height: 16,
-    resizeMode: 'contain',
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: 12,
+      marginTop: 8,
+    },
+    label: {
+      position: 'absolute',
+      backgroundColor: colors.labelBackground,
+      color: colors.textDarkGray,
+      left: 8,
+      top: -8,
+      zIndex: 999,
+      paddingHorizontal: 4,
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      position: 'relative',
+    },
+    input: {
+      minHeight: 44,
+      maxHeight: 160,
+      borderColor: colors.inputBorder,
+      borderWidth: 1,
+      borderRadius: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 12,
+      color: colors.text,
+      backgroundColor: colors.inputBackground,
+      flex: 1,
+    },
+    inputPadding: {
+      paddingRight: 40,
+    },
+    eyeButton: {
+      position: 'absolute',
+      right: 0,
+      height: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+    },
+    eyeIcon: {
+      width: 16,
+      height: 16,
+      resizeMode: 'contain',
+    },
+  });
 
 export default CustomTextInput;

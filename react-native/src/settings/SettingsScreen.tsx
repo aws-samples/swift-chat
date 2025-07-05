@@ -77,6 +77,7 @@ import CustomTextInput from './CustomTextInput.tsx';
 import { requestAllOllamaModels } from '../api/ollama-api.ts';
 import TabButton from './TabButton';
 import { useAppContext } from '../history/AppProvider.tsx';
+import { useTheme, ColorScheme } from '../theme';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -87,6 +88,7 @@ const initUpgradeInfo: UpgradeInfo = {
 export const GITHUB_LINK = 'https://github.com/aws-samples/swift-chat';
 
 function SettingsScreen(): React.JSX.Element {
+  const { colors, isDark } = useTheme();
   const allModel = getAllModels();
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
@@ -303,11 +305,15 @@ function SettingsScreen(): React.JSX.Element {
               tapIndex: -1,
             });
           }}
-          imageSource={require('../assets/done.png')}
+          imageSource={
+            isDark
+              ? require('../assets/done_dark.png')
+              : require('../assets/done.png')
+          }
         />
       ),
     });
-  }, [apiUrl, apiKey, region, navigation]);
+  }, [apiUrl, apiKey, region, navigation, isDark]);
 
   const regionsData: DropdownItem[] = getAllRegions().map(regionId => ({
     label: regionId ?? '',
@@ -446,6 +452,8 @@ function SettingsScreen(): React.JSX.Element {
     }
   };
 
+  const styles = createStyles(colors);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
@@ -568,7 +576,11 @@ function SettingsScreen(): React.JSX.Element {
             <Text style={styles.text}>{`USD ${cost}`}</Text>
             <Image
               style={styles.arrowImage}
-              source={require('../assets/back.png')}
+              source={
+                isDark
+                  ? require('../assets/back_dark.png')
+                  : require('../assets/back.png')
+              }
             />
           </View>
         </TouchableOpacity>
@@ -588,7 +600,11 @@ function SettingsScreen(): React.JSX.Element {
           <Text style={styles.label}>Configuration Guide</Text>
           <Image
             style={styles.arrowImage}
-            source={require('../assets/back.png')}
+            source={
+              isDark
+                ? require('../assets/back_dark.png')
+                : require('../assets/back.png')
+            }
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -600,7 +616,11 @@ function SettingsScreen(): React.JSX.Element {
           <Text style={styles.label}>Submit Feedback</Text>
           <Image
             style={styles.arrowImage}
-            source={require('../assets/back.png')}
+            source={
+              isDark
+                ? require('../assets/back_dark.png')
+                : require('../assets/back.png')
+            }
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -614,7 +634,11 @@ function SettingsScreen(): React.JSX.Element {
           <Text style={styles.label}>Report an Issue</Text>
           <Image
             style={styles.arrowImage}
-            source={require('../assets/back.png')}
+            source={
+              isDark
+                ? require('../assets/back_dark.png')
+                : require('../assets/back.png')
+            }
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -631,7 +655,11 @@ function SettingsScreen(): React.JSX.Element {
             </Text>
             <Image
               style={styles.arrowImage}
-              source={require('../assets/back.png')}
+              source={
+                isDark
+                  ? require('../assets/back_dark.png')
+                  : require('../assets/back.png')
+              }
             />
           </View>
         </TouchableOpacity>
@@ -640,131 +668,133 @@ function SettingsScreen(): React.JSX.Element {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'black',
-  },
-  firstLabel: {
-    marginBottom: 12,
-  },
-  middleLabel: {
-    marginTop: 10,
-    marginBottom: 12,
-  },
-  proxyLabel: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: 'black',
-    marginLeft: 2,
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: 'grey',
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 6,
-    marginBottom: 16,
-    marginTop: 8,
-    paddingHorizontal: 10,
-    color: 'black',
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 10,
-  },
-  proxySwitchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  thinkingSwitchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 10,
-  },
-  arrowContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  arrowImage: {
-    width: 16,
-    height: 16,
-    transform: [{ scaleX: -1 }],
-    opacity: 0.4,
-    marginLeft: 4,
-  },
-  versionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 10,
-    paddingBottom: 60,
-  },
-  apiKeyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  apiKeyInputContainer: {
-    flex: 1,
-    marginRight: 10,
-  },
-  proxyContainer: {
-    marginBottom: 12,
-  },
-  proxyMacContainer: {
-    marginTop: 10,
-  },
-  providerSettingsWrapper: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingTop: 8,
-    paddingBottom: 2,
-    marginBottom: 12,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: 12,
-    marginHorizontal: Platform.OS === 'ios' ? -2 : 0,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
-    padding: 6,
-  },
-  providerSettingsContainer: {
-    paddingHorizontal: 2,
-  },
-  switch: {
-    marginRight: -14,
-    width: 32,
-    height: 32,
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+      padding: 20,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    firstLabel: {
+      marginBottom: 12,
+    },
+    middleLabel: {
+      marginTop: 10,
+      marginBottom: 12,
+    },
+    proxyLabel: {
+      fontSize: 14,
+      fontWeight: '400',
+      color: colors.textDarkGray,
+      marginLeft: 2,
+    },
+    text: {
+      fontSize: 14,
+      fontWeight: '400',
+      color: colors.textSecondary,
+    },
+    input: {
+      height: 40,
+      borderColor: colors.inputBorder,
+      borderWidth: 1,
+      borderRadius: 6,
+      marginBottom: 16,
+      marginTop: 8,
+      paddingHorizontal: 10,
+      color: colors.text,
+      backgroundColor: colors.inputBackground,
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginVertical: 10,
+    },
+    proxySwitchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    thinkingSwitchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    itemContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginVertical: 10,
+    },
+    arrowContainer: {
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    arrowImage: {
+      width: 16,
+      height: 16,
+      transform: [{ scaleX: -1 }],
+      opacity: 0.6,
+      marginLeft: 4,
+    },
+    versionContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginVertical: 10,
+      paddingBottom: 60,
+    },
+    apiKeyContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    apiKeyInputContainer: {
+      flex: 1,
+      marginRight: 10,
+    },
+    proxyContainer: {
+      marginBottom: 12,
+    },
+    proxyMacContainer: {
+      marginTop: 10,
+    },
+    providerSettingsWrapper: {
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingHorizontal: 8,
+      paddingTop: 8,
+      paddingBottom: 2,
+      marginBottom: 12,
+    },
+    tabContainer: {
+      flexDirection: 'row',
+      marginBottom: 12,
+      marginHorizontal: Platform.OS === 'ios' ? -2 : 0,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+      padding: 6,
+    },
+    providerSettingsContainer: {
+      paddingHorizontal: 2,
+    },
+    switch: {
+      marginRight: -14,
+      width: 32,
+      height: 32,
+    },
+  });
 
 export default SettingsScreen;

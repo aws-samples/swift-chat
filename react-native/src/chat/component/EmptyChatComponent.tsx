@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RouteParamList } from '../../types/RouteTypes.ts';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { getImageModel, getTextModel } from '../../storage/StorageUtils.ts';
+import { useTheme, ColorScheme } from '../../theme';
 
 const isAndroid = Platform.OS === 'android';
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
@@ -26,6 +27,7 @@ export const EmptyChatComponent = ({
   chatMode,
   isLoadingMessages = false,
 }: EmptyChatComponentProps): React.ReactElement => {
+  const { colors } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { event } = useAppContext();
   const [currentTextModel, setCurrentTextModel] = useState(getTextModel());
@@ -42,6 +44,8 @@ export const EmptyChatComponent = ({
       ? currentTextModel.modelName
       : getImageModel().modelName;
 
+  const styles = createStyles(colors);
+
   return (
     <View style={styles.emptyChatContainer}>
       <TouchableOpacity
@@ -52,7 +56,7 @@ export const EmptyChatComponent = ({
           <ImageSpinner
             visible={true}
             size={24}
-            isRotate={true}
+            isRotate={!isAndroid}
             source={require('../../assets/loading.png')}
           />
         ) : (
@@ -63,17 +67,18 @@ export const EmptyChatComponent = ({
   );
 };
 
-const styles = StyleSheet.create({
-  emptyChatContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
-  },
-  greetingText: {
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-    color: '#333',
-    transform: [{ scaleY: -1 }, { scaleX: isAndroid ? -1 : 1 }],
-  },
-});
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    emptyChatContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      flex: 1,
+    },
+    greetingText: {
+      fontSize: 16,
+      fontWeight: '500',
+      textAlign: 'center',
+      color: colors.textDarkGray,
+      transform: [{ scaleY: -1 }, { scaleX: isAndroid ? -1 : 1 }],
+    },
+  });

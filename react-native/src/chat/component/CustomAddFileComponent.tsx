@@ -18,6 +18,8 @@ import {
 import { isMac } from '../../App.tsx';
 import { getTextModel } from '../../storage/StorageUtils.ts';
 import { showInfo } from '../util/ToastUtils.ts';
+import { useTheme } from '../../theme';
+import { isAndroid } from '../../utils/PlatformUtils.ts';
 
 interface CustomRenderActionsProps {
   onFileSelected: (files: FileInfo[]) => void;
@@ -25,21 +27,38 @@ interface CustomRenderActionsProps {
   chatMode?: ChatMode;
 }
 
-const DefaultIcon = () => (
-  <Image
-    style={styles.imageButton}
-    resizeMode="contain"
-    source={require('../../assets/add.png')}
-  />
+const DefaultIcon = () => {
+  const { isDark } = useTheme();
+  return (
+    <Image
+      style={styles.imageButton}
+      resizeMode="contain"
+      source={
+        isDark
+          ? require('../../assets/add_dark.png')
+          : require('../../assets/add.png')
+      }
+    />
+  );
+};
+
+const ListIcon = ({ textColor }: { textColor: string }) => (
+  <Text style={[styles.addIcon, { color: textColor }]}>+</Text>
 );
 
-const ListIcon = () => <Text style={styles.addIcon}>+</Text>;
 export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
   onFileSelected,
   mode = 'default',
   chatMode = ChatMode.Text,
 }) => {
+  const { colors } = useTheme();
   const chatModeRef = useRef(chatMode);
+
+  // Create a memoized ListIcon component with theme colors
+  const ThemedListIcon = React.useCallback(
+    () => <ListIcon textColor={colors.textSecondary} />,
+    [colors.textSecondary]
+  );
   chatModeRef.current = chatMode;
   const handleChooseFiles = async () => {
     let chooseType = [];
@@ -158,7 +177,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
             marginRight: 10,
           }),
         }}
-        icon={mode === 'default' ? DefaultIcon : ListIcon}
+        icon={mode === 'default' ? DefaultIcon : ThemedListIcon}
         onPressActionButton={handleChooseFiles}
       />
     );
@@ -173,7 +192,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
           marginRight: 10,
         }),
       }}
-      icon={mode === 'default' ? DefaultIcon : ListIcon}
+      icon={mode === 'default' ? DefaultIcon : ThemedListIcon}
       options={{
         'Take Camera': () => {
           launchCamera({
@@ -214,7 +233,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
         'Choose From Files': handleChooseFiles,
         Cancel: () => {},
       }}
-      optionTintColor="black"
+      optionTintColor={isAndroid ? colors.background : colors.text}
     />
   );
 };
@@ -222,6 +241,31 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
 const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
 export const IMAGE_FORMATS = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
 export const VIDEO_FORMATS = ['mp4', 'mov', 'mkv', 'webm'];
+export const EXTRA_DOCUMENT_FORMATS = [
+  'json',
+  'py',
+  'ts',
+  'tsx',
+  'js',
+  'kt',
+  'java',
+  'swift',
+  'c',
+  'm',
+  'h',
+  'sh',
+  'cpp',
+  'rs',
+  'go',
+  'class',
+  'cs',
+  'php',
+  'rb',
+  'dart',
+  'sql',
+  'css',
+  'yaml',
+];
 export const DOCUMENT_FORMATS = [
   'pdf',
   'csv',
@@ -232,6 +276,7 @@ export const DOCUMENT_FORMATS = [
   'html',
   'txt',
   'md',
+  ...EXTRA_DOCUMENT_FORMATS,
 ];
 
 export const getFileType = (format: string) => {

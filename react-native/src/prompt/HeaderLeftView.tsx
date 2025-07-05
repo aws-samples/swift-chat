@@ -5,13 +5,22 @@ import { RouteParamList } from '../types/RouteTypes.ts';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
-export const HeaderLeftView = (navigation: NavigationProp) => (
-  <TouchableOpacity
-    onPress={() => navigation.goBack()}
-    style={styles.headerContainer}>
-    <Image source={require('../assets/back.png')} style={styles.headerImage} />
-  </TouchableOpacity>
-);
+export const HeaderLeftView = (navigation: NavigationProp, isDark: boolean) => {
+  return (
+    <TouchableOpacity
+      onPress={() => navigation.goBack()}
+      style={styles.headerContainer}>
+      <Image
+        source={
+          isDark
+            ? require('../assets/back_dark.png')
+            : require('../assets/back.png')
+        }
+        style={styles.headerImage}
+      />
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
   headerContainer: {
