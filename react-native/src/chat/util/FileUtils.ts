@@ -47,6 +47,16 @@ export const getFileBytes = async (fileUrl: string) => {
   }
 };
 
+export const getFileTextContent = async (fileUrl: string): Promise<string> => {
+  try {
+    const fullFileUrl = getFullFileUrl(fileUrl);
+    return await RNFS.readFile(fullFileUrl, 'utf8');
+  } catch (error) {
+    console.warn('Error reading text file:', fileUrl, error);
+    throw error;
+  }
+};
+
 const getUniqueFileName = async (
   basePath: string,
   originalFileName: string

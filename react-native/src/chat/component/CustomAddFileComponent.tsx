@@ -67,20 +67,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
       if (isImageMode) {
         chooseType = [types.images];
       } else {
-        chooseType = [
-          types.images,
-          types.pdf,
-          types.csv,
-          types.doc,
-          types.docx,
-          types.xls,
-          types.xlsx,
-          types.plainText,
-          'public.html',
-        ];
-        if (isVideoSupported()) {
-          chooseType.push(types.video);
-        }
+        chooseType = [types.allFiles];
       }
       const pickResults = await pick({
         allowMultiSelection: !isImageMode,
@@ -264,6 +251,7 @@ export const EXTRA_DOCUMENT_FORMATS = [
   'dart',
   'sql',
   'css',
+  'xml',
   'yaml',
 ];
 export const DOCUMENT_FORMATS = [
