@@ -10,7 +10,6 @@ import {
 } from '../storage/StorageUtils.ts';
 import {
   BedrockMessage,
-  DocumentContent,
   ImageContent,
   OpenAIMessage,
   TextContent,
