@@ -72,10 +72,19 @@ across Android, iOS, and macOS platforms.
 
 **Speech to Speech Features**: General Talk, Learn Sentences, and Storytelling
 
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4" width=32%>
-<img src="https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838" width=32%>
-<img src="https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4" width=32%>
+<div style="display: flex; flex-direction: row; justify-content: space-between;">
+<div style="width: 32%; text-align: center;">
+<strong>General Talk</strong><br>
+https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4
+</div>
+<div style="width: 32%; text-align: center;">
+<strong>Learn Sentences</strong><br>
+https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838
+</div>
+<div style="width: 32%; text-align: center;">
+<strong>Telling Story on Mac</strong><br>
+https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
+</div>
 </div>
 
 #### Other Features
