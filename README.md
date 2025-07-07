@@ -23,7 +23,7 @@ across Android, iOS, and macOS platforms.
 
 ### What's New 🔥
 
-- Supports dark mode on Android, iOS, and Mac (Following system settings, From v2.2.0).
+- Supports dark mode on Android, iOS, and Mac (Following system settings, From v2.4.0).
 - 🚀 Support Speech to Speech By Amazon Nova Sonic on Apple Platform.
   Check [How to Use](#amazon-nova-sonic-speech-to-speech-model) for
   more details. (From v2.3.0).
@@ -77,8 +77,8 @@ across Android, iOS, and macOS platforms.
 1. Built-in spoken language practice for words and sentences, as well as storytelling scenarios. You can also add
    **Custom System Prompts** for voice chatting in different scenarios.
 2. Support **Barge In** by default, Also you can disable in system prompt.
-3. Support selecting voices in the settings page, including American/British English, and options for male and female
-   voices.
+3. Support selecting voices in the settings page, including American/British English, Spanish and options for male and
+   female voices.
 4. Support **Echo Cancellation**, You can talk directly to the device without wearing headphones.
 5. Support **Voice Waveform** to display volume level.
 

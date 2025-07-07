@@ -14,18 +14,29 @@
 [English](/README.md)
 
 SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https://reactnative.dev/)
-开发，并依托 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 提供强大支持，同时兼容 Ollama、DeepSeek、OpenAI 和 OpenAI API 兼容的其他模型供应商。
-凭借其极简设计理念与坚实的隐私保护措施，该应用在 Android、iOS 和 macOS 平台上实现了实时流式对话、AI 图像生成和语音对话助手功能。
+开发，并依托 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 提供强大支持，同时兼容 Ollama、DeepSeek、OpenAI 和 OpenAI API
+兼容的其他模型供应商。 凭借其极简设计理念与坚实的隐私保护措施，该应用在 Android、iOS 和 macOS 平台上实现了实时流式对话、AI
+图像生成和语音对话助手功能。
 
 ![](assets/promo.avif)
 
 ### 新功能 🔥
 
-- 🚀 在 Apple 平台上支持 Amazon Nova Sonic 语音对话功能。查看 [使用方法](#amazon-nova-系列功能) 了解更多详情。（自 v2.3.0 起）。
-- 支持请求延迟和 token 响应速度显示（自 v2.3.0 起）。
-- 用户问题展示为新的气泡 UI 格式（自 v2.3.0 起）。
-- 支持 OpenAI Compatible 模型。您现在可以通过 SwiftChat 使用 [easy-model-deployer](https://github.com/aws-samples/easy-model-deployer)、
+- 支持 Android、iOS 和 Mac 上的暗黑模式（跟随系统设置，自 v2.4.0 起）。
+- 🚀 在 Apple 平台上支持 Amazon Nova Sonic 语音对话功能。查看 [使用方法](#amazon-nova-sonic-语音对话模型) 了解更多详情。（自
+  v2.3.0 起）。
+- 支持 OpenAI Compatible 模型。您现在可以通过 SwiftChat
+  使用 [easy-model-deployer](https://github.com/aws-samples/easy-model-deployer)、
   OpenRouter 或任何 OpenAI API 兼容的模型。更多详情请查看 [配置 OpenAI Compatible](#openai-api-兼容) 部分（自 v2.2.0 起）。
+
+#### 暗黑模式
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/dark_markdown.avif" width=24%>
+<img src="assets/animations/dark_voice.avif" width=24%>
+<img src="assets/animations/dark_gen_image.avif" width=24%>
+<img src="assets/animations/dark_settings.avif" width=24%>
+</div>
 
 ### 主要特点
 
@@ -40,7 +51,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 - 快速启动和响应性能
 - 支持多种 AI 模型及切换 (
   包括 [Amazon Bedrock](https://aws.amazon.com/bedrock/)，[Ollama](https://github.com/ollama/ollama)，[DeepSeek](https://www.deepseek.com/)，[OpenAI](https://openai.com/)
-  和 [OpenAI Compatible](#openai-compatible) 模型)
+  和 [OpenAI Compatible](#openai-api-兼容) 模型)
 - 支持完全自定义的系统提示词助手
 
 ### Amazon Nova 系列功能
@@ -61,14 +72,10 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 **语音对话功能**
 
 1. 内置单词和句子的口语练习，以及讲故事场景。您还可以添加 **自定义系统提示词** 用于不同场景的语音聊天。
-2. 支持在设置页面中选择声音类型，支持美式/英式英语，以及男声和女声的选择。
-3. 默认支持 **插话功能**，您也可以在系统提示词中禁用。
+2. 默认支持 **插话功能**，您也可以在系统提示词中禁用。
+3. 支持在设置页面中选择声音类型，支持美式/英式英语，西班牙语，以及男声和女声的选择。
 4. 支持 **回声消除**，您可以直接对着设备说话而无需佩戴耳机。
 5. 支持 **语音波形** 显示音量级别。
-
-**日常对话**
-
-https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4
 
 **学习句子**
 
@@ -142,7 +149,9 @@ https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
 - 文本模型: `Amazon Nova Pro`
 - 图像模型: `Stable Diffusion 3.5 Large`
 
-如果您要使用图片生成功能，请确保已开启 `Amazon Nova Lite` 模型的访问权限。您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) 来启用您的模型。
+如果您要使用图片生成功能，请确保已开启 `Amazon Nova Lite`
+模型的访问权限。您可以参考 [Amazon Bedrock 用户指南](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html)
+来启用您的模型。
 
 <details>
 <summary><b>🔧 配置步骤（点击展开）</b></summary>
@@ -172,10 +181,12 @@ https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
 2. 点击 **下一步**，在"指定堆栈详细信息"页面中提供以下信息:
     - 使用存储 API Key 的参数名填写`ApiKeyParam`(例如"SwiftChatAPIKey")。
     - 对于 App Runner，根据您的需求选择`InstanceTypeParam`。
-3. 点击 **下一步**，保持 "配置堆栈选项" 页面默认设置，阅读功能并勾选底部的 "我确认，AWS CloudFormation 可能会创建 IAM 资源" 复选框。
+3. 点击 **下一步**，保持 "配置堆栈选项" 页面默认设置，阅读功能并勾选底部的 "我确认，AWS CloudFormation 可能会创建 IAM 资源"
+   复选框。
 4. 点击 **下一步**，在 "审核并创建" 中检查配置并点击 **提交**。
 
-等待约 3-5 分钟部署完成，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到 **API URL** 类似`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws`。
+等待约 3-5 分钟部署完成，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到 **API URL**
+类似`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws`。
 
 ### 第 3 步: 启动应用并设置 API URL 和 API Key
 
@@ -411,7 +422,8 @@ npm run ios
     https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template
     ```
 4. 点击 **下一步** 按钮并继续点击 **下一步** 按钮。在 **配置堆栈选项** 页面上，
-   勾选 `我确认，AWS CloudFormation 可能会创建 IAM 资源。` 然后点击 **下一步** 和 **提交** 按钮来更新您的 CloudFormation 模板。
+   勾选 `我确认，AWS CloudFormation 可能会创建 IAM 资源。` 然后点击 **下一步** 和 **提交** 按钮来更新您的 CloudFormation
+   模板。
 
 ## 安全
 
