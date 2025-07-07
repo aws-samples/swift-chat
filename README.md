@@ -22,13 +22,11 @@ across Android, iOS, and macOS platforms.
 ![](assets/promo.avif)
 
 ### What's New 🔥
-
+- Support Dark Mode on Android, iOS and Mac (From v2.4.0).
 - 🚀 Support Speech to Speech By Amazon Nova Sonic on Apple Platform. Check [How to Use](#amazon-nova-sonic-speech-to-speech-model) for
   more details. (From v2.3.0).
-- Support Request Latency and token response speed display (From v2.3.0).
-- Change to new bubble format UI for user question (From v2.3.0).
 - Support for OpenAI Compatible models. You can now
-  use [easy-model-deployer](https://github.com/aws-samples/easy-model-deployer),
+  use [Easy Model Deployer](https://github.com/aws-samples/easy-model-deployer),
   OpenRouter, or any OpenAI-compatible model provider via SwiftChat. Please
   check [Configure OpenAI Compatible](#openai-compatible) section for more details(From v2.2.0).
 
@@ -72,17 +70,13 @@ across Android, iOS, and macOS platforms.
 4. Support **Echo Cancellation**, You can talk directly to the device without wearing headphones.
 5. Support **Voice Waveform** to display volume level.
 
-**General Talk**
+**Speech to Speech Features**: General Talk, Learn Sentences, and Storytelling
 
-https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4
-
-**Learn Sentences**
-
-https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838
-
-**Telling Story on Mac (With barge in feature)**
-
-https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4" width=32%>
+<img src="https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838" width=32%>
+<img src="https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4" width=32%>
+</div>
 
 #### Other Features
 
