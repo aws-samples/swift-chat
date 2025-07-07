@@ -22,8 +22,10 @@ across Android, iOS, and macOS platforms.
 ![](assets/promo.avif)
 
 ### What's New 🔥
+
 - Support Dark Mode on Android, iOS and Mac (From v2.4.0).
-- 🚀 Support Speech to Speech By Amazon Nova Sonic on Apple Platform. Check [How to Use](#amazon-nova-sonic-speech-to-speech-model) for
+- 🚀 Support Speech to Speech By Amazon Nova Sonic on Apple Platform.
+  Check [How to Use](#amazon-nova-sonic-speech-to-speech-model) for
   more details. (From v2.3.0).
 - Support for OpenAI Compatible models. You can now
   use [Easy Model Deployer](https://github.com/aws-samples/easy-model-deployer),
@@ -66,26 +68,16 @@ across Android, iOS, and macOS platforms.
 1. Built-in spoken language practice for words and sentences, as well as storytelling scenarios. You can also add
    **Custom System Prompts** for voice chatting in different scenarios.
 2. Support **Barge In** by default, Also you can disable in system prompt.
-3. Support selecting voices in the settings page, including American/British English, and options for male and female voices.
+3. Support selecting voices in the settings page, including American/British English, and options for male and female
+   voices.
 4. Support **Echo Cancellation**, You can talk directly to the device without wearing headphones.
 5. Support **Voice Waveform** to display volume level.
 
 **Speech to Speech Features**: General Talk, Learn Sentences, and Storytelling
 
-<div style="display: flex; flex-direction: row; justify-content: space-between;">
-<div style="width: 32%; text-align: center;">
-<strong>General Talk</strong><br>
-https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4
-</div>
-<div style="width: 32%; text-align: center;">
-<strong>Learn Sentences</strong><br>
-https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838
-</div>
-<div style="width: 32%; text-align: center;">
-<strong>Telling Story on Mac</strong><br>
-https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
-</div>
-</div>
+|                                **General Talk**                                 |                               **Learn Sentences**                               |                            **Telling Story on Mac**                             |
+|:-------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------:|
+| https://github.com/user-attachments/assets/d3028312-c420-476c-88c2-ba870015f3c4 | https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838 | https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4 |
 
 #### Other Features
 
