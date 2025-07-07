@@ -372,7 +372,7 @@ cd react-native && npm i && npm start
 npm run android
 ```
 
-## 构建 iOS
+### 构建 iOS
 
 先打开一个新的终端，如果是第一次运行，请先执行 `cd ios && pod install && cd ..` 来安装原生依赖，然后运行：
 

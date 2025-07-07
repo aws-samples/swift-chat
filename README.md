@@ -51,7 +51,7 @@ across Android, iOS, and macOS platforms.
 - Cross-platform support (Android, iOS, macOS)
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
-- Multiple AI model
+- Multiple AI models
   supported ([Amazon Bedrock](https://aws.amazon.com/bedrock/), [Ollama](https://github.com/ollama/ollama), [DeepSeek](https://www.deepseek.com/), [OpenAI](https://openai.com/)
   and [OpenAI Compatible](#openai-compatible) Models)
 - Fully Customizable System Prompt Assistant
@@ -62,12 +62,12 @@ across Android, iOS, and macOS platforms.
 
 **Usage Guide**
 
-1. Amazon Nova Sonic model is supported starting from v2.3.0. If you have deployed it before, You Need to:
+1. Amazon Nova Sonic model is supported starting from v2.3.0. If you have deployed it before, you need to:
     * [Update CloudFormation](#upgrade-cloudformation) Stack
     * [Update API](#upgrade-api)
     * [Upgrade your App](#-quick-download) to v2.3.0 or later
 
-   If you have not Deployed your CloudFormation Stack please
+   If you have not deployed your CloudFormation Stack please
    finish [Getting Started with Amazon Bedrock](#getting-started-with-amazon-bedrock) section.
 2. Switch the **Region** to `us-east-1` in the settings page and select the `Nova Sonic` under **Chat Model**.
 3. Return to Chat page, select a system prompt or directly click the microphone icon to start your conversation.
@@ -391,7 +391,7 @@ npm run android
 
 ### Build for iOS
 
-also open a new terminal, for the first time you need to install the native dependencies
+also open a new terminal. For the first time you need to install the native dependencies
 by execute `cd ios && pod install && cd ..`, then execute the follow command:
 
 ```bash
