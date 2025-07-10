@@ -34,6 +34,7 @@ import { invokeOpenAIWithCallBack } from './open-api.ts';
 import { invokeOllamaWithCallBack } from './ollama-api.ts';
 import { BedrockThinkingModels } from '../storage/Constants.ts';
 import { getModelTag } from '../utils/ModelUtils.ts';
+import { invokeBedrockWithAPIKey } from './bedrock-api-key.ts';
 
 type CallbackFunction = (
   result: string,
@@ -88,6 +89,17 @@ export const invokeBedrockWithCallBack = async (
         callback
       );
     }
+    return;
+  }
+  const apiKey = getApiKey();
+  if (apiKey) {
+    await invokeBedrockWithAPIKey(
+      messages,
+      prompt,
+      shouldStop,
+      controller,
+      callback
+    );
     return;
   }
   if (!isConfigured()) {
