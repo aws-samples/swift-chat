@@ -1,4 +1,4 @@
-import { BedrockChunk, SystemPrompt, Usage } from '../types/Chat.ts';
+import { BedrockAPIChunk, SystemPrompt, Usage } from '../types/Chat.ts';
 import { getApiKey, getRegion, getTextModel } from '../storage/StorageUtils.ts';
 import { BedrockMessage } from '../chat/util/BedrockMessageConvertor.ts';
 
@@ -59,9 +59,7 @@ export const invokeBedrockWithAPIKey = async (
         }
 
         try {
-          console.log('start read');
           const { done, value } = await reader.read();
-          console.log('get value', value);
           const chunk = decoder.decode(value, { stream: true });
           console.log(chunk);
           const bedrockChunk = parseChunk(chunk);
@@ -136,44 +134,19 @@ export const invokeBedrockWithAPIKey = async (
 function parseChunk(rawChunk: string) {
   if (rawChunk.length > 0) {
     // Split by SSE event boundaries
-    const events = rawChunk.split(/\n\n|\r\n\r\n/);
-    let combinedReasoning = '';
-    let combinedText = '';
-    let lastUsage;
-
-    for (const event of events) {
-      if (!event.trim()) {
-        continue;
-      }
-
-      try {
-        // Parse SSE format: look for data: lines
-        const lines = event.split(/\n|\r\n/);
-        let messageType = '';
-        let dataLine = '';
-
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (trimmedLine.startsWith(':event-type')) {
-            // Skip event type parsing
-          } else if (trimmedLine.startsWith(':message-type')) {
-            messageType = trimmedLine.substring(14).trim();
-          } else if (
-            trimmedLine.startsWith('event') &&
-            trimmedLine.includes('{')
-          ) {
-            // Extract JSON data from lines like "event{...}"
-            const jsonStart = trimmedLine.indexOf('{');
-            if (jsonStart !== -1) {
-              dataLine = trimmedLine.substring(jsonStart);
-            }
-          }
+    const events = rawChunk.split('\n\n');
+    if (events.length > 0) {
+      let combinedReasoning = '';
+      let combinedText = '';
+      let lastUsage;
+      for (let i = 0; i < events.length; i++) {
+        const part = events[i];
+        if (part.length === 0) {
+          continue;
         }
-
-        if (dataLine && messageType === 'event') {
-          const chunk: BedrockChunk = JSON.parse(dataLine);
-          const content = extractChunkContent(chunk, dataLine);
-
+        try {
+          const chunk: BedrockAPIChunk = JSON.parse(part);
+          const content = extractChunkContent(chunk, rawChunk);
           if (content.reasoning) {
             combinedReasoning += content.reasoning;
           }
@@ -183,15 +156,15 @@ function parseChunk(rawChunk: string) {
           if (content.usage) {
             lastUsage = content.usage;
           }
+        } catch (innerError) {
+          console.log('DataChunk parse error:' + innerError, rawChunk, events);
+          return {
+            reasoning: combinedReasoning,
+            text: rawChunk,
+            usage: lastUsage,
+          };
         }
-      } catch (innerError) {
-        console.log('SSE parse error:', innerError, 'Event:', event);
-        // Continue processing other events instead of returning error
-        continue;
       }
-    }
-
-    if (combinedText || combinedReasoning || lastUsage) {
       return {
         reasoning: combinedReasoning,
         text: combinedText,
@@ -202,12 +175,11 @@ function parseChunk(rawChunk: string) {
   return null;
 }
 
-function extractChunkContent(bedrockChunk: BedrockChunk, rawChunk: string) {
-  const reasoning =
-    bedrockChunk?.contentBlockDelta?.delta?.reasoningContent?.text;
-  let text = bedrockChunk?.contentBlockDelta?.delta?.text;
-  const usage = bedrockChunk?.metadata?.usage;
-  if (bedrockChunk?.detail) {
+function extractChunkContent(bedrockChunk: BedrockAPIChunk, rawChunk: string) {
+  const reasoning = bedrockChunk?.delta?.reasoningContent?.text;
+  let text = bedrockChunk?.delta?.text;
+  const usage = bedrockChunk?.usage;
+  if (bedrockChunk?.Message || bedrockChunk?.message) {
     text = rawChunk;
   }
   return { reasoning, text, usage };

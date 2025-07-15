@@ -137,6 +137,14 @@ export interface BedrockChunk {
   detail: string;
 }
 
+export interface BedrockAPIChunk {
+  delta: Delta;
+  usage: Usage;
+  stopReason: string;
+  Message: string;
+  message: string;
+}
+
 export interface Delta {
   text: string;
   reasoningContent: ReasoningContent;
