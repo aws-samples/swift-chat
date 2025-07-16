@@ -1,5 +1,9 @@
 import { BedrockAPIChunk, SystemPrompt, Usage } from '../types/Chat.ts';
-import { getApiKey, getRegion, getTextModel } from '../storage/StorageUtils.ts';
+import {
+  getBedrockApiKey,
+  getRegion,
+  getTextModel,
+} from '../storage/StorageUtils.ts';
 import { BedrockMessage } from '../chat/util/BedrockMessageConvertor.ts';
 import { isEnableThinking } from './bedrock-api.ts';
 
@@ -49,7 +53,6 @@ export const invokeBedrockWithAPIKey = async (
     };
   }
   // Add system prompt if provided
-  console.log('bodyObject', JSON.stringify(bodyObject, null, 2));
   let completeMessage = '';
   let completeReasoning = '';
   const url = `https://bedrock-runtime.${getRegion()}.amazonaws.com/model/${modelId}/converse-stream`;
@@ -59,7 +62,7 @@ export const invokeBedrockWithAPIKey = async (
     headers: {
       accept: '*/*',
       'content-type': 'application/json',
-      Authorization: 'Bearer ' + getApiKey(),
+      Authorization: 'Bearer ' + getBedrockApiKey(),
     },
     body: JSON.stringify(bodyObject),
     signal: controller.signal,

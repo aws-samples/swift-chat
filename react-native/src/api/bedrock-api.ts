@@ -13,6 +13,8 @@ import {
 import {
   getApiKey,
   getApiUrl,
+  getBedrockApiKey,
+  getBedrockConfigMode,
   getDeepSeekApiKey,
   getImageModel,
   getImageSize,
@@ -91,8 +93,14 @@ export const invokeBedrockWithCallBack = async (
     }
     return;
   }
-  const apiKey = getApiKey();
-  if (apiKey) {
+  const bedrockConfigMode = getBedrockConfigMode();
+  const bedrockApiKey = getBedrockApiKey();
+
+  if (bedrockConfigMode === 'bedrock') {
+    if (!bedrockApiKey) {
+      callback('Please configure your Bedrock API Key', true, true);
+      return;
+    }
     await invokeBedrockWithAPIKey(
       messages,
       prompt,
@@ -103,7 +111,11 @@ export const invokeBedrockWithCallBack = async (
     return;
   }
   if (!isConfigured()) {
-    callback('Please configure your API URL and API Key', true, true);
+    callback(
+      'Please configure your SwiftChat Server API URL and API Key',
+      true,
+      true
+    );
     return;
   }
   if (chatMode === ChatMode.Text) {

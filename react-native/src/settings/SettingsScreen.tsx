@@ -52,6 +52,10 @@ import {
   saveThinkingEnabled,
   saveVoiceId,
   updateTextModelUsageOrder,
+  getBedrockConfigMode,
+  saveBedrockConfigMode,
+  getBedrockApiKey,
+  saveBedrockApiKey,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -124,6 +128,9 @@ function SettingsScreen(): React.JSX.Element {
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
   const [voiceId, setVoiceId] = useState(getVoiceId);
+  const [bedrockConfigMode, setBedrockConfigMode] =
+    useState(getBedrockConfigMode);
+  const [bedrockApiKey, setBedrockApiKey] = useState(getBedrockApiKey);
   const { sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
 
@@ -283,6 +290,20 @@ function SettingsScreen(): React.JSX.Element {
     fetchAndSetModelNames().then();
   }, [openAICompatModels, fetchAndSetModelNames]);
 
+  useEffect(() => {
+    if (bedrockConfigMode === getBedrockConfigMode()) {
+      return;
+    }
+    saveBedrockConfigMode(bedrockConfigMode);
+  }, [bedrockConfigMode]);
+
+  useEffect(() => {
+    if (bedrockApiKey === getBedrockApiKey()) {
+      return;
+    }
+    saveBedrockApiKey(bedrockApiKey);
+  }, [bedrockApiKey]);
+
   const fetchUpgradeInfo = async () => {
     if (isMac || Platform.OS === 'android') {
       const os = isMac ? 'mac' : 'android';
@@ -353,19 +374,69 @@ function SettingsScreen(): React.JSX.Element {
       case 'bedrock':
         return (
           <>
-            <CustomTextInput
-              label="API URL"
-              value={apiUrl}
-              onChangeText={setApiUrl}
-              placeholder="Enter API URL"
-            />
-            <CustomTextInput
-              label="API Key"
-              value={apiKey}
-              onChangeText={setApiKey}
-              placeholder="Enter API Key"
-              secureTextEntry={true}
-            />
+            <View style={styles.configSwitchContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.configSwitchButton,
+                  bedrockConfigMode === 'bedrock' &&
+                    styles.configSwitchButtonActive,
+                ]}
+                activeOpacity={0.7}
+                onPress={() => setBedrockConfigMode('bedrock')}>
+                <Text
+                  style={[
+                    styles.configSwitchText,
+                    bedrockConfigMode === 'bedrock' &&
+                      styles.configSwitchTextActive,
+                  ]}>
+                  Bedrock API Key
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.configSwitchButton,
+                  bedrockConfigMode === 'swiftchat' &&
+                    styles.configSwitchButtonActive,
+                ]}
+                activeOpacity={0.7}
+                onPress={() => setBedrockConfigMode('swiftchat')}>
+                <Text
+                  style={[
+                    styles.configSwitchText,
+                    bedrockConfigMode === 'swiftchat' &&
+                      styles.configSwitchTextActive,
+                  ]}>
+                  SwiftChat Server
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {bedrockConfigMode === 'bedrock' ? (
+              <>
+                <CustomTextInput
+                  label="Bedrock API Key"
+                  value={bedrockApiKey}
+                  onChangeText={setBedrockApiKey}
+                  placeholder="Enter Bedrock API Key"
+                  secureTextEntry={true}
+                />
+              </>
+            ) : (
+              <>
+                <CustomTextInput
+                  label="API URL"
+                  value={apiUrl}
+                  onChangeText={setApiUrl}
+                  placeholder="Enter API URL"
+                />
+                <CustomTextInput
+                  label="API Key"
+                  value={apiKey}
+                  onChangeText={setApiKey}
+                  placeholder="Enter API Key"
+                  secureTextEntry={true}
+                />
+              </>
+            )}
             <CustomDropdown
               label="Region"
               data={regionsData}
@@ -794,6 +865,36 @@ const createStyles = (colors: ColorScheme) =>
       marginRight: -14,
       width: 32,
       height: 32,
+    },
+    configSwitchContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      backgroundColor: colors.background,
+      borderRadius: 8,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 2,
+    },
+    configSwitchButton: {
+      flex: 1,
+      paddingVertical: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 6,
+      margin: 2,
+    },
+    configSwitchButtonActive: {
+      backgroundColor: colors.text + 'CC',
+    },
+    configSwitchText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    configSwitchTextActive: {
+      color: colors.background,
+      fontWeight: '600',
     },
   });
 

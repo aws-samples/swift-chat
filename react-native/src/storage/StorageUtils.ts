@@ -64,6 +64,8 @@ const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
 const modelOrderKey = keyPrefix + 'modelOrderKey';
 const voiceIdKey = keyPrefix + 'voiceIdKey';
 const tokenInfoKey = keyPrefix + 'tokenInfo';
+const bedrockConfigModeKey = keyPrefix + 'bedrockConfigModeKey';
+const bedrockApiKeyTag = keyPrefix + 'bedrockApiKeyTag';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -79,6 +81,8 @@ let currentSystemPrompts: SystemPrompt[] | undefined;
 let currentOpenAIProxyEnabled: boolean | undefined;
 let currentThinkingEnabled: boolean | undefined;
 let currentModelOrder: Model[] | undefined;
+let currentBedrockConfigMode: string | undefined;
+let currentBedrockApiKey: string | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -597,4 +601,36 @@ export function isTokenValid(): boolean {
   const expirationDate = new Date(tokenInfo.expiration).getTime();
   const now = new Date().getTime();
   return expirationDate > now + 10 * 60 * 1000;
+}
+
+// Bedrock configuration mode functions
+export function saveBedrockConfigMode(mode: string) {
+  currentBedrockConfigMode = mode;
+  storage.set(bedrockConfigModeKey, mode);
+}
+
+export function getBedrockConfigMode(): string {
+  if (currentBedrockConfigMode) {
+    return currentBedrockConfigMode;
+  } else {
+    currentBedrockConfigMode =
+      storage.getString(bedrockConfigModeKey) ??
+      (getApiUrl().length > 0 ? 'swiftchat' : 'bedrock');
+    return currentBedrockConfigMode;
+  }
+}
+
+// Bedrock API key functions
+export function saveBedrockApiKey(apiKey: string) {
+  currentBedrockApiKey = apiKey;
+  encryptStorage.set(bedrockApiKeyTag, apiKey);
+}
+
+export function getBedrockApiKey(): string {
+  if (currentBedrockApiKey) {
+    return currentBedrockApiKey;
+  } else {
+    currentBedrockApiKey = encryptStorage.getString(bedrockApiKeyTag) ?? '';
+    return currentBedrockApiKey;
+  }
 }
