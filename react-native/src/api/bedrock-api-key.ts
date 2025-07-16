@@ -1,4 +1,11 @@
-import { BedrockAPIChunk, SystemPrompt, Usage } from '../types/Chat.ts';
+import {
+  AllModel,
+  BedrockAPIChunk,
+  Model,
+  ModelTag,
+  SystemPrompt,
+  Usage,
+} from '../types/Chat.ts';
 import {
   getBedrockApiKey,
   getRegion,
@@ -215,3 +222,86 @@ function extractChunkContent(bedrockChunk: BedrockAPIChunk, rawChunk: string) {
   }
   return { reasoning, text, usage };
 }
+
+export const requestAllModelsByBedrockAPI = async (): Promise<AllModel> => {
+  if (getBedrockApiKey() === '') {
+    return { imageModel: [], textModel: [] };
+  }
+  const controller = new AbortController();
+  const url = `https://bedrock.${getRegion()}.amazonaws.com/foundation-models`;
+  const options = {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+      Authorization: 'Bearer ' + getBedrockApiKey(),
+    },
+    reactNative: { textStreaming: true },
+  };
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(url, options);
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      console.log(`HTTP error! status: ${response.status}`);
+      return { imageModel: [], textModel: [] };
+    }
+    const allModel = await response.json();
+
+    // Process the model data similar to the Python code
+    if (allModel.modelSummaries) {
+      const modelNames = new Set<string>();
+      const textModel: Model[] = [];
+      const imageModel: Model[] = [];
+      const region = getRegion();
+
+      for (const model of allModel.modelSummaries) {
+        const needCrossRegion =
+          model.inferenceTypesSupported?.includes('INFERENCE_PROFILE');
+
+        if (
+          model.modelLifecycle?.status === 'ACTIVE' &&
+          (model.inferenceTypesSupported?.includes('ON_DEMAND') ||
+            needCrossRegion) &&
+          !model.modelId.endsWith('k') &&
+          !modelNames.has(model.modelName)
+        ) {
+          if (
+            model.outputModalities?.includes('TEXT') &&
+            model.responseStreamingSupported
+          ) {
+            let modelId = model.modelId;
+            if (needCrossRegion) {
+              let regionPrefix = region.split('-')[0];
+              if (regionPrefix === 'ap') {
+                regionPrefix = 'apac';
+              }
+              modelId = regionPrefix + '.' + model.modelId;
+            }
+
+            textModel.push({
+              modelId: modelId,
+              modelName: model.modelName,
+              modelTag: ModelTag.Bedrock,
+            });
+          } else if (model.outputModalities?.includes('IMAGE')) {
+            imageModel.push({
+              modelId: model.modelId,
+              modelName: model.modelName,
+              modelTag: ModelTag.Bedrock,
+            });
+          }
+
+          modelNames.add(model.modelName);
+        }
+      }
+
+      return { textModel, imageModel };
+    }
+
+    return { imageModel: [], textModel: [] };
+  } catch (error) {
+    console.log('Error fetching models:', error);
+    clearTimeout(timeoutId);
+    return { imageModel: [], textModel: [] };
+  }
+};

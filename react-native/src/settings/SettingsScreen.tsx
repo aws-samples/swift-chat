@@ -82,6 +82,7 @@ import { requestAllOllamaModels } from '../api/ollama-api.ts';
 import TabButton from './TabButton';
 import { useAppContext } from '../history/AppProvider.tsx';
 import { useTheme, ColorScheme } from '../theme';
+import { requestAllModelsByBedrockAPI } from '../api/bedrock-api-key.ts';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -142,7 +143,10 @@ function SettingsScreen(): React.JSX.Element {
       ollamaModels = await requestAllOllamaModels();
     }
 
-    const response = await requestAllModels();
+    const response =
+      bedrockConfigMode === 'bedrock'
+        ? await requestAllModelsByBedrockAPI()
+        : await requestAllModels();
     addBedrockPrefixToDeepseekModels(response.textModel);
     if (Platform.OS === 'android') {
       response.textModel = response.textModel.filter(
@@ -213,7 +217,7 @@ function SettingsScreen(): React.JSX.Element {
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
       saveAllModels(response);
     }
-  }, [openAICompatModels]);
+  }, [bedrockConfigMode, openAICompatModels]);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -294,15 +298,17 @@ function SettingsScreen(): React.JSX.Element {
     if (bedrockConfigMode === getBedrockConfigMode()) {
       return;
     }
+    fetchAndSetModelNames().then();
     saveBedrockConfigMode(bedrockConfigMode);
-  }, [bedrockConfigMode]);
+  }, [bedrockConfigMode, fetchAndSetModelNames]);
 
   useEffect(() => {
     if (bedrockApiKey === getBedrockApiKey()) {
       return;
     }
+    fetchAndSetModelNames().then();
     saveBedrockApiKey(bedrockApiKey);
-  }, [bedrockApiKey]);
+  }, [bedrockApiKey, fetchAndSetModelNames]);
 
   const fetchUpgradeInfo = async () => {
     if (isMac || Platform.OS === 'android') {

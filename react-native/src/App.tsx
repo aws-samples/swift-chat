@@ -17,6 +17,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
 import { isAndroid, isMacCatalyst } from './utils/PlatformUtils';
 import { ThemeProvider, useTheme } from './theme';
+import { configureErrorHandling } from './utils/ErrorUtils';
 
 export const isMac = isMacCatalyst;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -120,6 +121,10 @@ const AppWithTheme = () => {
 };
 
 const App = () => {
+  React.useEffect(() => {
+    configureErrorHandling();
+  }, []);
+
   return (
     <>
       <ThemeProvider>
