@@ -36,8 +36,7 @@
     NSString *encodedResponse = [[NSString alloc] initWithData:currentCarryData encoding:encoding];
 
     if (!encodedResponse && data.length > 0) {
-        // 使用我们的JSON提取方法
-        encodedResponse = [RCTNetworkingPatch extractSimpleJSONFromData:data];
+        encodedResponse = [RCTNetworkingPatch extractPayloadFromEventStream:data];
     }
 
     if (inputCarryData) {
@@ -56,64 +55,36 @@
     return encodedResponse;
 }
 
-+ (NSString *)extractSimpleJSONFromData:(NSData *)data {
++ (NSString *)extractPayloadFromEventStream:(NSData *)data {
+    NSMutableArray *payloads = [NSMutableArray array];
     const uint8_t *bytes = (const uint8_t *)[data bytes];
-    NSInteger length = [data length];
-    NSMutableArray *jsonStrings = [NSMutableArray array];
+    NSInteger dataLen = [data length];
+    NSInteger pos = 0;
     
-    NSInteger i = 0;
-    while (i < length - 1) {
-        if (bytes[i] == '{' && bytes[i+1] == '"') {
-            NSInteger startIndex = i;
-            NSInteger braceCount = 0;
-            BOOL inString = NO;
-            BOOL escaped = NO;
-            NSInteger endIndex = -1;
-            
-            for (NSInteger j = startIndex; j < length; j++) {
-                uint8_t byte = bytes[j];
-                
-                if (escaped) {
-                    escaped = NO;
-                    continue;
-                }
-                
-                if (byte == '\\' && inString) {
-                    escaped = YES;
-                    continue;
-                }
-                
-                if (byte == '"') {
-                    inString = !inString;
-                } else if (!inString) {
-                    if (byte == '{') {
-                        braceCount++;
-                    } else if (byte == '}') {
-                        braceCount--;
-                        if (braceCount == 0) {
-                            endIndex = j;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (endIndex >= 0) {
-                NSData *jsonData = [data subdataWithRange:NSMakeRange(startIndex, endIndex - startIndex + 1)];
-                NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-                if (jsonString) {
-                    [jsonStrings addObject:jsonString];
-                }
-                i = endIndex + 1;
-            } else {
-                i++;
-            }
-        } else {
-            i++;
+    while (pos + 12 <= dataLen && pos >= 0) {
+        uint32_t totalLength = CFSwapInt32BigToHost(*(uint32_t*)(bytes + pos));
+        uint32_t headersLength = CFSwapInt32BigToHost(*(uint32_t*)(bytes + pos + 4));
+        
+        if (pos + totalLength > dataLen) {
+            break;
         }
+        
+        NSInteger payloadStart = pos + 12 + headersLength;
+        NSInteger payloadEnd = pos + totalLength - 4;
+        
+        if (payloadStart > 0 && payloadStart < payloadEnd && payloadEnd <= dataLen) {
+            NSData *payloadData = [data subdataWithRange:NSMakeRange(payloadStart, payloadEnd - payloadStart)];
+            NSString *payloadStr = [[NSString alloc] initWithData:payloadData encoding:NSUTF8StringEncoding];
+            
+            if (payloadStr) {
+                [payloads addObject:payloadStr];
+            }
+        }
+        
+        pos += totalLength;
     }
     
-    return [jsonStrings componentsJoinedByString:@"\n\n"];
+    return [payloads componentsJoinedByString:@"\n\n"];
 }
 
 @end

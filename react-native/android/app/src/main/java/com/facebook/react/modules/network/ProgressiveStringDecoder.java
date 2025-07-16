@@ -1,102 +1,95 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
 package com.facebook.react.modules.network;
 
-import android.util.Log;
-import com.facebook.common.logging.FLog;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 class ProgressiveStringDecoder {
+    private static final String EMPTY_STRING = "";
     private final CharsetDecoder mDecoder;
+    private byte[] remainder = null;
+
     public ProgressiveStringDecoder(Charset charset) {
         this.mDecoder = charset.newDecoder();
     }
 
     public String decodeNext(byte[] data, int length) {
-        ByteBuffer decodeBuffer = ByteBuffer.wrap(data, 0, length);
-        CharBuffer result;
+        byte[] decodeData;
+        if (this.remainder != null) {
+            decodeData = new byte[this.remainder.length + length];
+            System.arraycopy(this.remainder, 0, decodeData, 0, this.remainder.length);
+            System.arraycopy(data, 0, decodeData, this.remainder.length, length);
+            length += this.remainder.length;
+        } else {
+            decodeData = data;
+        }
 
-        try {
-            result = mDecoder.decode(decodeBuffer);
-        } catch (CharacterCodingException e) {
-            // First decoding failed, directly use JSON extraction method
-            String extractedJson = extractSimpleJSONFromData(data, length);
-            return extractedJson.isEmpty() ? "" : extractedJson;
+        ByteBuffer decodeBuffer = ByteBuffer.wrap(decodeData, 0, length);
+        CharBuffer result = null;
+        boolean decoded = false;
+        int remainderLength = 0;
+
+        while(!decoded && remainderLength < 4) {
+            try {
+                result = this.mDecoder.decode(decodeBuffer);
+                decoded = true;
+            } catch (CharacterCodingException var9) {
+                ++remainderLength;
+                decodeBuffer = ByteBuffer.wrap(decodeData, 0, length - remainderLength);
+            }
+        }
+
+        boolean hasRemainder = decoded && remainderLength > 0;
+        if (hasRemainder) {
+            this.remainder = new byte[remainderLength];
+            System.arraycopy(decodeData, length - remainderLength, this.remainder, 0, remainderLength);
+        } else {
+            this.remainder = null;
         }
         if (result != null) {
             return new String(result.array(), 0, result.length());
         } else {
-            FLog.w("SwiftChat", "failed to decode string from byte array");
-            return "";
+            String extractedJson = extractPayloadFromEventStream(data, length);
+            return extractedJson.isEmpty() ? "" : extractedJson;
         }
     }
 
-    public static String extractSimpleJSONFromData(byte[] data, int length) {
-        List<String> jsonStrings = new ArrayList<>();
-        int i = 0;
-        while (i < length - 1) {
-            if (data[i] == '{' && data[i + 1] == '"') {
-                int startIndex = i;
-                int braceCount = 0;
-                boolean inString = false;
-                boolean escaped = false;
-                int endIndex = -1;
+    public static String extractPayloadFromEventStream(byte[] data, int dataLen) {
+        List<String> payloads = new ArrayList<>();
+        int pos = 0;
+        while (pos + 12 <= dataLen && pos >= 0) {
+            ByteBuffer buffer = ByteBuffer.wrap(data, pos, 8);
+            buffer.order(ByteOrder.BIG_ENDIAN);
 
-                for (int j = startIndex; j < length; j++) {
-                    byte b = data[j];
+            int totalLength = buffer.getInt();
+            int headersLength = buffer.getInt();
 
-                    if (escaped) {
-                        escaped = false;
-                        continue;
-                    }
-
-                    if (b == '\\' && inString) {
-                        escaped = true;
-                        continue;
-                    }
-
-                    if (b == '"') {
-                        inString = !inString;
-                    } else if (!inString) {
-                        if (b == '{') {
-                            braceCount++;
-                        } else if (b == '}') {
-                            braceCount--;
-                            if (braceCount == 0) {
-                                endIndex = j;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (endIndex >= 0) {
-                    try {
-                        byte[] jsonData = Arrays.copyOfRange(data, startIndex, endIndex + 1);
-                        String jsonString = new String(jsonData, StandardCharsets.UTF_8);
-                        jsonStrings.add(jsonString);
-                        i = endIndex + 1;
-                    } catch (Exception e) {
-                        i++;
-                    }
-                } else {
-                    i++;
-                }
-            } else {
-                i++;
+            if (pos + totalLength > dataLen) {
+                break;
             }
-        }
-        return String.join("\n\n", jsonStrings);
-    }
 
+            int payloadStart = pos + 12 + headersLength;
+            int payloadEnd = pos + totalLength - 4;
+
+            if (payloadStart > 0 && payloadStart < payloadEnd && payloadEnd <= dataLen) {
+                byte[] payloadData = new byte[payloadEnd - payloadStart];
+                System.arraycopy(data, payloadStart, payloadData, 0, payloadEnd - payloadStart);
+
+                try {
+                    String payloadStr = new String(payloadData, StandardCharsets.UTF_8);
+                    payloads.add(payloadStr);
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+            pos += totalLength;
+        }
+        return String.join("\n\n", payloads);
+    }
 }
