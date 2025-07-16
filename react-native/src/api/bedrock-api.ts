@@ -541,7 +541,7 @@ function getApiPrefix(): string {
   }
 }
 
-const isEnableThinking = (): boolean => {
+export const isEnableThinking = (): boolean => {
   return isThinkingModel() && getThinkingEnabled();
 };
 

@@ -1,6 +1,7 @@
 import { BedrockAPIChunk, SystemPrompt, Usage } from '../types/Chat.ts';
 import { getApiKey, getRegion, getTextModel } from '../storage/StorageUtils.ts';
 import { BedrockMessage } from '../chat/util/BedrockMessageConvertor.ts';
+import { isEnableThinking } from './bedrock-api.ts';
 
 type CallbackFunction = (
   result: string,
@@ -12,15 +13,43 @@ type CallbackFunction = (
 
 export const invokeBedrockWithAPIKey = async (
   messages: BedrockMessage[],
-  _prompt: SystemPrompt | null,
+  prompt: SystemPrompt | null,
   shouldStop: () => boolean,
   controller: AbortController,
   callback: CallbackFunction
 ) => {
   const modelId = getTextModel().modelId;
+
+  // Set max_tokens based on model type
+  let maxTokens = 4096;
+  if (modelId.startsWith('meta.llama')) {
+    maxTokens = 2048;
+  }
+  if (modelId.includes('deepseek.r1') || modelId.includes('claude-opus-4')) {
+    maxTokens = 32000;
+  }
+  if (
+    modelId.includes('claude-3-7-sonnet') ||
+    modelId.includes('claude-sonnet-4')
+  ) {
+    maxTokens = 64000;
+  }
   const bodyObject = {
+    inferenceConfig: { maxTokens },
     messages: messages,
+    additionalModelRequestFields: {},
+    system: prompt ? [{ text: prompt?.prompt }] : undefined,
   };
+  if (isEnableThinking()) {
+    bodyObject.additionalModelRequestFields = {
+      reasoning_config: {
+        type: 'enabled',
+        budget_tokens: 16000,
+      },
+    };
+  }
+  // Add system prompt if provided
+  console.log('bodyObject', JSON.stringify(bodyObject, null, 2));
   let completeMessage = '';
   let completeReasoning = '';
   const url = `https://bedrock-runtime.${getRegion()}.amazonaws.com/model/${modelId}/converse-stream`;
@@ -61,7 +90,6 @@ export const invokeBedrockWithAPIKey = async (
         try {
           const { done, value } = await reader.read();
           const chunk = decoder.decode(value, { stream: true });
-          console.log(chunk);
           const bedrockChunk = parseChunk(chunk);
           if (bedrockChunk) {
             if (bedrockChunk.reasoning) {
