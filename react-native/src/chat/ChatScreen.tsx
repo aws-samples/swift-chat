@@ -610,7 +610,10 @@ function ChatScreen(): React.JSX.Element {
     }
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
-        message[0].text = getFileTypeSummary(files);
+        message[0].text =
+          modeRef.current === ChatMode.Text
+            ? getFileTypeSummary(files)
+            : 'Virtual try-on';
       }
       if (selectedFilesRef.current.length > 0) {
         message[0].image = JSON.stringify(selectedFilesRef.current);

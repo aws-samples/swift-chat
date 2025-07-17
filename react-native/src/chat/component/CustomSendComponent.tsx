@@ -41,6 +41,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
     isShowSending =
       !isModelSupportUploadImages(chatMode) ||
       (text && text!.length > 0) ||
+      selectedFiles.length === 2 ||
       chatStatus === ChatStatus.Running;
   } else if (chatMode === ChatMode.Text) {
     isShowSending =
