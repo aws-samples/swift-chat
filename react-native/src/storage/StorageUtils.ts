@@ -44,6 +44,7 @@ const hapticEnabledKey = keyPrefix + 'hapticEnabled';
 const apiUrlKey = keyPrefix + 'apiUrlKey';
 const apiKeyTag = keyPrefix + 'apiKeyTag';
 const ollamaApiUrlKey = keyPrefix + 'ollamaApiUrlKey';
+const ollamaApiKeyTag = keyPrefix + 'ollamaApiKeyTag';
 const deepSeekApiKeyTag = keyPrefix + 'deepSeekApiKeyTag';
 const openAIApiKeyTag = keyPrefix + 'openAIApiKeyTag';
 const openAICompatApiKeyTag = keyPrefix + 'openAICompatApiKeyTag';
@@ -70,6 +71,7 @@ const bedrockApiKeyTag = keyPrefix + 'bedrockApiKeyTag';
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
 let currentOllamaApiUrl: string | undefined;
+let currentOllamaApiKey: string | undefined;
 let currentDeepSeekApiKey: string | undefined;
 let currentOpenAIApiKey: string | undefined;
 let currentOpenAICompatApiKey: string | undefined;
@@ -262,6 +264,20 @@ export function saveApiKey(apiKey: string) {
 export function saveOllamaApiURL(apiUrl: string) {
   currentOllamaApiUrl = apiUrl;
   storage.set(ollamaApiUrlKey, apiUrl);
+}
+
+export function getOllamaApiKey(): string {
+  if (currentOllamaApiKey) {
+    return currentOllamaApiKey;
+  } else {
+    currentOllamaApiKey = encryptStorage.getString(ollamaApiKeyTag) ?? '';
+    return currentOllamaApiKey;
+  }
+}
+
+export function saveOllamaApiKey(apiKey: string) {
+  currentOllamaApiKey = apiKey;
+  encryptStorage.set(ollamaApiKeyTag, apiKey);
 }
 
 export function saveDeepSeekApiKey(apiKey: string) {

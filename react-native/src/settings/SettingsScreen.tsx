@@ -26,6 +26,7 @@ import {
   getImageSize,
   getModelUsage,
   getOllamaApiUrl,
+  getOllamaApiKey,
   getOpenAIApiKey,
   getOpenAICompatApiKey,
   getOpenAICompatApiURL,
@@ -42,6 +43,7 @@ import {
   saveImageSize,
   saveKeys,
   saveOllamaApiURL,
+  saveOllamaApiKey,
   saveOpenAIApiKey,
   saveOpenAICompatApiKey,
   saveOpenAICompatApiURL,
@@ -98,6 +100,7 @@ function SettingsScreen(): React.JSX.Element {
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
   const [ollamaApiUrl, setOllamaApiUrl] = useState(getOllamaApiUrl);
+  const [ollamaApiKey, setOllamaApiKey] = useState(getOllamaApiKey);
   const [deepSeekApiKey, setDeepSeekApiKey] = useState(getDeepSeekApiKey);
   const [openAIApiKey, setOpenAIApiKey] = useState(getOpenAIApiKey);
   const [openAIProxyEnabled, setOpenAIProxyEnabled] = useState(
@@ -258,6 +261,14 @@ function SettingsScreen(): React.JSX.Element {
     saveOllamaApiURL(ollamaApiUrl);
     fetchAndSetModelNames().then();
   }, [ollamaApiUrl, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (ollamaApiKey === getOllamaApiKey()) {
+      return;
+    }
+    saveOllamaApiKey(ollamaApiKey);
+    fetchAndSetModelNames().then();
+  }, [ollamaApiKey, fetchAndSetModelNames]);
 
   useEffect(() => {
     if (deepSeekApiKey === getDeepSeekApiKey()) {
@@ -460,12 +471,21 @@ function SettingsScreen(): React.JSX.Element {
         );
       case 'ollama':
         return (
-          <CustomTextInput
-            label="Ollama API URL"
-            value={ollamaApiUrl}
-            onChangeText={setOllamaApiUrl}
-            placeholder="Enter Ollama API URL"
-          />
+          <>
+            <CustomTextInput
+              label="Ollama API URL"
+              value={ollamaApiUrl}
+              onChangeText={setOllamaApiUrl}
+              placeholder="Enter Ollama API URL"
+            />
+            <CustomTextInput
+              label="Ollama API Key"
+              value={ollamaApiKey}
+              onChangeText={setOllamaApiKey}
+              placeholder="Enter Ollama API Key (Optional)"
+              secureTextEntry={true}
+            />
+          </>
         );
       case 'deepseek':
         return (
