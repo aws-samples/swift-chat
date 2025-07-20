@@ -58,6 +58,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [copied, setCopied] = useState(false);
   const [clickTitleCopied, setClickTitleCopied] = useState(false);
+  const [reasoningCopied, setReasoningCopied] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
   const [inputHeight, setInputHeight] = useState(0);
@@ -114,14 +115,14 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   );
 
   const handleCopy = useCallback(() => {
-    const copyText = currentMessage?.reasoning
-      ? 'Reasoning: ' +
-          currentMessage.reasoning +
-          '\n\n' +
-          currentMessage?.text || ''
-      : currentMessage?.text || '';
+    const copyText = currentMessage?.text.trim() || '';
     Clipboard.setString(copyText);
-  }, [currentMessage?.reasoning, currentMessage?.text]);
+  }, [currentMessage?.text]);
+
+  const handleReasoningCopy = useCallback(() => {
+    const copyText = currentMessage?.reasoning?.trim() || '';
+    Clipboard.setString(copyText);
+  }, [currentMessage?.reasoning]);
 
   const currentUser = currentMessage?.user;
   const showRefresh =
@@ -202,6 +203,21 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       <View style={styles.reasoningContainer}>
         <View style={styles.reasoningHeader}>
           <Text style={styles.reasoningTitle}>Reasoning</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setReasoningCopied(true);
+            }}>
+            <Image
+              source={
+                reasoningCopied
+                  ? isDark
+                    ? require('../../assets/done_dark.png')
+                    : require('../../assets/done.png')
+                  : require('../../assets/copy_grey.png')
+              }
+              style={styles.reasoningCopyIcon}
+            />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.reasoningContent}>
@@ -228,7 +244,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     styles.reasoningContainer,
     styles.reasoningHeader,
     styles.reasoningTitle,
+    styles.reasoningCopyIcon,
     styles.reasoningContent,
+    reasoningCopied,
+    isDark,
   ]);
 
   const handleShowButton = useCallback(() => {
@@ -257,6 +276,17 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       return () => clearTimeout(timer);
     }
   }, [handleCopy, clickTitleCopied]);
+
+  useEffect(() => {
+    if (reasoningCopied) {
+      handleReasoningCopy();
+      const timer = setTimeout(() => {
+        setReasoningCopied(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [handleReasoningCopy, reasoningCopied]);
 
   const messageContent = useMemo(() => {
     if (!currentMessage) {
@@ -521,6 +551,7 @@ const createStyles = (colors: ColorScheme) =>
     reasoningHeader: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       padding: 8,
       backgroundColor: colors.borderLight,
     },
@@ -559,6 +590,10 @@ const createStyles = (colors: ColorScheme) =>
       fontSize: 12,
       color: colors.textTertiary,
       marginRight: 4,
+    },
+    reasoningCopyIcon: {
+      width: 16,
+      height: 16,
     },
   });
 
