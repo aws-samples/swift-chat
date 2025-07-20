@@ -13,6 +13,7 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		3A19D3892CCE980A001797C6 /* TestAddBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A19D3882CCE980A001797C6 /* TestAddBridge.swift */; };
 		3A22BD7A2D44D84300749246 /* PlatformModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A22BD792D44D84300749246 /* PlatformModule.m */; };
+		3A2384122E2A63DC00FBF762 /* AWSBedrockRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 3A2384112E2A63DC00FBF762 /* AWSBedrockRuntime */; };
 		3A6846882DA8F8AA003CFBEC /* AWSBedrockRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 3A6846872DA8F8AA003CFBEC /* AWSBedrockRuntime */; };
 		3A6846A62DA8FBBE003CFBEC /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6846A22DA8FBBE003CFBEC /* AudioManager.swift */; };
 		3A6846A72DA8FBBE003CFBEC /* ConversationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6846A32DA8FBBE003CFBEC /* ConversationManager.swift */; };
@@ -85,6 +86,7 @@
 			files = (
 				3A6846882DA8F8AA003CFBEC /* AWSBedrockRuntime in Frameworks */,
 				7923F2A519E6BC533C0F2749 /* libPods-SwiftChat.a in Frameworks */,
+				3A2384122E2A63DC00FBF762 /* AWSBedrockRuntime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,7 +286,7 @@
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			packageReferences = (
-				3A6846862DA8F8AA003CFBEC /* XCRemoteSwiftPackageReference "aws-sdk-swift" */,
+				3A2384102E2A63DC00FBF762 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */,
 			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
@@ -806,17 +808,30 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		3A2384102E2A63DC00FBF762 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/awslabs/aws-sdk-swift.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 1.5.1;
+			};
+		};
 		3A6846862DA8F8AA003CFBEC /* XCRemoteSwiftPackageReference "aws-sdk-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/awslabs/aws-sdk-swift.git";
 			requirement = {
 				kind = upToNextMinorVersion;
-				minimumVersion = 1.2.58;
+				minimumVersion = 1.5.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		3A2384112E2A63DC00FBF762 /* AWSBedrockRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A2384102E2A63DC00FBF762 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSBedrockRuntime;
+		};
 		3A6846872DA8F8AA003CFBEC /* AWSBedrockRuntime */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3A6846862DA8F8AA003CFBEC /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;

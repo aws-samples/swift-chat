@@ -44,7 +44,8 @@ class VoiceChatModule: RCTEventEmitter {
     {
         guard let region = config["region"] as? String,
               let accessKey = config["accessKey"] as? String,
-              let secretKey = config["secretKey"] as? String
+              let secretKey = config["secretKey"] as? String,
+              let apiKey = config["apiKey"] as? String
         else {
             reject("INVALID_CONFIG", "Invalid credential provided", nil)
             return
@@ -63,7 +64,8 @@ class VoiceChatModule: RCTEventEmitter {
                     region: region,
                     accessKey: accessKey,
                     secretKey: secretKey,
-                    sessionToken: sessionToken
+                    sessionToken: sessionToken,
+                    apiKey: apiKey
                 )
                 DispatchQueue.main.async {
                     resolve(["success": true])
@@ -125,7 +127,8 @@ class VoiceChatModule: RCTEventEmitter {
     {
         guard let region = config["region"] as? String,
               let accessKey = config["accessKey"] as? String,
-              let secretKey = config["secretKey"] as? String
+              let secretKey = config["secretKey"] as? String,
+              let apiKey = config["apiKey"] as? String
         else {
             reject("INVALID_CONFIG", "Invalid credential provided", nil)
             return
@@ -139,7 +142,8 @@ class VoiceChatModule: RCTEventEmitter {
             region: region,
             accessKey: accessKey,
             secretKey: secretKey,
-            sessionToken: sessionToken
+            sessionToken: sessionToken,
+            apiKey: apiKey
         )
         
         resolve(["success": true])

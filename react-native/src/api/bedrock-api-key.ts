@@ -100,37 +100,44 @@ export const invokeBedrockWithAPIKey = async (
         try {
           const { done, value } = await reader.read();
           const chunk = decoder.decode(value, { stream: true });
-          const bedrockChunk = parseChunk(chunk);
-          if (bedrockChunk) {
-            if (bedrockChunk.reasoning) {
-              completeReasoning += bedrockChunk.reasoning ?? '';
-              callback(
-                completeMessage,
-                false,
-                false,
-                undefined,
-                completeReasoning
-              );
-            }
-            if (bedrockChunk.text) {
-              completeMessage += bedrockChunk.text ?? '';
-              callback(
-                completeMessage,
-                false,
-                false,
-                undefined,
-                completeReasoning
-              );
-            }
-            if (bedrockChunk.usage) {
-              bedrockChunk.usage.modelName = getTextModel().modelName;
-              callback(
-                completeMessage,
-                false,
-                false,
-                bedrockChunk.usage,
-                completeReasoning
-              );
+          if (chunk.length > 0) {
+            // Split by SSE event boundaries
+            const events = chunk.split('\n\n');
+            for (const event of events) {
+              await sleep(0.1);
+              const bedrockChunk = parseChunk(event);
+              if (bedrockChunk) {
+                if (bedrockChunk.reasoning) {
+                  completeReasoning += bedrockChunk.reasoning ?? '';
+                  callback(
+                    completeMessage,
+                    false,
+                    false,
+                    undefined,
+                    completeReasoning
+                  );
+                }
+                if (bedrockChunk.text) {
+                  completeMessage += bedrockChunk.text ?? '';
+                  callback(
+                    completeMessage,
+                    false,
+                    false,
+                    undefined,
+                    completeReasoning
+                  );
+                }
+                if (bedrockChunk.usage) {
+                  bedrockChunk.usage.modelName = getTextModel().modelName;
+                  callback(
+                    completeMessage,
+                    false,
+                    false,
+                    bedrockChunk.usage,
+                    completeReasoning
+                  );
+                }
+              }
             }
           }
           if (done) {
@@ -169,46 +176,36 @@ export const invokeBedrockWithAPIKey = async (
     });
 };
 
-function parseChunk(rawChunk: string) {
-  if (rawChunk.length > 0) {
-    // Split by SSE event boundaries
-    const events = rawChunk.split('\n\n');
-    if (events.length > 0) {
-      let combinedReasoning = '';
-      let combinedText = '';
-      let lastUsage;
-      for (let i = 0; i < events.length; i++) {
-        const part = events[i];
-        if (part.length === 0) {
-          continue;
-        }
-        try {
-          const chunk: BedrockAPIChunk = JSON.parse(part);
-          const content = extractChunkContent(chunk, rawChunk);
-          if (content.reasoning) {
-            combinedReasoning += content.reasoning;
-          }
-          if (content.text) {
-            combinedText += content.text;
-          }
-          if (content.usage) {
-            lastUsage = content.usage;
-          }
-        } catch (innerError) {
-          console.log('DataChunk parse error:' + innerError, rawChunk, events);
-          return {
-            reasoning: combinedReasoning,
-            text: rawChunk,
-            usage: lastUsage,
-          };
-        }
+function parseChunk(part: string) {
+  if (part.length > 0) {
+    let reasoning = '';
+    let text = '';
+    let lastUsage;
+    try {
+      const chunk: BedrockAPIChunk = JSON.parse(part);
+      const content = extractChunkContent(chunk, part);
+      if (content.reasoning) {
+        reasoning = content.reasoning;
       }
+      if (content.text) {
+        text = content.text;
+      }
+      if (content.usage) {
+        lastUsage = content.usage;
+      }
+    } catch (innerError) {
+      console.log('DataChunk parse error:' + innerError, part);
       return {
-        reasoning: combinedReasoning,
-        text: combinedText,
+        reasoning: reasoning,
+        text: part,
         usage: lastUsage,
       };
     }
+    return {
+      reasoning: reasoning,
+      text: text,
+      usage: lastUsage,
+    };
   }
   return null;
 }
@@ -305,3 +302,6 @@ export const requestAllModelsByBedrockAPI = async (): Promise<AllModel> => {
     return { imageModel: [], textModel: [] };
   }
 };
+
+export const sleep = (ms: number) =>
+  new Promise(resolve => setTimeout(resolve, ms));

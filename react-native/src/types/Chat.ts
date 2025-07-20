@@ -160,6 +160,7 @@ export type TokenResponse = {
   sessionToken: string;
   expiration: string;
   error: string;
+  apiKey?: string;
 };
 
 export interface Metrics {
