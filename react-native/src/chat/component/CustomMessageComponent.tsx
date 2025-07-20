@@ -59,6 +59,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const [copied, setCopied] = useState(false);
   const [clickTitleCopied, setClickTitleCopied] = useState(false);
   const [reasoningCopied, setReasoningCopied] = useState(false);
+  const [reasoningExpanded, setReasoningExpanded] = useState(true);
   const [isEdit, setIsEdit] = useState(false);
 
   const [inputHeight, setInputHeight] = useState(0);
@@ -201,10 +202,31 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
     return (
       <View style={styles.reasoningContainer}>
-        <View style={styles.reasoningHeader}>
-          <Text style={styles.reasoningTitle}>Reasoning</Text>
+        <TouchableOpacity
+          style={styles.reasoningHeader}
+          onPress={() => setReasoningExpanded(!reasoningExpanded)}>
+          <View style={styles.reasoningHeaderContent}>
+            <Image
+              source={
+                isDark
+                  ? require('../../assets/back_dark.png')
+                  : require('../../assets/back.png')
+              }
+              style={[
+                styles.reasoningArrowIcon,
+                {
+                  transform: [
+                    { rotate: reasoningExpanded ? '270deg' : '180deg' },
+                  ],
+                },
+              ]}
+            />
+            <Text style={styles.reasoningTitle}>Reasoning</Text>
+          </View>
           <TouchableOpacity
-            onPress={() => {
+            hitSlop={8}
+            onPress={e => {
+              e.stopPropagation();
               setReasoningCopied(true);
             }}>
             <Image
@@ -218,22 +240,24 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
               style={styles.reasoningCopyIcon}
             />
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.reasoningContent}>
-          <Markdown
-            value={currentMessage.reasoning}
-            flatListProps={{
-              style: {
-                backgroundColor: colors.reasoningBackground,
-              },
-            }}
-            styles={customMarkedStyles}
-            renderer={customMarkdownRenderer}
-            tokenizer={customTokenizer}
-            chatStatus={chatStatusRef.current}
-          />
-        </View>
+        {reasoningExpanded && (
+          <View style={styles.reasoningContent}>
+            <Markdown
+              value={currentMessage.reasoning}
+              flatListProps={{
+                style: {
+                  backgroundColor: colors.reasoningBackground,
+                },
+              }}
+              styles={customMarkedStyles}
+              renderer={customMarkdownRenderer}
+              tokenizer={customTokenizer}
+              chatStatus={chatStatusRef.current}
+            />
+          </View>
+        )}
       </View>
     );
   }, [
@@ -243,10 +267,13 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     colors.reasoningBackground,
     styles.reasoningContainer,
     styles.reasoningHeader,
+    styles.reasoningHeaderContent,
     styles.reasoningTitle,
+    styles.reasoningArrowIcon,
     styles.reasoningCopyIcon,
     styles.reasoningContent,
     reasoningCopied,
+    reasoningExpanded,
     isDark,
   ]);
 
@@ -555,6 +582,15 @@ const createStyles = (colors: ColorScheme) =>
       padding: 8,
       backgroundColor: colors.borderLight,
     },
+    reasoningHeaderContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    reasoningArrowIcon: {
+      width: 14,
+      height: 14,
+      marginRight: 4,
+    },
     reasoningTitle: {
       fontSize: 15,
       fontWeight: '500',
@@ -592,6 +628,7 @@ const createStyles = (colors: ColorScheme) =>
       marginRight: 4,
     },
     reasoningCopyIcon: {
+      padding: 4,
       width: 16,
       height: 16,
     },
