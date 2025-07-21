@@ -44,7 +44,11 @@ interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
   isLastAIMessage?: boolean;
   onRegenerate?: () => void;
-  onReasoningToggle?: (expanded: boolean, height: number) => void;
+  onReasoningToggle?: (
+    expanded: boolean,
+    height: number,
+    animated: boolean
+  ) => void;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -61,7 +65,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const [copied, setCopied] = useState(false);
   const [clickTitleCopied, setClickTitleCopied] = useState(false);
   const [reasoningCopied, setReasoningCopied] = useState(false);
-  const [reasoningExpanded, setReasoningExpanded] = useState(true);
+  const [reasoningExpanded, setReasoningExpanded] = useState(false);
   const reasoningContainerRef = useRef<View>(null);
   const reasoningContainerHeightRef = useRef<number>(0);
   const [isEdit, setIsEdit] = useState(false);
@@ -73,7 +77,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     { start: number; end: number } | undefined
   >(undefined);
   const isLoading =
-    chatStatus === ChatStatus.Running && currentMessage?.text === '...';
+    chatStatus === ChatStatus.Running &&
+    (currentMessage?.text === '...' || currentMessage?.text === '');
   const [forceShowButtons, setForceShowButtons] = useState(false);
   const isUser = useRef(currentMessage?.user?._id === 1);
   const { drawerType } = useAppContext();
@@ -221,7 +226,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                   setReasoningExpanded(newExpanded);
                   onReasoningToggle?.(
                     newExpanded,
-                    reasoningContainerHeightRef.current ?? 0
+                    reasoningContainerHeightRef.current ?? 0,
+                    false
                   );
                 }
               );
@@ -234,7 +240,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                     reasoningContainerRef.current?.measure(
                       (_x, _y, _width, height) => {
                         reasoningContainerHeightRef.current = height;
-                        onReasoningToggle?.(newExpanded, height ?? 0);
+                        onReasoningToggle?.(newExpanded, height ?? 0, true);
                       }
                     );
                   }
@@ -243,7 +249,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                 setTimeout(() => {
                   onReasoningToggle?.(
                     newExpanded,
-                    reasoningContainerHeightRef.current ?? 0
+                    reasoningContainerHeightRef.current ?? 0,
+                    false
                   );
                 }, 1);
               }
@@ -486,6 +493,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         {copyButton}
       </TouchableOpacity>
       <View style={styles.marked_box}>
+        {(currentMessage?.reasoning?.length ?? 0) > 0 && reasoningSection}
         {isLoading && (
           <View style={styles.loading}>
             <ImageSpinner
@@ -495,7 +503,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             />
           </View>
         )}
-        {!isLoading && reasoningSection}
         {!isLoading && !isEdit && (
           <TapGestureHandler
             numberOfTaps={2}

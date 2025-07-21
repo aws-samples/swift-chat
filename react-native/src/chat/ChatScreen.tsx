@@ -468,13 +468,17 @@ function ChatScreen(): React.JSX.Element {
     }
   };
 
-  const scrollUpByHeight = (expanded: boolean, height: number) => {
+  const scrollUpByHeight = (
+    expanded: boolean,
+    height: number,
+    animated: boolean
+  ) => {
     if (flatListRef.current) {
       const newOffset =
         currentScrollOffsetRef.current + (expanded ? height : -height);
       flatListRef.current.scrollToOffset({
         offset: newOffset,
-        animated: false,
+        animated: animated,
       });
     }
   };
@@ -818,8 +822,8 @@ function ChatScreen(): React.JSX.Element {
                 props.currentMessage?._id === messages[0]?._id &&
                 props.currentMessage?.user._id !== 1
               }
-              onReasoningToggle={(expanded, height) => {
-                scrollUpByHeight(expanded, height);
+              onReasoningToggle={(expanded, height, animated) => {
+                scrollUpByHeight(expanded, height, animated);
               }}
               onRegenerate={() => {
                 setUserScrolled(false);
