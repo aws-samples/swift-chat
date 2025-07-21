@@ -852,7 +852,7 @@ function ChatScreen(): React.JSX.Element {
           onLayout: (layoutEvent: LayoutChangeEvent) => {
             containerHeightRef.current = layoutEvent.nativeEvent.layout.height;
           },
-          onScroll: handleScroll,
+          onScrollEvent: handleScroll,
           onContentSizeChange: (_width: number, height: number) => {
             contentHeightRef.current = height;
           },

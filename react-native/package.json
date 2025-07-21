@@ -10,7 +10,8 @@
     "format": "npx prettier --check '*.{js,ts}'",
     "lint": "npx eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@bwjohns4/react-native-draggable-flatlist": "^4.0.1-patch",
@@ -55,6 +56,7 @@
     "@react-native/eslint-config": "0.74.85",
     "@react-native/metro-config": "0.74.85",
     "@react-native/typescript-config": "0.74.85",
+    "@types/marked": "5.0.0",
     "@types/react": "^18.2.6",
     "@types/react-native-table-component": "^1.2.8",
     "@types/react-syntax-highlighter": "^15.5.13",
@@ -65,10 +67,10 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "8.8.0",
     "jest": "^29.6.3",
+    "patch-package": "^8.0.0",
     "prettier": "2.8.8",
     "react-test-renderer": "18.2.0",
-    "typescript": "5.0.4",
-    "@types/marked": "5.0.0"
+    "typescript": "5.0.4"
   },
   "overrides": {
     "@react-native-clipboard/clipboard": {

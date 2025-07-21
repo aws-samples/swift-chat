@@ -62,6 +62,7 @@ const currentVoiceSystemPromptKey = keyPrefix + 'currentVoiceSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
 const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
+const reasoningExpandedKey = keyPrefix + 'reasoningExpandedKey';
 const modelOrderKey = keyPrefix + 'modelOrderKey';
 const voiceIdKey = keyPrefix + 'voiceIdKey';
 const tokenInfoKey = keyPrefix + 'tokenInfo';
@@ -82,6 +83,7 @@ let currentTextModel: Model | undefined;
 let currentSystemPrompts: SystemPrompt[] | undefined;
 let currentOpenAIProxyEnabled: boolean | undefined;
 let currentThinkingEnabled: boolean | undefined;
+let currentReasoningExpanded: boolean | undefined;
 let currentModelOrder: Model[] | undefined;
 let currentBedrockConfigMode: string | undefined;
 let currentBedrockApiKey: string | undefined;
@@ -540,6 +542,20 @@ export function getThinkingEnabled() {
   } else {
     currentThinkingEnabled = storage.getBoolean(thinkingEnabledKey) ?? true;
     return currentThinkingEnabled;
+  }
+}
+
+export function saveReasoningExpanded(expanded: boolean) {
+  currentReasoningExpanded = expanded;
+  storage.set(reasoningExpandedKey, expanded);
+}
+
+export function getReasoningExpanded() {
+  if (currentReasoningExpanded !== undefined) {
+    return currentReasoningExpanded;
+  } else {
+    currentReasoningExpanded = storage.getBoolean(reasoningExpandedKey) ?? true;
+    return currentReasoningExpanded;
   }
 }
 

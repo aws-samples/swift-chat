@@ -39,6 +39,10 @@ import { getModelIcon, getModelTagByUserName } from '../../utils/ModelUtils.ts';
 import { isAndroid } from '../../utils/PlatformUtils.ts';
 import { useAppContext } from '../../history/AppProvider.tsx';
 import { useTheme, ColorScheme } from '../../theme';
+import {
+  getReasoningExpanded,
+  saveReasoningExpanded,
+} from '../../storage/StorageUtils.ts';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
@@ -65,7 +69,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const [copied, setCopied] = useState(false);
   const [clickTitleCopied, setClickTitleCopied] = useState(false);
   const [reasoningCopied, setReasoningCopied] = useState(false);
-  const [reasoningExpanded, setReasoningExpanded] = useState(false);
+  const [reasoningExpanded, setReasoningExpanded] =
+    useState(getReasoningExpanded);
   const reasoningContainerRef = useRef<View>(null);
   const reasoningContainerHeightRef = useRef<number>(0);
   const [isEdit, setIsEdit] = useState(false);
@@ -224,6 +229,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                   reasoningContainerHeightRef.current = height;
                   const newExpanded = !reasoningExpanded;
                   setReasoningExpanded(newExpanded);
+                  saveReasoningExpanded(newExpanded);
                   onReasoningToggle?.(
                     newExpanded,
                     reasoningContainerHeightRef.current ?? 0,
@@ -234,6 +240,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             } else {
               const newExpanded = !reasoningExpanded;
               setReasoningExpanded(newExpanded);
+              saveReasoningExpanded(newExpanded);
               if (reasoningContainerHeightRef.current === 0) {
                 setTimeout(() => {
                   if (reasoningContainerRef.current) {
