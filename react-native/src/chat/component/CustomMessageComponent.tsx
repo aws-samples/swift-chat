@@ -239,9 +239,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
               );
             } else {
               const newExpanded = !reasoningExpanded;
-              setReasoningExpanded(newExpanded);
-              saveReasoningExpanded(newExpanded);
               if (reasoningContainerHeightRef.current === 0) {
+                setReasoningExpanded(newExpanded);
                 setTimeout(() => {
                   if (reasoningContainerRef.current) {
                     reasoningContainerRef.current?.measure(
@@ -259,8 +258,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
                     reasoningContainerHeightRef.current ?? 0,
                     false
                   );
-                }, 1);
+                }, 0);
+                setReasoningExpanded(newExpanded);
               }
+              saveReasoningExpanded(newExpanded);
             }
           }}>
           <View style={styles.reasoningHeaderContent}>
