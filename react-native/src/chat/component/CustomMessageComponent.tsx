@@ -44,6 +44,7 @@ interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
   isLastAIMessage?: boolean;
   onRegenerate?: () => void;
+  onReasoningToggle?: (expanded: boolean, height: number) => void;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -53,6 +54,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   chatStatus,
   isLastAIMessage,
   onRegenerate,
+  onReasoningToggle,
 }) => {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -60,6 +62,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const [clickTitleCopied, setClickTitleCopied] = useState(false);
   const [reasoningCopied, setReasoningCopied] = useState(false);
   const [reasoningExpanded, setReasoningExpanded] = useState(true);
+  const reasoningContainerRef = useRef<View>(null);
+  const reasoningContainerHeightRef = useRef<number>(0);
   const [isEdit, setIsEdit] = useState(false);
 
   const [inputHeight, setInputHeight] = useState(0);
@@ -204,7 +208,47 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       <View style={styles.reasoningContainer}>
         <TouchableOpacity
           style={styles.reasoningHeader}
-          onPress={() => setReasoningExpanded(!reasoningExpanded)}>
+          activeOpacity={1}
+          onPress={() => {
+            if (
+              reasoningExpanded &&
+              reasoningContainerHeightRef.current === 0
+            ) {
+              reasoningContainerRef.current?.measure(
+                (_x, _y, _width, height) => {
+                  reasoningContainerHeightRef.current = height;
+                  const newExpanded = !reasoningExpanded;
+                  setReasoningExpanded(newExpanded);
+                  onReasoningToggle?.(
+                    newExpanded,
+                    reasoningContainerHeightRef.current ?? 0
+                  );
+                }
+              );
+            } else {
+              const newExpanded = !reasoningExpanded;
+              setReasoningExpanded(newExpanded);
+              if (reasoningContainerHeightRef.current === 0) {
+                setTimeout(() => {
+                  if (reasoningContainerRef.current) {
+                    reasoningContainerRef.current?.measure(
+                      (_x, _y, _width, height) => {
+                        reasoningContainerHeightRef.current = height;
+                        onReasoningToggle?.(newExpanded, height ?? 0);
+                      }
+                    );
+                  }
+                }, 150);
+              } else {
+                setTimeout(() => {
+                  onReasoningToggle?.(
+                    newExpanded,
+                    reasoningContainerHeightRef.current ?? 0
+                  );
+                }, 1);
+              }
+            }
+          }}>
           <View style={styles.reasoningHeaderContent}>
             <Image
               source={
@@ -243,7 +287,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         </TouchableOpacity>
 
         {reasoningExpanded && (
-          <View style={styles.reasoningContent}>
+          <View ref={reasoningContainerRef} style={styles.reasoningContent}>
             <Markdown
               value={currentMessage.reasoning}
               flatListProps={{
@@ -272,9 +316,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     styles.reasoningArrowIcon,
     styles.reasoningCopyIcon,
     styles.reasoningContent,
-    reasoningCopied,
-    reasoningExpanded,
     isDark,
+    reasoningExpanded,
+    reasoningCopied,
+    onReasoningToggle,
   ]);
 
   const handleShowButton = useCallback(() => {
@@ -653,6 +698,7 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
       nextProps.currentMessage?.reasoning &&
     prevProps.chatStatus === nextProps.chatStatus &&
     prevProps.isLastAIMessage === nextProps.isLastAIMessage &&
-    prevProps.onRegenerate === nextProps.onRegenerate
+    prevProps.onRegenerate === nextProps.onRegenerate &&
+    prevProps.onReasoningToggle === nextProps.onReasoningToggle
   );
 });

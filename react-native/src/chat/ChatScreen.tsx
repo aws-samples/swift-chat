@@ -141,6 +141,7 @@ function ChatScreen(): React.JSX.Element {
   const audioWaveformRef = useRef<AudioWaveformRef>(null);
 
   const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
+  const currentScrollOffsetRef = useRef(0);
 
   const endVoiceConversation = useCallback(async () => {
     audioWaveformRef.current?.resetAudioLevels();
@@ -465,6 +466,23 @@ function ChatScreen(): React.JSX.Element {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: true });
     }
+  };
+
+  const scrollUpByHeight = (expanded: boolean, height: number) => {
+    if (flatListRef.current) {
+      const newOffset =
+        currentScrollOffsetRef.current + (expanded ? height : -height);
+      flatListRef.current.scrollToOffset({
+        offset: newOffset,
+        animated: false,
+      });
+    }
+  };
+
+  const handleScroll = (
+    scrollEvent: NativeSyntheticEvent<NativeScrollEvent>
+  ) => {
+    currentScrollOffsetRef.current = scrollEvent.nativeEvent.contentOffset.y;
   };
 
   const handleUserScroll = (_: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -800,6 +818,9 @@ function ChatScreen(): React.JSX.Element {
                 props.currentMessage?._id === messages[0]?._id &&
                 props.currentMessage?.user._id !== 1
               }
+              onReasoningToggle={(expanded, height) => {
+                scrollUpByHeight(expanded, height);
+              }}
               onRegenerate={() => {
                 setUserScrolled(false);
                 trigger(HapticFeedbackTypes.impactMedium);
@@ -827,6 +848,7 @@ function ChatScreen(): React.JSX.Element {
           onLayout: (layoutEvent: LayoutChangeEvent) => {
             containerHeightRef.current = layoutEvent.nativeEvent.layout.height;
           },
+          onScroll: handleScroll,
           onContentSizeChange: (_width: number, height: number) => {
             contentHeightRef.current = height;
           },
