@@ -812,8 +812,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/awslabs/aws-sdk-swift.git";
 			requirement = {
-				kind = upToNextMinorVersion;
-				minimumVersion = 1.5.1;
+				kind = exactVersion;
+				version = 1.3.43;
 			};
 		};
 		3A6846862DA8F8AA003CFBEC /* XCRemoteSwiftPackageReference "aws-sdk-swift" */ = {

@@ -116,7 +116,7 @@ class NovaSonicService {
             )
         }
         
-        let identityResolver = StaticAWSCredentialIdentityResolver(credentials)
+        let identityResolver = try StaticAWSCredentialIdentityResolver(credentials)
         
         // Create client configuration
         let clientConfig = try BedrockRuntimeClient.BedrockRuntimeClientConfiguration(

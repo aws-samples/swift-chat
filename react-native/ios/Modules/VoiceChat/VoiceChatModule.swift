@@ -60,7 +60,7 @@ class VoiceChatModule: RCTEventEmitter {
         // Initialize conversation manager
         Task {
             do {
-                try await conversationManager.initialize(
+                try conversationManager.initialize(
                     region: region,
                     accessKey: accessKey,
                     secretKey: secretKey,
