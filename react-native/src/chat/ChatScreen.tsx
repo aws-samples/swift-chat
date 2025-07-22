@@ -141,6 +141,7 @@ function ChatScreen(): React.JSX.Element {
   const audioWaveformRef = useRef<AudioWaveformRef>(null);
 
   const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
+  const currentScrollOffsetRef = useRef(0);
 
   const endVoiceConversation = useCallback(async () => {
     audioWaveformRef.current?.resetAudioLevels();
@@ -467,6 +468,27 @@ function ChatScreen(): React.JSX.Element {
     }
   };
 
+  const scrollUpByHeight = (
+    expanded: boolean,
+    height: number,
+    animated: boolean
+  ) => {
+    if (flatListRef.current) {
+      const newOffset =
+        currentScrollOffsetRef.current + (expanded ? height : -height);
+      flatListRef.current.scrollToOffset({
+        offset: newOffset,
+        animated: animated,
+      });
+    }
+  };
+
+  const handleScroll = (
+    scrollEvent: NativeSyntheticEvent<NativeScrollEvent>
+  ) => {
+    currentScrollOffsetRef.current = scrollEvent.nativeEvent.contentOffset.y;
+  };
+
   const handleUserScroll = (_: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (chatStatusRef.current === ChatStatus.Running) {
       setUserScrolled(true);
@@ -610,7 +632,10 @@ function ChatScreen(): React.JSX.Element {
     }
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
-        message[0].text = getFileTypeSummary(files);
+        message[0].text =
+          modeRef.current === ChatMode.Text
+            ? getFileTypeSummary(files)
+            : 'Virtual try-on';
       }
       if (selectedFilesRef.current.length > 0) {
         message[0].image = JSON.stringify(selectedFilesRef.current);
@@ -797,6 +822,9 @@ function ChatScreen(): React.JSX.Element {
                 props.currentMessage?._id === messages[0]?._id &&
                 props.currentMessage?.user._id !== 1
               }
+              onReasoningToggle={(expanded, height, animated) => {
+                scrollUpByHeight(expanded, height, animated);
+              }}
               onRegenerate={() => {
                 setUserScrolled(false);
                 trigger(HapticFeedbackTypes.impactMedium);
@@ -824,6 +852,7 @@ function ChatScreen(): React.JSX.Element {
           onLayout: (layoutEvent: LayoutChangeEvent) => {
             containerHeightRef.current = layoutEvent.nativeEvent.layout.height;
           },
+          onScrollEvent: handleScroll,
           onContentSizeChange: (_width: number, height: number) => {
             contentHeightRef.current = height;
           },

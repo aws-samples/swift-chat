@@ -13,6 +13,8 @@ import {
 import {
   getApiKey,
   getApiUrl,
+  getBedrockApiKey,
+  getBedrockConfigMode,
   getDeepSeekApiKey,
   getImageModel,
   getImageSize,
@@ -34,6 +36,8 @@ import { invokeOpenAIWithCallBack } from './open-api.ts';
 import { invokeOllamaWithCallBack } from './ollama-api.ts';
 import { BedrockThinkingModels } from '../storage/Constants.ts';
 import { getModelTag } from '../utils/ModelUtils.ts';
+import { invokeBedrockWithAPIKey } from './bedrock-api-key.ts';
+import { genImageWithAPIKey } from './bedrock-api-key-image.ts';
 
 type CallbackFunction = (
   result: string,
@@ -90,11 +94,31 @@ export const invokeBedrockWithCallBack = async (
     }
     return;
   }
-  if (!isConfigured()) {
-    callback('Please configure your API URL and API Key', true, true);
+  const bedrockConfigMode = getBedrockConfigMode();
+  const bedrockApiKey = getBedrockApiKey();
+  if (bedrockConfigMode === 'bedrock' && !bedrockApiKey) {
+    callback('Please configure your Bedrock API Key', true, true);
     return;
   }
   if (chatMode === ChatMode.Text) {
+    if (bedrockConfigMode === 'bedrock') {
+      await invokeBedrockWithAPIKey(
+        messages,
+        prompt,
+        shouldStop,
+        controller,
+        callback
+      );
+      return;
+    }
+    if (!isConfigured()) {
+      callback(
+        'Please configure your SwiftChat Server API URL and API Key',
+        true,
+        true
+      );
+      return;
+    }
     const bodyObject = {
       messages: messages,
       modelId: getTextModel().modelId,
@@ -228,11 +252,27 @@ export const invokeBedrockWithCallBack = async (
       messages[messages.length - 1].content[0] as TextContent
     ).text;
     let image: ImageInfo | undefined;
+    let garmentImage: ImageInfo | undefined;
     if (messages[messages.length - 1].content[1]) {
       image = (messages[messages.length - 1].content[1] as ImageContent).image;
     }
+    if (messages[messages.length - 1].content[2]) {
+      garmentImage = (messages[messages.length - 1].content[2] as ImageContent)
+        .image;
+    }
 
-    const imageRes = await genImage(imagePrompt, controller, image);
+    let imageRes: ImageRes;
+    if (bedrockConfigMode === 'bedrock') {
+      imageRes = await genImageWithAPIKey(
+        imagePrompt,
+        controller,
+        image,
+        garmentImage
+      );
+    } else {
+      imageRes = await genImage(imagePrompt, controller, image);
+    }
+
     if (imageRes.image.length > 0) {
       const localFilePath = await saveImageToLocal(imageRes.image);
       const imageSize = getImageSize().split('x')[0].trim();
@@ -529,7 +569,7 @@ function getApiPrefix(): string {
   }
 }
 
-const isEnableThinking = (): boolean => {
+export const isEnableThinking = (): boolean => {
   return isThinkingModel() && getThinkingEnabled();
 };
 

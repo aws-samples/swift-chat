@@ -116,6 +116,12 @@ android {
             }
         }
     }
+
+    packaging {
+        resources {
+            resources.pickFirsts.add('com/facebook/react/modules/network/ProgressiveStringDecoder.class')
+        }
+    }
 }
 
 dependencies {

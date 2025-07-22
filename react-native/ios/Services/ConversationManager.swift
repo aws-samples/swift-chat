@@ -23,14 +23,14 @@ class ConversationManager {
     
     // MARK: - Initialization
     
-    func updateCredentials(region: String, accessKey: String, secretKey: String, sessionToken: String? = nil) {
-        novaSonicService?.updateCredentials(accessKey: accessKey, secretKey: secretKey, sessionToken: sessionToken)
+    func updateCredentials(region: String, accessKey: String, secretKey: String, sessionToken: String? = nil, apiKey: String? = nil) {
+        novaSonicService?.updateCredentials(accessKey: accessKey, secretKey: secretKey, sessionToken: sessionToken, apiKey: apiKey)
     }
     
-    func initialize(region: String, accessKey: String, secretKey: String, sessionToken: String? = nil) async throws {
+    func initialize(region: String, accessKey: String, secretKey: String, sessionToken: String? = nil, apiKey: String? = nil) throws {
         guard !isInitialized else { return }
         // Initialize NovaSonic service
-        novaSonicService = NovaSonicService(region: region, accessKey: accessKey, secretKey: secretKey, sessionToken: sessionToken)
+        novaSonicService = NovaSonicService(region: region, accessKey: accessKey, secretKey: secretKey, sessionToken: sessionToken, apiKey: apiKey)
         audioManager = novaSonicService?.audioManager
         // Set up callbacks
         setupCallbacks()

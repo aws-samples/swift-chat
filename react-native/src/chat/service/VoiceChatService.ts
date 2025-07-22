@@ -10,6 +10,8 @@ import {
   isTokenValid,
   getTokenInfo,
   getRegion,
+  getBedrockConfigMode,
+  getBedrockApiKey,
 } from '../../storage/StorageUtils.ts';
 import { requestToken } from '../../api/bedrock-api.ts';
 import { TokenResponse } from '../../types/Chat.ts';
@@ -126,25 +128,40 @@ export class VoiceChatService {
    */
   private async getValidConfig(): Promise<object | null> {
     // Request new token
-    let tokenInfo: TokenResponse | null;
-    if (!isTokenValid()) {
-      tokenInfo = await requestToken();
-      if (!tokenInfo) {
-        if (this.onErrorCallback) {
-          this.onErrorCallback('Failed to get credentials');
+    let tokenInfo: TokenResponse | null = null;
+    if (getBedrockConfigMode() === 'swiftchat') {
+      if (!isTokenValid()) {
+        tokenInfo = await requestToken();
+        if (!tokenInfo) {
+          if (this.onErrorCallback) {
+            this.onErrorCallback('Failed to get credentials');
+          }
+        }
+        if (tokenInfo?.error) {
+          if (this.onErrorCallback) {
+            this.onErrorCallback(tokenInfo.error);
+          }
+        }
+      } else {
+        tokenInfo = getTokenInfo();
+        if (!tokenInfo) {
+          if (this.onErrorCallback) {
+            this.onErrorCallback('AWS credentials not available');
+          }
         }
       }
-      if (tokenInfo?.error) {
-        if (this.onErrorCallback) {
-          this.onErrorCallback(tokenInfo.error);
-        }
-      }
-    } else {
-      tokenInfo = getTokenInfo();
-      if (!tokenInfo) {
-        if (this.onErrorCallback) {
-          this.onErrorCallback('AWS credentials not available');
-        }
+    }
+    if (getBedrockConfigMode() === 'bedrock') {
+      const apiKey = getBedrockApiKey();
+      if (apiKey.length > 0) {
+        tokenInfo = {
+          accessKeyId: '',
+          secretAccessKey: '',
+          sessionToken: '',
+          apiKey: apiKey,
+          expiration: '',
+          error: '',
+        };
       }
     }
     if (!tokenInfo) {
@@ -156,6 +173,7 @@ export class VoiceChatService {
       accessKey: tokenInfo.accessKeyId,
       secretKey: tokenInfo.secretAccessKey,
       sessionToken: tokenInfo.sessionToken,
+      apiKey: tokenInfo.apiKey ?? '',
     };
   }
 

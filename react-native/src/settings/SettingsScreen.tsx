@@ -26,6 +26,7 @@ import {
   getImageSize,
   getModelUsage,
   getOllamaApiUrl,
+  getOllamaApiKey,
   getOpenAIApiKey,
   getOpenAICompatApiKey,
   getOpenAICompatApiURL,
@@ -42,6 +43,7 @@ import {
   saveImageSize,
   saveKeys,
   saveOllamaApiURL,
+  saveOllamaApiKey,
   saveOpenAIApiKey,
   saveOpenAICompatApiKey,
   saveOpenAICompatApiURL,
@@ -52,6 +54,10 @@ import {
   saveThinkingEnabled,
   saveVoiceId,
   updateTextModelUsageOrder,
+  getBedrockConfigMode,
+  saveBedrockConfigMode,
+  getBedrockApiKey,
+  saveBedrockApiKey,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -78,6 +84,7 @@ import { requestAllOllamaModels } from '../api/ollama-api.ts';
 import TabButton from './TabButton';
 import { useAppContext } from '../history/AppProvider.tsx';
 import { useTheme, ColorScheme } from '../theme';
+import { requestAllModelsByBedrockAPI } from '../api/bedrock-api-key.ts';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -93,6 +100,7 @@ function SettingsScreen(): React.JSX.Element {
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
   const [ollamaApiUrl, setOllamaApiUrl] = useState(getOllamaApiUrl);
+  const [ollamaApiKey, setOllamaApiKey] = useState(getOllamaApiKey);
   const [deepSeekApiKey, setDeepSeekApiKey] = useState(getDeepSeekApiKey);
   const [openAIApiKey, setOpenAIApiKey] = useState(getOpenAIApiKey);
   const [openAIProxyEnabled, setOpenAIProxyEnabled] = useState(
@@ -124,6 +132,9 @@ function SettingsScreen(): React.JSX.Element {
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
   const [voiceId, setVoiceId] = useState(getVoiceId);
+  const [bedrockConfigMode, setBedrockConfigMode] =
+    useState(getBedrockConfigMode);
+  const [bedrockApiKey, setBedrockApiKey] = useState(getBedrockApiKey);
   const { sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
 
@@ -135,7 +146,10 @@ function SettingsScreen(): React.JSX.Element {
       ollamaModels = await requestAllOllamaModels();
     }
 
-    const response = await requestAllModels();
+    const response =
+      bedrockConfigMode === 'bedrock'
+        ? await requestAllModelsByBedrockAPI()
+        : await requestAllModels();
     addBedrockPrefixToDeepseekModels(response.textModel);
     if (Platform.OS === 'android') {
       response.textModel = response.textModel.filter(
@@ -206,7 +220,7 @@ function SettingsScreen(): React.JSX.Element {
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
       saveAllModels(response);
     }
-  }, [openAICompatModels]);
+  }, [bedrockConfigMode, openAICompatModels]);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -249,6 +263,14 @@ function SettingsScreen(): React.JSX.Element {
   }, [ollamaApiUrl, fetchAndSetModelNames]);
 
   useEffect(() => {
+    if (ollamaApiKey === getOllamaApiKey()) {
+      return;
+    }
+    saveOllamaApiKey(ollamaApiKey);
+    fetchAndSetModelNames().then();
+  }, [ollamaApiKey, fetchAndSetModelNames]);
+
+  useEffect(() => {
     if (deepSeekApiKey === getDeepSeekApiKey()) {
       return;
     }
@@ -282,6 +304,22 @@ function SettingsScreen(): React.JSX.Element {
     saveOpenAICompatModels(openAICompatModels);
     fetchAndSetModelNames().then();
   }, [openAICompatModels, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (bedrockConfigMode === getBedrockConfigMode()) {
+      return;
+    }
+    fetchAndSetModelNames().then();
+    saveBedrockConfigMode(bedrockConfigMode);
+  }, [bedrockConfigMode, fetchAndSetModelNames]);
+
+  useEffect(() => {
+    if (bedrockApiKey === getBedrockApiKey()) {
+      return;
+    }
+    fetchAndSetModelNames().then();
+    saveBedrockApiKey(bedrockApiKey);
+  }, [bedrockApiKey, fetchAndSetModelNames]);
 
   const fetchUpgradeInfo = async () => {
     if (isMac || Platform.OS === 'android') {
@@ -353,19 +391,69 @@ function SettingsScreen(): React.JSX.Element {
       case 'bedrock':
         return (
           <>
-            <CustomTextInput
-              label="API URL"
-              value={apiUrl}
-              onChangeText={setApiUrl}
-              placeholder="Enter API URL"
-            />
-            <CustomTextInput
-              label="API Key"
-              value={apiKey}
-              onChangeText={setApiKey}
-              placeholder="Enter API Key"
-              secureTextEntry={true}
-            />
+            <View style={styles.configSwitchContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.configSwitchButton,
+                  bedrockConfigMode === 'bedrock' &&
+                    styles.configSwitchButtonActive,
+                ]}
+                activeOpacity={0.7}
+                onPress={() => setBedrockConfigMode('bedrock')}>
+                <Text
+                  style={[
+                    styles.configSwitchText,
+                    bedrockConfigMode === 'bedrock' &&
+                      styles.configSwitchTextActive,
+                  ]}>
+                  Bedrock API Key
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.configSwitchButton,
+                  bedrockConfigMode === 'swiftchat' &&
+                    styles.configSwitchButtonActive,
+                ]}
+                activeOpacity={0.7}
+                onPress={() => setBedrockConfigMode('swiftchat')}>
+                <Text
+                  style={[
+                    styles.configSwitchText,
+                    bedrockConfigMode === 'swiftchat' &&
+                      styles.configSwitchTextActive,
+                  ]}>
+                  SwiftChat Server
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {bedrockConfigMode === 'bedrock' ? (
+              <>
+                <CustomTextInput
+                  label="Bedrock API Key"
+                  value={bedrockApiKey}
+                  onChangeText={setBedrockApiKey}
+                  placeholder="Enter Bedrock API Key"
+                  secureTextEntry={true}
+                />
+              </>
+            ) : (
+              <>
+                <CustomTextInput
+                  label="API URL"
+                  value={apiUrl}
+                  onChangeText={setApiUrl}
+                  placeholder="Enter API URL"
+                />
+                <CustomTextInput
+                  label="API Key"
+                  value={apiKey}
+                  onChangeText={setApiKey}
+                  placeholder="Enter API Key"
+                  secureTextEntry={true}
+                />
+              </>
+            )}
             <CustomDropdown
               label="Region"
               data={regionsData}
@@ -383,12 +471,21 @@ function SettingsScreen(): React.JSX.Element {
         );
       case 'ollama':
         return (
-          <CustomTextInput
-            label="Ollama API URL"
-            value={ollamaApiUrl}
-            onChangeText={setOllamaApiUrl}
-            placeholder="Enter Ollama API URL"
-          />
+          <>
+            <CustomTextInput
+              label="Ollama API URL"
+              value={ollamaApiUrl}
+              onChangeText={setOllamaApiUrl}
+              placeholder="Enter Ollama API URL"
+            />
+            <CustomTextInput
+              label="Ollama API Key"
+              value={ollamaApiKey}
+              onChangeText={setOllamaApiKey}
+              placeholder="Enter Ollama API Key (Optional)"
+              secureTextEntry={true}
+            />
+          </>
         );
       case 'deepseek':
         return (
@@ -794,6 +891,36 @@ const createStyles = (colors: ColorScheme) =>
       marginRight: -14,
       width: 32,
       height: 32,
+    },
+    configSwitchContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      backgroundColor: colors.background,
+      borderRadius: 8,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 2,
+    },
+    configSwitchButton: {
+      flex: 1,
+      paddingVertical: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 6,
+      margin: 2,
+    },
+    configSwitchButtonActive: {
+      backgroundColor: colors.text + 'CC',
+    },
+    configSwitchText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    configSwitchTextActive: {
+      color: colors.background,
+      fontWeight: '600',
     },
   });
 

@@ -44,6 +44,7 @@ const hapticEnabledKey = keyPrefix + 'hapticEnabled';
 const apiUrlKey = keyPrefix + 'apiUrlKey';
 const apiKeyTag = keyPrefix + 'apiKeyTag';
 const ollamaApiUrlKey = keyPrefix + 'ollamaApiUrlKey';
+const ollamaApiKeyTag = keyPrefix + 'ollamaApiKeyTag';
 const deepSeekApiKeyTag = keyPrefix + 'deepSeekApiKeyTag';
 const openAIApiKeyTag = keyPrefix + 'openAIApiKeyTag';
 const openAICompatApiKeyTag = keyPrefix + 'openAICompatApiKeyTag';
@@ -61,13 +62,17 @@ const currentVoiceSystemPromptKey = keyPrefix + 'currentVoiceSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
 const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
+const reasoningExpandedKey = keyPrefix + 'reasoningExpandedKey';
 const modelOrderKey = keyPrefix + 'modelOrderKey';
 const voiceIdKey = keyPrefix + 'voiceIdKey';
 const tokenInfoKey = keyPrefix + 'tokenInfo';
+const bedrockConfigModeKey = keyPrefix + 'bedrockConfigModeKey';
+const bedrockApiKeyTag = keyPrefix + 'bedrockApiKeyTag';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
 let currentOllamaApiUrl: string | undefined;
+let currentOllamaApiKey: string | undefined;
 let currentDeepSeekApiKey: string | undefined;
 let currentOpenAIApiKey: string | undefined;
 let currentOpenAICompatApiKey: string | undefined;
@@ -78,7 +83,10 @@ let currentTextModel: Model | undefined;
 let currentSystemPrompts: SystemPrompt[] | undefined;
 let currentOpenAIProxyEnabled: boolean | undefined;
 let currentThinkingEnabled: boolean | undefined;
+let currentReasoningExpanded: boolean | undefined;
 let currentModelOrder: Model[] | undefined;
+let currentBedrockConfigMode: string | undefined;
+let currentBedrockApiKey: string | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -258,6 +266,20 @@ export function saveApiKey(apiKey: string) {
 export function saveOllamaApiURL(apiUrl: string) {
   currentOllamaApiUrl = apiUrl;
   storage.set(ollamaApiUrlKey, apiUrl);
+}
+
+export function getOllamaApiKey(): string {
+  if (currentOllamaApiKey) {
+    return currentOllamaApiKey;
+  } else {
+    currentOllamaApiKey = encryptStorage.getString(ollamaApiKeyTag) ?? '';
+    return currentOllamaApiKey;
+  }
+}
+
+export function saveOllamaApiKey(apiKey: string) {
+  currentOllamaApiKey = apiKey;
+  encryptStorage.set(ollamaApiKeyTag, apiKey);
 }
 
 export function saveDeepSeekApiKey(apiKey: string) {
@@ -523,6 +545,20 @@ export function getThinkingEnabled() {
   }
 }
 
+export function saveReasoningExpanded(expanded: boolean) {
+  currentReasoningExpanded = expanded;
+  storage.set(reasoningExpandedKey, expanded);
+}
+
+export function getReasoningExpanded() {
+  if (currentReasoningExpanded !== undefined) {
+    return currentReasoningExpanded;
+  } else {
+    currentReasoningExpanded = storage.getBoolean(reasoningExpandedKey) ?? true;
+    return currentReasoningExpanded;
+  }
+}
+
 // Model order functions
 export function saveModelOrder(models: Model[]) {
   currentModelOrder = models;
@@ -597,4 +633,36 @@ export function isTokenValid(): boolean {
   const expirationDate = new Date(tokenInfo.expiration).getTime();
   const now = new Date().getTime();
   return expirationDate > now + 10 * 60 * 1000;
+}
+
+// Bedrock configuration mode functions
+export function saveBedrockConfigMode(mode: string) {
+  currentBedrockConfigMode = mode;
+  storage.set(bedrockConfigModeKey, mode);
+}
+
+export function getBedrockConfigMode(): string {
+  if (currentBedrockConfigMode) {
+    return currentBedrockConfigMode;
+  } else {
+    currentBedrockConfigMode =
+      storage.getString(bedrockConfigModeKey) ??
+      (getApiUrl().length > 0 ? 'swiftchat' : 'bedrock');
+    return currentBedrockConfigMode;
+  }
+}
+
+// Bedrock API key functions
+export function saveBedrockApiKey(apiKey: string) {
+  currentBedrockApiKey = apiKey;
+  encryptStorage.set(bedrockApiKeyTag, apiKey);
+}
+
+export function getBedrockApiKey(): string {
+  if (currentBedrockApiKey) {
+    return currentBedrockApiKey;
+  } else {
+    currentBedrockApiKey = encryptStorage.getString(bedrockApiKeyTag) ?? '';
+    return currentBedrockApiKey;
+  }
 }

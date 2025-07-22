@@ -202,7 +202,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
         },
         'Choose From Photos': () => {
           launchImageLibrary({
-            selectionLimit: chatModeRef.current === ChatMode.Text ? 0 : 1,
+            selectionLimit: chatModeRef.current === ChatMode.Text ? 0 : 2,
             mediaType:
               chatModeRef.current === ChatMode.Text && isVideoSupported()
                 ? 'mixed'
