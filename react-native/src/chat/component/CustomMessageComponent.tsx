@@ -205,6 +205,45 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
 
+  const handleReasoningToggle = useCallback(() => {
+    if (reasoningExpanded && reasoningContainerHeightRef.current === 0) {
+      reasoningContainerRef.current?.measure((_x, _y, _width, height) => {
+        reasoningContainerHeightRef.current = height;
+        const newExpanded = !reasoningExpanded;
+        setReasoningExpanded(newExpanded);
+        saveReasoningExpanded(newExpanded);
+        onReasoningToggle?.(
+          newExpanded,
+          reasoningContainerHeightRef.current ?? 0,
+          false
+        );
+      });
+    } else {
+      const newExpanded = !reasoningExpanded;
+      if (reasoningContainerHeightRef.current === 0) {
+        setReasoningExpanded(newExpanded);
+        setTimeout(() => {
+          if (reasoningContainerRef.current) {
+            reasoningContainerRef.current?.measure((_x, _y, _width, height) => {
+              reasoningContainerHeightRef.current = height;
+              onReasoningToggle?.(newExpanded, height ?? 0, true);
+            });
+          }
+        }, 150);
+      } else {
+        setTimeout(() => {
+          onReasoningToggle?.(
+            newExpanded,
+            reasoningContainerHeightRef.current ?? 0,
+            false
+          );
+        }, 0);
+        setReasoningExpanded(newExpanded);
+      }
+      saveReasoningExpanded(newExpanded);
+    }
+  }, [reasoningExpanded, onReasoningToggle]);
+
   const reasoningSection = useMemo(() => {
     if (
       !currentMessage?.reasoning ||
@@ -219,51 +258,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         <TouchableOpacity
           style={styles.reasoningHeader}
           activeOpacity={1}
-          onPress={() => {
-            if (
-              reasoningExpanded &&
-              reasoningContainerHeightRef.current === 0
-            ) {
-              reasoningContainerRef.current?.measure(
-                (_x, _y, _width, height) => {
-                  reasoningContainerHeightRef.current = height;
-                  const newExpanded = !reasoningExpanded;
-                  setReasoningExpanded(newExpanded);
-                  saveReasoningExpanded(newExpanded);
-                  onReasoningToggle?.(
-                    newExpanded,
-                    reasoningContainerHeightRef.current ?? 0,
-                    false
-                  );
-                }
-              );
-            } else {
-              const newExpanded = !reasoningExpanded;
-              if (reasoningContainerHeightRef.current === 0) {
-                setReasoningExpanded(newExpanded);
-                setTimeout(() => {
-                  if (reasoningContainerRef.current) {
-                    reasoningContainerRef.current?.measure(
-                      (_x, _y, _width, height) => {
-                        reasoningContainerHeightRef.current = height;
-                        onReasoningToggle?.(newExpanded, height ?? 0, true);
-                      }
-                    );
-                  }
-                }, 150);
-              } else {
-                setTimeout(() => {
-                  onReasoningToggle?.(
-                    newExpanded,
-                    reasoningContainerHeightRef.current ?? 0,
-                    false
-                  );
-                }, 0);
-                setReasoningExpanded(newExpanded);
-              }
-              saveReasoningExpanded(newExpanded);
-            }
-          }}>
+          onPress={handleReasoningToggle}>
           <View style={styles.reasoningHeaderContent}>
             <Image
               source={
@@ -334,7 +329,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     isDark,
     reasoningExpanded,
     reasoningCopied,
-    onReasoningToggle,
+    handleReasoningToggle,
   ]);
 
   const handleShowButton = useCallback(() => {
