@@ -99,6 +99,11 @@ export class VoiceChatService {
               errorMsg.includes('closed stream. HTTP/2 error code: NO_ERROR')
             ) {
               errorMsg = '\n**Stream Closed With NO_ERROR**';
+            } else if (
+              errorMsg.includes('This operation does not support API Keys')
+            ) {
+              errorMsg =
+                '\nThis operation does not support API Keys, Please switch to [SwiftChat Server](https://github.com/aws-samples/swift-chat?tab=readme-ov-file#getting-started-with-amazon-bedrock) to use Nova Sonic';
             }
             this.onErrorCallback(errorMsg);
           }
