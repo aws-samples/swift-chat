@@ -354,9 +354,7 @@ function ChatScreen(): React.JSX.Element {
 
   const showKeyboard = () => {
     setTimeout(() => {
-      if (textInputRef.current) {
-        textInputRef.current.focus();
-      }
+      textInputRef.current?.focus();
     }, 100);
   };
 
@@ -886,6 +884,31 @@ function ChatScreen(): React.JSX.Element {
           ...{
             fontWeight: isMac ? '300' : 'normal',
             color: colors.text,
+            blurOnSubmit: isMac,
+            onSubmitEditing: () => {
+              if (
+                inputTexRef.current.length > 0 &&
+                chatStatusRef.current !== ChatStatus.Running
+              ) {
+                const msg: SwiftChatMessage = {
+                  text: inputTexRef.current,
+                  user: { _id: 1 },
+                  createdAt: new Date(),
+                  _id: uuid.v4(),
+                };
+                onSend([msg]);
+                inputTexRef.current = '';
+                textInputRef.current?.clear();
+                setTimeout(() => {
+                  textInputRef.current?.clear();
+                  textInputRef.current?.focus();
+                }, 1);
+              } else {
+                setTimeout(() => {
+                  textInputRef.current?.focus();
+                }, 1);
+              }
+            },
           },
         }}
         maxComposerHeight={isMac ? 360 : 200}
@@ -893,23 +916,11 @@ function ChatScreen(): React.JSX.Element {
           if (
             isMac &&
             inputTexRef.current.length > 0 &&
-            text[text.length - 1] === '\n' &&
-            text[text.length - 2] !== ' ' &&
-            text.length - inputTexRef.current.length === 1 &&
-            chatStatusRef.current !== ChatStatus.Running
+            text[text.length - 1] === '\n'
           ) {
             setTimeout(() => {
-              if (textInputRef.current) {
-                textInputRef.current.clear();
-              }
+              textInputRef.current?.focus();
             }, 1);
-            const msg: SwiftChatMessage = {
-              text: inputTexRef.current,
-              user: { _id: 1 },
-              createdAt: new Date(),
-              _id: uuid.v4(),
-            };
-            onSend([msg]);
           }
           inputTexRef.current = text;
         }}

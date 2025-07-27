@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
 #import "RCTNetworkingPatch.h"
+#import "RCTTextInputPatch.h"
 
 #import <React/RCTBundleURLProvider.h>
 
@@ -9,6 +10,12 @@
 {
   // setup Networking Patch for bedrock chunk parse
   [RCTNetworkingPatch setupNetworkingPatch];
+  
+#if TARGET_OS_MACCATALYST
+  // setup Text Input Patch for Alt+Enter newline functionality
+  [RCTTextInputPatch setupTextInputPatch];
+#endif
+  
 
   self.moduleName = @"SwiftChat";
   // You can add your custom initial props in the dictionary below.
