@@ -13,6 +13,7 @@
 @implementation RCTTextInputPatch
 
 static BOOL altKeyPressed = NO;
+static IMP originalTextInputShouldChangeTextIMP = NULL;
 
 + (void)setupTextInputPatch {
     static dispatch_once_t onceToken;
@@ -35,12 +36,24 @@ static BOOL altKeyPressed = NO;
             method_exchangeImplementations(originalSubmitMethod, swizzledSubmitMethod);
         }
         
-        // Add pressesBegan method to RCTBaseTextInputView
+        // Swizzle textInputShouldChangeText:inRange: method to intercept file paste
+        Method originalChangeTextMethod = class_getInstanceMethod(targetClass, @selector(textInputShouldChangeText:inRange:));
+        Method swizzledChangeTextMethod = class_getInstanceMethod([RCTTextInputPatch class], @selector(swizzled_textInputShouldChangeText:inRange:));
+        
+        if (originalChangeTextMethod && swizzledChangeTextMethod) {
+            // Save the original implementation
+            originalTextInputShouldChangeTextIMP = method_getImplementation(originalChangeTextMethod);
+            IMP swizzledChangeTextIMP = method_getImplementation(swizzledChangeTextMethod);
+            
+            // Replace the original method with our swizzled implementation
+            method_setImplementation(originalChangeTextMethod, swizzledChangeTextIMP);
+        }
+        
+        // Add pressesBegan and pressesEnded methods for Alt+Enter functionality
         Method pressBegan = class_getInstanceMethod([RCTTextInputPatch class], @selector(pressesBegan:withEvent:));
         IMP pressBeganIMP = method_getImplementation(pressBegan);
         class_addMethod(targetClass, @selector(pressesBegan:withEvent:), pressBeganIMP, method_getTypeEncoding(pressBegan));
         
-        // Add pressesEnded method to RCTBaseTextInputView
         Method pressEnded = class_getInstanceMethod([RCTTextInputPatch class], @selector(pressesEnded:withEvent:));
         IMP pressEndedIMP = method_getImplementation(pressEnded);
         class_addMethod(targetClass, @selector(pressesEnded:withEvent:), pressEndedIMP, method_getTypeEncoding(pressEnded));
@@ -138,6 +151,42 @@ static BOOL altKeyPressed = NO;
         
         return shouldSubmit;
     }
+}
+
+
+- (NSString *)swizzled_textInputShouldChangeText:(NSString *)text inRange:(NSRange)range
+{
+    // Check if the text being pasted is a file URL
+    if (text && [text hasPrefix:@"file:///.file/id="]) {
+        // Handle file paste directly here
+        // Get reference to self as RCTBaseTextInputView
+        RCTBaseTextInputView *textInputView = (RCTBaseTextInputView *)self;
+        
+        // Get bridge and event dispatcher
+        RCTBridge *bridge = [textInputView valueForKey:@"_bridge"];
+        NSNumber *reactTag = textInputView.reactTag;
+        
+        if (bridge && reactTag) {
+            // Send a custom event to React Native layer
+            [bridge enqueueJSCall:@"RCTDeviceEventEmitter"
+                          method:@"emit"
+                            args:@[@"onPasteFiles", @{@"target": reactTag}]
+                      completion:NULL];
+        }
+        
+        // Return nil to prevent the file URL from being inserted as text
+        return nil;
+    }
+    
+    // Call the original method for normal text input using the saved IMP
+    if (originalTextInputShouldChangeTextIMP) {
+        // Cast the IMP to the correct function pointer type
+        NSString* (*originalFunc)(id, SEL, NSString*, NSRange) = (NSString* (*)(id, SEL, NSString*, NSRange))originalTextInputShouldChangeTextIMP;
+        return originalFunc(self, @selector(textInputShouldChangeText:inRange:), text, range);
+    }
+    
+    // Fallback: return the text as-is if we couldn't call the original method
+    return text;
 }
 
 @end
