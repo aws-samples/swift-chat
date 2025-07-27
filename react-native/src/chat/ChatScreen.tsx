@@ -309,6 +309,7 @@ function ChatScreen(): React.JSX.Element {
         setMessages(msg);
         setIsLoadingMessages(false);
         scrollToBottom();
+        showKeyboard();
       } else {
         setTimeout(() => {
           setMessages(msg);

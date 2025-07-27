@@ -176,7 +176,6 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
       const pickResults: DocumentPickerResponse[] = [];
       for (const file of fileList) {
         if (file.isFile()) {
-          console.log(file.path);
           pickResults.push({
             uri: `file://${file.path}`,
             name: file.name,
@@ -199,18 +198,19 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
     }
   }, [processFiles, onFileSelected]);
 
+  // Use ref to store the latest handlePasteFiles function
+  const handlePasteFilesRef = useRef(handlePasteFiles);
+  handlePasteFilesRef.current = handlePasteFiles;
+
   // Listen for paste files event from native layer (macOS Command+V)
   useEffect(() => {
-    console.log('start addListener onPasteFiles');
     const subscription = DeviceEventEmitter.addListener('onPasteFiles', () => {
-      console.log('📎 Paste files event received in CustomAddFileComponent');
-      handlePasteFiles().then();
+      handlePasteFilesRef.current().then();
     });
-
     return () => {
       subscription.remove();
     };
-  }, [handlePasteFiles]);
+  }, []);
 
   const handleChooseFiles = async () => {
     let chooseType = [];
@@ -334,6 +334,7 @@ export const EXTRA_DOCUMENT_FORMATS = [
   'css',
   'xml',
   'yaml',
+  'yml',
 ];
 export const DOCUMENT_FORMATS = [
   'pdf',

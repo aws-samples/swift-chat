@@ -106,7 +106,6 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
             }
           );
           const metaData = await getVideoMetaData(uri);
-          console.log('metaData', metaData);
           isCompressing.current = false;
           compressingFiles.current = '';
           const currentSize = metaData.size / 1024 / 1024;

@@ -485,7 +485,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   if (!currentMessage) {
     return null;
   }
-
+  const hasReasoning = (currentMessage?.reasoning?.length ?? 0) > 0;
+  const showLoading = isLoading && !(hasReasoning && reasoningExpanded);
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -496,8 +497,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         {copyButton}
       </TouchableOpacity>
       <View style={styles.marked_box}>
-        {(currentMessage?.reasoning?.length ?? 0) > 0 && reasoningSection}
-        {isLoading && (
+        {hasReasoning && reasoningSection}
+        {showLoading && (
           <View style={styles.loading}>
             <ImageSpinner
               visible={true}
