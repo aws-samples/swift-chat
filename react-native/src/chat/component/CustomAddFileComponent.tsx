@@ -200,7 +200,10 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
 
   // Use ref to store the latest handlePasteFiles function
   const handlePasteFilesRef = useRef(handlePasteFiles);
-  handlePasteFilesRef.current = handlePasteFiles;
+
+  useEffect(() => {
+    handlePasteFilesRef.current = handlePasteFiles;
+  }, [handlePasteFiles]);
 
   // Listen for paste files event from native layer (macOS Command+V)
   useEffect(() => {

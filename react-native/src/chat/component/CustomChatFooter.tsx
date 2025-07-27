@@ -18,6 +18,7 @@ interface CustomComposerProps {
   onSwitchedToTextModel: () => void;
   chatMode: ChatMode;
   isShowSystemPrompt: boolean;
+  hasInputText?: boolean;
 }
 
 export const CustomChatFooter: React.FC<CustomComposerProps> = ({
@@ -27,6 +28,7 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
   onSwitchedToTextModel,
   chatMode,
   isShowSystemPrompt,
+  hasInputText = false,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 });
@@ -67,56 +69,53 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
     setModalVisible(false);
   };
 
-  if (files.length > 0 || (isShowSystemPrompt && chatMode === ChatMode.Text)) {
-    return (
-      <>
-        <View
-          style={{
-            ...styles.container,
-            ...(isShowSystemPrompt &&
-              files.length === 0 && {
-                height: 60,
-              }),
-          }}>
-          {files.length === 0 &&
-            isShowSystemPrompt &&
-            chatMode === ChatMode.Text && (
-              <View style={styles.promptContainer}>
-                <PromptListComponent
-                  onSelectPrompt={prompt => {
-                    onSystemPromptUpdated(prompt);
-                  }}
-                  onSwitchedToTextModel={() => {
-                    onSwitchedToTextModel();
-                  }}
-                />
-                <View ref={modelIconRef} collapsable={false}>
-                  <ModelIconButton onPress={handleOpenModal} />
-                </View>
+  return (
+    <>
+      <View
+        style={{
+          ...styles.container,
+          ...(isShowSystemPrompt &&
+            files.length === 0 && {
+              height: 60,
+            }),
+        }}>
+        {files.length === 0 &&
+          isShowSystemPrompt &&
+          chatMode === ChatMode.Text && (
+            <View style={styles.promptContainer}>
+              <PromptListComponent
+                onSelectPrompt={prompt => {
+                  onSystemPromptUpdated(prompt);
+                }}
+                onSwitchedToTextModel={() => {
+                  onSwitchedToTextModel();
+                }}
+              />
+              <View ref={modelIconRef} collapsable={false}>
+                <ModelIconButton onPress={handleOpenModal} />
               </View>
-            )}
-          {files.length > 0 && (
-            <CustomFileListComponent
-              files={files}
-              onFileUpdated={onFileUpdated}
-              mode={
-                chatMode === ChatMode.Image
-                  ? DisplayMode.GenImage
-                  : DisplayMode.Edit
-              }
-            />
+            </View>
           )}
-        </View>
-        <ModelSelectionModal
-          visible={modalVisible}
-          onClose={handleCloseModal}
-          iconPosition={iconPosition}
-        />
-      </>
-    );
-  } else {
-    return null;
-  }
+        {(hasInputText || files.length > 0) && (
+          <CustomFileListComponent
+            files={files}
+            onFileUpdated={onFileUpdated}
+            mode={
+              chatMode === ChatMode.Image
+                ? DisplayMode.GenImage
+                : DisplayMode.Edit
+            }
+            hasInputText={hasInputText}
+          />
+        )}
+      </View>
+      <ModelSelectionModal
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        iconPosition={iconPosition}
+      />
+    </>
+  );
 };
 
 const styles = StyleSheet.create({

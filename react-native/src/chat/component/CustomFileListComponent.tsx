@@ -24,6 +24,7 @@ interface CustomFileProps {
   files: FileInfo[];
   onFileUpdated?: (files: FileInfo[], isUpdate?: boolean) => void;
   mode?: DisplayMode;
+  hasInputText?: boolean;
 }
 
 export enum DisplayMode {
@@ -66,6 +67,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
   files,
   onFileUpdated,
   mode = DisplayMode.Edit,
+  hasInputText = false,
 }) => {
   const { colors, isDark } = useTheme();
   const [visible, setIsVisible] = useState(false);
@@ -304,6 +306,13 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
           marginLeft: 0,
           paddingTop: 4,
         }),
+        ...(files.length === 0 &&
+          hasInputText && {
+            opacity: 0,
+            position: 'absolute',
+            height: 0,
+            overflow: 'hidden',
+          }),
       }}>
       {files.map((file, fileIndex) => renderFileItem(file, fileIndex))}
 

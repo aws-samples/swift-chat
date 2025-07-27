@@ -14,6 +14,8 @@
 
 static BOOL altKeyPressed = NO;
 static IMP originalTextInputShouldChangeTextIMP = NULL;
+static IMP originalPressesBegan = NULL;
+static IMP originalPressesEnded = NULL;
 
 + (void)setupTextInputPatch {
     static dispatch_once_t onceToken;
@@ -50,6 +52,17 @@ static IMP originalTextInputShouldChangeTextIMP = NULL;
         }
 
         // Add pressesBegan and pressesEnded methods for Alt+Enter functionality
+        Method originalPressBeganMethod = class_getInstanceMethod(targetClass, @selector(pressesBegan:withEvent:));
+        Method originalPressEndedMethod = class_getInstanceMethod(targetClass, @selector(pressesEnded:withEvent:));
+
+        // Save original implementations if they exist
+        if (originalPressBeganMethod) {
+            originalPressesBegan = method_getImplementation(originalPressBeganMethod);
+        }
+        if (originalPressEndedMethod) {
+            originalPressesEnded = method_getImplementation(originalPressEndedMethod);
+        }
+
         Method pressBegan = class_getInstanceMethod([RCTTextInputPatch class], @selector(pressesBegan:withEvent:));
         IMP pressBeganIMP = method_getImplementation(pressBegan);
         class_addMethod(targetClass, @selector(pressesBegan:withEvent:), pressBeganIMP, method_getTypeEncoding(pressBegan));
@@ -64,20 +77,42 @@ static IMP originalTextInputShouldChangeTextIMP = NULL;
 
 - (void)pressesBegan:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event
 {
+    BOOL didHandleEvent = NO;
+
     for (UIPress *press in presses) {
         if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftAlt ||
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightAlt) {
             altKeyPressed = YES;
+            didHandleEvent = YES;
+        }
+    }
+
+    if (!didHandleEvent) {
+        // If we didn't handle any keys, pass to the original implementation
+        if (originalPressesBegan) {
+            void (*originalFunc)(id, SEL, NSSet<UIPress *> *, UIPressesEvent *) = (void (*)(id, SEL, NSSet<UIPress *> *, UIPressesEvent *))originalPressesBegan;
+            originalFunc(self, @selector(pressesBegan:withEvent:), presses, event);
         }
     }
 }
 
 - (void)pressesEnded:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event
 {
+    BOOL didHandleEvent = NO;
+
     for (UIPress *press in presses) {
         if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftAlt ||
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightAlt) {
             altKeyPressed = NO;
+            didHandleEvent = YES;
+        }
+    }
+
+    if (!didHandleEvent) {
+        // If we didn't handle any keys, pass to the original implementation
+        if (originalPressesEnded) {
+            void (*originalFunc)(id, SEL, NSSet<UIPress *> *, UIPressesEvent *) = (void (*)(id, SEL, NSSet<UIPress *> *, UIPressesEvent *))originalPressesEnded;
+            originalFunc(self, @selector(pressesEnded:withEvent:), presses, event);
         }
     }
 }

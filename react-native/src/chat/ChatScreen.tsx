@@ -128,6 +128,7 @@ function ChatScreen(): React.JSX.Element {
   const { sendEvent, event, drawerType } = useAppContext();
   const sendEventRef = useRef(sendEvent);
   const inputTexRef = useRef('');
+  const [hasInputText, setHasInputText] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
   const selectedFilesRef = useRef(selectedFiles);
@@ -805,6 +806,7 @@ function ChatScreen(): React.JSX.Element {
             }}
             chatMode={modeRef.current}
             isShowSystemPrompt={showSystemPrompt}
+            hasInputText={hasInputText}
           />
         )}
         renderMessage={props => {
@@ -899,6 +901,7 @@ function ChatScreen(): React.JSX.Element {
                 };
                 onSend([msg]);
                 inputTexRef.current = '';
+                setHasInputText(false);
                 textInputRef.current?.clear();
                 setTimeout(() => {
                   textInputRef.current?.clear();
@@ -924,6 +927,7 @@ function ChatScreen(): React.JSX.Element {
             }, 1);
           }
           inputTexRef.current = text;
+          setHasInputText(text.length > 0);
         }}
       />
     </SafeAreaView>
