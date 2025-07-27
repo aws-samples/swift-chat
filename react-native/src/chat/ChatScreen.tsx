@@ -906,25 +906,21 @@ function ChatScreen(): React.JSX.Element {
                 setTimeout(() => {
                   textInputRef.current?.clear();
                   textInputRef.current?.focus();
-                }, 1);
+                }, 20);
               } else {
                 setTimeout(() => {
                   textInputRef.current?.focus();
-                }, 1);
+                }, 20);
               }
             },
           },
         }}
         maxComposerHeight={isMac ? 360 : 200}
         onInputTextChanged={text => {
-          if (
-            isMac &&
-            inputTexRef.current.length > 0 &&
-            text[text.length - 1] === '\n'
-          ) {
+          if (isMac && text.length > 0 && text[text.length - 1] === '\n') {
             setTimeout(() => {
               textInputRef.current?.focus();
-            }, 1);
+            }, 20);
           }
           inputTexRef.current = text;
           setHasInputText(text.length > 0);
