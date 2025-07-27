@@ -1,14 +1,25 @@
 import { Actions } from 'react-native-gifted-chat';
-import { Image, Platform, StyleSheet, Text } from 'react-native';
-import React, { useRef } from 'react';
+import {
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  DeviceEventEmitter,
+} from 'react-native';
+import React, { useRef, useEffect, useCallback } from 'react';
 import {
   ImagePickerResponse,
   launchCamera,
   launchImageLibrary,
 } from 'react-native-image-picker';
 import { ChatMode, FileInfo, FileType } from '../../types/Chat.ts';
-import { pick, types } from 'react-native-document-picker';
+import {
+  pick,
+  types,
+  DocumentPickerResponse,
+} from 'react-native-document-picker';
 import { saveFile } from '../util/FileUtils.ts';
+import RNFS from 'react-native-fs';
 import {
   createVideoThumbnail,
   getImageMetaData,
@@ -60,19 +71,10 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
     [colors.textSecondary]
   );
   chatModeRef.current = chatMode;
-  const handleChooseFiles = async () => {
-    let chooseType = [];
-    const isImageMode = chatModeRef.current === ChatMode.Image;
-    try {
-      if (isImageMode) {
-        chooseType = [types.images];
-      } else {
-        chooseType = [types.allFiles];
-      }
-      const pickResults = await pick({
-        allowMultiSelection: !isImageMode,
-        type: chooseType,
-      });
+
+  // Process files from DocumentPickerResponse array
+  const processFiles = useCallback(
+    async (pickResults: DocumentPickerResponse[]): Promise<FileInfo[]> => {
       const files: FileInfo[] = [];
       await Promise.all(
         pickResults.map(async pickResult => {
@@ -145,6 +147,85 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
           }
         }) ?? []
       );
+      return files;
+    },
+    []
+  );
+
+  // Handle paste files from clipboard
+  const handlePasteFiles = useCallback(async () => {
+    try {
+      const clipboardPath = `${RNFS.DocumentDirectoryPath}/clipboard`;
+
+      // Check if clipboard directory exists
+      const exists = await RNFS.exists(clipboardPath);
+      if (!exists) {
+        console.log('Clipboard directory does not exist');
+        return;
+      }
+
+      // Read all files from clipboard directory
+      const fileList = await RNFS.readDir(clipboardPath);
+
+      if (fileList.length === 0) {
+        console.log('No files found in clipboard directory');
+        return;
+      }
+
+      // Convert to DocumentPickerResponse format
+      const pickResults: DocumentPickerResponse[] = [];
+      for (const file of fileList) {
+        if (file.isFile()) {
+          console.log(file.path);
+          pickResults.push({
+            uri: `file://${file.path}`,
+            name: file.name,
+            size: file.size,
+            type: null, // Will be determined by file extension
+            fileCopyUri: null,
+          });
+        }
+      }
+
+      // Process files using the shared logic
+      const files = await processFiles(pickResults);
+
+      if (files.length > 0) {
+        onFileSelected(files);
+      }
+    } catch (error) {
+      console.error('Error handling paste files:', error);
+      showInfo('Error processing pasted files');
+    }
+  }, [processFiles, onFileSelected]);
+
+  // Listen for paste files event from native layer (macOS Command+V)
+  useEffect(() => {
+    console.log('start addListener onPasteFiles');
+    const subscription = DeviceEventEmitter.addListener('onPasteFiles', () => {
+      console.log('📎 Paste files event received in CustomAddFileComponent');
+      handlePasteFiles().then();
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [handlePasteFiles]);
+
+  const handleChooseFiles = async () => {
+    let chooseType = [];
+    const isImageMode = chatModeRef.current === ChatMode.Image;
+    try {
+      if (isImageMode) {
+        chooseType = [types.images];
+      } else {
+        chooseType = [types.allFiles];
+      }
+      const pickResults = await pick({
+        allowMultiSelection: !isImageMode,
+        type: chooseType,
+      });
+      const files = await processFiles(pickResults);
       if (files.length > 0) {
         onFileSelected(files);
       }

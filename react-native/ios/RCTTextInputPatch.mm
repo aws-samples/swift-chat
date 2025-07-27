@@ -19,45 +19,45 @@ static IMP originalTextInputShouldChangeTextIMP = NULL;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         Class targetClass = [RCTBaseTextInputView class];
-        
+
         // Swizzle textInputShouldSubmitOnReturn method
         Method originalSubmitMethod = class_getInstanceMethod(targetClass, @selector(textInputShouldSubmitOnReturn));
         Method swizzledSubmitMethod = class_getInstanceMethod([RCTTextInputPatch class], @selector(swizzled_textInputShouldSubmitOnReturn));
-        
+
         IMP originalSubmitIMP = method_getImplementation(originalSubmitMethod);
         IMP swizzledSubmitIMP = method_getImplementation(swizzledSubmitMethod);
-        
+
         // Add the swizzled method to RCTBaseTextInputView
         BOOL didAddSubmitMethod = class_addMethod(targetClass, @selector(textInputShouldSubmitOnReturn), swizzledSubmitIMP, method_getTypeEncoding(swizzledSubmitMethod));
-        
+
         if (didAddSubmitMethod) {
             class_replaceMethod(targetClass, @selector(swizzled_textInputShouldSubmitOnReturn), originalSubmitIMP, method_getTypeEncoding(originalSubmitMethod));
         } else {
             method_exchangeImplementations(originalSubmitMethod, swizzledSubmitMethod);
         }
-        
+
         // Swizzle textInputShouldChangeText:inRange: method to intercept file paste
         Method originalChangeTextMethod = class_getInstanceMethod(targetClass, @selector(textInputShouldChangeText:inRange:));
         Method swizzledChangeTextMethod = class_getInstanceMethod([RCTTextInputPatch class], @selector(swizzled_textInputShouldChangeText:inRange:));
-        
+
         if (originalChangeTextMethod && swizzledChangeTextMethod) {
             // Save the original implementation
             originalTextInputShouldChangeTextIMP = method_getImplementation(originalChangeTextMethod);
             IMP swizzledChangeTextIMP = method_getImplementation(swizzledChangeTextMethod);
-            
+
             // Replace the original method with our swizzled implementation
             method_setImplementation(originalChangeTextMethod, swizzledChangeTextIMP);
         }
-        
+
         // Add pressesBegan and pressesEnded methods for Alt+Enter functionality
         Method pressBegan = class_getInstanceMethod([RCTTextInputPatch class], @selector(pressesBegan:withEvent:));
         IMP pressBeganIMP = method_getImplementation(pressBegan);
         class_addMethod(targetClass, @selector(pressesBegan:withEvent:), pressBeganIMP, method_getTypeEncoding(pressBegan));
-        
+
         Method pressEnded = class_getInstanceMethod([RCTTextInputPatch class], @selector(pressesEnded:withEvent:));
         IMP pressEndedIMP = method_getImplementation(pressEnded);
         class_addMethod(targetClass, @selector(pressesEnded:withEvent:), pressEndedIMP, method_getTypeEncoding(pressEnded));
-        
+
         NSLog(@"🚀 RCTTextInputPatch: Method swizzling completed");
     });
 }
@@ -86,60 +86,60 @@ static IMP originalTextInputShouldChangeTextIMP = NULL;
 {
     // Get reference to self as RCTBaseTextInputView
     RCTBaseTextInputView *textInputView = (RCTBaseTextInputView *)self;
-    
+
     if (altKeyPressed) {
         // Alt+Enter logic - insert newline
-        
+
         id<RCTBackedTextInputViewProtocol> backedTextInputView = textInputView.backedTextInputView;
-        
+
         // Get current selection range
         UITextRange *selectedRange = backedTextInputView.selectedTextRange;
         NSInteger startPosition = [backedTextInputView offsetFromPosition:backedTextInputView.beginningOfDocument
                                                               toPosition:selectedRange.start];
         NSInteger endPosition = [backedTextInputView offsetFromPosition:backedTextInputView.beginningOfDocument
                                                             toPosition:selectedRange.end];
-        
+
         // Create new text content with newline
         NSMutableAttributedString *currentText = [backedTextInputView.attributedText mutableCopy];
-        
+
         // Get text attributes from the text input view
         RCTTextAttributes *textAttributes = [textInputView valueForKey:@"_textAttributes"];
         NSDictionary *attributes = textAttributes ? textAttributes.effectiveTextAttributes : @{};
-        
+
         NSAttributedString *newlineString = [[NSAttributedString alloc]
                                             initWithString:@"\n"
                                             attributes:attributes];
-        
+
         // Insert newline at current position
         [currentText replaceCharactersInRange:NSMakeRange(startPosition, endPosition - startPosition)
                          withAttributedString:newlineString];
-        
+
         // Update text
         backedTextInputView.attributedText = currentText;
-        
+
         // Set cursor position after newline
         UITextPosition *newPosition = [backedTextInputView positionFromPosition:backedTextInputView.beginningOfDocument
                                                                          offset:startPosition + 1];
         [backedTextInputView setSelectedTextRange:[backedTextInputView textRangeFromPosition:newPosition
                                                                                  toPosition:newPosition]
                                    notifyDelegate:YES];
-        
+
         // Trigger text change event
         [textInputView textInputDidChange];
-        
+
         // Return NO to prevent submission when Alt is pressed
         return NO;
     } else {
         // Implement the original logic from RCTBaseTextInputView
         NSString *submitBehavior = textInputView.submitBehavior;
         const BOOL shouldSubmit = [submitBehavior isEqualToString:@"blurAndSubmit"] || [submitBehavior isEqualToString:@"submit"];
-        
+
         if (shouldSubmit) {
             // Get bridge and event dispatcher
             RCTBridge *bridge = [textInputView valueForKey:@"_bridge"];
             NSNumber *reactTag = textInputView.reactTag;  // This is available through UIView+React category
             NSInteger nativeEventCount = textInputView.nativeEventCount;  // This is a public property in RCTBaseTextInputView.h
-            
+
             if (bridge && bridge.eventDispatcher && reactTag) {
                 [bridge.eventDispatcher sendTextEventWithType:RCTTextEventTypeSubmit
                                                       reactTag:reactTag
@@ -148,7 +148,7 @@ static IMP originalTextInputShouldChangeTextIMP = NULL;
                                                     eventCount:nativeEventCount];
             }
         }
-        
+
         return shouldSubmit;
     }
 }
@@ -156,37 +156,196 @@ static IMP originalTextInputShouldChangeTextIMP = NULL;
 
 - (NSString *)swizzled_textInputShouldChangeText:(NSString *)text inRange:(NSRange)range
 {
-    // Check if the text being pasted is a file URL
-    if (text && [text hasPrefix:@"file:///.file/id="]) {
-        // Handle file paste directly here
-        // Get reference to self as RCTBaseTextInputView
+    // Check if the text being pasted is a file (URL or filename)
+    if (text && [RCTTextInputPatch isFilePasteText:text]) {
+        // Get reference to self as RCTBaseTextInputView for event dispatch
         RCTBaseTextInputView *textInputView = (RCTBaseTextInputView *)self;
-        
-        // Get bridge and event dispatcher
         RCTBridge *bridge = [textInputView valueForKey:@"_bridge"];
         NSNumber *reactTag = textInputView.reactTag;
-        
-        if (bridge && reactTag) {
-            // Send a custom event to React Native layer
-            [bridge enqueueJSCall:@"RCTDeviceEventEmitter"
-                          method:@"emit"
-                            args:@[@"onPasteFiles", @{@"target": reactTag}]
-                      completion:NULL];
-        }
-        
+
+        // Copy files from pasteboard to clipboard directory, then send event
+        [RCTTextInputPatch copyPasteboardFilesToClipboardDirectoryWithCompletion:^{
+            if (bridge && reactTag) {
+                // Send event on main thread after file copy completion
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [bridge enqueueJSCall:@"RCTDeviceEventEmitter"
+                                  method:@"emit"
+                                    args:@[@"onPasteFiles", @{@"target": reactTag}]
+                              completion:NULL];
+                });
+            }
+        }];
+
         // Return nil to prevent the file URL from being inserted as text
         return nil;
     }
-    
+
     // Call the original method for normal text input using the saved IMP
     if (originalTextInputShouldChangeTextIMP) {
         // Cast the IMP to the correct function pointer type
         NSString* (*originalFunc)(id, SEL, NSString*, NSRange) = (NSString* (*)(id, SEL, NSString*, NSRange))originalTextInputShouldChangeTextIMP;
         return originalFunc(self, @selector(textInputShouldChangeText:inRange:), text, range);
     }
-    
+
     // Fallback: return the text as-is if we couldn't call the original method
     return text;
+}
+
++ (void)copyPasteboardFilesToClipboardDirectoryWithCompletion:(void(^)(void))completion
+{
+    // Capture pasteboard items immediately on main thread
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    NSArray *pasteboardItems = [pasteboard.items copy];
+
+    // Perform file operations on background queue
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Get app documents directory
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *documentsPath = [paths objectAtIndex:0];
+        NSString *clipboardPath = [documentsPath stringByAppendingPathComponent:@"clipboard"];
+
+        // Create clipboard directory if it doesn't exist
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSError *error = nil;
+
+        if (![fileManager fileExistsAtPath:clipboardPath]) {
+            [fileManager createDirectoryAtPath:clipboardPath
+                   withIntermediateDirectories:YES
+                                    attributes:nil
+                                         error:&error];
+            if (error) {
+                NSLog(@"❌ Failed to create clipboard directory: %@", error.localizedDescription);
+                return;
+            }
+        }
+
+        // Clear existing files in clipboard directory
+        NSArray *existingFiles = [fileManager contentsOfDirectoryAtPath:clipboardPath error:&error];
+        if (!error) {
+            for (NSString *fileName in existingFiles) {
+                NSString *filePath = [clipboardPath stringByAppendingPathComponent:fileName];
+                [fileManager removeItemAtPath:filePath error:nil];
+            }
+        }
+
+        // Copy files from pasteboard
+        for (NSInteger index = 0; index < pasteboardItems.count; index++) {
+            NSDictionary *item = pasteboardItems[index];
+
+            // Try to get file URL
+            NSURL *fileURL = nil;
+
+            // Try public.file-url first
+            id fileUrlData = [item objectForKey:@"public.file-url"];
+            if (fileUrlData) {
+                if ([fileUrlData isKindOfClass:[NSData class]]) {
+                    NSString *urlString = [[NSString alloc] initWithData:fileUrlData encoding:NSUTF8StringEncoding];
+                    if (urlString) {
+                        fileURL = [NSURL URLWithString:urlString];
+                    }
+                } else if ([fileUrlData isKindOfClass:[NSString class]]) {
+                    fileURL = [NSURL URLWithString:fileUrlData];
+                }
+            }
+
+            // Try public.url as fallback
+            if (!fileURL) {
+                id urlData = [item objectForKey:@"public.url"];
+                if (urlData) {
+                    if ([urlData isKindOfClass:[NSData class]]) {
+                        NSString *urlString = [[NSString alloc] initWithData:urlData encoding:NSUTF8StringEncoding];
+                        if (urlString) {
+                            fileURL = [NSURL URLWithString:urlString];
+                        }
+                    } else if ([urlData isKindOfClass:[NSString class]]) {
+                        fileURL = [NSURL URLWithString:urlData];
+                    }
+                }
+            }
+
+            // If we have a file URL, copy the file
+            if (fileURL && [fileURL isFileURL]) {
+                NSString *sourceFilePath = [fileURL path];
+                NSString *fileName = [sourceFilePath lastPathComponent];
+
+                // Generate unique filename if file already exists
+                NSString *destinationFileName = fileName;
+                NSInteger counter = 1;
+                NSString *nameWithoutExtension = [fileName stringByDeletingPathExtension];
+                NSString *extension = [fileName pathExtension];
+
+                while ([fileManager fileExistsAtPath:[clipboardPath stringByAppendingPathComponent:destinationFileName]]) {
+                    if (extension.length > 0) {
+                        destinationFileName = [NSString stringWithFormat:@"%@_%ld.%@", nameWithoutExtension, (long)counter, extension];
+                    } else {
+                        destinationFileName = [NSString stringWithFormat:@"%@_%ld", nameWithoutExtension, (long)counter];
+                    }
+                    counter++;
+                }
+
+                NSString *destinationPath = [clipboardPath stringByAppendingPathComponent:destinationFileName];
+
+                // Copy file
+                NSError *copyError = nil;
+                BOOL success = [fileManager copyItemAtPath:sourceFilePath toPath:destinationPath error:&copyError];
+
+                if (!success) {
+                    NSLog(@"❌ Failed to copy file %@: %@", fileName, copyError.localizedDescription);
+                }
+            }
+        }
+
+        // Call completion callback after all files are processed
+        if (completion) {
+            completion();
+        }
+    });
+}
+
++ (BOOL)isFilePasteText:(NSString *)text
+{
+    // First check if it's a file URL format
+    if ([text containsString:@"file:///.file/id="]) {
+        return YES;
+    }
+
+    // Check if pasteboard contains files and text matches any filename
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    NSArray *items = pasteboard.items;
+
+    for (NSDictionary *item in items) {
+        // Check if this item has file URL data
+        BOOL hasFileUrl = [item objectForKey:@"public.file-url"] != nil || [item objectForKey:@"public.url"] != nil;
+
+        if (hasFileUrl) {
+            // Try to extract filename from file URLs
+            NSArray *urlKeys = @[@"public.file-url", @"public.url"];
+            for (NSString *key in urlKeys) {
+                id urlData = [item objectForKey:key];
+                if (urlData) {
+                    NSString *urlString = nil;
+                    if ([urlData isKindOfClass:[NSData class]]) {
+                        urlString = [[NSString alloc] initWithData:urlData encoding:NSUTF8StringEncoding];
+                    } else if ([urlData isKindOfClass:[NSString class]]) {
+                        urlString = urlData;
+                    }
+
+                    if (urlString) {
+                        NSURL *fileURL = [NSURL URLWithString:urlString];
+                        if (fileURL && [fileURL isFileURL]) {
+                            NSString *fileName = [[fileURL path] lastPathComponent];
+                            // Check if the pasted text matches the filename
+                            if ([text containsString:fileName]) {
+                                return YES;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return NO;
 }
 
 @end
