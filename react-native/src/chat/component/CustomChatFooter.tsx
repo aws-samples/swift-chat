@@ -78,6 +78,10 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
             files.length === 0 && {
               height: 60,
             }),
+          ...(!isShowSystemPrompt &&
+            files.length === 0 && {
+              height: 0,
+            }),
         }}>
         {files.length === 0 &&
           isShowSystemPrompt &&
