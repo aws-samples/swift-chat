@@ -87,13 +87,14 @@ export const invokeBedrockWithAPIKey = async (
       }
       const reader = body.getReader();
       const decoder = new TextDecoder();
+      let appendTimes = 0;
       while (true) {
         if (shouldStop()) {
           await reader.cancel();
           if (completeMessage === '') {
             completeMessage = '...';
           }
-          callback(completeMessage, true, true);
+          callback(completeMessage, true, true, undefined, completeReasoning);
           return;
         }
 
@@ -119,6 +120,10 @@ export const invokeBedrockWithAPIKey = async (
                 }
                 if (bedrockChunk.text) {
                   completeMessage += bedrockChunk.text ?? '';
+                  appendTimes++;
+                  if (appendTimes > 5000 && appendTimes % 2 === 0) {
+                    continue;
+                  }
                   callback(
                     completeMessage,
                     false,
