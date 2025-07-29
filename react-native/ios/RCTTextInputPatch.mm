@@ -230,29 +230,19 @@ static IMP originalPressesEnded = NULL;
         NSString *documentsPath = [paths objectAtIndex:0];
         NSString *clipboardPath = [documentsPath stringByAppendingPathComponent:@"clipboard"];
 
-        // Create clipboard directory if it doesn't exist
+        // Remove entire clipboard directory if it exists
         NSFileManager *fileManager = [NSFileManager defaultManager];
         NSError *error = nil;
 
-        if (![fileManager fileExistsAtPath:clipboardPath]) {
-            [fileManager createDirectoryAtPath:clipboardPath
-                   withIntermediateDirectories:YES
-                                    attributes:nil
-                                         error:&error];
-            if (error) {
-                NSLog(@"❌ Failed to create clipboard directory: %@", error.localizedDescription);
-                return;
-            }
+        if ([fileManager fileExistsAtPath:clipboardPath]) {
+            [fileManager removeItemAtPath:clipboardPath error:&error];
         }
 
-        // Clear existing files in clipboard directory
-        NSArray *existingFiles = [fileManager contentsOfDirectoryAtPath:clipboardPath error:&error];
-        if (!error) {
-            for (NSString *fileName in existingFiles) {
-                NSString *filePath = [clipboardPath stringByAppendingPathComponent:fileName];
-                [fileManager removeItemAtPath:filePath error:nil];
-            }
-        }
+        // Create fresh clipboard directory
+        [fileManager createDirectoryAtPath:clipboardPath
+               withIntermediateDirectories:YES
+                                attributes:nil
+                                     error:&error];
 
         // Copy files from pasteboard
         for (NSInteger index = 0; index < pasteboardItems.count; index++) {
