@@ -9,6 +9,7 @@
 #import <React/RCTTextSelection.h>
 #import <React/RCTBridge.h>
 #import <React/UIView+React.h>
+#import "Modules/FilePaste/FilePasteModule.h"
 
 @implementation RCTTextInputPatch
 
@@ -193,22 +194,12 @@ static IMP originalPressesEnded = NULL;
 {
     // Check if the text being pasted is a file (URL or filename)
     if (text && [RCTTextInputPatch isFilePasteText:text]) {
-        // Get reference to self as RCTBaseTextInputView for event dispatch
-        RCTBaseTextInputView *textInputView = (RCTBaseTextInputView *)self;
-        RCTBridge *bridge = [textInputView valueForKey:@"_bridge"];
-        NSNumber *reactTag = textInputView.reactTag;
-
         // Copy files from pasteboard to clipboard directory, then send event
         [RCTTextInputPatch copyPasteboardFilesToClipboardDirectoryWithCompletion:^{
-            if (bridge && reactTag) {
-                // Send event on main thread after file copy completion
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [bridge enqueueJSCall:@"RCTDeviceEventEmitter"
-                                  method:@"emit"
-                                    args:@[@"onPasteFiles", @{@"target": reactTag}]
-                              completion:NULL];
-                });
-            }
+            // Send event using the FilePasteModule event emitter
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [FilePasteModule sendFilePasteEvent];
+            });
         }];
 
         // Return nil to prevent the file URL from being inserted as text

@@ -21,6 +21,8 @@
 		3A6846A82DA8FBBE003CFBEC /* NovaSonicService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6846A42DA8FBBE003CFBEC /* NovaSonicService.swift */; };
 		3A6846A92DA8FBBE003CFBEC /* VoiceChatModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A68469F2DA8FBBE003CFBEC /* VoiceChatModule.swift */; };
 		3A6846AA2DA8FBBE003CFBEC /* VoiceChatModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A68469E2DA8FBBE003CFBEC /* VoiceChatModule.m */; };
+		3AFE001F2E99999999999999 /* FilePasteModule.h in Sources */ = {isa = PBXBuildFile; fileRef = 3AFE001D2E99999999999999 /* FilePasteModule.h */; };
+		3AFE00202E99999999999999 /* FilePasteModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 3AFE001E2E99999999999999 /* FilePasteModule.m */; };
 		3ADD2B4F2E26337F00171D1D /* RCTNetworkingPatch.m in Sources */ = {isa = PBXBuildFile; fileRef = 3ADD2B4E2E26337F00171D1D /* RCTNetworkingPatch.m */; };
 		7923F2A519E6BC533C0F2749 /* libPods-SwiftChat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E954E88951117AE160D5618 /* libPods-SwiftChat.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
@@ -64,6 +66,8 @@
 		3A6846A22DA8FBBE003CFBEC /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 		3A6846A32DA8FBBE003CFBEC /* ConversationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationManager.swift; sourceTree = "<group>"; };
 		3A6846A42DA8FBBE003CFBEC /* NovaSonicService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NovaSonicService.swift; sourceTree = "<group>"; };
+		3AFE001D2E99999999999999 /* FilePasteModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FilePasteModule.h; sourceTree = "<group>"; };
+		3AFE001E2E99999999999999 /* FilePasteModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FilePasteModule.m; sourceTree = "<group>"; };
 		3A93A5722C932FC600C9F56C /* SwiftChat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = SwiftChat.entitlements; path = SwiftChat/SwiftChat.entitlements; sourceTree = "<group>"; };
 		3ADD2B4D2E26337F00171D1D /* RCTNetworkingPatch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTNetworkingPatch.h; sourceTree = "<group>"; };
 		3ADD2B4E2E26337F00171D1D /* RCTNetworkingPatch.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTNetworkingPatch.m; sourceTree = "<group>"; };
@@ -162,8 +166,18 @@
 			isa = PBXGroup;
 			children = (
 				3A6846A02DA8FBBE003CFBEC /* VoiceChat */,
+				3AFE001C2E99999999999999 /* FilePaste */,
 			);
 			path = Modules;
+			sourceTree = "<group>";
+		};
+		3AFE001C2E99999999999999 /* FilePaste */ = {
+			isa = PBXGroup;
+			children = (
+				3AFE001D2E99999999999999 /* FilePasteModule.h */,
+				3AFE001E2E99999999999999 /* FilePasteModule.m */,
+			);
+			path = FilePaste;
 			sourceTree = "<group>";
 		};
 		3A6846A52DA8FBBE003CFBEC /* Services */ = {
@@ -476,6 +490,7 @@
 				3A6846A82DA8FBBE003CFBEC /* NovaSonicService.swift in Sources */,
 				3A6846A92DA8FBBE003CFBEC /* VoiceChatModule.swift in Sources */,
 				3A6846AA2DA8FBBE003CFBEC /* VoiceChatModule.m in Sources */,
+				3AFE00202E99999999999999 /* FilePasteModule.m in Sources */,
 				3A22BD7A2D44D84300749246 /* PlatformModule.m in Sources */,
 				3A19D3892CCE980A001797C6 /* TestAddBridge.swift in Sources */,
 			);
