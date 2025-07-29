@@ -28,9 +28,6 @@ import {
   getOllamaApiUrl,
   getOllamaApiKey,
   getOpenAIApiKey,
-  getOpenAICompatApiKey,
-  getOpenAICompatApiURL,
-  getOpenAICompatModels,
   getOpenAIProxyEnabled,
   getRegion,
   getTextModel,
@@ -45,9 +42,6 @@ import {
   saveOllamaApiURL,
   saveOllamaApiKey,
   saveOpenAIApiKey,
-  saveOpenAICompatApiKey,
-  saveOpenAICompatApiURL,
-  saveOpenAICompatModels,
   saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
@@ -58,11 +52,17 @@ import {
   saveBedrockConfigMode,
   getBedrockApiKey,
   saveBedrockApiKey,
+  generateOpenAICompatModels,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';
-import { DropdownItem, Model, ModelTag, UpgradeInfo } from '../types/Chat.ts';
+import {
+  DropdownItem,
+  Model,
+  UpgradeInfo,
+  OpenAICompatConfig,
+} from '../types/Chat.ts';
 
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
@@ -85,6 +85,7 @@ import TabButton from './TabButton';
 import { useAppContext } from '../history/AppProvider.tsx';
 import { useTheme, ColorScheme } from '../theme';
 import { requestAllModelsByBedrockAPI } from '../api/bedrock-api-key.ts';
+import OpenAICompatConfigsSection from './OpenAICompatConfigsSection.tsx';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -106,15 +107,9 @@ function SettingsScreen(): React.JSX.Element {
   const [openAIProxyEnabled, setOpenAIProxyEnabled] = useState(
     getOpenAIProxyEnabled
   );
-  const [openAICompatApiURL, setOpenAICompatApiURL] = useState(
-    getOpenAICompatApiURL
-  );
-  const [openAICompatApiKey, setOpenAICompatApiKey] = useState(
-    getOpenAICompatApiKey
-  );
-  const [openAICompatModels, setOpenAICompatModels] = useState(
-    getOpenAICompatModels
-  );
+  const [openAICompatConfigs, setOpenAICompatConfigs] = useState<
+    OpenAICompatConfig[]
+  >([]);
   const [region, setRegion] = useState(getRegion);
   const [imageSize, setImageSize] = useState(getImageSize);
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
@@ -137,6 +132,14 @@ function SettingsScreen(): React.JSX.Element {
   const [bedrockApiKey, setBedrockApiKey] = useState(getBedrockApiKey);
   const { sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
+
+  // Handle OpenAI Compatible configs change
+  const handleOpenAICompatConfigsChange = useCallback(
+    (configs: OpenAICompatConfig[]) => {
+      setOpenAICompatConfigs(configs);
+    },
+    []
+  );
 
   const fetchAndSetModelNames = useCallback(async () => {
     controllerRef.current = new AbortController();
@@ -170,18 +173,8 @@ function SettingsScreen(): React.JSX.Element {
         saveImageModel(response.imageModel[0]);
       }
     }
-    let openAICompatModelList: Model[] = [];
-    if (openAICompatModels.length > 0) {
-      openAICompatModelList = openAICompatModels.split(',').map(modelId => {
-        modelId = modelId.trim().replace(/(\r\n|\n|\r)/gm, '');
-        const parts = modelId.split('/');
-        return {
-          modelId: modelId.trim(),
-          modelName: (parts.length === 2 ? parts[1] : modelId).trim(),
-          modelTag: ModelTag.OpenAICompatible,
-        } as Model;
-      });
-    }
+    const openAICompatModelList =
+      generateOpenAICompatModels(openAICompatConfigs);
     if (response.textModel.length === 0) {
       response.textModel = [
         ...DefaultTextModel,
@@ -220,7 +213,7 @@ function SettingsScreen(): React.JSX.Element {
     if (response.imageModel.length > 0 || response.textModel.length > 0) {
       saveAllModels(response);
     }
-  }, [bedrockConfigMode, openAICompatModels]);
+  }, [bedrockConfigMode, openAICompatConfigs]);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
@@ -287,23 +280,8 @@ function SettingsScreen(): React.JSX.Element {
   }, [openAIApiKey, fetchAndSetModelNames]);
 
   useEffect(() => {
-    if (openAICompatApiURL === getOpenAICompatApiURL()) {
-      return;
-    }
-    saveOpenAICompatApiURL(openAICompatApiURL);
-  }, [openAICompatApiURL]);
-
-  useEffect(() => {
-    if (openAICompatApiKey === getOpenAICompatApiKey()) {
-      return;
-    }
-    saveOpenAICompatApiKey(openAICompatApiKey);
-  }, [openAICompatApiKey]);
-
-  useEffect(() => {
-    saveOpenAICompatModels(openAICompatModels);
     fetchAndSetModelNames().then();
-  }, [openAICompatModels, fetchAndSetModelNames]);
+  }, [openAICompatConfigs, fetchAndSetModelNames]);
 
   useEffect(() => {
     if (bedrockConfigMode === getBedrockConfigMode()) {
@@ -507,30 +485,9 @@ function SettingsScreen(): React.JSX.Element {
               placeholder="Enter OpenAI API Key"
               secureTextEntry={true}
             />
-            <Text style={[styles.label, styles.middleLabel]}>
-              OpenAI Compatible
-            </Text>
-            <CustomTextInput
-              label="Base URL"
-              value={openAICompatApiURL}
-              onChangeText={setOpenAICompatApiURL}
-              placeholder="Enter Base URL"
-              secureTextEntry={false}
-            />
-            <CustomTextInput
-              label="API Key"
-              value={openAICompatApiKey}
-              onChangeText={setOpenAICompatApiKey}
-              placeholder="Enter API Key"
-              secureTextEntry={true}
-            />
-            <CustomTextInput
-              label="Model ID"
-              value={openAICompatModels}
-              onChangeText={setOpenAICompatModels}
-              placeholder="Enter Model IDs, split by comma"
-              secureTextEntry={false}
-              numberOfLines={4}
+            <OpenAICompatConfigsSection
+              isDark={isDark}
+              onConfigsChange={handleOpenAICompatConfigsChange}
             />
             {apiKey.length > 0 && apiUrl.length > 0 && (
               <View style={styles.proxySwitchContainer}>

@@ -19,7 +19,6 @@ import {
   getImageModel,
   getImageSize,
   getOpenAIApiKey,
-  getOpenAICompatApiURL,
   getRegion,
   getTextModel,
   getThinkingEnabled,
@@ -70,7 +69,7 @@ export const invokeBedrockWithCallBack = async (
     }
     if (
       currentModelTag === ModelTag.OpenAICompatible &&
-      getOpenAICompatApiURL().length === 0
+      getTextModel().apiUrl!.length === 0
     ) {
       callback('Please configure your OpenAI Compatible API URL', true, true);
       return;

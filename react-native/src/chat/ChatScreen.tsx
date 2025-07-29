@@ -122,12 +122,12 @@ function ChatScreen(): React.JSX.Element {
   const messagesRef = useRef(messages);
   const bedrockMessages = useRef<BedrockMessage[]>([]);
   const flatListRef = useRef<FlatList<SwiftChatMessage>>(null);
-  const textInputRef = useRef<TextInput>(null);
+  const textInputViewRef = useRef<TextInput>(null);
   const sessionIdRef = useRef(initialSessionId || getSessionId() + 1);
   const isCanceled = useRef(false);
   const { sendEvent, event, drawerType } = useAppContext();
   const sendEventRef = useRef(sendEvent);
-  const inputTexRef = useRef('');
+  const inputTextRef = useRef('');
   const [hasInputText, setHasInputText] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
@@ -247,7 +247,7 @@ function ChatScreen(): React.JSX.Element {
         <CustomHeaderRightButton
           onPress={() => {
             //clear input content and selected files
-            textInputRef?.current?.clear();
+            textInputViewRef?.current?.clear();
             setUsage(undefined);
             setSelectedFiles([]);
             if (
@@ -356,7 +356,7 @@ function ChatScreen(): React.JSX.Element {
 
   const showKeyboard = () => {
     setTimeout(() => {
-      textInputRef.current?.focus();
+      textInputViewRef.current?.focus();
     }, 100);
   };
 
@@ -701,7 +701,7 @@ function ChatScreen(): React.JSX.Element {
     <SafeAreaView style={styles.container}>
       <GiftedChat
         messageContainerRef={flatListRef}
-        textInputRef={textInputRef}
+        textInputRef={textInputViewRef}
         keyboardShouldPersistTaps="never"
         bottomOffset={
           Platform.OS === 'android'
@@ -890,27 +890,27 @@ function ChatScreen(): React.JSX.Element {
             blurOnSubmit: isMac,
             onSubmitEditing: () => {
               if (
-                inputTexRef.current.length > 0 &&
+                inputTextRef.current.length > 0 &&
                 chatStatusRef.current !== ChatStatus.Running
               ) {
                 const msg: SwiftChatMessage = {
-                  text: inputTexRef.current,
+                  text: inputTextRef.current,
                   user: { _id: 1 },
                   createdAt: new Date(),
                   _id: uuid.v4(),
                 };
                 onSend([msg]);
-                inputTexRef.current = '';
+                inputTextRef.current = '';
                 setHasInputText(false);
-                textInputRef.current?.clear();
+                textInputViewRef.current?.clear();
                 setTimeout(() => {
-                  textInputRef.current?.clear();
-                  textInputRef.current?.focus();
-                }, 10);
+                  textInputViewRef.current?.clear();
+                  textInputViewRef.current?.focus();
+                }, 20);
               } else {
                 setTimeout(() => {
-                  textInputRef.current?.focus();
-                }, 10);
+                  textInputViewRef.current?.focus();
+                }, 50);
               }
             },
           },
@@ -921,13 +921,13 @@ function ChatScreen(): React.JSX.Element {
             isMac &&
             text.length > 0 &&
             (text[text.length - 1] === '\n' ||
-              text.length - 1 === inputTexRef.current.length)
+              text.length - 1 === inputTextRef.current.length)
           ) {
             setTimeout(() => {
-              textInputRef.current?.focus();
-            }, 10);
+              textInputViewRef.current?.focus();
+            }, 50);
           }
-          inputTexRef.current = text;
+          inputTextRef.current = text;
           if (!hasInputText && text.length > 0) {
             setHasInputText(true);
           }

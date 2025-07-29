@@ -3,8 +3,6 @@ import {
   getApiUrl,
   getDeepSeekApiKey,
   getOpenAIApiKey,
-  getOpenAICompatApiKey,
-  getOpenAICompatApiURL,
   getOpenAIProxyEnabled,
   getTextModel,
 } from '../storage/StorageUtils.ts';
@@ -308,7 +306,7 @@ function getOpenAIMessages(
 
 function getApiKey(): string {
   if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
-    return getOpenAICompatApiKey();
+    return getTextModel().apiKey ?? '';
   } else if (getTextModel().modelId.includes('deepseek')) {
     return getDeepSeekApiKey();
   } else {
@@ -317,15 +315,15 @@ function getApiKey(): string {
 }
 
 function isOpenRouterRequest(): boolean {
-  return (
-    getTextModel().modelTag === ModelTag.OpenAICompatible &&
-    getOpenAICompatApiURL().startsWith('https://openrouter.ai/api')
-  );
+  if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
+    return getTextModel().apiUrl!.startsWith('https://openrouter.ai/api');
+  }
+  return false;
 }
 
 function getProxyRequestURL(): string {
   if (getTextModel().modelTag === ModelTag.OpenAICompatible) {
-    return getOpenAICompatApiURL() + '/chat/completions';
+    return getTextModel().apiUrl! + '/chat/completions';
   } else if (getTextModel().modelId.includes('deepseek')) {
     return '';
   } else {
@@ -338,7 +336,7 @@ function getApiURL(): string {
     if (getOpenAIProxyEnabled()) {
       return (isDev ? 'http://localhost:8080' : getApiUrl()) + '/api/openai';
     } else {
-      return getOpenAICompatApiURL() + '/chat/completions';
+      return getTextModel().apiUrl! + '/chat/completions';
     }
   } else if (getTextModel().modelId.includes('deepseek')) {
     return 'https://api.deepseek.com/chat/completions';

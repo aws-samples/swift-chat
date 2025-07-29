@@ -8,6 +8,8 @@ import {
   SystemPrompt,
   Usage,
   TokenResponse,
+  OpenAICompatConfig,
+  ModelTag,
 } from '../types/Chat.ts';
 import uuid from 'uuid';
 import {
@@ -50,6 +52,7 @@ const openAIApiKeyTag = keyPrefix + 'openAIApiKeyTag';
 const openAICompatApiKeyTag = keyPrefix + 'openAICompatApiKeyTag';
 const openAICompatApiURLKey = keyPrefix + 'openAICompatApiURLKey';
 const openAICompatModelsKey = keyPrefix + 'openAICompatModelsKey';
+const openAICompatConfigsKey = keyPrefix + 'openAICompatConfigsKey';
 const regionKey = keyPrefix + 'regionKey';
 const textModelKey = keyPrefix + 'textModelKey';
 const imageModelKey = keyPrefix + 'imageModelKey';
@@ -87,6 +90,7 @@ let currentReasoningExpanded: boolean | undefined;
 let currentModelOrder: Model[] | undefined;
 let currentBedrockConfigMode: string | undefined;
 let currentBedrockApiKey: string | undefined;
+let currentOpenAICompatibleConfig: OpenAICompatConfig[] | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -231,20 +235,6 @@ export function getOpenAICompatApiURL(): string {
 
 export function getOpenAICompatModels(): string {
   return storage.getString(openAICompatModelsKey) ?? '';
-}
-
-export function saveOpenAICompatApiKey(apiKey: string) {
-  currentOpenAICompatApiKey = apiKey;
-  encryptStorage.set(openAICompatApiKeyTag, apiKey);
-}
-
-export function saveOpenAICompatApiURL(apiUrl: string) {
-  currentOpenAICompatApiURL = apiUrl;
-  storage.set(openAICompatApiURLKey, apiUrl);
-}
-
-export function saveOpenAICompatModels(models: string) {
-  storage.set(openAICompatModelsKey, models);
 }
 
 export function saveHapticEnabled(enabled: boolean) {
@@ -665,4 +655,105 @@ export function getBedrockApiKey(): string {
     currentBedrockApiKey = encryptStorage.getString(bedrockApiKeyTag) ?? '';
     return currentBedrockApiKey;
   }
+}
+
+// OpenAI Compatible configurations functions
+export function saveOpenAICompatConfigs(configs: OpenAICompatConfig[]) {
+  currentOpenAICompatibleConfig = configs;
+  encryptStorage.set(openAICompatConfigsKey, JSON.stringify(configs));
+}
+
+export function getOpenAICompatConfigs(): OpenAICompatConfig[] {
+  if (currentOpenAICompatibleConfig) {
+    return currentOpenAICompatibleConfig;
+  } else {
+    const configsStr = encryptStorage.getString(openAICompatConfigsKey);
+    if (configsStr) {
+      currentOpenAICompatibleConfig = JSON.parse(
+        configsStr
+      ) as OpenAICompatConfig[];
+      return currentOpenAICompatibleConfig;
+    }
+    return [];
+  }
+}
+
+// Migration function to convert old single config to new multi-config format
+export function migrateOpenAICompatConfig() {
+  const existingConfigs = getOpenAICompatConfigs();
+  if (existingConfigs.length > 0) {
+    return; // Already migrated
+  }
+
+  const baseUrl = getOpenAICompatApiURL();
+  const apiKey = getOpenAICompatApiKey();
+  const modelIds = getOpenAICompatModels();
+
+  if (baseUrl || apiKey || modelIds) {
+    const domain = extractDomainFromUrl(baseUrl);
+    const newConfig: OpenAICompatConfig = {
+      id: uuid.v4(),
+      baseUrl,
+      apiKey,
+      modelIds,
+      name: domain || 'OpenAI Compatible',
+    };
+    saveOpenAICompatConfigs([newConfig]);
+
+    // Clear old storage keys
+    storage.delete(openAICompatApiURLKey);
+    encryptStorage.delete(openAICompatApiKeyTag);
+    storage.delete(openAICompatModelsKey);
+  }
+}
+
+// Helper function to extract domain from URL
+export function extractDomainFromUrl(url: string): string {
+  if (!url) {
+    return '';
+  }
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.replace('www.', '');
+    const parts = hostname.split('.');
+    if (parts.length > 1) {
+      return parts[parts.length - 2];
+    }
+    return parts[0];
+  } catch {
+    return '';
+  }
+}
+
+// Generate OpenAI Compatible models from configs
+export function generateOpenAICompatModels(
+  configs: OpenAICompatConfig[]
+): Model[] {
+  const openAICompatModelList: Model[] = [];
+
+  configs.forEach(config => {
+    if (config.modelIds && config.modelIds.length > 0 && config.baseUrl) {
+      const domain = extractDomainFromUrl(config.baseUrl);
+      const prefix = domain ? `${domain}/` : '';
+
+      const models = config.modelIds.split(',').map(modelId => {
+        modelId = modelId.trim().replace(/(\r\n|\n|\r)/gm, '');
+        const parts = modelId.split('/');
+        const displayName =
+          prefix + (parts.length === 2 ? parts[1] : modelId).trim();
+
+        return {
+          modelId: modelId,
+          modelName: displayName,
+          modelTag: ModelTag.OpenAICompatible,
+          uniqueId: config.id,
+          apiKey: config.apiKey ?? '',
+          apiUrl: config.baseUrl ?? '',
+        } as Model;
+      });
+      openAICompatModelList.push(...models);
+    }
+  });
+
+  return openAICompatModelList;
 }

@@ -23,6 +23,9 @@ export type Model = {
   modelId: string;
   modelName: string;
   modelTag?: string;
+  uniqueId?: string;
+  apiKey?: string;
+  apiUrl?: string;
 };
 
 export enum ModelTag {
@@ -35,6 +38,14 @@ export enum ModelTag {
 
 export type OllamaModel = {
   name: string;
+};
+
+export type OpenAICompatConfig = {
+  id: string;
+  baseUrl: string;
+  apiKey: string;
+  modelIds: string;
+  name?: string;
 };
 
 export type AllModel = {

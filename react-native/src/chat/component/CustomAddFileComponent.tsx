@@ -208,6 +208,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
   // Listen for paste files event from native layer (macOS Command+V)
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('onPasteFiles', () => {
+      console.log('Received onPasteFiles');
       handlePasteFilesRef.current().then();
     });
     return () => {

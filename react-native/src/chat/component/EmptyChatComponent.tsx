@@ -77,6 +77,7 @@ const createStyles = (colors: ColorScheme) =>
     greetingText: {
       fontSize: 16,
       fontWeight: '500',
+      paddingHorizontal: 16,
       textAlign: 'center',
       color: colors.textDarkGray,
       transform: [{ scaleY: -1 }, { scaleX: isAndroid ? -1 : 1 }],
