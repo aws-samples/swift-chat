@@ -34,7 +34,9 @@ import { useTheme } from '../../theme';
 import { isAndroid } from '../../utils/PlatformUtils.ts';
 
 const { FilePasteModule } = NativeModules;
-const eventEmitter = new NativeEventEmitter(FilePasteModule);
+const eventEmitter = FilePasteModule
+  ? new NativeEventEmitter(FilePasteModule)
+  : null;
 
 interface CustomRenderActionsProps {
   onFileSelected: (files: FileInfo[]) => void;
@@ -212,7 +214,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
   // Listen for paste files event from native layer (macOS Command+V)
   useEffect(() => {
     // Use NativeEventEmitter with FilePasteModule for more stable event handling
-    if (FilePasteModule) {
+    if (eventEmitter) {
       const subscription = eventEmitter.addListener('onPasteFiles', () => {
         handlePasteFilesRef.current().then();
       });
