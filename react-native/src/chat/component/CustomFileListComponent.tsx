@@ -24,7 +24,7 @@ interface CustomFileProps {
   files: FileInfo[];
   onFileUpdated?: (files: FileInfo[], isUpdate?: boolean) => void;
   mode?: DisplayMode;
-  hasInputText?: boolean;
+  isHideFileList?: boolean;
 }
 
 export enum DisplayMode {
@@ -67,7 +67,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
   files,
   onFileUpdated,
   mode = DisplayMode.Edit,
-  hasInputText = false,
+  isHideFileList = false,
 }) => {
   const { colors, isDark } = useTheme();
   const [visible, setIsVisible] = useState(false);
@@ -308,7 +308,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
         }),
         // allow adding files by command+v after input texts
         ...(files.length === 0 &&
-          hasInputText && {
+          isHideFileList && {
             opacity: 0,
             position: 'absolute',
             height: 0,

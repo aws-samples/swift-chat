@@ -849,6 +849,7 @@ function ChatScreen(): React.JSX.Element {
             chatMode={modeRef.current}
             isShowSystemPrompt={showSystemPrompt}
             hasInputText={hasInputText}
+            chatStatus={chatStatus}
             systemPrompt={systemPrompt}
           />
         )}

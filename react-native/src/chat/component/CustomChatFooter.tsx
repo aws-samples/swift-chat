@@ -1,6 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
-import { ChatMode, FileInfo, SystemPrompt } from '../../types/Chat.ts';
+import {
+  ChatMode,
+  ChatStatus,
+  FileInfo,
+  SystemPrompt,
+} from '../../types/Chat.ts';
 import {
   CustomFileListComponent,
   DisplayMode,
@@ -19,6 +24,7 @@ interface CustomComposerProps {
   chatMode: ChatMode;
   isShowSystemPrompt: boolean;
   hasInputText?: boolean;
+  chatStatus?: ChatStatus;
   systemPrompt?: SystemPrompt | null;
 }
 
@@ -30,6 +36,7 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
   chatMode,
   isShowSystemPrompt,
   hasInputText = false,
+  chatStatus,
   systemPrompt,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -75,6 +82,7 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
   const handleCloseModal = () => {
     setModalVisible(false);
   };
+  const isHideFileList = hasInputText || chatStatus === ChatStatus.Running;
 
   return (
     <>
@@ -98,12 +106,12 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
               height: 0,
             }),
         }}>
-        {(hasInputText || files.length > 0) && (
+        {(isHideFileList || files.length > 0) && (
           <CustomFileListComponent
             files={files}
             onFileUpdated={onFileUpdated}
             mode={chatMode === ChatMode.Image ? modeOnImage : DisplayMode.Edit}
-            hasInputText={hasInputText}
+            isHideFileList={isHideFileList}
           />
         )}
         {((isShowSystemPrompt && chatMode === ChatMode.Text) ||
