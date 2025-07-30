@@ -63,6 +63,7 @@ import {
   Model,
   UpgradeInfo,
   OpenAICompatConfig,
+  ModelTag,
 } from '../types/Chat.ts';
 
 import packageJson from '../../package.json';
@@ -133,6 +134,7 @@ function SettingsScreen(): React.JSX.Element {
   const [bedrockApiKey, setBedrockApiKey] = useState(getBedrockApiKey);
   const { sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
+  const openAICompatConfigsRef = useRef(openAICompatConfigs);
 
   // Handle OpenAI Compatible configs change
   const handleOpenAICompatConfigsChange = useCallback(
@@ -142,87 +144,121 @@ function SettingsScreen(): React.JSX.Element {
     []
   );
 
-  const fetchAndSetModelNames = useCallback(async () => {
-    console.log('fetchAndSetModelNames');
-    controllerRef.current = new AbortController();
+  const fetchAndSetModelNames = useCallback(
+    async (shouldFetchOllama = false, shouldFetchBedrock = false) => {
+      controllerRef.current = new AbortController();
 
-    let ollamaModels: Model[] = [];
-    if (getOllamaApiUrl().length > 0) {
-      ollamaModels = await requestAllOllamaModels();
-    }
+      // Get Ollama models
+      let ollamaModels: Model[] = [];
+      if (shouldFetchOllama && getOllamaApiUrl().length > 0) {
+        ollamaModels = await requestAllOllamaModels();
+      } else if (!shouldFetchOllama) {
+        // Filter existing Ollama models from current textModels
+        ollamaModels = textModels.filter(
+          model => model.modelTag === ModelTag.Ollama
+        );
+      }
 
-    const response =
-      bedrockConfigMode === 'bedrock'
-        ? await requestAllModelsByBedrockAPI()
-        : await requestAllModels();
-    addBedrockPrefixToDeepseekModels(response.textModel);
-    if (Platform.OS === 'android') {
-      response.textModel = response.textModel.filter(
-        model => model.modelName !== 'Nova Sonic'
+      // Get Bedrock models
+      let bedrockResponse = {
+        textModel: [] as Model[],
+        imageModel: [] as Model[],
+      };
+      if (shouldFetchBedrock) {
+        bedrockResponse =
+          bedrockConfigMode === 'bedrock'
+            ? await requestAllModelsByBedrockAPI()
+            : await requestAllModels();
+        addBedrockPrefixToDeepseekModels(bedrockResponse.textModel);
+        if (Platform.OS === 'android') {
+          bedrockResponse.textModel = bedrockResponse.textModel.filter(
+            model => model.modelName !== 'Nova Sonic'
+          );
+        }
+      } else {
+        // Filter existing Bedrock models from current models
+        bedrockResponse.textModel = textModels.filter(
+          model => !model.modelTag || model.modelTag === ModelTag.Bedrock
+        );
+        bedrockResponse.imageModel = imageModels;
+      }
+
+      // Handle image models
+      if (bedrockResponse.imageModel.length > 0) {
+        setImageModels(bedrockResponse.imageModel);
+        const imageModel = getImageModel();
+        const targetModels = bedrockResponse.imageModel.filter(
+          model => model.modelName === imageModel.modelName
+        );
+        if (targetModels && targetModels.length === 1) {
+          setSelectedImageModel(targetModels[0].modelId);
+          saveImageModel(targetModels[0]);
+        } else {
+          setSelectedImageModel(bedrockResponse.imageModel[0].modelId);
+          saveImageModel(bedrockResponse.imageModel[0]);
+        }
+      }
+
+      // Generate OpenAI Compatible models
+      const openAICompatModelList = generateOpenAICompatModels(
+        openAICompatConfigsRef.current
       );
-    }
-    if (response.imageModel.length > 0) {
-      setImageModels(response.imageModel);
-      const imageModel = getImageModel();
-      const targetModels = response.imageModel.filter(
-        model => model.modelName === imageModel.modelName
+
+      // Combine all text models
+      const allTextModels =
+        bedrockResponse.textModel.length === 0
+          ? [
+              ...DefaultTextModel,
+              ...ollamaModels,
+              ...getDefaultApiKeyModels(),
+              ...openAICompatModelList,
+            ]
+          : [
+              ...bedrockResponse.textModel,
+              ...ollamaModels,
+              ...getDefaultApiKeyModels(),
+              ...openAICompatModelList,
+            ];
+
+      setTextModels(allTextModels);
+
+      // Update selected text model
+      const textModel = getTextModel();
+      const targetModels = allTextModels.filter(
+        model => model.modelName === textModel.modelName
       );
       if (targetModels && targetModels.length === 1) {
-        setSelectedImageModel(targetModels[0].modelId);
-        saveImageModel(targetModels[0]);
+        setSelectedTextModel(targetModels[0]);
+        saveTextModel(targetModels[0]);
+        updateTextModelUsageOrder(targetModels[0]);
       } else {
-        setSelectedImageModel(response.imageModel[0].modelId);
-        saveImageModel(response.imageModel[0]);
+        const defaultMissMatchModel = allTextModels.filter(
+          model => model.modelName === 'Claude 3 Sonnet'
+        );
+        if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
+          setSelectedTextModel(defaultMissMatchModel[0]);
+          saveTextModel(defaultMissMatchModel[0]);
+          updateTextModelUsageOrder(defaultMissMatchModel[0]);
+        }
       }
-    }
-    const openAICompatModelList =
-      generateOpenAICompatModels(openAICompatConfigs);
-    if (response.textModel.length === 0) {
-      response.textModel = [
-        ...DefaultTextModel,
-        ...ollamaModels,
-        ...getDefaultApiKeyModels(),
-        ...openAICompatModelList,
-      ];
-    } else {
-      response.textModel = [
-        ...response.textModel,
-        ...ollamaModels,
-        ...getDefaultApiKeyModels(),
-        ...openAICompatModelList,
-      ];
-    }
-    setTextModels(response.textModel);
-    const textModel = getTextModel();
-    const targetModels = response.textModel.filter(
-      model => model.modelName === textModel.modelName
-    );
-    if (targetModels && targetModels.length === 1) {
-      setSelectedTextModel(targetModels[0]);
-      saveTextModel(targetModels[0]);
-      updateTextModelUsageOrder(targetModels[0]);
-    } else {
-      const defaultMissMatchModel = response.textModel.filter(
-        model => model.modelName === 'Claude 3 Sonnet'
-      );
-      if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
-        setSelectedTextModel(defaultMissMatchModel[0]);
-        saveTextModel(defaultMissMatchModel[0]);
-        updateTextModelUsageOrder(defaultMissMatchModel[0]);
+
+      sendEventRef.current('modelChanged');
+      if (bedrockResponse.imageModel.length > 0 || allTextModels.length > 0) {
+        saveAllModels({
+          textModel: allTextModels,
+          imageModel: bedrockResponse.imageModel,
+        });
       }
-    }
-    sendEventRef.current('modelChanged');
-    if (response.imageModel.length > 0 || response.textModel.length > 0) {
-      saveAllModels(response);
-    }
-  }, [bedrockConfigMode, openAICompatConfigs]);
+    },
+    [bedrockConfigMode, textModels, imageModels]
+  );
 
   const fetchAndSetModelNamesRef = useRef(fetchAndSetModelNames);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
       setCost(getTotalCost(getModelUsage()).toString());
-      fetchAndSetModelNamesRef.current().then();
+      fetchAndSetModelNamesRef.current(true, true).then();
     });
   }, [navigation]);
 
@@ -247,7 +283,7 @@ function SettingsScreen(): React.JSX.Element {
       return;
     }
     saveKeys(apiUrl.trim(), apiKey.trim());
-    fetchAndSetModelNamesRef.current().then();
+    fetchAndSetModelNamesRef.current(false, true).then();
     fetchUpgradeInfo().then();
   }, [apiUrl, apiKey]);
 
@@ -256,7 +292,7 @@ function SettingsScreen(): React.JSX.Element {
       return;
     }
     saveOllamaApiURL(ollamaApiUrl);
-    fetchAndSetModelNamesRef.current().then();
+    fetchAndSetModelNamesRef.current(true, false).then();
   }, [ollamaApiUrl]);
 
   useEffect(() => {
@@ -264,7 +300,7 @@ function SettingsScreen(): React.JSX.Element {
       return;
     }
     saveOllamaApiKey(ollamaApiKey);
-    fetchAndSetModelNamesRef.current().then();
+    fetchAndSetModelNamesRef.current(true, false).then();
   }, [ollamaApiKey]);
 
   useEffect(() => {
@@ -272,7 +308,7 @@ function SettingsScreen(): React.JSX.Element {
       return;
     }
     saveDeepSeekApiKey(deepSeekApiKey);
-    fetchAndSetModelNamesRef.current().then();
+    fetchAndSetModelNamesRef.current(false, false).then();
   }, [deepSeekApiKey]);
 
   useEffect(() => {
@@ -280,24 +316,25 @@ function SettingsScreen(): React.JSX.Element {
       return;
     }
     saveOpenAIApiKey(openAIApiKey);
-    fetchAndSetModelNamesRef.current().then();
+    fetchAndSetModelNamesRef.current(false, false).then();
   }, [openAIApiKey]);
 
   useEffect(() => {
-    const currentConfigs = getOpenAICompatConfigs();
+    const currentConfigs = openAICompatConfigsRef.current;
     if (
       JSON.stringify(openAICompatConfigs) === JSON.stringify(currentConfigs)
     ) {
       return;
     }
-    fetchAndSetModelNamesRef.current().then();
+    openAICompatConfigsRef.current = openAICompatConfigs;
+    fetchAndSetModelNamesRef.current(false, false).then();
   }, [openAICompatConfigs]);
 
   useEffect(() => {
     if (bedrockConfigMode === getBedrockConfigMode()) {
       return;
     }
-    fetchAndSetModelNamesRef.current().then();
+    fetchAndSetModelNamesRef.current(false, true).then();
     saveBedrockConfigMode(bedrockConfigMode);
   }, [bedrockConfigMode]);
 
@@ -305,7 +342,7 @@ function SettingsScreen(): React.JSX.Element {
     if (bedrockApiKey === getBedrockApiKey()) {
       return;
     }
-    fetchAndSetModelNamesRef.current().then();
+    fetchAndSetModelNamesRef.current(false, true).then();
     saveBedrockApiKey(bedrockApiKey);
   }, [bedrockApiKey]);
 
@@ -450,7 +487,7 @@ function SettingsScreen(): React.JSX.Element {
                 if (item.value !== '' && item.value !== region) {
                   setRegion(item.value);
                   saveRegion(item.value);
-                  fetchAndSetModelNames().then();
+                  fetchAndSetModelNames(false, true).then();
                 }
               }}
               placeholder="Select a region"
