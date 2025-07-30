@@ -646,14 +646,26 @@ function ChatScreen(): React.JSX.Element {
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
         if (modeRef.current === ChatMode.Text) {
-          message[0].text = getFileTypeSummary(files);
+          // use system prompt name as user prompt
+          if (systemPromptRef.current) {
+            message[0].text = systemPromptRef.current.name;
+          } else {
+            message[0].text = getFileTypeSummary(files);
+          }
         } else {
+          // use selected system prompt as user prompt
           message[0].text = systemPromptRef.current?.prompt ?? 'Empty Message';
           if (systemPromptRef.current?.id === -7) {
             saveLastVirtualTryOnImgFile(files[0]);
             saveCurrentImageSystemPrompt(null);
             sendEventRef.current('unSelectSystemPrompt');
           }
+        }
+      } else {
+        // append user prompt after system prompt in image mode
+        if (modeRef.current === ChatMode.Image && systemPromptRef.current) {
+          message[0].text =
+            systemPromptRef.current?.prompt + '\n' + message[0].text;
         }
       }
       if (selectedFilesRef.current.length > 0) {
