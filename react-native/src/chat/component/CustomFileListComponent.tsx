@@ -306,6 +306,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
           marginLeft: 0,
           paddingTop: 4,
         }),
+        // allow adding files by command+v after input texts
         ...(files.length === 0 &&
           hasInputText && {
             opacity: 0,

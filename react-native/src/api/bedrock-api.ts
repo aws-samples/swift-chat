@@ -357,7 +357,7 @@ export const requestAllModels = async (): Promise<AllModel> => {
     }));
     return allModel;
   } catch (error) {
-    console.log('Error fetching models:', error);
+    console.log('SwiftChat Server Error fetching models:', error);
     clearTimeout(timeoutId);
     return { imageModel: [], textModel: [] };
   }

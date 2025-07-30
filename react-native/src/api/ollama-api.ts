@@ -240,7 +240,7 @@ export const requestAllOllamaModels = async (): Promise<Model[]> => {
     }));
   } catch (error) {
     clearTimeout(timeoutId);
-    console.log('Error fetching models:', error);
+    console.log('Ollama API Error fetching models:', error);
     return [];
   }
 };

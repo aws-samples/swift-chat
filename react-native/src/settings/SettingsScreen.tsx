@@ -53,6 +53,7 @@ import {
   getBedrockApiKey,
   saveBedrockApiKey,
   generateOpenAICompatModels,
+  getOpenAICompatConfigs,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -109,7 +110,7 @@ function SettingsScreen(): React.JSX.Element {
   );
   const [openAICompatConfigs, setOpenAICompatConfigs] = useState<
     OpenAICompatConfig[]
-  >([]);
+  >(getOpenAICompatConfigs);
   const [region, setRegion] = useState(getRegion);
   const [imageSize, setImageSize] = useState(getImageSize);
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
@@ -142,6 +143,7 @@ function SettingsScreen(): React.JSX.Element {
   );
 
   const fetchAndSetModelNames = useCallback(async () => {
+    console.log('fetchAndSetModelNames');
     controllerRef.current = new AbortController();
 
     let ollamaModels: Model[] = [];
@@ -215,12 +217,14 @@ function SettingsScreen(): React.JSX.Element {
     }
   }, [bedrockConfigMode, openAICompatConfigs]);
 
+  const fetchAndSetModelNamesRef = useRef(fetchAndSetModelNames);
+
   useEffect(() => {
     return navigation.addListener('focus', () => {
       setCost(getTotalCost(getModelUsage()).toString());
-      fetchAndSetModelNames().then();
+      fetchAndSetModelNamesRef.current().then();
     });
-  }, [navigation, fetchAndSetModelNames]);
+  }, [navigation]);
 
   const toggleHapticFeedback = (value: boolean) => {
     setHapticEnabled(value);
@@ -243,61 +247,67 @@ function SettingsScreen(): React.JSX.Element {
       return;
     }
     saveKeys(apiUrl.trim(), apiKey.trim());
-    fetchAndSetModelNames().then();
+    fetchAndSetModelNamesRef.current().then();
     fetchUpgradeInfo().then();
-  }, [apiUrl, apiKey, fetchAndSetModelNames]);
+  }, [apiUrl, apiKey]);
 
   useEffect(() => {
     if (ollamaApiUrl === getOllamaApiUrl()) {
       return;
     }
     saveOllamaApiURL(ollamaApiUrl);
-    fetchAndSetModelNames().then();
-  }, [ollamaApiUrl, fetchAndSetModelNames]);
+    fetchAndSetModelNamesRef.current().then();
+  }, [ollamaApiUrl]);
 
   useEffect(() => {
     if (ollamaApiKey === getOllamaApiKey()) {
       return;
     }
     saveOllamaApiKey(ollamaApiKey);
-    fetchAndSetModelNames().then();
-  }, [ollamaApiKey, fetchAndSetModelNames]);
+    fetchAndSetModelNamesRef.current().then();
+  }, [ollamaApiKey]);
 
   useEffect(() => {
     if (deepSeekApiKey === getDeepSeekApiKey()) {
       return;
     }
     saveDeepSeekApiKey(deepSeekApiKey);
-    fetchAndSetModelNames().then();
-  }, [deepSeekApiKey, fetchAndSetModelNames]);
+    fetchAndSetModelNamesRef.current().then();
+  }, [deepSeekApiKey]);
 
   useEffect(() => {
     if (openAIApiKey === getOpenAIApiKey()) {
       return;
     }
     saveOpenAIApiKey(openAIApiKey);
-    fetchAndSetModelNames().then();
-  }, [openAIApiKey, fetchAndSetModelNames]);
+    fetchAndSetModelNamesRef.current().then();
+  }, [openAIApiKey]);
 
   useEffect(() => {
-    fetchAndSetModelNames().then();
-  }, [openAICompatConfigs, fetchAndSetModelNames]);
+    const currentConfigs = getOpenAICompatConfigs();
+    if (
+      JSON.stringify(openAICompatConfigs) === JSON.stringify(currentConfigs)
+    ) {
+      return;
+    }
+    fetchAndSetModelNamesRef.current().then();
+  }, [openAICompatConfigs]);
 
   useEffect(() => {
     if (bedrockConfigMode === getBedrockConfigMode()) {
       return;
     }
-    fetchAndSetModelNames().then();
+    fetchAndSetModelNamesRef.current().then();
     saveBedrockConfigMode(bedrockConfigMode);
-  }, [bedrockConfigMode, fetchAndSetModelNames]);
+  }, [bedrockConfigMode]);
 
   useEffect(() => {
     if (bedrockApiKey === getBedrockApiKey()) {
       return;
     }
-    fetchAndSetModelNames().then();
+    fetchAndSetModelNamesRef.current().then();
     saveBedrockApiKey(bedrockApiKey);
-  }, [bedrockApiKey, fetchAndSetModelNames]);
+  }, [bedrockApiKey]);
 
   const fetchUpgradeInfo = async () => {
     if (isMac || Platform.OS === 'android') {

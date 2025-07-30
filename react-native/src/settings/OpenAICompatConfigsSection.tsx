@@ -156,7 +156,7 @@ const createStyles = (colors: ColorScheme) =>
   StyleSheet.create({
     label: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '500',
       color: colors.text,
     },
     openAICompatSection: {

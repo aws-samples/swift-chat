@@ -10,9 +10,11 @@ import {
   TokenResponse,
   OpenAICompatConfig,
   ModelTag,
+  FileInfo,
 } from '../types/Chat.ts';
 import uuid from 'uuid';
 import {
+  DefaultImageSystemPrompts,
   DefaultRegion,
   DefaultVoiceSystemPrompts,
   getDefaultImageModels,
@@ -62,6 +64,7 @@ const modelUsageKey = keyPrefix + 'modelUsageKey';
 const systemPromptsKey = keyPrefix + 'systemPromptsKey';
 const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
 const currentVoiceSystemPromptKey = keyPrefix + 'currentVoiceSystemPromptKey';
+const currentImageSystemPromptKey = keyPrefix + 'currentImageSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
 const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
@@ -71,6 +74,7 @@ const voiceIdKey = keyPrefix + 'voiceIdKey';
 const tokenInfoKey = keyPrefix + 'tokenInfo';
 const bedrockConfigModeKey = keyPrefix + 'bedrockConfigModeKey';
 const bedrockApiKeyTag = keyPrefix + 'bedrockApiKeyTag';
+const lastVirtualTryOnImgFileTag = keyPrefix + 'lastVirtualTryOnImgFileTag';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -91,6 +95,7 @@ let currentModelOrder: Model[] | undefined;
 let currentBedrockConfigMode: string | undefined;
 let currentBedrockApiKey: string | undefined;
 let currentOpenAICompatibleConfig: OpenAICompatConfig[] | undefined;
+let currentVirtualTryOnImgFile: FileInfo | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -441,6 +446,21 @@ export function getCurrentVoiceSystemPrompt(): SystemPrompt | null {
   return null;
 }
 
+export function saveCurrentImageSystemPrompt(prompts: SystemPrompt | null) {
+  storage.set(
+    currentImageSystemPromptKey,
+    prompts ? JSON.stringify(prompts) : ''
+  );
+}
+
+export function getCurrentImageSystemPrompt(): SystemPrompt | null {
+  const promptString = storage.getString(currentImageSystemPromptKey) ?? '';
+  if (promptString.length > 0) {
+    return JSON.parse(promptString) as SystemPrompt;
+  }
+  return null;
+}
+
 export function saveSystemPrompts(prompts: SystemPrompt[], type?: string) {
   // get all prompt
   currentSystemPrompts = prompts;
@@ -477,6 +497,14 @@ export function getSystemPrompts(type?: string): SystemPrompt[] {
     ) {
       currentSystemPrompts = currentSystemPrompts.concat(
         DefaultVoiceSystemPrompts
+      );
+      saveAllSystemPrompts(currentSystemPrompts);
+    }
+    if (
+      currentSystemPrompts.filter(p => p.promptType === 'image').length === 0
+    ) {
+      currentSystemPrompts = currentSystemPrompts.concat(
+        DefaultImageSystemPrompts
       );
       saveAllSystemPrompts(currentSystemPrompts);
     }
@@ -654,6 +682,25 @@ export function getBedrockApiKey(): string {
   } else {
     currentBedrockApiKey = encryptStorage.getString(bedrockApiKeyTag) ?? '';
     return currentBedrockApiKey;
+  }
+}
+
+// Virtual try-on last base image file
+export function saveLastVirtualTryOnImgFile(file: FileInfo) {
+  currentVirtualTryOnImgFile = file;
+  storage.set(lastVirtualTryOnImgFileTag, JSON.stringify(file));
+}
+
+export function getLastVirtualTryOnImgFile(): FileInfo | null {
+  if (currentVirtualTryOnImgFile) {
+    return currentVirtualTryOnImgFile;
+  } else {
+    const fileString = storage.getString(lastVirtualTryOnImgFileTag) ?? '';
+    if (fileString) {
+      currentVirtualTryOnImgFile = JSON.parse(fileString) as FileInfo;
+      return currentVirtualTryOnImgFile;
+    }
+    return null;
   }
 }
 

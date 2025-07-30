@@ -302,7 +302,7 @@ export const requestAllModelsByBedrockAPI = async (): Promise<AllModel> => {
 
     return { imageModel: [], textModel: [] };
   } catch (error) {
-    console.log('Error fetching models:', error);
+    console.log('Bedrock API Error fetching models:', error);
     clearTimeout(timeoutId);
     return { imageModel: [], textModel: [] };
   }

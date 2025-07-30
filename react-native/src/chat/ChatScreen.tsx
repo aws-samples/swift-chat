@@ -17,7 +17,7 @@ import { voiceChatService } from './service/VoiceChatService';
 import AudioWaveformComponent, {
   AudioWaveformRef,
 } from './component/AudioWaveformComponent';
-import { useTheme, ColorScheme } from '../theme';
+import { ColorScheme, useTheme } from '../theme';
 import {
   invokeBedrockWithCallBack as invokeBedrockWithCallBack,
   requestToken,
@@ -32,12 +32,15 @@ import {
   getCurrentSystemPrompt,
   getCurrentVoiceSystemPrompt,
   getImageModel,
+  getLastVirtualTryOnImgFile,
   getMessagesBySessionId,
   getSessionId,
   getTextModel,
   isTokenValid,
+  saveCurrentImageSystemPrompt,
   saveCurrentSystemPrompt,
   saveCurrentVoiceSystemPrompt,
+  saveLastVirtualTryOnImgFile,
   saveMessageList,
   saveMessages,
   updateTotalUsage,
@@ -175,9 +178,6 @@ function ChatScreen(): React.JSX.Element {
 
   useEffect(() => {
     selectedFilesRef.current = selectedFiles;
-    if (selectedFiles.length > 0) {
-      setShowSystemPrompt(false);
-    }
   }, [selectedFiles]);
 
   // Initialize voice chat service
@@ -199,7 +199,7 @@ function ChatScreen(): React.JSX.Element {
       }
     );
 
-    // Clean up on unmount
+    // Clean up on unmounting
     return () => {
       voiceChatService.cleanup();
     };
@@ -285,7 +285,17 @@ function ChatScreen(): React.JSX.Element {
         }
         saveCurrentMessages();
       }
-      modeRef.current = mode;
+      if (modeRef.current === ChatMode.Image) {
+        setShowSystemPrompt(true);
+      }
+      if (modeRef.current !== mode) {
+        // when change chat mode, clear system prompt and files
+        modeRef.current = mode;
+        setTimeout(() => {
+          sendEventRef.current?.('unSelectSystemPrompt');
+        }, 50);
+        setSelectedFiles([]);
+      }
       setChatStatus(ChatStatus.Init);
       sendEventRef.current('');
       setUsage(undefined);
@@ -303,6 +313,9 @@ function ChatScreen(): React.JSX.Element {
       setSystemPrompt(null);
       saveCurrentSystemPrompt(null);
       saveCurrentVoiceSystemPrompt(null);
+      saveCurrentImageSystemPrompt(null);
+      //notify to unselect prompt
+      sendEventRef.current?.('unSelectSystemPrompt');
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
@@ -416,7 +429,7 @@ function ChatScreen(): React.JSX.Element {
     };
   }, []);
 
-  // save current message
+  // save the current message
   const saveCurrentMessages = () => {
     if (messagesRef.current.length === 0) {
       return;
@@ -624,7 +637,7 @@ function ChatScreen(): React.JSX.Element {
   const onSend = useCallback((message: SwiftChatMessage[] = []) => {
     // Reset user scroll state when sending a new message
     setUserScrolled(false);
-    setShowSystemPrompt(false);
+    setShowSystemPrompt(modeRef.current === ChatMode.Image);
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
       showInfo('please wait for all videos to be ready');
@@ -632,10 +645,16 @@ function ChatScreen(): React.JSX.Element {
     }
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
-        message[0].text =
-          modeRef.current === ChatMode.Text
-            ? getFileTypeSummary(files)
-            : 'Virtual try-on';
+        if (modeRef.current === ChatMode.Text) {
+          message[0].text = getFileTypeSummary(files);
+        } else {
+          message[0].text = systemPromptRef.current?.prompt ?? 'Empty Message';
+          if (systemPromptRef.current?.id === -7) {
+            saveLastVirtualTryOnImgFile(files[0]);
+            saveCurrentImageSystemPrompt(null);
+            sendEventRef.current('unSelectSystemPrompt');
+          }
+        }
       }
       if (selectedFilesRef.current.length > 0) {
         message[0].image = JSON.stringify(selectedFilesRef.current);
@@ -656,7 +675,15 @@ function ChatScreen(): React.JSX.Element {
 
   const handleNewFileSelected = (files: FileInfo[]) => {
     setSelectedFiles(prevFiles => {
-      return checkFileNumberLimit(prevFiles, files);
+      const isVirtualTryOn =
+        modeRef.current === ChatMode.Image &&
+        systemPromptRef.current?.id === -7;
+      return checkFileNumberLimit(
+        prevFiles,
+        files,
+        modeRef.current,
+        isVirtualTryOn
+      );
     });
   };
 
@@ -778,6 +805,7 @@ function ChatScreen(): React.JSX.Element {
                 trigger(HapticFeedbackTypes.impactMedium);
               });
             }}
+            systemPrompt={systemPrompt}
           />
         )}
         renderChatFooter={() => (
@@ -791,8 +819,22 @@ function ChatScreen(): React.JSX.Element {
               }
             }}
             onSystemPromptUpdated={prompt => {
+              const lastPromptIsVirtualTryOn = systemPrompt?.id === -7;
               setSystemPrompt(prompt);
-              if (isNovaSonic) {
+              if (modeRef.current === ChatMode.Image) {
+                saveCurrentImageSystemPrompt(prompt);
+                if (prompt?.id === -7) {
+                  const lastVirtualTryOnImgFile = getLastVirtualTryOnImgFile();
+                  if (lastVirtualTryOnImgFile) {
+                    setSelectedFiles([lastVirtualTryOnImgFile]);
+                  }
+                } else {
+                  //clear virtual try on image when prompt changes
+                  if (selectedFiles.length > 0 && lastPromptIsVirtualTryOn) {
+                    setSelectedFiles([]);
+                  }
+                }
+              } else if (isNovaSonic) {
                 saveCurrentVoiceSystemPrompt(prompt);
                 if (chatStatus === ChatStatus.Running) {
                   endVoiceConversationRef.current?.();
@@ -807,6 +849,7 @@ function ChatScreen(): React.JSX.Element {
             chatMode={modeRef.current}
             isShowSystemPrompt={showSystemPrompt}
             hasInputText={hasInputText}
+            systemPrompt={systemPrompt}
           />
         )}
         renderMessage={props => {

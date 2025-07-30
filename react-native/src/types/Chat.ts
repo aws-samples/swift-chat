@@ -134,7 +134,7 @@ export interface SystemPrompt {
   name: string;
   prompt: string;
   includeHistory: boolean;
-  promptType?: string; // 'voice' or undefined
+  promptType?: string; // 'image' 'voice' or undefined
   allowInterruption?: boolean;
 }
 
