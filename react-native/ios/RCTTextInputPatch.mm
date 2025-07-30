@@ -14,6 +14,7 @@
 @implementation RCTTextInputPatch
 
 static BOOL altKeyPressed = NO;
+static BOOL commandPressed = NO;
 static IMP originalTextInputShouldChangeTextIMP = NULL;
 static IMP originalPressesBegan = NULL;
 static IMP originalPressesEnded = NULL;
@@ -86,6 +87,18 @@ static IMP originalPressesEnded = NULL;
             altKeyPressed = YES;
             didHandleEvent = YES;
         }
+        if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftGUI ||
+            press.key.keyCode == UIKeyboardHIDUsageKeyboardRightGUI) {
+            commandPressed = YES;
+        }
+        if (press.key.keyCode == UIKeyboardHIDUsageKeyboardV) {
+            [RCTTextInputPatch copyPasteboardFilesToClipboardDirectoryWithCompletion:^{
+                // Send event using the FilePasteModule event emitter
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [FilePasteModule sendFilePasteEvent];
+                });
+            } handleScreenshots:YES];
+        }
     }
 
     if (!didHandleEvent) {
@@ -106,6 +119,10 @@ static IMP originalPressesEnded = NULL;
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightAlt) {
             altKeyPressed = NO;
             didHandleEvent = YES;
+        }
+        if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftGUI ||
+            press.key.keyCode == UIKeyboardHIDUsageKeyboardRightGUI) {
+            commandPressed = NO;
         }
     }
 
@@ -200,7 +217,7 @@ static IMP originalPressesEnded = NULL;
             dispatch_async(dispatch_get_main_queue(), ^{
                 [FilePasteModule sendFilePasteEvent];
             });
-        }];
+        } handleScreenshots:NO];
 
         // Return nil to prevent the file URL from being inserted as text
         return nil;
@@ -217,7 +234,7 @@ static IMP originalPressesEnded = NULL;
     return text;
 }
 
-+ (void)copyPasteboardFilesToClipboardDirectoryWithCompletion:(void(^)(void))completion
++ (void)copyPasteboardFilesToClipboardDirectoryWithCompletion:(void(^)(void))completion handleScreenshots:(BOOL)handleScreenshots
 {
     // Capture pasteboard items immediately on main thread
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
@@ -247,66 +264,119 @@ static IMP originalPressesEnded = NULL;
         // Copy files from pasteboard
         for (NSInteger index = 0; index < pasteboardItems.count; index++) {
             NSDictionary *item = pasteboardItems[index];
+            BOOL itemProcessed = NO;
 
-            // Try to get file URL
-            NSURL *fileURL = nil;
+            // First try to handle image data (for screenshots) - only if handleScreenshots is YES
+            if (handleScreenshots) {
+                NSData *imageData = nil;
+                NSString *imageExtension = @"png";
 
-            // Try public.file-url first
-            id fileUrlData = [item objectForKey:@"public.file-url"];
-            if (fileUrlData) {
-                if ([fileUrlData isKindOfClass:[NSData class]]) {
-                    NSString *urlString = [[NSString alloc] initWithData:fileUrlData encoding:NSUTF8StringEncoding];
-                    if (urlString) {
-                        fileURL = [NSURL URLWithString:urlString];
+                // Mac screenshots are always PNG format
+                id imageObject = [item objectForKey:@"public.png"];
+                if (imageObject) {
+                    imageExtension = @"png";
+                    // Convert UIImage to NSData if needed
+                    if ([imageObject isKindOfClass:[UIImage class]]) {
+                        UIImage *image = (UIImage *)imageObject;
+                        imageData = UIImagePNGRepresentation(image);
+                    } else if ([imageObject isKindOfClass:[NSData class]]) {
+                        imageData = (NSData *)imageObject;
                     }
-                } else if ([fileUrlData isKindOfClass:[NSString class]]) {
-                    fileURL = [NSURL URLWithString:fileUrlData];
+                }
+
+                if (imageData && [imageData isKindOfClass:[NSData class]] && imageData.length > 0) {
+                    // Generate filename for screenshot
+                    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+                    [formatter setDateFormat:@"yyyy-MM-dd_HH-mm-ss"];
+                    NSString *timestamp = [formatter stringFromDate:[NSDate date]];
+                    NSString *baseFileName = [NSString stringWithFormat:@"Screenshot_%@", timestamp];
+
+                    // Generate unique filename
+                    NSString *destinationFileName = [NSString stringWithFormat:@"%@.%@", baseFileName, imageExtension];
+                    NSInteger counter = 1;
+
+                    while ([fileManager fileExistsAtPath:[clipboardPath stringByAppendingPathComponent:destinationFileName]]) {
+                        destinationFileName = [NSString stringWithFormat:@"%@_%ld.%@", baseFileName, (long)counter, imageExtension];
+                        counter++;
+                    }
+
+                    NSString *destinationPath = [clipboardPath stringByAppendingPathComponent:destinationFileName];
+
+                    // Write image data to file
+                    NSError *writeError = nil;
+                    BOOL success = [imageData writeToFile:destinationPath options:NSDataWritingAtomic error:&writeError];
+
+                    if (success) {
+                        itemProcessed = YES;
+                    } else {
+                        NSLog(@"❌ Failed to save screenshot: %@", writeError.localizedDescription);
+                    }
                 }
             }
 
-            // Try public.url as fallback
-            if (!fileURL) {
-                id urlData = [item objectForKey:@"public.url"];
-                if (urlData) {
-                    if ([urlData isKindOfClass:[NSData class]]) {
-                        NSString *urlString = [[NSString alloc] initWithData:urlData encoding:NSUTF8StringEncoding];
+            // If no image data found, try to handle as file URL
+            if (!itemProcessed) {
+                NSURL *fileURL = nil;
+
+                // Try public.file-url first
+                id fileUrlData = [item objectForKey:@"public.file-url"];
+                if (fileUrlData) {
+                    if ([fileUrlData isKindOfClass:[NSData class]]) {
+                        NSString *urlString = [[NSString alloc] initWithData:fileUrlData encoding:NSUTF8StringEncoding];
                         if (urlString) {
                             fileURL = [NSURL URLWithString:urlString];
                         }
-                    } else if ([urlData isKindOfClass:[NSString class]]) {
-                        fileURL = [NSURL URLWithString:urlData];
+                    } else if ([fileUrlData isKindOfClass:[NSString class]]) {
+                        fileURL = [NSURL URLWithString:fileUrlData];
                     }
                 }
-            }
 
-            // If we have a file URL, copy the file
-            if (fileURL && [fileURL isFileURL]) {
-                NSString *sourceFilePath = [fileURL path];
-                NSString *fileName = [sourceFilePath lastPathComponent];
+                // Try public.url as fallback
+                if (!fileURL) {
+                    id urlData = [item objectForKey:@"public.url"];
+                    if (urlData) {
+                        if ([urlData isKindOfClass:[NSData class]]) {
+                            NSString *urlString = [[NSString alloc] initWithData:urlData encoding:NSUTF8StringEncoding];
+                            if (urlString) {
+                                fileURL = [NSURL URLWithString:urlString];
+                            }
+                        } else if ([urlData isKindOfClass:[NSString class]]) {
+                            fileURL = [NSURL URLWithString:urlData];
+                        }
+                    }
+                }
 
-                // Generate unique filename if file already exists
-                NSString *destinationFileName = fileName;
-                NSInteger counter = 1;
-                NSString *nameWithoutExtension = [fileName stringByDeletingPathExtension];
-                NSString *extension = [fileName pathExtension];
+                // If we have a file URL, copy the file
+                if (fileURL && [fileURL isFileURL]) {
+                    NSString *sourceFilePath = [fileURL path];
+                    NSString *fileName = [sourceFilePath lastPathComponent];
 
-                while ([fileManager fileExistsAtPath:[clipboardPath stringByAppendingPathComponent:destinationFileName]]) {
-                    if (extension.length > 0) {
-                        destinationFileName = [NSString stringWithFormat:@"%@_%ld.%@", nameWithoutExtension, (long)counter, extension];
+                    // Generate unique filename if file already exists
+                    NSString *destinationFileName = fileName;
+                    NSInteger counter = 1;
+                    NSString *nameWithoutExtension = [fileName stringByDeletingPathExtension];
+                    NSString *extension = [fileName pathExtension];
+
+                    while ([fileManager fileExistsAtPath:[clipboardPath stringByAppendingPathComponent:destinationFileName]]) {
+                        if (extension.length > 0) {
+                            destinationFileName = [NSString stringWithFormat:@"%@_%ld.%@", nameWithoutExtension, (long)counter, extension];
+                        } else {
+                            destinationFileName = [NSString stringWithFormat:@"%@_%ld", nameWithoutExtension, (long)counter];
+                        }
+                        counter++;
+                    }
+
+                    NSString *destinationPath = [clipboardPath stringByAppendingPathComponent:destinationFileName];
+
+                    // Copy file
+                    NSError *copyError = nil;
+                    BOOL success = [fileManager copyItemAtPath:sourceFilePath toPath:destinationPath error:&copyError];
+
+                    if (success) {
+                        NSLog(@"✅ Successfully copied file: %@", fileName);
                     } else {
-                        destinationFileName = [NSString stringWithFormat:@"%@_%ld", nameWithoutExtension, (long)counter];
+                        NSLog(@"❌ Failed to copy file %@: %@", fileName, copyError.localizedDescription);
                     }
-                    counter++;
-                }
-
-                NSString *destinationPath = [clipboardPath stringByAppendingPathComponent:destinationFileName];
-
-                // Copy file
-                NSError *copyError = nil;
-                BOOL success = [fileManager copyItemAtPath:sourceFilePath toPath:destinationPath error:&copyError];
-
-                if (!success) {
-                    NSLog(@"❌ Failed to copy file %@: %@", fileName, copyError.localizedDescription);
                 }
             }
         }
