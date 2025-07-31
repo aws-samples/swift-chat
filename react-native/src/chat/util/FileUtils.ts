@@ -1,7 +1,7 @@
 import RNFS from 'react-native-fs';
 import { Platform } from 'react-native';
-import { FileInfo, FileType } from '../../types/Chat.ts';
-import { getTextModel } from '../../storage/StorageUtils.ts';
+import { ChatMode, FileInfo, FileType } from '../../types/Chat.ts';
+import { getImageModel, getTextModel } from '../../storage/StorageUtils.ts';
 import { showInfo } from './ToastUtils.ts';
 
 export const saveImageToLocal = async (
@@ -98,7 +98,9 @@ const MAX_NOVA_VIDEOS = 1;
 
 export const checkFileNumberLimit = (
   prevFiles: FileInfo[],
-  newFiles: FileInfo[]
+  newFiles: FileInfo[],
+  chatMode: ChatMode,
+  isVirtualTryOn: boolean = false
 ) => {
   const existingImages = prevFiles.filter(file => file.type === FileType.image);
   const existingDocs = prevFiles.filter(
@@ -113,6 +115,15 @@ export const checkFileNumberLimit = (
   let processedNewImages = newImages;
   let processedNewDocs = newDocs;
   let showWarning = false;
+
+  if (chatMode === ChatMode.Image && isNovaCanvas()) {
+    const maxFilesAllowed = isVirtualTryOn ? 2 : 1;
+    if (prevFiles.length + newFiles.length > maxFilesAllowed) {
+      showInfo(`Maximum ${maxFilesAllowed} image allowed`);
+    }
+    const allFiles = [...prevFiles, ...newFiles];
+    return allFiles.slice(0, maxFilesAllowed);
+  }
 
   if (isNova()) {
     if (prevFiles.length + newFiles.length > MAX_NOVA_FILES) {
@@ -170,6 +181,11 @@ export const checkFileNumberLimit = (
 const isNova = (): boolean => {
   const textModelId = getTextModel().modelId;
   return textModelId.includes('nova-pro') || textModelId.includes('nova-lite');
+};
+
+const isNovaCanvas = (): boolean => {
+  const imageModelId = getImageModel().modelId;
+  return imageModelId.includes('nova-canvas');
 };
 
 export const isAllFileReady = (files: FileInfo[]) => {

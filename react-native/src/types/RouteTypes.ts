@@ -10,5 +10,6 @@ export type RouteParamList = {
   TokenUsage: NonNullable<unknown>;
   Prompt: {
     prompt?: SystemPrompt;
+    promptType?: string | undefined;
   };
 };

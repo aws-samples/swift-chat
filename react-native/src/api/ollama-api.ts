@@ -5,7 +5,11 @@ import {
   SystemPrompt,
   Usage,
 } from '../types/Chat.ts';
-import { getOllamaApiUrl, getTextModel } from '../storage/StorageUtils.ts';
+import {
+  getOllamaApiUrl,
+  getOllamaApiKey,
+  getTextModel,
+} from '../storage/StorageUtils.ts';
 import {
   BedrockMessage,
   ImageContent,
@@ -30,12 +34,19 @@ export const invokeOllamaWithCallBack = async (
     model: getTextModel().modelId,
     messages: getOllamaMessages(messages, prompt),
   };
+  const headers: { [key: string]: string } = {
+    accept: '*/*',
+    'content-type': 'application/json',
+  };
+
+  const ollamaApiKey = getOllamaApiKey();
+  if (ollamaApiKey && ollamaApiKey.length > 0) {
+    headers.Authorization = 'Bearer ' + ollamaApiKey;
+  }
+
   const options = {
     method: 'POST',
-    headers: {
-      accept: '*/*',
-      'content-type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(bodyObject),
     signal: controller.signal,
     reactNative: { textStreaming: true },
@@ -197,12 +208,19 @@ function getOllamaMessages(
 export const requestAllOllamaModels = async (): Promise<Model[]> => {
   const controller = new AbortController();
   const modelsUrl = getOllamaApiUrl() + '/api/tags';
+  const headers: { [key: string]: string } = {
+    accept: 'application/json',
+    'content-type': 'application/json',
+  };
+
+  const ollamaApiKey = getOllamaApiKey();
+  if (ollamaApiKey && ollamaApiKey.length > 0) {
+    headers.Authorization = 'Bearer ' + ollamaApiKey;
+  }
+
   const options = {
     method: 'GET',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-    },
+    headers,
     signal: controller.signal,
     reactNative: { textStreaming: true },
   };
@@ -222,7 +240,7 @@ export const requestAllOllamaModels = async (): Promise<Model[]> => {
     }));
   } catch (error) {
     clearTimeout(timeoutId);
-    console.log('Error fetching models:', error);
+    console.log('Ollama API Error fetching models:', error);
     return [];
   }
 };

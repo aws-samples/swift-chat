@@ -17,7 +17,7 @@ import { voiceChatService } from './service/VoiceChatService';
 import AudioWaveformComponent, {
   AudioWaveformRef,
 } from './component/AudioWaveformComponent';
-import { useTheme, ColorScheme } from '../theme';
+import { ColorScheme, useTheme } from '../theme';
 import {
   invokeBedrockWithCallBack as invokeBedrockWithCallBack,
   requestToken,
@@ -32,12 +32,15 @@ import {
   getCurrentSystemPrompt,
   getCurrentVoiceSystemPrompt,
   getImageModel,
+  getLastVirtualTryOnImgFile,
   getMessagesBySessionId,
   getSessionId,
   getTextModel,
   isTokenValid,
+  saveCurrentImageSystemPrompt,
   saveCurrentSystemPrompt,
   saveCurrentVoiceSystemPrompt,
+  saveLastVirtualTryOnImgFile,
   saveMessageList,
   saveMessages,
   updateTotalUsage,
@@ -122,12 +125,13 @@ function ChatScreen(): React.JSX.Element {
   const messagesRef = useRef(messages);
   const bedrockMessages = useRef<BedrockMessage[]>([]);
   const flatListRef = useRef<FlatList<SwiftChatMessage>>(null);
-  const textInputRef = useRef<TextInput>(null);
+  const textInputViewRef = useRef<TextInput>(null);
   const sessionIdRef = useRef(initialSessionId || getSessionId() + 1);
   const isCanceled = useRef(false);
   const { sendEvent, event, drawerType } = useAppContext();
   const sendEventRef = useRef(sendEvent);
-  const inputTexRef = useRef('');
+  const inputTextRef = useRef('');
+  const [hasInputText, setHasInputText] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
   const selectedFilesRef = useRef(selectedFiles);
@@ -141,6 +145,7 @@ function ChatScreen(): React.JSX.Element {
   const audioWaveformRef = useRef<AudioWaveformRef>(null);
 
   const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
+  const currentScrollOffsetRef = useRef(0);
 
   const endVoiceConversation = useCallback(async () => {
     audioWaveformRef.current?.resetAudioLevels();
@@ -173,9 +178,6 @@ function ChatScreen(): React.JSX.Element {
 
   useEffect(() => {
     selectedFilesRef.current = selectedFiles;
-    if (selectedFiles.length > 0) {
-      setShowSystemPrompt(false);
-    }
   }, [selectedFiles]);
 
   // Initialize voice chat service
@@ -197,7 +199,7 @@ function ChatScreen(): React.JSX.Element {
       }
     );
 
-    // Clean up on unmount
+    // Clean up on unmounting
     return () => {
       voiceChatService.cleanup();
     };
@@ -245,7 +247,7 @@ function ChatScreen(): React.JSX.Element {
         <CustomHeaderRightButton
           onPress={() => {
             //clear input content and selected files
-            textInputRef?.current?.clear();
+            textInputViewRef?.current?.clear();
             setUsage(undefined);
             setSelectedFiles([]);
             if (
@@ -283,7 +285,17 @@ function ChatScreen(): React.JSX.Element {
         }
         saveCurrentMessages();
       }
-      modeRef.current = mode;
+      if (modeRef.current === ChatMode.Image) {
+        setShowSystemPrompt(true);
+      }
+      if (modeRef.current !== mode) {
+        // when change chat mode, clear system prompt and files
+        modeRef.current = mode;
+        setTimeout(() => {
+          sendEventRef.current?.('unSelectSystemPrompt');
+        }, 50);
+        setSelectedFiles([]);
+      }
       setChatStatus(ChatStatus.Init);
       sendEventRef.current('');
       setUsage(undefined);
@@ -301,6 +313,9 @@ function ChatScreen(): React.JSX.Element {
       setSystemPrompt(null);
       saveCurrentSystemPrompt(null);
       saveCurrentVoiceSystemPrompt(null);
+      saveCurrentImageSystemPrompt(null);
+      //notify to unselect prompt
+      sendEventRef.current?.('unSelectSystemPrompt');
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
@@ -308,6 +323,7 @@ function ChatScreen(): React.JSX.Element {
         setMessages(msg);
         setIsLoadingMessages(false);
         scrollToBottom();
+        showKeyboard();
       } else {
         setTimeout(() => {
           setMessages(msg);
@@ -353,9 +369,7 @@ function ChatScreen(): React.JSX.Element {
 
   const showKeyboard = () => {
     setTimeout(() => {
-      if (textInputRef.current) {
-        textInputRef.current.focus();
-      }
+      textInputViewRef.current?.focus();
     }, 100);
   };
 
@@ -415,7 +429,7 @@ function ChatScreen(): React.JSX.Element {
     };
   }, []);
 
-  // save current message
+  // save the current message
   const saveCurrentMessages = () => {
     if (messagesRef.current.length === 0) {
       return;
@@ -465,6 +479,27 @@ function ChatScreen(): React.JSX.Element {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: true });
     }
+  };
+
+  const scrollUpByHeight = (
+    expanded: boolean,
+    height: number,
+    animated: boolean
+  ) => {
+    if (flatListRef.current) {
+      const newOffset =
+        currentScrollOffsetRef.current + (expanded ? height : -height);
+      flatListRef.current.scrollToOffset({
+        offset: newOffset,
+        animated: animated,
+      });
+    }
+  };
+
+  const handleScroll = (
+    scrollEvent: NativeSyntheticEvent<NativeScrollEvent>
+  ) => {
+    currentScrollOffsetRef.current = scrollEvent.nativeEvent.contentOffset.y;
   };
 
   const handleUserScroll = (_: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -602,7 +637,7 @@ function ChatScreen(): React.JSX.Element {
   const onSend = useCallback((message: SwiftChatMessage[] = []) => {
     // Reset user scroll state when sending a new message
     setUserScrolled(false);
-    setShowSystemPrompt(false);
+    setShowSystemPrompt(modeRef.current === ChatMode.Image);
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
       showInfo('please wait for all videos to be ready');
@@ -610,7 +645,28 @@ function ChatScreen(): React.JSX.Element {
     }
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
-        message[0].text = getFileTypeSummary(files);
+        if (modeRef.current === ChatMode.Text) {
+          // use system prompt name as user prompt
+          if (systemPromptRef.current) {
+            message[0].text = systemPromptRef.current.name;
+          } else {
+            message[0].text = getFileTypeSummary(files);
+          }
+        } else {
+          // use selected system prompt as user prompt
+          message[0].text = systemPromptRef.current?.prompt ?? 'Empty Message';
+          if (systemPromptRef.current?.id === -7) {
+            saveLastVirtualTryOnImgFile(files[0]);
+            saveCurrentImageSystemPrompt(null);
+            sendEventRef.current('unSelectSystemPrompt');
+          }
+        }
+      } else {
+        // append user prompt after system prompt in image mode
+        if (modeRef.current === ChatMode.Image && systemPromptRef.current) {
+          message[0].text =
+            systemPromptRef.current?.prompt + '\n' + message[0].text;
+        }
       }
       if (selectedFilesRef.current.length > 0) {
         message[0].image = JSON.stringify(selectedFilesRef.current);
@@ -631,7 +687,15 @@ function ChatScreen(): React.JSX.Element {
 
   const handleNewFileSelected = (files: FileInfo[]) => {
     setSelectedFiles(prevFiles => {
-      return checkFileNumberLimit(prevFiles, files);
+      const isVirtualTryOn =
+        modeRef.current === ChatMode.Image &&
+        systemPromptRef.current?.id === -7;
+      return checkFileNumberLimit(
+        prevFiles,
+        files,
+        modeRef.current,
+        isVirtualTryOn
+      );
     });
   };
 
@@ -676,7 +740,7 @@ function ChatScreen(): React.JSX.Element {
     <SafeAreaView style={styles.container}>
       <GiftedChat
         messageContainerRef={flatListRef}
-        textInputRef={textInputRef}
+        textInputRef={textInputViewRef}
         keyboardShouldPersistTaps="never"
         bottomOffset={
           Platform.OS === 'android'
@@ -753,6 +817,7 @@ function ChatScreen(): React.JSX.Element {
                 trigger(HapticFeedbackTypes.impactMedium);
               });
             }}
+            systemPrompt={systemPrompt}
           />
         )}
         renderChatFooter={() => (
@@ -766,8 +831,22 @@ function ChatScreen(): React.JSX.Element {
               }
             }}
             onSystemPromptUpdated={prompt => {
+              const lastPromptIsVirtualTryOn = systemPrompt?.id === -7;
               setSystemPrompt(prompt);
-              if (isNovaSonic) {
+              if (modeRef.current === ChatMode.Image) {
+                saveCurrentImageSystemPrompt(prompt);
+                if (prompt?.id === -7) {
+                  const lastVirtualTryOnImgFile = getLastVirtualTryOnImgFile();
+                  if (lastVirtualTryOnImgFile) {
+                    setSelectedFiles([lastVirtualTryOnImgFile]);
+                  }
+                } else {
+                  //clear virtual try on image when prompt changes
+                  if (selectedFiles.length > 0 && lastPromptIsVirtualTryOn) {
+                    setSelectedFiles([]);
+                  }
+                }
+              } else if (isNovaSonic) {
                 saveCurrentVoiceSystemPrompt(prompt);
                 if (chatStatus === ChatStatus.Running) {
                   endVoiceConversationRef.current?.();
@@ -781,6 +860,9 @@ function ChatScreen(): React.JSX.Element {
             }}
             chatMode={modeRef.current}
             isShowSystemPrompt={showSystemPrompt}
+            hasInputText={hasInputText}
+            chatStatus={chatStatus}
+            systemPrompt={systemPrompt}
           />
         )}
         renderMessage={props => {
@@ -797,6 +879,9 @@ function ChatScreen(): React.JSX.Element {
                 props.currentMessage?._id === messages[0]?._id &&
                 props.currentMessage?.user._id !== 1
               }
+              onReasoningToggle={(expanded, height, animated) => {
+                scrollUpByHeight(expanded, height, animated);
+              }}
               onRegenerate={() => {
                 setUserScrolled(false);
                 trigger(HapticFeedbackTypes.impactMedium);
@@ -824,6 +909,7 @@ function ChatScreen(): React.JSX.Element {
           onLayout: (layoutEvent: LayoutChangeEvent) => {
             containerHeightRef.current = layoutEvent.nativeEvent.layout.height;
           },
+          onScrollEvent: handleScroll,
           onContentSizeChange: (_width: number, height: number) => {
             contentHeightRef.current = height;
           },
@@ -857,32 +943,53 @@ function ChatScreen(): React.JSX.Element {
           ...{
             fontWeight: isMac ? '300' : 'normal',
             color: colors.text,
+            blurOnSubmit: isMac,
+            onSubmitEditing: () => {
+              if (
+                inputTextRef.current.length > 0 &&
+                chatStatusRef.current !== ChatStatus.Running
+              ) {
+                const msg: SwiftChatMessage = {
+                  text: inputTextRef.current,
+                  user: { _id: 1 },
+                  createdAt: new Date(),
+                  _id: uuid.v4(),
+                };
+                onSend([msg]);
+                inputTextRef.current = '';
+                setHasInputText(false);
+                textInputViewRef.current?.clear();
+                setTimeout(() => {
+                  textInputViewRef.current?.clear();
+                  textInputViewRef.current?.focus();
+                }, 20);
+              } else {
+                setTimeout(() => {
+                  textInputViewRef.current?.focus();
+                }, 50);
+              }
+            },
           },
         }}
         maxComposerHeight={isMac ? 360 : 200}
         onInputTextChanged={text => {
           if (
             isMac &&
-            inputTexRef.current.length > 0 &&
-            text[text.length - 1] === '\n' &&
-            text[text.length - 2] !== ' ' &&
-            text.length - inputTexRef.current.length === 1 &&
-            chatStatusRef.current !== ChatStatus.Running
+            text.length > 0 &&
+            (text[text.length - 1] === '\n' ||
+              text.length - 1 === inputTextRef.current.length)
           ) {
             setTimeout(() => {
-              if (textInputRef.current) {
-                textInputRef.current.clear();
-              }
-            }, 1);
-            const msg: SwiftChatMessage = {
-              text: inputTexRef.current,
-              user: { _id: 1 },
-              createdAt: new Date(),
-              _id: uuid.v4(),
-            };
-            onSend([msg]);
+              textInputViewRef.current?.focus();
+            }, 50);
           }
-          inputTexRef.current = text;
+          inputTextRef.current = text;
+          if (!hasInputText && text.length > 0) {
+            setHasInputText(true);
+          }
+          if (hasInputText && text.length === 0) {
+            setHasInputText(false);
+          }
         }}
       />
     </SafeAreaView>

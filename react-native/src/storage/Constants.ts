@@ -100,6 +100,30 @@ export const VoiceIDList = [
   },
 ];
 
+export const DefaultImageSystemPrompts = [
+  {
+    id: -7,
+    name: 'Virtual try-on',
+    prompt: 'Virtual try-on',
+    includeHistory: false,
+    promptType: 'image',
+  },
+  {
+    id: -8,
+    name: 'Variations',
+    prompt: 'Generate similar style of the image',
+    includeHistory: false,
+    promptType: 'image',
+  },
+  {
+    id: -9,
+    name: 'RemoveBG',
+    prompt: 'Remove background of the image',
+    includeHistory: false,
+    promptType: 'image',
+  },
+];
+
 export const DefaultVoiceSystemPrompts = [
   {
     id: -4,
@@ -174,6 +198,7 @@ Stay focused on practical improvements only.`,
     includeHistory: true,
   },
   ...DefaultVoiceSystemPrompts,
+  ...DefaultImageSystemPrompts,
 ];
 
 export const DefaultVoicePrompt =

@@ -1,4 +1,6 @@
 #import "AppDelegate.h"
+#import "RCTNetworkingPatch.h"
+#import "RCTTextInputPatch.h"
 
 #import <React/RCTBundleURLProvider.h>
 
@@ -6,6 +8,15 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  // setup Networking Patch for bedrock chunk parse
+  [RCTNetworkingPatch setupNetworkingPatch];
+  
+#if TARGET_OS_MACCATALYST
+  // setup Text Input Patch for Alt+Enter newline functionality
+  [RCTTextInputPatch setupTextInputPatch];
+#endif
+  
+
   self.moduleName = @"SwiftChat";
   // You can add your custom initial props in the dictionary below.
   // They will be passed down to the ViewController used by React Native.

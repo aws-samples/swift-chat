@@ -8,9 +8,13 @@ import {
   SystemPrompt,
   Usage,
   TokenResponse,
+  OpenAICompatConfig,
+  ModelTag,
+  FileInfo,
 } from '../types/Chat.ts';
 import uuid from 'uuid';
 import {
+  DefaultImageSystemPrompts,
   DefaultRegion,
   DefaultVoiceSystemPrompts,
   getDefaultImageModels,
@@ -44,11 +48,13 @@ const hapticEnabledKey = keyPrefix + 'hapticEnabled';
 const apiUrlKey = keyPrefix + 'apiUrlKey';
 const apiKeyTag = keyPrefix + 'apiKeyTag';
 const ollamaApiUrlKey = keyPrefix + 'ollamaApiUrlKey';
+const ollamaApiKeyTag = keyPrefix + 'ollamaApiKeyTag';
 const deepSeekApiKeyTag = keyPrefix + 'deepSeekApiKeyTag';
 const openAIApiKeyTag = keyPrefix + 'openAIApiKeyTag';
 const openAICompatApiKeyTag = keyPrefix + 'openAICompatApiKeyTag';
 const openAICompatApiURLKey = keyPrefix + 'openAICompatApiURLKey';
 const openAICompatModelsKey = keyPrefix + 'openAICompatModelsKey';
+const openAICompatConfigsKey = keyPrefix + 'openAICompatConfigsKey';
 const regionKey = keyPrefix + 'regionKey';
 const textModelKey = keyPrefix + 'textModelKey';
 const imageModelKey = keyPrefix + 'imageModelKey';
@@ -58,16 +64,22 @@ const modelUsageKey = keyPrefix + 'modelUsageKey';
 const systemPromptsKey = keyPrefix + 'systemPromptsKey';
 const currentSystemPromptKey = keyPrefix + 'currentSystemPromptKey';
 const currentVoiceSystemPromptKey = keyPrefix + 'currentVoiceSystemPromptKey';
+const currentImageSystemPromptKey = keyPrefix + 'currentImageSystemPromptKey';
 const currentPromptIdKey = keyPrefix + 'currentPromptIdKey';
 const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
 const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
+const reasoningExpandedKey = keyPrefix + 'reasoningExpandedKey';
 const modelOrderKey = keyPrefix + 'modelOrderKey';
 const voiceIdKey = keyPrefix + 'voiceIdKey';
 const tokenInfoKey = keyPrefix + 'tokenInfo';
+const bedrockConfigModeKey = keyPrefix + 'bedrockConfigModeKey';
+const bedrockApiKeyTag = keyPrefix + 'bedrockApiKeyTag';
+const lastVirtualTryOnImgFileTag = keyPrefix + 'lastVirtualTryOnImgFileTag';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
 let currentOllamaApiUrl: string | undefined;
+let currentOllamaApiKey: string | undefined;
 let currentDeepSeekApiKey: string | undefined;
 let currentOpenAIApiKey: string | undefined;
 let currentOpenAICompatApiKey: string | undefined;
@@ -78,7 +90,12 @@ let currentTextModel: Model | undefined;
 let currentSystemPrompts: SystemPrompt[] | undefined;
 let currentOpenAIProxyEnabled: boolean | undefined;
 let currentThinkingEnabled: boolean | undefined;
+let currentReasoningExpanded: boolean | undefined;
 let currentModelOrder: Model[] | undefined;
+let currentBedrockConfigMode: string | undefined;
+let currentBedrockApiKey: string | undefined;
+let currentOpenAICompatibleConfig: OpenAICompatConfig[] | undefined;
+let currentVirtualTryOnImgFile: FileInfo | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -225,20 +242,6 @@ export function getOpenAICompatModels(): string {
   return storage.getString(openAICompatModelsKey) ?? '';
 }
 
-export function saveOpenAICompatApiKey(apiKey: string) {
-  currentOpenAICompatApiKey = apiKey;
-  encryptStorage.set(openAICompatApiKeyTag, apiKey);
-}
-
-export function saveOpenAICompatApiURL(apiUrl: string) {
-  currentOpenAICompatApiURL = apiUrl;
-  storage.set(openAICompatApiURLKey, apiUrl);
-}
-
-export function saveOpenAICompatModels(models: string) {
-  storage.set(openAICompatModelsKey, models);
-}
-
 export function saveHapticEnabled(enabled: boolean) {
   storage.set(hapticEnabledKey, enabled);
 }
@@ -258,6 +261,20 @@ export function saveApiKey(apiKey: string) {
 export function saveOllamaApiURL(apiUrl: string) {
   currentOllamaApiUrl = apiUrl;
   storage.set(ollamaApiUrlKey, apiUrl);
+}
+
+export function getOllamaApiKey(): string {
+  if (currentOllamaApiKey) {
+    return currentOllamaApiKey;
+  } else {
+    currentOllamaApiKey = encryptStorage.getString(ollamaApiKeyTag) ?? '';
+    return currentOllamaApiKey;
+  }
+}
+
+export function saveOllamaApiKey(apiKey: string) {
+  currentOllamaApiKey = apiKey;
+  encryptStorage.set(ollamaApiKeyTag, apiKey);
 }
 
 export function saveDeepSeekApiKey(apiKey: string) {
@@ -429,6 +446,21 @@ export function getCurrentVoiceSystemPrompt(): SystemPrompt | null {
   return null;
 }
 
+export function saveCurrentImageSystemPrompt(prompts: SystemPrompt | null) {
+  storage.set(
+    currentImageSystemPromptKey,
+    prompts ? JSON.stringify(prompts) : ''
+  );
+}
+
+export function getCurrentImageSystemPrompt(): SystemPrompt | null {
+  const promptString = storage.getString(currentImageSystemPromptKey) ?? '';
+  if (promptString.length > 0) {
+    return JSON.parse(promptString) as SystemPrompt;
+  }
+  return null;
+}
+
 export function saveSystemPrompts(prompts: SystemPrompt[], type?: string) {
   // get all prompt
   currentSystemPrompts = prompts;
@@ -465,6 +497,14 @@ export function getSystemPrompts(type?: string): SystemPrompt[] {
     ) {
       currentSystemPrompts = currentSystemPrompts.concat(
         DefaultVoiceSystemPrompts
+      );
+      saveAllSystemPrompts(currentSystemPrompts);
+    }
+    if (
+      currentSystemPrompts.filter(p => p.promptType === 'image').length === 0
+    ) {
+      currentSystemPrompts = currentSystemPrompts.concat(
+        DefaultImageSystemPrompts
       );
       saveAllSystemPrompts(currentSystemPrompts);
     }
@@ -520,6 +560,20 @@ export function getThinkingEnabled() {
   } else {
     currentThinkingEnabled = storage.getBoolean(thinkingEnabledKey) ?? true;
     return currentThinkingEnabled;
+  }
+}
+
+export function saveReasoningExpanded(expanded: boolean) {
+  currentReasoningExpanded = expanded;
+  storage.set(reasoningExpandedKey, expanded);
+}
+
+export function getReasoningExpanded() {
+  if (currentReasoningExpanded !== undefined) {
+    return currentReasoningExpanded;
+  } else {
+    currentReasoningExpanded = storage.getBoolean(reasoningExpandedKey) ?? true;
+    return currentReasoningExpanded;
   }
 }
 
@@ -597,4 +651,156 @@ export function isTokenValid(): boolean {
   const expirationDate = new Date(tokenInfo.expiration).getTime();
   const now = new Date().getTime();
   return expirationDate > now + 10 * 60 * 1000;
+}
+
+// Bedrock configuration mode functions
+export function saveBedrockConfigMode(mode: string) {
+  currentBedrockConfigMode = mode;
+  storage.set(bedrockConfigModeKey, mode);
+}
+
+export function getBedrockConfigMode(): string {
+  if (currentBedrockConfigMode) {
+    return currentBedrockConfigMode;
+  } else {
+    currentBedrockConfigMode =
+      storage.getString(bedrockConfigModeKey) ??
+      (getApiUrl().length > 0 ? 'swiftchat' : 'bedrock');
+    return currentBedrockConfigMode;
+  }
+}
+
+// Bedrock API key functions
+export function saveBedrockApiKey(apiKey: string) {
+  currentBedrockApiKey = apiKey;
+  encryptStorage.set(bedrockApiKeyTag, apiKey);
+}
+
+export function getBedrockApiKey(): string {
+  if (currentBedrockApiKey) {
+    return currentBedrockApiKey;
+  } else {
+    currentBedrockApiKey = encryptStorage.getString(bedrockApiKeyTag) ?? '';
+    return currentBedrockApiKey;
+  }
+}
+
+// Virtual try-on last base image file
+export function saveLastVirtualTryOnImgFile(file: FileInfo) {
+  currentVirtualTryOnImgFile = file;
+  storage.set(lastVirtualTryOnImgFileTag, JSON.stringify(file));
+}
+
+export function getLastVirtualTryOnImgFile(): FileInfo | null {
+  if (currentVirtualTryOnImgFile) {
+    return currentVirtualTryOnImgFile;
+  } else {
+    const fileString = storage.getString(lastVirtualTryOnImgFileTag) ?? '';
+    if (fileString) {
+      currentVirtualTryOnImgFile = JSON.parse(fileString) as FileInfo;
+      return currentVirtualTryOnImgFile;
+    }
+    return null;
+  }
+}
+
+// OpenAI Compatible configurations functions
+export function saveOpenAICompatConfigs(configs: OpenAICompatConfig[]) {
+  currentOpenAICompatibleConfig = configs;
+  encryptStorage.set(openAICompatConfigsKey, JSON.stringify(configs));
+}
+
+export function getOpenAICompatConfigs(): OpenAICompatConfig[] {
+  if (currentOpenAICompatibleConfig) {
+    return currentOpenAICompatibleConfig;
+  } else {
+    const configsStr = encryptStorage.getString(openAICompatConfigsKey);
+    if (configsStr) {
+      currentOpenAICompatibleConfig = JSON.parse(
+        configsStr
+      ) as OpenAICompatConfig[];
+      return currentOpenAICompatibleConfig;
+    }
+    return [];
+  }
+}
+
+// Migration function to convert old single config to new multi-config format
+export function migrateOpenAICompatConfig() {
+  const existingConfigs = getOpenAICompatConfigs();
+  if (existingConfigs.length > 0) {
+    return; // Already migrated
+  }
+
+  const baseUrl = getOpenAICompatApiURL();
+  const apiKey = getOpenAICompatApiKey();
+  const modelIds = getOpenAICompatModels();
+
+  if (baseUrl || apiKey || modelIds) {
+    const domain = extractDomainFromUrl(baseUrl);
+    const newConfig: OpenAICompatConfig = {
+      id: uuid.v4(),
+      baseUrl,
+      apiKey,
+      modelIds,
+      name: domain || 'OpenAI Compatible',
+    };
+    saveOpenAICompatConfigs([newConfig]);
+
+    // Clear old storage keys
+    storage.delete(openAICompatApiURLKey);
+    encryptStorage.delete(openAICompatApiKeyTag);
+    storage.delete(openAICompatModelsKey);
+  }
+}
+
+// Helper function to extract domain from URL
+export function extractDomainFromUrl(url: string): string {
+  if (!url) {
+    return '';
+  }
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.replace('www.', '');
+    const parts = hostname.split('.');
+    if (parts.length > 1) {
+      return parts[parts.length - 2];
+    }
+    return parts[0];
+  } catch {
+    return '';
+  }
+}
+
+// Generate OpenAI Compatible models from configs
+export function generateOpenAICompatModels(
+  configs: OpenAICompatConfig[]
+): Model[] {
+  const openAICompatModelList: Model[] = [];
+
+  configs.forEach(config => {
+    if (config.modelIds && config.modelIds.length > 0 && config.baseUrl) {
+      const domain = extractDomainFromUrl(config.baseUrl);
+      const prefix = domain ? `${domain}/` : '';
+
+      const models = config.modelIds.split(',').map(modelId => {
+        modelId = modelId.trim().replace(/(\r\n|\n|\r)/gm, '');
+        const parts = modelId.split('/');
+        const displayName =
+          prefix + (parts.length === 2 ? parts[1] : modelId).trim();
+
+        return {
+          modelId: modelId,
+          modelName: displayName,
+          modelTag: ModelTag.OpenAICompatible,
+          uniqueId: config.id,
+          apiKey: config.apiKey ?? '',
+          apiUrl: config.baseUrl ?? '',
+        } as Model;
+      });
+      openAICompatModelList.push(...models);
+    }
+  });
+
+  return openAICompatModelList;
 }

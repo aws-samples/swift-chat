@@ -13,11 +13,12 @@ import {
 import {
   getApiKey,
   getApiUrl,
+  getBedrockApiKey,
+  getBedrockConfigMode,
   getDeepSeekApiKey,
   getImageModel,
   getImageSize,
   getOpenAIApiKey,
-  getOpenAICompatApiURL,
   getRegion,
   getTextModel,
   getThinkingEnabled,
@@ -34,6 +35,8 @@ import { invokeOpenAIWithCallBack } from './open-api.ts';
 import { invokeOllamaWithCallBack } from './ollama-api.ts';
 import { BedrockThinkingModels } from '../storage/Constants.ts';
 import { getModelTag } from '../utils/ModelUtils.ts';
+import { invokeBedrockWithAPIKey, sleep } from './bedrock-api-key.ts';
+import { genImageWithAPIKey } from './bedrock-api-key-image.ts';
 
 type CallbackFunction = (
   result: string,
@@ -66,7 +69,7 @@ export const invokeBedrockWithCallBack = async (
     }
     if (
       currentModelTag === ModelTag.OpenAICompatible &&
-      getOpenAICompatApiURL().length === 0
+      getTextModel().apiUrl!.length === 0
     ) {
       callback('Please configure your OpenAI Compatible API URL', true, true);
       return;
@@ -90,11 +93,31 @@ export const invokeBedrockWithCallBack = async (
     }
     return;
   }
-  if (!isConfigured()) {
-    callback('Please configure your API URL and API Key', true, true);
+  const bedrockConfigMode = getBedrockConfigMode();
+  const bedrockApiKey = getBedrockApiKey();
+  if (bedrockConfigMode === 'bedrock' && !bedrockApiKey) {
+    callback('Please configure your Bedrock API Key', true, true);
     return;
   }
   if (chatMode === ChatMode.Text) {
+    if (bedrockConfigMode === 'bedrock') {
+      await invokeBedrockWithAPIKey(
+        messages,
+        prompt,
+        shouldStop,
+        controller,
+        callback
+      );
+      return;
+    }
+    if (!isConfigured()) {
+      callback(
+        'Please configure your SwiftChat Server API URL and API Key',
+        true,
+        true
+      );
+      return;
+    }
     const bodyObject = {
       messages: messages,
       modelId: getTextModel().modelId,
@@ -146,41 +169,48 @@ export const invokeBedrockWithCallBack = async (
           try {
             const { done, value } = await reader.read();
             const chunk = decoder.decode(value, { stream: true });
-            const bedrockChunk = parseChunk(chunk);
-            if (bedrockChunk) {
-              if (bedrockChunk.reasoning) {
-                completeReasoning += bedrockChunk.reasoning ?? '';
-                callback(
-                  completeMessage,
-                  false,
-                  false,
-                  undefined,
-                  completeReasoning
-                );
-              }
-              if (bedrockChunk.text) {
-                completeMessage += bedrockChunk.text ?? '';
-                appendTimes++;
-                if (appendTimes > 5000 && appendTimes % 2 === 0) {
-                  continue;
+            if (chunk.length > 0) {
+              // Split by SSE event boundaries
+              const events = chunk.split('\n\n');
+              for (const event of events) {
+                await sleep(0.1);
+                const bedrockChunk = parseChunk(event);
+                if (bedrockChunk) {
+                  if (bedrockChunk.reasoning) {
+                    completeReasoning += bedrockChunk.reasoning ?? '';
+                    callback(
+                      completeMessage,
+                      false,
+                      false,
+                      undefined,
+                      completeReasoning
+                    );
+                  }
+                  if (bedrockChunk.text) {
+                    completeMessage += bedrockChunk.text ?? '';
+                    appendTimes++;
+                    if (appendTimes > 5000 && appendTimes % 2 === 0) {
+                      continue;
+                    }
+                    callback(
+                      completeMessage,
+                      false,
+                      false,
+                      undefined,
+                      completeReasoning
+                    );
+                  }
+                  if (bedrockChunk.usage) {
+                    bedrockChunk.usage.modelName = getTextModel().modelName;
+                    callback(
+                      completeMessage,
+                      false,
+                      false,
+                      bedrockChunk.usage,
+                      completeReasoning
+                    );
+                  }
                 }
-                callback(
-                  completeMessage,
-                  false,
-                  false,
-                  undefined,
-                  completeReasoning
-                );
-              }
-              if (bedrockChunk.usage) {
-                bedrockChunk.usage.modelName = getTextModel().modelName;
-                callback(
-                  completeMessage,
-                  false,
-                  false,
-                  bedrockChunk.usage,
-                  completeReasoning
-                );
               }
             }
             if (done) {
@@ -228,11 +258,31 @@ export const invokeBedrockWithCallBack = async (
       messages[messages.length - 1].content[0] as TextContent
     ).text;
     let image: ImageInfo | undefined;
+    let garmentImage: ImageInfo | undefined;
     if (messages[messages.length - 1].content[1]) {
       image = (messages[messages.length - 1].content[1] as ImageContent).image;
     }
+    if (messages[messages.length - 1].content[2]) {
+      garmentImage = (messages[messages.length - 1].content[2] as ImageContent)
+        .image;
+    }
 
-    const imageRes = await genImage(imagePrompt, controller, image);
+    let imageRes: ImageRes;
+    if (bedrockConfigMode === 'bedrock') {
+      imageRes = await genImageWithAPIKey(
+        imagePrompt,
+        controller,
+        image,
+        garmentImage
+      );
+    } else {
+      const images =
+        image || garmentImage
+          ? ([image, garmentImage].filter(Boolean) as ImageInfo[])
+          : undefined;
+      imageRes = await genImage(imagePrompt, controller, images);
+    }
+
     if (imageRes.image.length > 0) {
       const localFilePath = await saveImageToLocal(imageRes.image);
       const imageSize = getImageSize().split('x')[0].trim();
@@ -311,7 +361,7 @@ export const requestAllModels = async (): Promise<AllModel> => {
     }));
     return allModel;
   } catch (error) {
-    console.log('Error fetching models:', error);
+    console.log('SwiftChat Server Error fetching models:', error);
     clearTimeout(timeoutId);
     return { imageModel: [], textModel: [] };
   }
@@ -385,7 +435,7 @@ export const requestUpgradeInfo = async (
 export const genImage = async (
   imagePrompt: string,
   controller: AbortController,
-  image?: ImageInfo
+  images?: ImageInfo[]
 ): Promise<ImageRes> => {
   if (!isConfigured()) {
     return {
@@ -399,7 +449,7 @@ export const genImage = async (
   const height = imageSize[1].trim();
   const bodyObject = {
     prompt: imagePrompt,
-    refImages: image ? [image] : undefined,
+    refImages: images,
     modelId: getImageModel().modelId,
     region: getRegion(),
     width: width,
@@ -464,45 +514,36 @@ export const genImage = async (
   }
 };
 
-function parseChunk(rawChunk: string) {
-  if (rawChunk.length > 0) {
-    const dataChunks = rawChunk.split('\n\n');
-    if (dataChunks.length > 0) {
-      let combinedReasoning = '';
-      let combinedText = '';
-      let lastUsage;
-      for (let i = 0; i < dataChunks.length; i++) {
-        const part = dataChunks[i];
-        if (part.length === 0) {
-          continue;
-        }
-        try {
-          const chunk: BedrockChunk = JSON.parse(part);
-          const content = extractChunkContent(chunk, rawChunk);
-          if (content.reasoning) {
-            combinedReasoning += content.reasoning;
-          }
-          if (content.text) {
-            combinedText += content.text;
-          }
-          if (content.usage) {
-            lastUsage = content.usage;
-          }
-        } catch (innerError) {
-          console.log('DataChunk parse error:' + innerError, part);
-          return {
-            reasoning: combinedReasoning,
-            text: rawChunk,
-            usage: lastUsage,
-          };
-        }
+function parseChunk(part: string) {
+  if (part.length > 0) {
+    let combinedReasoning = '';
+    let combinedText = '';
+    let lastUsage;
+    try {
+      const chunk: BedrockChunk = JSON.parse(part);
+      const content = extractChunkContent(chunk, part);
+      if (content.reasoning) {
+        combinedReasoning += content.reasoning;
       }
+      if (content.text) {
+        combinedText += content.text;
+      }
+      if (content.usage) {
+        lastUsage = content.usage;
+      }
+    } catch (innerError) {
+      console.log('DataChunk parse error:' + innerError, part);
       return {
         reasoning: combinedReasoning,
-        text: combinedText,
+        text: part,
         usage: lastUsage,
       };
     }
+    return {
+      reasoning: combinedReasoning,
+      text: combinedText,
+      usage: lastUsage,
+    };
   }
   return null;
 }
@@ -529,7 +570,7 @@ function getApiPrefix(): string {
   }
 }
 
-const isEnableThinking = (): boolean => {
+export const isEnableThinking = (): boolean => {
   return isThinkingModel() && getThinkingEnabled();
 };
 

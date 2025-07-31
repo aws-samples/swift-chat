@@ -24,6 +24,7 @@ interface CustomFileProps {
   files: FileInfo[];
   onFileUpdated?: (files: FileInfo[], isUpdate?: boolean) => void;
   mode?: DisplayMode;
+  isHideFileList?: boolean;
 }
 
 export enum DisplayMode {
@@ -66,6 +67,7 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
   files,
   onFileUpdated,
   mode = DisplayMode.Edit,
+  isHideFileList = false,
 }) => {
   const { colors, isDark } = useTheme();
   const [visible, setIsVisible] = useState(false);
@@ -106,7 +108,6 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
             }
           );
           const metaData = await getVideoMetaData(uri);
-          console.log('metaData', metaData);
           isCompressing.current = false;
           compressingFiles.current = '';
           const currentSize = metaData.size / 1024 / 1024;
@@ -305,6 +306,14 @@ export const CustomFileListComponent: React.FC<CustomFileProps> = ({
           marginLeft: 0,
           paddingTop: 4,
         }),
+        // allow adding files by command+v after input texts
+        ...(files.length === 0 &&
+          isHideFileList && {
+            opacity: 0,
+            position: 'absolute',
+            height: 0,
+            overflow: 'hidden',
+          }),
       }}>
       {files.map((file, fileIndex) => renderFileItem(file, fileIndex))}
 

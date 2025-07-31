@@ -29,6 +29,7 @@ function PromptScreen(): React.JSX.Element {
   const route = useRoute<PromptScreenRouteProp>();
   const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
   const isAddMode = route.params.prompt === undefined;
+  const promptType = route.params.promptType;
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
   const [currentPrompt, setCurrentPrompt] = useState<SystemPrompt>(
@@ -39,7 +40,7 @@ function PromptScreen(): React.JSX.Element {
           prompt: '',
           includeHistory: false,
           allowInterruption: true,
-          promptType: isNovaSonic ? 'voice' : undefined,
+          promptType: promptType,
         }
       : route.params.prompt
   );
@@ -99,29 +100,32 @@ function PromptScreen(): React.JSX.Element {
             setCurrentPrompt({ ...currentPrompt, prompt: text });
           }}
         />
-        <View style={styles.switchContainer}>
-          <Text style={styles.label}>
-            {isNovaSonic ? 'Allow Interruption' : 'Include Chat History'}
-          </Text>
-          <Switch
-            style={[isMac ? styles.switch : {}]}
-            value={
-              isNovaSonic
-                ? currentPrompt.allowInterruption
-                : currentPrompt.includeHistory
-            }
-            onValueChange={value => {
-              if (isNovaSonic) {
-                setCurrentPrompt({
-                  ...currentPrompt,
-                  allowInterruption: value,
-                });
-              } else {
-                setCurrentPrompt({ ...currentPrompt, includeHistory: value });
+        {promptType !== 'image' && (
+          <View style={styles.switchContainer}>
+            <Text style={styles.label}>
+              {isNovaSonic ? 'Allow Interruption' : 'Include Chat History'}
+            </Text>
+            <Switch
+              style={[isMac ? styles.switch : {}]}
+              value={
+                isNovaSonic
+                  ? currentPrompt.allowInterruption
+                  : currentPrompt.includeHistory
               }
-            }}
-          />
-        </View>
+              onValueChange={value => {
+                if (isNovaSonic) {
+                  setCurrentPrompt({
+                    ...currentPrompt,
+                    allowInterruption: value,
+                  });
+                } else {
+                  setCurrentPrompt({ ...currentPrompt, includeHistory: value });
+                }
+              }}
+            />
+          </View>
+        )}
+
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>
             {isAddMode ? 'Create' : 'Update'}

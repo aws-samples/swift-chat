@@ -39,11 +39,20 @@ import { getModelIcon, getModelTagByUserName } from '../../utils/ModelUtils.ts';
 import { isAndroid } from '../../utils/PlatformUtils.ts';
 import { useAppContext } from '../../history/AppProvider.tsx';
 import { useTheme, ColorScheme } from '../../theme';
+import {
+  getReasoningExpanded,
+  saveReasoningExpanded,
+} from '../../storage/StorageUtils.ts';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
   isLastAIMessage?: boolean;
   onRegenerate?: () => void;
+  onReasoningToggle?: (
+    expanded: boolean,
+    height: number,
+    animated: boolean
+  ) => void;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -53,11 +62,17 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   chatStatus,
   isLastAIMessage,
   onRegenerate,
+  onReasoningToggle,
 }) => {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [copied, setCopied] = useState(false);
   const [clickTitleCopied, setClickTitleCopied] = useState(false);
+  const [reasoningCopied, setReasoningCopied] = useState(false);
+  const [reasoningExpanded, setReasoningExpanded] =
+    useState(getReasoningExpanded);
+  const reasoningContainerRef = useRef<View>(null);
+  const reasoningContainerHeightRef = useRef<number>(0);
   const [isEdit, setIsEdit] = useState(false);
 
   const [inputHeight, setInputHeight] = useState(0);
@@ -67,7 +82,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     { start: number; end: number } | undefined
   >(undefined);
   const isLoading =
-    chatStatus === ChatStatus.Running && currentMessage?.text === '...';
+    chatStatus === ChatStatus.Running &&
+    (currentMessage?.text === '...' || currentMessage?.text === '');
   const [forceShowButtons, setForceShowButtons] = useState(false);
   const isUser = useRef(currentMessage?.user?._id === 1);
   const { drawerType } = useAppContext();
@@ -114,14 +130,14 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   );
 
   const handleCopy = useCallback(() => {
-    const copyText = currentMessage?.reasoning
-      ? 'Reasoning: ' +
-          currentMessage.reasoning +
-          '\n\n' +
-          currentMessage?.text || ''
-      : currentMessage?.text || '';
+    const copyText = currentMessage?.text.trim() || '';
     Clipboard.setString(copyText);
-  }, [currentMessage?.reasoning, currentMessage?.text]);
+  }, [currentMessage?.text]);
+
+  const handleReasoningCopy = useCallback(() => {
+    const copyText = currentMessage?.reasoning?.trim() || '';
+    Clipboard.setString(copyText);
+  }, [currentMessage?.reasoning]);
 
   const currentUser = currentMessage?.user;
   const showRefresh =
@@ -189,6 +205,45 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
 
+  const handleReasoningToggle = useCallback(() => {
+    if (reasoningExpanded && reasoningContainerHeightRef.current === 0) {
+      reasoningContainerRef.current?.measure((_x, _y, _width, height) => {
+        reasoningContainerHeightRef.current = height;
+        const newExpanded = !reasoningExpanded;
+        setReasoningExpanded(newExpanded);
+        saveReasoningExpanded(newExpanded);
+        onReasoningToggle?.(
+          newExpanded,
+          reasoningContainerHeightRef.current ?? 0,
+          false
+        );
+      });
+    } else {
+      const newExpanded = !reasoningExpanded;
+      if (reasoningContainerHeightRef.current === 0) {
+        setReasoningExpanded(newExpanded);
+        setTimeout(() => {
+          if (reasoningContainerRef.current) {
+            reasoningContainerRef.current?.measure((_x, _y, _width, height) => {
+              reasoningContainerHeightRef.current = height;
+              onReasoningToggle?.(newExpanded, height ?? 0, true);
+            });
+          }
+        }, 150);
+      } else {
+        setTimeout(() => {
+          onReasoningToggle?.(
+            newExpanded,
+            reasoningContainerHeightRef.current ?? 0,
+            false
+          );
+        }, 0);
+        setReasoningExpanded(newExpanded);
+      }
+      saveReasoningExpanded(newExpanded);
+    }
+  }, [reasoningExpanded, onReasoningToggle]);
+
   const reasoningSection = useMemo(() => {
     if (
       !currentMessage?.reasoning ||
@@ -200,24 +255,63 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
     return (
       <View style={styles.reasoningContainer}>
-        <View style={styles.reasoningHeader}>
-          <Text style={styles.reasoningTitle}>Reasoning</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.reasoningHeader}
+          activeOpacity={1}
+          onPress={handleReasoningToggle}>
+          <View style={styles.reasoningHeaderContent}>
+            <Image
+              source={
+                isDark
+                  ? require('../../assets/back_dark.png')
+                  : require('../../assets/back.png')
+              }
+              style={[
+                styles.reasoningArrowIcon,
+                {
+                  transform: [
+                    { rotate: reasoningExpanded ? '270deg' : '180deg' },
+                  ],
+                },
+              ]}
+            />
+            <Text style={styles.reasoningTitle}>Reasoning</Text>
+          </View>
+          <TouchableOpacity
+            hitSlop={8}
+            onPress={e => {
+              e.stopPropagation();
+              setReasoningCopied(true);
+            }}>
+            <Image
+              source={
+                reasoningCopied
+                  ? isDark
+                    ? require('../../assets/done_dark.png')
+                    : require('../../assets/done.png')
+                  : require('../../assets/copy_grey.png')
+              }
+              style={styles.reasoningCopyIcon}
+            />
+          </TouchableOpacity>
+        </TouchableOpacity>
 
-        <View style={styles.reasoningContent}>
-          <Markdown
-            value={currentMessage.reasoning}
-            flatListProps={{
-              style: {
-                backgroundColor: colors.reasoningBackground,
-              },
-            }}
-            styles={customMarkedStyles}
-            renderer={customMarkdownRenderer}
-            tokenizer={customTokenizer}
-            chatStatus={chatStatusRef.current}
-          />
-        </View>
+        {reasoningExpanded && (
+          <View ref={reasoningContainerRef} style={styles.reasoningContent}>
+            <Markdown
+              value={currentMessage.reasoning}
+              flatListProps={{
+                style: {
+                  backgroundColor: colors.reasoningBackground,
+                },
+              }}
+              styles={customMarkedStyles}
+              renderer={customMarkdownRenderer}
+              tokenizer={customTokenizer}
+              chatStatus={chatStatusRef.current}
+            />
+          </View>
+        )}
       </View>
     );
   }, [
@@ -227,8 +321,15 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     colors.reasoningBackground,
     styles.reasoningContainer,
     styles.reasoningHeader,
+    styles.reasoningHeaderContent,
     styles.reasoningTitle,
+    styles.reasoningArrowIcon,
+    styles.reasoningCopyIcon,
     styles.reasoningContent,
+    isDark,
+    reasoningExpanded,
+    reasoningCopied,
+    handleReasoningToggle,
   ]);
 
   const handleShowButton = useCallback(() => {
@@ -257,6 +358,17 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       return () => clearTimeout(timer);
     }
   }, [handleCopy, clickTitleCopied]);
+
+  useEffect(() => {
+    if (reasoningCopied) {
+      handleReasoningCopy();
+      const timer = setTimeout(() => {
+        setReasoningCopied(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [handleReasoningCopy, reasoningCopied]);
 
   const messageContent = useMemo(() => {
     if (!currentMessage) {
@@ -373,7 +485,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   if (!currentMessage) {
     return null;
   }
-
+  const hasReasoning = (currentMessage?.reasoning?.length ?? 0) > 0;
+  const showLoading = isLoading && !(hasReasoning && reasoningExpanded);
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -384,7 +497,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         {copyButton}
       </TouchableOpacity>
       <View style={styles.marked_box}>
-        {isLoading && (
+        {hasReasoning && reasoningSection}
+        {showLoading && (
           <View style={styles.loading}>
             <ImageSpinner
               visible={true}
@@ -393,7 +507,6 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             />
           </View>
         )}
-        {!isLoading && reasoningSection}
         {!isLoading && !isEdit && (
           <TapGestureHandler
             numberOfTaps={2}
@@ -521,8 +634,18 @@ const createStyles = (colors: ColorScheme) =>
     reasoningHeader: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       padding: 8,
       backgroundColor: colors.borderLight,
+    },
+    reasoningHeaderContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    reasoningArrowIcon: {
+      width: 14,
+      height: 14,
+      marginRight: 4,
     },
     reasoningTitle: {
       fontSize: 15,
@@ -560,6 +683,11 @@ const createStyles = (colors: ColorScheme) =>
       color: colors.textTertiary,
       marginRight: 4,
     },
+    reasoningCopyIcon: {
+      padding: 4,
+      width: 16,
+      height: 16,
+    },
   });
 
 const customMarkedStyles: MarkedStyles = {
@@ -581,6 +709,7 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
       nextProps.currentMessage?.reasoning &&
     prevProps.chatStatus === nextProps.chatStatus &&
     prevProps.isLastAIMessage === nextProps.isLastAIMessage &&
-    prevProps.onRegenerate === nextProps.onRegenerate
+    prevProps.onRegenerate === nextProps.onRegenerate &&
+    prevProps.onReasoningToggle === nextProps.onReasoningToggle
   );
 });

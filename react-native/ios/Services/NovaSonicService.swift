@@ -9,6 +9,7 @@ import Foundation
 import AWSBedrockRuntime
 import AWSSDKIdentity
 import Smithy
+import SmithyIdentity
 
 enum NovaSonicError: Error {
     case invalidCredentials
@@ -27,6 +28,7 @@ class NovaSonicService {
     private var accessKey: String
     private var secretKey: String
     private var sessionToken: String?
+    private var apiKey: String?
     private var modelId: String = "amazon.nova-sonic-v1:0"
     
     // Stream state
@@ -47,11 +49,12 @@ class NovaSonicService {
     var onAudioReceived: ((Data) -> Void)?
     var onError: ((Error) -> Void)?
     
-    init(region: String, accessKey: String, secretKey: String, sessionToken: String? = nil) {
+    init(region: String, accessKey: String, secretKey: String, sessionToken: String? = nil, apiKey: String? = nil) {
         self.region = region
         self.accessKey = accessKey
         self.secretKey = secretKey
         self.sessionToken = sessionToken
+        self.apiKey = apiKey
         self.promptName = UUID().uuidString
         self.contentName = UUID().uuidString
         self.audioContentName = UUID().uuidString
@@ -83,16 +86,18 @@ class NovaSonicService {
     
     // MARK: - Client Initialization
     
-    func updateCredentials(accessKey: String, secretKey: String, sessionToken: String?) {
+    func updateCredentials(accessKey: String, secretKey: String, sessionToken: String?, apiKey: String?) {
         self.accessKey = accessKey
         self.secretKey = secretKey
         self.sessionToken = sessionToken
+        self.apiKey = apiKey
         client = nil
         try? initializeClient()
     }
     
     func initializeClient() throws {
-        guard !accessKey.isEmpty && !secretKey.isEmpty else {
+        let isValidAPIKey = apiKey != nil && apiKey != ""
+        guard (!accessKey.isEmpty && !secretKey.isEmpty) || isValidAPIKey else {
             throw NovaSonicError.invalidCredentials
         }
         
@@ -111,14 +116,20 @@ class NovaSonicService {
             )
         }
         
-        let identityResolver = try StaticAWSCredentialIdentityResolver(credentials)
+        let identityResolver = StaticAWSCredentialIdentityResolver(credentials)
         
         // Create client configuration
         let clientConfig = try BedrockRuntimeClient.BedrockRuntimeClientConfiguration(
             region: region
         )
-        clientConfig.awsCredentialIdentityResolver = identityResolver
-        
+        if(!isValidAPIKey) {
+          clientConfig.awsCredentialIdentityResolver = identityResolver
+        } else {
+          let bearerTokenIdentityResolver = StaticBearerTokenIdentityResolver(token: BearerTokenIdentity(token: apiKey!))
+          clientConfig.bearerTokenIdentityResolver = bearerTokenIdentityResolver
+          clientConfig.authSchemePreference = ["smithy.api#httpBearerAuth"]
+        }
+      
         // Initialize the client
         client = BedrockRuntimeClient(config: clientConfig)
     }

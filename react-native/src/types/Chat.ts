@@ -23,6 +23,9 @@ export type Model = {
   modelId: string;
   modelName: string;
   modelTag?: string;
+  uniqueId?: string;
+  apiKey?: string;
+  apiUrl?: string;
 };
 
 export enum ModelTag {
@@ -35,6 +38,14 @@ export enum ModelTag {
 
 export type OllamaModel = {
   name: string;
+};
+
+export type OpenAICompatConfig = {
+  id: string;
+  baseUrl: string;
+  apiKey: string;
+  modelIds: string;
+  name?: string;
 };
 
 export type AllModel = {
@@ -123,7 +134,7 @@ export interface SystemPrompt {
   name: string;
   prompt: string;
   includeHistory: boolean;
-  promptType?: string; // 'voice' or undefined
+  promptType?: string; // 'image' 'voice' or undefined
   allowInterruption?: boolean;
 }
 
@@ -135,6 +146,14 @@ export interface BedrockChunk {
     usage: Usage;
   };
   detail: string;
+}
+
+export interface BedrockAPIChunk {
+  delta: Delta;
+  usage: Usage;
+  stopReason: string;
+  Message: string;
+  message: string;
 }
 
 export interface Delta {
@@ -152,6 +171,7 @@ export type TokenResponse = {
   sessionToken: string;
   expiration: string;
   error: string;
+  apiKey?: string;
 };
 
 export interface Metrics {

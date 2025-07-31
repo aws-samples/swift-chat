@@ -26,10 +26,8 @@ import {
   getImageSize,
   getModelUsage,
   getOllamaApiUrl,
+  getOllamaApiKey,
   getOpenAIApiKey,
-  getOpenAICompatApiKey,
-  getOpenAICompatApiURL,
-  getOpenAICompatModels,
   getOpenAIProxyEnabled,
   getRegion,
   getTextModel,
@@ -42,21 +40,31 @@ import {
   saveImageSize,
   saveKeys,
   saveOllamaApiURL,
+  saveOllamaApiKey,
   saveOpenAIApiKey,
-  saveOpenAICompatApiKey,
-  saveOpenAICompatApiURL,
-  saveOpenAICompatModels,
   saveOpenAIProxyEnabled,
   saveRegion,
   saveTextModel,
   saveThinkingEnabled,
   saveVoiceId,
   updateTextModelUsageOrder,
+  getBedrockConfigMode,
+  saveBedrockConfigMode,
+  getBedrockApiKey,
+  saveBedrockApiKey,
+  generateOpenAICompatModels,
+  getOpenAICompatConfigs,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
 import { requestAllModels, requestUpgradeInfo } from '../api/bedrock-api.ts';
-import { DropdownItem, Model, ModelTag, UpgradeInfo } from '../types/Chat.ts';
+import {
+  DropdownItem,
+  Model,
+  UpgradeInfo,
+  OpenAICompatConfig,
+  ModelTag,
+} from '../types/Chat.ts';
 
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
@@ -78,6 +86,8 @@ import { requestAllOllamaModels } from '../api/ollama-api.ts';
 import TabButton from './TabButton';
 import { useAppContext } from '../history/AppProvider.tsx';
 import { useTheme, ColorScheme } from '../theme';
+import { requestAllModelsByBedrockAPI } from '../api/bedrock-api-key.ts';
+import OpenAICompatConfigsSection from './OpenAICompatConfigsSection.tsx';
 
 const initUpgradeInfo: UpgradeInfo = {
   needUpgrade: false,
@@ -93,20 +103,15 @@ function SettingsScreen(): React.JSX.Element {
   const [apiUrl, setApiUrl] = useState(getApiUrl);
   const [apiKey, setApiKey] = useState(getApiKey);
   const [ollamaApiUrl, setOllamaApiUrl] = useState(getOllamaApiUrl);
+  const [ollamaApiKey, setOllamaApiKey] = useState(getOllamaApiKey);
   const [deepSeekApiKey, setDeepSeekApiKey] = useState(getDeepSeekApiKey);
   const [openAIApiKey, setOpenAIApiKey] = useState(getOpenAIApiKey);
   const [openAIProxyEnabled, setOpenAIProxyEnabled] = useState(
     getOpenAIProxyEnabled
   );
-  const [openAICompatApiURL, setOpenAICompatApiURL] = useState(
-    getOpenAICompatApiURL
-  );
-  const [openAICompatApiKey, setOpenAICompatApiKey] = useState(
-    getOpenAICompatApiKey
-  );
-  const [openAICompatModels, setOpenAICompatModels] = useState(
-    getOpenAICompatModels
-  );
+  const [openAICompatConfigs, setOpenAICompatConfigs] = useState<
+    OpenAICompatConfig[]
+  >(getOpenAICompatConfigs);
   const [region, setRegion] = useState(getRegion);
   const [imageSize, setImageSize] = useState(getImageSize);
   const [hapticEnabled, setHapticEnabled] = useState(getHapticEnabled);
@@ -124,96 +129,138 @@ function SettingsScreen(): React.JSX.Element {
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
   const [voiceId, setVoiceId] = useState(getVoiceId);
+  const [bedrockConfigMode, setBedrockConfigMode] =
+    useState(getBedrockConfigMode);
+  const [bedrockApiKey, setBedrockApiKey] = useState(getBedrockApiKey);
   const { sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
+  const openAICompatConfigsRef = useRef(openAICompatConfigs);
 
-  const fetchAndSetModelNames = useCallback(async () => {
-    controllerRef.current = new AbortController();
+  // Handle OpenAI Compatible configs change
+  const handleOpenAICompatConfigsChange = useCallback(
+    (configs: OpenAICompatConfig[]) => {
+      setOpenAICompatConfigs(configs);
+    },
+    []
+  );
 
-    let ollamaModels: Model[] = [];
-    if (getOllamaApiUrl().length > 0) {
-      ollamaModels = await requestAllOllamaModels();
-    }
+  const fetchAndSetModelNames = useCallback(
+    async (shouldFetchOllama = false, shouldFetchBedrock = false) => {
+      controllerRef.current = new AbortController();
 
-    const response = await requestAllModels();
-    addBedrockPrefixToDeepseekModels(response.textModel);
-    if (Platform.OS === 'android') {
-      response.textModel = response.textModel.filter(
-        model => model.modelName !== 'Nova Sonic'
+      // Get Ollama models
+      let ollamaModels: Model[] = [];
+      if (shouldFetchOllama && getOllamaApiUrl().length > 0) {
+        ollamaModels = await requestAllOllamaModels();
+      } else if (!shouldFetchOllama) {
+        // Filter existing Ollama models from current textModels
+        ollamaModels = textModels.filter(
+          model => model.modelTag === ModelTag.Ollama
+        );
+      }
+
+      // Get Bedrock models
+      let bedrockResponse = {
+        textModel: [] as Model[],
+        imageModel: [] as Model[],
+      };
+      if (shouldFetchBedrock) {
+        bedrockResponse =
+          bedrockConfigMode === 'bedrock'
+            ? await requestAllModelsByBedrockAPI()
+            : await requestAllModels();
+        addBedrockPrefixToDeepseekModels(bedrockResponse.textModel);
+        if (Platform.OS === 'android') {
+          bedrockResponse.textModel = bedrockResponse.textModel.filter(
+            model => model.modelName !== 'Nova Sonic'
+          );
+        }
+      } else {
+        // Filter existing Bedrock models from current models
+        bedrockResponse.textModel = textModels.filter(
+          model => !model.modelTag || model.modelTag === ModelTag.Bedrock
+        );
+        bedrockResponse.imageModel = imageModels;
+      }
+
+      // Handle image models
+      if (bedrockResponse.imageModel.length > 0) {
+        setImageModels(bedrockResponse.imageModel);
+        const imageModel = getImageModel();
+        const targetModels = bedrockResponse.imageModel.filter(
+          model => model.modelName === imageModel.modelName
+        );
+        if (targetModels && targetModels.length === 1) {
+          setSelectedImageModel(targetModels[0].modelId);
+          saveImageModel(targetModels[0]);
+        } else {
+          setSelectedImageModel(bedrockResponse.imageModel[0].modelId);
+          saveImageModel(bedrockResponse.imageModel[0]);
+        }
+      }
+
+      // Generate OpenAI Compatible models
+      const openAICompatModelList = generateOpenAICompatModels(
+        openAICompatConfigsRef.current
       );
-    }
-    if (response.imageModel.length > 0) {
-      setImageModels(response.imageModel);
-      const imageModel = getImageModel();
-      const targetModels = response.imageModel.filter(
-        model => model.modelName === imageModel.modelName
+
+      // Combine all text models
+      const allTextModels =
+        bedrockResponse.textModel.length === 0
+          ? [
+              ...DefaultTextModel,
+              ...ollamaModels,
+              ...getDefaultApiKeyModels(),
+              ...openAICompatModelList,
+            ]
+          : [
+              ...bedrockResponse.textModel,
+              ...ollamaModels,
+              ...getDefaultApiKeyModels(),
+              ...openAICompatModelList,
+            ];
+
+      setTextModels(allTextModels);
+
+      // Update selected text model
+      const textModel = getTextModel();
+      const targetModels = allTextModels.filter(
+        model => model.modelName === textModel.modelName
       );
       if (targetModels && targetModels.length === 1) {
-        setSelectedImageModel(targetModels[0].modelId);
-        saveImageModel(targetModels[0]);
+        setSelectedTextModel(targetModels[0]);
+        saveTextModel(targetModels[0]);
+        updateTextModelUsageOrder(targetModels[0]);
       } else {
-        setSelectedImageModel(response.imageModel[0].modelId);
-        saveImageModel(response.imageModel[0]);
+        const defaultMissMatchModel = allTextModels.filter(
+          model => model.modelName === 'Claude 3 Sonnet'
+        );
+        if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
+          setSelectedTextModel(defaultMissMatchModel[0]);
+          saveTextModel(defaultMissMatchModel[0]);
+          updateTextModelUsageOrder(defaultMissMatchModel[0]);
+        }
       }
-    }
-    let openAICompatModelList: Model[] = [];
-    if (openAICompatModels.length > 0) {
-      openAICompatModelList = openAICompatModels.split(',').map(modelId => {
-        modelId = modelId.trim().replace(/(\r\n|\n|\r)/gm, '');
-        const parts = modelId.split('/');
-        return {
-          modelId: modelId.trim(),
-          modelName: (parts.length === 2 ? parts[1] : modelId).trim(),
-          modelTag: ModelTag.OpenAICompatible,
-        } as Model;
-      });
-    }
-    if (response.textModel.length === 0) {
-      response.textModel = [
-        ...DefaultTextModel,
-        ...ollamaModels,
-        ...getDefaultApiKeyModels(),
-        ...openAICompatModelList,
-      ];
-    } else {
-      response.textModel = [
-        ...response.textModel,
-        ...ollamaModels,
-        ...getDefaultApiKeyModels(),
-        ...openAICompatModelList,
-      ];
-    }
-    setTextModels(response.textModel);
-    const textModel = getTextModel();
-    const targetModels = response.textModel.filter(
-      model => model.modelName === textModel.modelName
-    );
-    if (targetModels && targetModels.length === 1) {
-      setSelectedTextModel(targetModels[0]);
-      saveTextModel(targetModels[0]);
-      updateTextModelUsageOrder(targetModels[0]);
-    } else {
-      const defaultMissMatchModel = response.textModel.filter(
-        model => model.modelName === 'Claude 3 Sonnet'
-      );
-      if (defaultMissMatchModel && defaultMissMatchModel.length === 1) {
-        setSelectedTextModel(defaultMissMatchModel[0]);
-        saveTextModel(defaultMissMatchModel[0]);
-        updateTextModelUsageOrder(defaultMissMatchModel[0]);
+
+      sendEventRef.current('modelChanged');
+      if (bedrockResponse.imageModel.length > 0 || allTextModels.length > 0) {
+        saveAllModels({
+          textModel: allTextModels,
+          imageModel: bedrockResponse.imageModel,
+        });
       }
-    }
-    sendEventRef.current('modelChanged');
-    if (response.imageModel.length > 0 || response.textModel.length > 0) {
-      saveAllModels(response);
-    }
-  }, [openAICompatModels]);
+    },
+    [bedrockConfigMode, textModels, imageModels]
+  );
+
+  const fetchAndSetModelNamesRef = useRef(fetchAndSetModelNames);
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
       setCost(getTotalCost(getModelUsage()).toString());
-      fetchAndSetModelNames().then();
+      fetchAndSetModelNamesRef.current(true, true).then();
     });
-  }, [navigation, fetchAndSetModelNames]);
+  }, [navigation]);
 
   const toggleHapticFeedback = (value: boolean) => {
     setHapticEnabled(value);
@@ -236,52 +283,68 @@ function SettingsScreen(): React.JSX.Element {
       return;
     }
     saveKeys(apiUrl.trim(), apiKey.trim());
-    fetchAndSetModelNames().then();
+    fetchAndSetModelNamesRef.current(false, true).then();
     fetchUpgradeInfo().then();
-  }, [apiUrl, apiKey, fetchAndSetModelNames]);
+  }, [apiUrl, apiKey]);
 
   useEffect(() => {
     if (ollamaApiUrl === getOllamaApiUrl()) {
       return;
     }
     saveOllamaApiURL(ollamaApiUrl);
-    fetchAndSetModelNames().then();
-  }, [ollamaApiUrl, fetchAndSetModelNames]);
+    fetchAndSetModelNamesRef.current(true, false).then();
+  }, [ollamaApiUrl]);
+
+  useEffect(() => {
+    if (ollamaApiKey === getOllamaApiKey()) {
+      return;
+    }
+    saveOllamaApiKey(ollamaApiKey);
+    fetchAndSetModelNamesRef.current(true, false).then();
+  }, [ollamaApiKey]);
 
   useEffect(() => {
     if (deepSeekApiKey === getDeepSeekApiKey()) {
       return;
     }
     saveDeepSeekApiKey(deepSeekApiKey);
-    fetchAndSetModelNames().then();
-  }, [deepSeekApiKey, fetchAndSetModelNames]);
+    fetchAndSetModelNamesRef.current(false, false).then();
+  }, [deepSeekApiKey]);
 
   useEffect(() => {
     if (openAIApiKey === getOpenAIApiKey()) {
       return;
     }
     saveOpenAIApiKey(openAIApiKey);
-    fetchAndSetModelNames().then();
-  }, [openAIApiKey, fetchAndSetModelNames]);
+    fetchAndSetModelNamesRef.current(false, false).then();
+  }, [openAIApiKey]);
 
   useEffect(() => {
-    if (openAICompatApiURL === getOpenAICompatApiURL()) {
+    const currentConfigs = openAICompatConfigsRef.current;
+    if (
+      JSON.stringify(openAICompatConfigs) === JSON.stringify(currentConfigs)
+    ) {
       return;
     }
-    saveOpenAICompatApiURL(openAICompatApiURL);
-  }, [openAICompatApiURL]);
+    openAICompatConfigsRef.current = openAICompatConfigs;
+    fetchAndSetModelNamesRef.current(false, false).then();
+  }, [openAICompatConfigs]);
 
   useEffect(() => {
-    if (openAICompatApiKey === getOpenAICompatApiKey()) {
+    if (bedrockConfigMode === getBedrockConfigMode()) {
       return;
     }
-    saveOpenAICompatApiKey(openAICompatApiKey);
-  }, [openAICompatApiKey]);
+    fetchAndSetModelNamesRef.current(false, true).then();
+    saveBedrockConfigMode(bedrockConfigMode);
+  }, [bedrockConfigMode]);
 
   useEffect(() => {
-    saveOpenAICompatModels(openAICompatModels);
-    fetchAndSetModelNames().then();
-  }, [openAICompatModels, fetchAndSetModelNames]);
+    if (bedrockApiKey === getBedrockApiKey()) {
+      return;
+    }
+    fetchAndSetModelNamesRef.current(false, true).then();
+    saveBedrockApiKey(bedrockApiKey);
+  }, [bedrockApiKey]);
 
   const fetchUpgradeInfo = async () => {
     if (isMac || Platform.OS === 'android') {
@@ -353,19 +416,69 @@ function SettingsScreen(): React.JSX.Element {
       case 'bedrock':
         return (
           <>
-            <CustomTextInput
-              label="API URL"
-              value={apiUrl}
-              onChangeText={setApiUrl}
-              placeholder="Enter API URL"
-            />
-            <CustomTextInput
-              label="API Key"
-              value={apiKey}
-              onChangeText={setApiKey}
-              placeholder="Enter API Key"
-              secureTextEntry={true}
-            />
+            <View style={styles.configSwitchContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.configSwitchButton,
+                  bedrockConfigMode === 'bedrock' &&
+                    styles.configSwitchButtonActive,
+                ]}
+                activeOpacity={0.7}
+                onPress={() => setBedrockConfigMode('bedrock')}>
+                <Text
+                  style={[
+                    styles.configSwitchText,
+                    bedrockConfigMode === 'bedrock' &&
+                      styles.configSwitchTextActive,
+                  ]}>
+                  Bedrock API Key
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.configSwitchButton,
+                  bedrockConfigMode === 'swiftchat' &&
+                    styles.configSwitchButtonActive,
+                ]}
+                activeOpacity={0.7}
+                onPress={() => setBedrockConfigMode('swiftchat')}>
+                <Text
+                  style={[
+                    styles.configSwitchText,
+                    bedrockConfigMode === 'swiftchat' &&
+                      styles.configSwitchTextActive,
+                  ]}>
+                  SwiftChat Server
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {bedrockConfigMode === 'bedrock' ? (
+              <>
+                <CustomTextInput
+                  label="Bedrock API Key"
+                  value={bedrockApiKey}
+                  onChangeText={setBedrockApiKey}
+                  placeholder="Enter Bedrock API Key"
+                  secureTextEntry={true}
+                />
+              </>
+            ) : (
+              <>
+                <CustomTextInput
+                  label="API URL"
+                  value={apiUrl}
+                  onChangeText={setApiUrl}
+                  placeholder="Enter API URL"
+                />
+                <CustomTextInput
+                  label="API Key"
+                  value={apiKey}
+                  onChangeText={setApiKey}
+                  placeholder="Enter API Key"
+                  secureTextEntry={true}
+                />
+              </>
+            )}
             <CustomDropdown
               label="Region"
               data={regionsData}
@@ -374,7 +487,7 @@ function SettingsScreen(): React.JSX.Element {
                 if (item.value !== '' && item.value !== region) {
                   setRegion(item.value);
                   saveRegion(item.value);
-                  fetchAndSetModelNames().then();
+                  fetchAndSetModelNames(false, true).then();
                 }
               }}
               placeholder="Select a region"
@@ -383,12 +496,21 @@ function SettingsScreen(): React.JSX.Element {
         );
       case 'ollama':
         return (
-          <CustomTextInput
-            label="Ollama API URL"
-            value={ollamaApiUrl}
-            onChangeText={setOllamaApiUrl}
-            placeholder="Enter Ollama API URL"
-          />
+          <>
+            <CustomTextInput
+              label="Ollama API URL"
+              value={ollamaApiUrl}
+              onChangeText={setOllamaApiUrl}
+              placeholder="Enter Ollama API URL"
+            />
+            <CustomTextInput
+              label="Ollama API Key"
+              value={ollamaApiKey}
+              onChangeText={setOllamaApiKey}
+              placeholder="Enter Ollama API Key (Optional)"
+              secureTextEntry={true}
+            />
+          </>
         );
       case 'deepseek':
         return (
@@ -410,30 +532,9 @@ function SettingsScreen(): React.JSX.Element {
               placeholder="Enter OpenAI API Key"
               secureTextEntry={true}
             />
-            <Text style={[styles.label, styles.middleLabel]}>
-              OpenAI Compatible
-            </Text>
-            <CustomTextInput
-              label="Base URL"
-              value={openAICompatApiURL}
-              onChangeText={setOpenAICompatApiURL}
-              placeholder="Enter Base URL"
-              secureTextEntry={false}
-            />
-            <CustomTextInput
-              label="API Key"
-              value={openAICompatApiKey}
-              onChangeText={setOpenAICompatApiKey}
-              placeholder="Enter API Key"
-              secureTextEntry={true}
-            />
-            <CustomTextInput
-              label="Model ID"
-              value={openAICompatModels}
-              onChangeText={setOpenAICompatModels}
-              placeholder="Enter Model IDs, split by comma"
-              secureTextEntry={false}
-              numberOfLines={4}
+            <OpenAICompatConfigsSection
+              isDark={isDark}
+              onConfigsChange={handleOpenAICompatConfigsChange}
             />
             {apiKey.length > 0 && apiUrl.length > 0 && (
               <View style={styles.proxySwitchContainer}>
@@ -794,6 +895,36 @@ const createStyles = (colors: ColorScheme) =>
       marginRight: -14,
       width: 32,
       height: 32,
+    },
+    configSwitchContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      backgroundColor: colors.background,
+      borderRadius: 8,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 2,
+    },
+    configSwitchButton: {
+      flex: 1,
+      paddingVertical: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 6,
+      margin: 2,
+    },
+    configSwitchButtonActive: {
+      backgroundColor: colors.text + 'CC',
+    },
+    configSwitchText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    configSwitchTextActive: {
+      color: colors.background,
+      fontWeight: '600',
     },
   });
 

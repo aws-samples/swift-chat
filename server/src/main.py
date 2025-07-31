@@ -13,7 +13,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
 from urllib.request import urlopen, Request
 import time
-from image_nl_processor import get_native_request_with_ref_image, get_analyse_result
+from image_nl_processor import get_native_request_with_ref_image, get_analyse_result, get_native_request_with_virtual_try_on
 import httpx
 
 app = FastAPI()
@@ -377,6 +377,8 @@ def get_image(client, model_id, prompt, ref_image, width, height):
                         "seed": seed,
                     },
                 }
+            elif len(ref_image) == 2:
+                native_request = get_native_request_with_virtual_try_on(client, prompt, ref_image, width, height)
             else:
                 native_request = get_native_request_with_ref_image(client, prompt, ref_image, width, height)
         elif model_id.startswith("stability."):

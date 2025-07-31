@@ -7,6 +7,7 @@ import {
   ChatStatus,
   FileInfo,
   SwiftChatMessage,
+  SystemPrompt,
 } from '../../types/Chat.ts';
 import { CustomAddFileComponent } from './CustomAddFileComponent.tsx';
 import { getImageModel, getTextModel } from '../../storage/StorageUtils.ts';
@@ -20,6 +21,7 @@ interface CustomSendComponentProps extends SendProps<SwiftChatMessage> {
   onStopPress: () => void;
   onFileSelected: (files: FileInfo[]) => void;
   onVoiceChatToggle?: () => void;
+  systemPrompt?: SystemPrompt | null;
 }
 
 const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
@@ -30,17 +32,21 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   onStopPress,
   onFileSelected,
   onVoiceChatToggle,
+  systemPrompt,
   ...props
 }) => {
   const { text } = props;
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
   const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
+  const isVirtualTryOn = systemPrompt?.id === -7;
   let isShowSending = false;
   if (chatMode === ChatMode.Image) {
     isShowSending =
       !isModelSupportUploadImages(chatMode) ||
-      (text && text!.length > 0) ||
+      (systemPrompt != null && !isVirtualTryOn && selectedFiles.length > 0) ||
+      (isVirtualTryOn && selectedFiles.length === 2) ||
+      (systemPrompt == null && text && text!.length > 0) ||
       chatStatus === ChatStatus.Running;
   } else if (chatMode === ChatMode.Text) {
     isShowSending =

@@ -464,7 +464,6 @@ const createCustomStyles = (colors: ColorScheme) =>
     imageContainer: {
       marginVertical: 4,
       maxWidth: 400,
-      maxHeight: 400,
     },
     imageStyle: {
       borderRadius: 8,
