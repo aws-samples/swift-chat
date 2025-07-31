@@ -45,7 +45,7 @@ type CallbackFunction = (
   usage?: Usage,
   reasoning?: string
 ) => void;
-export const isDev = false;
+export const isDev = true;
 export const invokeBedrockWithCallBack = async (
   messages: BedrockMessage[],
   chatMode: ChatMode,
@@ -276,7 +276,11 @@ export const invokeBedrockWithCallBack = async (
         garmentImage
       );
     } else {
-      imageRes = await genImage(imagePrompt, controller, image);
+      const images =
+        image || garmentImage
+          ? ([image, garmentImage].filter(Boolean) as ImageInfo[])
+          : undefined;
+      imageRes = await genImage(imagePrompt, controller, images);
     }
 
     if (imageRes.image.length > 0) {
@@ -431,7 +435,7 @@ export const requestUpgradeInfo = async (
 export const genImage = async (
   imagePrompt: string,
   controller: AbortController,
-  image?: ImageInfo
+  images?: ImageInfo[]
 ): Promise<ImageRes> => {
   if (!isConfigured()) {
     return {
@@ -445,7 +449,7 @@ export const genImage = async (
   const height = imageSize[1].trim();
   const bodyObject = {
     prompt: imagePrompt,
-    refImages: image ? [image] : undefined,
+    refImages: images,
     modelId: getImageModel().modelId,
     region: getRegion(),
     width: width,
