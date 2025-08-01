@@ -15,6 +15,7 @@
 
 static BOOL altKeyPressed = NO;
 static BOOL commandPressed = NO;
+static BOOL shiftPressed = NO;
 static IMP originalTextInputShouldChangeTextIMP = NULL;
 static IMP originalPressesBegan = NULL;
 static IMP originalPressesEnded = NULL;
@@ -91,6 +92,10 @@ static IMP originalPressesEnded = NULL;
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightGUI) {
             commandPressed = YES;
         }
+        if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftShift ||
+            press.key.keyCode == UIKeyboardHIDUsageKeyboardRightShift) {
+            shiftPressed = YES;
+        }
         if (press.key.keyCode == UIKeyboardHIDUsageKeyboardV) {
             [RCTTextInputPatch copyPasteboardFilesToClipboardDirectoryWithCompletion:^{
                 // Send event using the FilePasteModule event emitter
@@ -124,6 +129,10 @@ static IMP originalPressesEnded = NULL;
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightGUI) {
             commandPressed = NO;
         }
+        if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftShift ||
+            press.key.keyCode == UIKeyboardHIDUsageKeyboardRightShift) {
+            shiftPressed = NO;
+        }
     }
 
     if (!didHandleEvent) {
@@ -140,7 +149,7 @@ static IMP originalPressesEnded = NULL;
     // Get reference to self as RCTBaseTextInputView
     RCTBaseTextInputView *textInputView = (RCTBaseTextInputView *)self;
 
-    if (altKeyPressed) {
+    if (altKeyPressed || shiftPressed) {
         // Alt+Enter logic - insert newline
 
         id<RCTBackedTextInputViewProtocol> backedTextInputView = textInputView.backedTextInputView;

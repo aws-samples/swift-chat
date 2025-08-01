@@ -91,6 +91,30 @@ export const VoiceIDList = [
     voiceId: 'amy',
   },
   {
+    voiceName: 'Ambre (French)',
+    voiceId: 'ambre',
+  },
+  {
+    voiceName: 'Florian (French)',
+    voiceId: 'florian',
+  },
+  {
+    voiceName: 'Beatrice (Italian)',
+    voiceId: 'beatrice',
+  },
+  {
+    voiceName: 'Lorenzo (Italian)',
+    voiceId: 'lorenzo',
+  },
+  {
+    voiceName: 'Greta (German)',
+    voiceId: 'greta',
+  },
+  {
+    voiceName: 'Lennart (German)',
+    voiceId: 'lennart',
+  },
+  {
     voiceName: 'Lupe (Spanish)',
     voiceId: 'lupe',
   },

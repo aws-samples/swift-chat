@@ -277,18 +277,28 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
         </TouchableOpacity>
       )}
       <Dialog.Container visible={showDialog}>
-        <Dialog.Title>Delete Prompt</Dialog.Title>
-        <Dialog.Description>You cannot undo this action.</Dialog.Description>
+        <Dialog.Title>
+          {deletePromptIdRef.current === -7 ? 'Cannot Delete' : 'Delete Prompt'}
+        </Dialog.Title>
+        <Dialog.Description>
+          {deletePromptIdRef.current === -7
+            ? 'Virtual try on can not be deleted'
+            : 'You cannot undo this action.'}
+        </Dialog.Description>
+        {deletePromptIdRef.current !== -7 && (
+          <Dialog.Button
+            label="Cancel"
+            onPress={() => {
+              setShowDialog(false);
+            }}
+          />
+        )}
         <Dialog.Button
-          label="Cancel"
+          label={deletePromptIdRef.current === -7 ? 'OK' : 'Delete'}
           onPress={() => {
-            setShowDialog(false);
-          }}
-        />
-        <Dialog.Button
-          label="Delete"
-          onPress={() => {
-            handleDelete();
+            if (deletePromptIdRef.current !== -7) {
+              handleDelete();
+            }
             setShowDialog(false);
           }}
         />
