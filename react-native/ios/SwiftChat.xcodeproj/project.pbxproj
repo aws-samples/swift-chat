@@ -12,6 +12,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		3A19D3892CCE980A001797C6 /* TestAddBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A19D3882CCE980A001797C6 /* TestAddBridge.swift */; };
+		3A1B98C72E3F955600B6AEDF /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A1B98C62E3F955600B6AEDF /* SceneDelegate.swift */; };
 		3A22BD7A2D44D84300749246 /* PlatformModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A22BD792D44D84300749246 /* PlatformModule.m */; };
 		3A2384122E2A63DC00FBF762 /* AWSBedrockRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 3A2384112E2A63DC00FBF762 /* AWSBedrockRuntime */; };
 		3A60BCFA2E35DAC800C60918 /* RCTTextInputPatch.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A60BCF92E35DAC800C60918 /* RCTTextInputPatch.mm */; };
@@ -56,6 +57,7 @@
 		26F467DFA655DE557FFCBA1D /* Pods-SwiftChat-SwiftChatTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftChat-SwiftChatTests.debug.xcconfig"; path = "Target Support Files/Pods-SwiftChat-SwiftChatTests/Pods-SwiftChat-SwiftChatTests.debug.xcconfig"; sourceTree = "<group>"; };
 		3A19D3852CCBB38F001797C6 /* SwiftChat-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwiftChat-Bridging-Header.h"; sourceTree = "<group>"; };
 		3A19D3882CCE980A001797C6 /* TestAddBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestAddBridge.swift; sourceTree = "<group>"; };
+		3A1B98C62E3F955600B6AEDF /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		3A22BD782D44D84300749246 /* PlatformModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlatformModule.h; sourceTree = "<group>"; };
 		3A22BD792D44D84300749246 /* PlatformModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PlatformModule.m; sourceTree = "<group>"; };
 		3A60BCF62E35D91F00C60918 /* RCTTextInputPatch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTTextInputPatch.h; sourceTree = "<group>"; };
@@ -134,6 +136,7 @@
 				3A60BCF92E35DAC800C60918 /* RCTTextInputPatch.mm */,
 				3ADD2B4D2E26337F00171D1D /* RCTNetworkingPatch.h */,
 				3ADD2B4E2E26337F00171D1D /* RCTNetworkingPatch.m */,
+				3A1B98C62E3F955600B6AEDF /* SceneDelegate.swift */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				5D25C7B4CE6B3F2BED0CFCE0 /* PrivacyInfo.xcprivacy */,
@@ -488,6 +491,7 @@
 				3ADD2B4F2E26337F00171D1D /* RCTNetworkingPatch.m in Sources */,
 				3A6846A82DA8FBBE003CFBEC /* NovaSonicService.swift in Sources */,
 				3A6846A92DA8FBBE003CFBEC /* VoiceChatModule.swift in Sources */,
+				3A1B98C72E3F955600B6AEDF /* SceneDelegate.swift in Sources */,
 				3A6846AA2DA8FBBE003CFBEC /* VoiceChatModule.m in Sources */,
 				3AFE00202E99999999999999 /* FilePasteModule.m in Sources */,
 				3A22BD7A2D44D84300749246 /* PlatformModule.m in Sources */,
