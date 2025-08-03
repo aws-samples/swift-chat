@@ -403,6 +403,11 @@ function ChatScreen(): React.JSX.Element {
       });
       if (drawerTypeRef.current === 'permanent') {
         sendEventRef.current('updateHistory');
+        setTimeout(() => {
+          sendEventRef.current('updateHistorySelectedId', {
+            id: sessionIdRef.current,
+          });
+        }, 100);
       }
       setChatStatus(ChatStatus.Init);
     }
