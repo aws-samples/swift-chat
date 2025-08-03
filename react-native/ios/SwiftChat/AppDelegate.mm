@@ -47,7 +47,7 @@
 - (UIViewController *)createRootViewController
 {
   // Create React Native root view
-  RCTBridge *bridge = [self createBridgeWithDelegate:self launchOptions:nil];
+  RCTBridge *bridge = [self createBridgeWithDelegate:self launchOptions:{}];
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge moduleName:self.moduleName initialProperties:self.initialProps];
   
   // Configure root view appearance

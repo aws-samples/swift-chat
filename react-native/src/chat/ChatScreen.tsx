@@ -146,6 +146,7 @@ function ChatScreen(): React.JSX.Element {
 
   const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
   const currentScrollOffsetRef = useRef(0);
+  const isNewChatRef = useRef(!initialSessionId);
 
   const endVoiceConversation = useCallback(async () => {
     audioWaveformRef.current?.resetAudioLevels();
@@ -210,6 +211,7 @@ function ChatScreen(): React.JSX.Element {
     useCallback(() => {
       trigger(HapticFeedbackTypes.impactMedium);
       sessionIdRef.current = getSessionId() + 1;
+      isNewChatRef.current = true;
       sendEventRef.current('updateHistorySelectedId', {
         id: sessionIdRef.current,
       });
@@ -435,13 +437,25 @@ function ChatScreen(): React.JSX.Element {
       return;
     }
     const currentSessionId = getSessionId();
+    if (isNewChatRef.current) {
+      if (sessionIdRef.current <= currentSessionId) {
+        //update sessionID
+        sessionIdRef.current = currentSessionId + 1;
+        setTimeout(() => {
+          sendEventRef.current('updateHistorySelectedId', {
+            id: sessionIdRef.current,
+          });
+        }, 100);
+      }
+    }
     saveMessages(sessionIdRef.current, messagesRef.current, usageRef.current!);
-    if (sessionIdRef.current > currentSessionId) {
+    if (isNewChatRef.current) {
       saveMessageList(
         sessionIdRef.current,
         messagesRef.current[messagesRef.current.length - 1],
         modeRef.current
       );
+      isNewChatRef.current = false;
     }
   };
 
