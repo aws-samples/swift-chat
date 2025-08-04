@@ -307,6 +307,7 @@ function ChatScreen(): React.JSX.Element {
       }
       // click from history
       setMessages([]);
+      isNewChatRef.current = false;
       endVoiceConversationRef.current?.();
       setIsLoadingMessages(true);
       const msg = getMessagesBySessionId(initialSessionId);
