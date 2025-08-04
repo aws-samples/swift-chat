@@ -172,7 +172,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     - `GPT-4.1 mini`
     - `GPT-4.1 nano`
 
-此外，如果您已部署并配置了 [ClickStream 服务器](#amazon-bedrock-入门指南)，可以启用 **Use Proxy** 选项来转发您的请求。
+此外，如果您已部署并配置了 [SwiftChat 服务器](#amazon-bedrock-入门指南)，可以启用 **Use Proxy** 选项来转发您的请求。
 
 </details>
 

@@ -184,7 +184,7 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
     - `GPT-4.1 mini`
     - `GPT-4.1 nano`
 
-Additionally, if you have deployed and configured the [ClickStream Server](#getting-started-with-amazon-bedrock), you
+Additionally, if you have deployed and configured the [SwiftChat Server](#getting-started-with-amazon-bedrock), you
 can enable the **Use Proxy** option to forward your requests.
 
 </details>
