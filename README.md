@@ -21,7 +21,7 @@ across Android, iOS, and macOS platforms.
 - 🚀 Support virtual try-on, automatically recognize clothes, pants, shoes and try them on (From v2.5.0).
 - 🚀 Support shortcuts for macOS (From v2.5.0).
     - Use `Shift + Enter`, `Control + Enter` or `Option + Enter` to add a line break.
-    - Use `⌘ + V` to add images (Screenshot), videos, or documents on your paste board.
+    - Use `⌘ + V` to add images (Screenshot), videos, or documents from your clipboard.
     - Use `⌘ + N` to opening multiple Mac windows for parallel operations.
 - Support adds multiple OpenAI Compatible model providers. You can now
   use [Easy Model Deployer](https://github.com/aws-samples/easy-model-deployer), OpenRouter, or any OpenAI-compatible
