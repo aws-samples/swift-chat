@@ -1,15 +1,9 @@
-# SwiftChat - A Cross-platform AI Chat App
+# SwiftChat — A Cross-platform AI Chat App
 
-> 🚀 Your Personal AI Assistant - Fast, Private, and Cross-platform
+> 🚀 Your Personal AI Assistant — Fast, Private, and Easy to use
 
 [![GitHub Release](https://img.shields.io/github/v/release/aws-samples/swift-chat)](https://github.com/aws-samples/swift-chat/releases)
 [![License](https://img.shields.io/badge/license-MIT--0-green)](LICENSE)
-
-## 📱 Quick Download
-
-- [Download for Android](https://github.com/aws-samples/swift-chat/releases/download/2.4.0/SwiftChat.apk)
-- [Download for macOS](https://github.com/aws-samples/swift-chat/releases/download/2.4.0/SwiftChat.dmg)
-- For iOS: Currently available through local build with Xcode
 
 [中文](/README_CN.md)
 
@@ -23,121 +17,53 @@ across Android, iOS, and macOS platforms.
 
 ### What's New 🔥
 
-- Supports dark mode on Android, iOS, and Mac (Following system settings, From v2.4.0).
-- 🚀 Support Speech to Speech By Amazon Nova Sonic on Apple Platform.
-  Check [How to Use](#amazon-nova-sonic-speech-to-speech-model) for
-  more details. (From v2.3.0).
-- Support for OpenAI Compatible models. You can now
-  use [Easy Model Deployer](https://github.com/aws-samples/easy-model-deployer),
-  OpenRouter, or any OpenAI-compatible model provider via SwiftChat. Please
-  check [Configure OpenAI Compatible](#openai-compatible) section for more details(From v2.2.0).
+- 🚀 Support using Bedrock API Key for Amazon Bedrock models (From v2.5.0).
+- 🚀 Support virtual try-on, automatically recognize clothes, pants, shoes and try them on (From v2.5.0).
+- 🚀 Support shortcuts for macOS (From v2.5.0).
+    - Use `Shift + Enter`, `Control + Enter` or `Option + Enter` to add a line break.
+    - Use `⌘ + V` to add images (Screenshot), videos, or documents on your paste board.
+    - Use `⌘ + N` to opening multiple Mac windows for parallel operations.
+- Support adds multiple OpenAI Compatible model providers. You can now
+  use [Easy Model Deployer](https://github.com/aws-samples/easy-model-deployer), OpenRouter, or any OpenAI-compatible
+  model provider. (From v2.5.0).
+- Supports dark mode on Android, iOS, and Mac (From v2.4.0).
+- Support Speech to Speech By Amazon Nova Sonic on Apple Platform. (From v2.3.0).
 
-#### Dark Mode
+## 📱 Quick Download
 
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/animations/dark_markdown.avif" width=24%>
-<img src="assets/animations/dark_voice.avif" width=24%>
-<img src="assets/animations/dark_gen_image.avif" width=24%>
-<img src="assets/animations/dark_settings.avif" width=24%>
-</div>
+- [Download for Android](https://github.com/aws-samples/swift-chat/releases/download/2.4.0/SwiftChat.apk)
+- [Download for macOS](https://github.com/aws-samples/swift-chat/releases/download/2.4.0/SwiftChat.dmg)
+- For iOS: Currently available through local build with Xcode
 
-### Key Features
+## Getting Started with Amazon Bedrock
 
-- Real-time streaming chat with AI
-- Rich Markdown Support: Tables, Code Blocks, LaTeX and More
-- AI image generation with progress
-- Multimodal support (images, videos & documents)
-- Conversation history list view and management
-- Cross-platform support (Android, iOS, macOS)
-- Tablet-optimized for iPad and Android tablets
-- Fast launch and responsive performance
-- Multiple AI models
-  supported ([Amazon Bedrock](https://aws.amazon.com/bedrock/), [Ollama](https://github.com/ollama/ollama), [DeepSeek](https://www.deepseek.com/), [OpenAI](https://openai.com/)
-  and [OpenAI Compatible](#openai-compatible) Models)
-- Fully Customizable System Prompt Assistant
+### Prerequisites
 
-### Amazon Nova Series Features
+Click [Amazon Bedrock Model access](https://console.aws.amazon.com/bedrock/home#/modelaccess) to enable your models
+access.
 
-#### Amazon Nova Sonic Speech to Speech Model
+### Configuration
 
-**Usage Guide**
+You can choose one of the following two methods for configuration
 
-1. Amazon Nova Sonic model is supported starting from v2.3.0. If you have deployed it before, you need to:
-    * [Update CloudFormation](#upgrade-cloudformation) Stack
-    * [Update API](#upgrade-api)
-    * [Upgrade your App](#-quick-download) to v2.3.0 or later
+<details>
+<summary><b>🔧 Configure Bedrock API Key (Click to expand)</b></summary>
 
-   If you have not deployed your CloudFormation Stack please
-   finish [Getting Started with Amazon Bedrock](#getting-started-with-amazon-bedrock) section.
-2. Switch the **Region** to `us-east-1` in the settings page and select the `Nova Sonic` under **Chat Model**.
-3. Return to Chat page, select a system prompt or directly click the microphone icon to start your conversation.
+1. Click [Amazon Bedrock Console](https://console.aws.amazon.com/bedrock/home#/api-keys/long-term/create) to create a
+   long-term API
+   key.
 
-**Features for Speech to Speech**
+2. Copy and paste the API key to the (Amazon Bedrock -> Bedrock API Key) under SwiftChat Settings page.
 
-1. Built-in spoken language practice for words and sentences, as well as storytelling scenarios. You can also add
-   **Custom System Prompts** for voice chatting in different scenarios.
-2. Support **Barge In** by default, Also you can disable in system prompt.
-3. Support selecting voices in the settings page, including American/British English, Spanish and options for male and
-   female voices.
-4. Support **Echo Cancellation**, You can talk directly to the device without wearing headphones.
-5. Support **Voice Waveform** to display volume level.
+3. The App will automatically get the latest model list based on the region you currently selected. If multiple models
+   appear in the list, it means the configuration is successful.
 
-**Learn Sentences**
+</details>
 
-https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838
+<details>
+<summary><b>🔧 Configure SwiftChat Server (Click to expand)</b></summary>
 
-**Telling Story on Mac (With barge in feature)**
-
-https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
-
-#### Other Features
-
-- Record 30-second videos directly on Android and iOS for Nova analysis
-- Upload large videos (1080p/4K) beyond 8MB with auto compression
-- Support using natural language to make Nova Canvas generate images, remove backgrounds, replace backgrounds, and
-  create images in similar styles.
-
-### Feature Showcase
-
-#### YouTube Video
-
-[<img src="./assets/youtube.avif">](https://www.youtube.com/watch?v=rey05WzfEbM)
-> The content in the video is an early version. For UI, architecture, and inconsistencies, please refer to the current
-> documentation.
-
-**Comprehensive Multimodal Analysis**: Text, Image, Document and Video
-
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/animations/text_streaming.avif" width=24%>
-<img src="assets/animations/image_summary.avif" width=24%>
-<img src="assets/animations/doc_summary.avif" width=24%>
-<img src="assets/animations/video_summary.avif" width=24%>
-</div>
-
-**Creative Image Suite**: Generation, Style Replication, Background Removal & Replacement with Nova Canvas
-
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-<img src="assets/animations/gen_image.avif" width=24%>
-<img src="assets/animations/similar_style.avif" width=24%>
-<img src="assets/animations/remove_background.avif" width=24%>
-<img src="assets/animations/replace_background.avif" width=24%>
-</div>
-
-**System Prompt Assistant**: Useful Preset System Prompts with Full Management Capabilities (Add/Edit/Sort/Delete)
-
-![](assets/animations/english_teacher.avif)
-
-**Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX and More
-
-![](assets/markdown.avif)
-
-We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation.
-All of these features are also seamlessly displayed on Android and macOS with native UI
-
-> Note: Some animated images have been sped up for demonstration. If you experience lag, please view on Chrome, Firefox,
-> or Edge browser on your computer.
-
-## Architecture
+### Architecture
 
 ![](/assets/architecture.avif)
 
@@ -148,24 +74,6 @@ Alternatively, we provide the option to replace App Runner with **AWS Lambda** u
 cost-effective
 solution, as shown in
 this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming).
-
-## Getting Started with Amazon Bedrock
-
-### Prerequisites
-
-Ensure you have access to Amazon Bedrock foundation models. SwiftChat default settings are:
-
-- Region: `us-west-2`
-- Chat Model: `Amazon Nova Pro`
-- Image Model: `Stable Diffusion 3.5 Large`
-
-If you are using the image generation feature, please make sure you have enabled access to the `Amazon Nova Lite` model.
-Please follow
-the [Amazon Bedrock User Guide](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access-modify.html) to
-enable your models.
-
-<details>
-<summary><b>🔧 Configuration Steps (Click to expand)</b></summary>
 
 ### Step 1: Set up your API Key
 
@@ -208,11 +116,11 @@ can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or
 ### Step 3: Open the App and setup with API URL and API Key
 
 1. Launch the App, open the drawer menu, and tap **Settings**.
-2. Paste the `API URL` and `API Key`(The **Value** you typed in Parameter Store) then select the Region.
+2. Paste the `API URL` and `API Key`(The **Value** you typed in Parameter Store) Under Amazon Bedrock -> SwiftChat
+   Server, then select your Region.
 3. Click the top right ✓ icon to save your configuration and start your chat.
 
 Congratulations 🎉 Your SwiftChat App is ready to use!
-</details>
 
 ### Supported Region
 
@@ -228,6 +136,8 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
 - Europe (Paris): eu-west-3
 - South America (São Paulo): sa-east-1
 
+</details>
+
 ## Getting Started with Other Model Providers
 
 ### Ollama
@@ -240,7 +150,9 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
     ```bash
     http://localhost:11434
     ```
-3. Once the correct Server URL is entered, you can select your desired Ollama models from the **Chat Model** dropdown
+3. Enter your Ollama Server API Key (Optional).
+
+4. Once the correct Server URL is entered, you can select your desired Ollama models from the **Chat Model** dropdown
    list.
 
 </details>
@@ -272,8 +184,8 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
     - `GPT-4.1 mini`
     - `GPT-4.1 nano`
 
-Additionally, if you have deployed the [ClickStream Server](#step-2-deploy-stack-and-get-your-api-url), you can enable
-the **Use Proxy** option to forward your requests.
+Additionally, if you have deployed and configured the [ClickStream Server](#getting-started-with-amazon-bedrock), you
+can enable the **Use Proxy** option to forward your requests.
 
 </details>
 
@@ -288,8 +200,103 @@ the **Use Proxy** option to forward your requests.
     - `API Key` of your model provider
     - `Model ID` of the models you want to use (separate multiple models with commas)
 3. Select one of your models from the **Chat Model** dropdown list.
+4. Click the plus button on the right to add another OpenAI-compatible model provider. You can add up to 10
+   OpenAI-compatible model providers.
 
 </details>
+
+## Key Features
+
+- Real-time streaming chat with AI
+- Rich Markdown Support: Tables, Code Blocks, LaTeX and More
+- AI image generation with progress
+- Multimodal support (images, videos & documents)
+- Conversation history list view and management
+- Cross-platform support (Android, iOS, macOS)
+- Tablet-optimized for iPad and Android tablets
+- Fast launch and responsive performance
+- Multiple AI models
+  supported ([Amazon Bedrock](https://aws.amazon.com/bedrock/), [Ollama](https://github.com/ollama/ollama), [DeepSeek](https://www.deepseek.com/), [OpenAI](https://openai.com/)
+  and [OpenAI Compatible](#openai-compatible) Models)
+- Fully Customizable System Prompt Assistant
+
+### Feature Showcase
+
+**Comprehensive Multimodal Analysis**: Text, Image, Document and Video
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/text_streaming.avif" width=24%>
+<img src="assets/animations/image_summary.avif" width=24%>
+<img src="assets/animations/doc_summary.avif" width=24%>
+<img src="assets/animations/video_summary.avif" width=24%>
+</div>
+
+**Creative Image Suite**: Generation, Virtual try-on, Style Replication, Background Removal with Nova Canvas
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/gen_image.avif" width=24%>
+<img src="assets/animations/virtual_try_on.avif" width=24%>
+<img src="assets/animations/similar_style.avif" width=24%>
+<img src="assets/animations/remove_background.avif" width=24%>
+</div>
+
+**System Prompt Assistant**: Useful Preset System Prompts with Full Management Capabilities (Add/Edit/Sort/Delete)
+
+![](assets/animations/english_teacher.avif)
+
+**Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX and More
+
+![](assets/markdown.avif)
+
+We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation.
+All of these features are also seamlessly displayed on Android and macOS with native UI
+
+#### Dark Mode
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/dark_markdown.avif" width=24%>
+<img src="assets/animations/dark_voice.avif" width=24%>
+<img src="assets/animations/dark_gen_image.avif" width=24%>
+<img src="assets/animations/dark_settings.avif" width=24%>
+</div>
+
+> Note: Some animated images have been sped up for demonstration. If you experience lag, please view on Chrome, Firefox,
+> or Edge browser on your computer.
+
+### Amazon Nova Series Features
+
+#### Easy to use Virtual try-on by Nova Canvas
+
+1. Support automatic setting of the main image, default is the previously used main image.
+2. Support uploading or taking the second image and sending it directly without any prompt words.
+3. Support automatically recognizes clothes, pants, shoes and tries them on
+
+#### Amazon Nova Sonic Speech to Speech Model
+
+1. Built-in spoken language practice for words and sentences, as well as storytelling scenarios. You can also add
+   **Custom System Prompts** for voice chatting in different scenarios.
+2. Support **Barge In** by default, Also you can disable in system prompt.
+3. Support selecting voices in the settings page, including American/British English, Spanish and options for male and
+   female voices.
+4. Support **Echo Cancellation**, You can talk directly to the device without wearing headphones.
+5. Support **Voice Waveform** to display volume level.
+
+**Learn Sentences**
+
+https://github.com/user-attachments/assets/ebf21b12-9c93-4d2e-a109-1d6484019838
+
+**Telling Story on Mac (With barge in feature)**
+
+https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
+
+> Note: Amazon Nova Sonic currently only available with SwiftChat server.
+
+#### Other Features
+
+- Record 30-second videos directly on Android and iOS for Nova analysis
+- Upload large videos (1080p/4K) beyond 8MB with auto compression
+- Support using default template to make Nova Canvas generate images, remove backgrounds, and
+  create images in similar styles.
 
 ## Detailed Features
 
@@ -310,16 +317,18 @@ We feature streamlined chat History, Settings pages, and intuitive Usage statist
 - [x] Text copy support:
     - Copy button at the bottom of messages, or directly click the model name or user title section.
     - Copy button in code blocks
-    - Direct Select and copy code on macOS (double click or long click on iOS)
-    - Long press text to copy entire sentence (Right-click on macOS)
+    - Copy button in reasoning blocks
+    - Direct Select and copy code on macOS (double-click or long click on iOS)
+    - Long press text to copy the entire sentence (Right-click on macOS)
 - [x] Text selection mode by click selection button.
 - [x] Message timeline view in history
 - [x] Delete messages through long press in history
 - [x] Click to preview for documents videos and images
+- [x] Support for collapsing and expanding the reasoning section and remembering the most recent state
 
 ### Image Features
 
-- [x] Support image generation with Chinese prompts(Make sure `Amazon Nova Lite` is enabled in your selected region)
+- [x] Support image generation with Chinese prompts (Make sure `Amazon Nova Lite` is enabled in your selected region)
 - [x] Long press images to save or share
 - [x] Automatic image compression to improve response speed
 
@@ -328,7 +337,7 @@ We feature streamlined chat History, Settings pages, and intuitive Usage statist
 - [x] Haptic feedback for Android and iOS (can be disabled in Settings)
 - [x] Support landscape mode on Android/iOS devices
 - [x] Double tap title bar to scroll to top
-- [x] Click bottom arrow to view latest messages
+- [x] Click bottom arrow to view the latest messages
 - [x] Display system prompt and model switch icon again by clicking on the chat title
 - [x] View current session token usage by tapping twice Chat title
 - [x] Check detailed token usage and image generation count in Settings
@@ -338,6 +347,12 @@ We have optimized the layout for landscape mode. As shown below, you can comfort
 landscape orientation.
 
 ![](assets/animations/landscape.avif)
+
+### YouTube Video
+
+[<img src="./assets/youtube.avif">](https://www.youtube.com/watch?v=rey05WzfEbM)
+> The content in the video is an early version. For UI, architecture, and inconsistencies, please refer to the current
+> documentation.
 
 ## What Makes SwiftChat Really "Swift"?
 
@@ -391,7 +406,7 @@ npm run android
 
 ### Build for iOS
 
-also open a new terminal. For the first time you need to install the native dependencies
+Also open a new terminal. For the first time you need to install the native dependencies
 by execute `cd ios && pod install && cd ..`, then execute the follow command:
 
 ```bash
@@ -426,26 +441,6 @@ the [release notes](https://github.com/aws-samples/swift-chat/releases) to see i
   find and open `swiftchat-api`, click top right **Deploy** button.
 - **For Lambda**: Click and open [Lambda Services](https://console.aws.amazon.com/lambda/home#/functions), find and open
   your Lambda which start with `SwiftChatLambda-xxx`, click the **Deploy new image** button and click Save.
-
-### Upgrade CloudFormation
-
-1. Click and open [CloudFormation](https://console.aws.amazon.com/cloudformation), switch to the region which you
-   have deployed the **SwiftChatAPI** stack.
-2. Select the **SwiftChatAPI** Stack, click **Update stack** -> **Make a direct update**
-3. On the **Update stack** Page, select **Replace existing template** under the **Amazon S3 URL**, then input the
-   following template url.
-
-   For App Runner
-    ```
-    https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template
-    ``` 
-   For Lambda
-    ```
-    https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template
-    ``` 
-4. Click the **Next** button and continue click **Next** button. On the **Configure stack options** page,
-   check `I acknowledge that AWS CloudFormation might create IAM resources.` then click **Next** and *Submit* button to
-   update your CloudFormation Template.
 
 ## Security
 
