@@ -60,18 +60,18 @@ export const invokeBedrockWithCallBack = async (
       currentModelTag === ModelTag.DeepSeek &&
       getDeepSeekApiKey().length === 0
     ) {
-      callback('Please configure your DeepSeek API Key', true, true);
+      callback('Please configure your DeepSeek API Key', true, false);
       return;
     }
     if (currentModelTag === ModelTag.OpenAI && getOpenAIApiKey().length === 0) {
-      callback('Please configure your OpenAI API Key', true, true);
+      callback('Please configure your OpenAI API Key', true, false);
       return;
     }
     if (
       currentModelTag === ModelTag.OpenAICompatible &&
       getTextModel().apiUrl!.length === 0
     ) {
-      callback('Please configure your OpenAI Compatible API URL', true, true);
+      callback('Please configure your OpenAI Compatible API URL', true, false);
       return;
     }
     if (currentModelTag === ModelTag.Ollama) {
@@ -96,7 +96,7 @@ export const invokeBedrockWithCallBack = async (
   const bedrockConfigMode = getBedrockConfigMode();
   const bedrockApiKey = getBedrockApiKey();
   if (bedrockConfigMode === 'bedrock' && !bedrockApiKey) {
-    callback('Please configure your Bedrock API Key', true, true);
+    callback('Please configure your Bedrock API Key', true, false);
     return;
   }
   if (chatMode === ChatMode.Text) {
@@ -114,7 +114,7 @@ export const invokeBedrockWithCallBack = async (
       callback(
         'Please configure your SwiftChat Server API URL and API Key',
         true,
-        true
+        false
       );
       return;
     }
