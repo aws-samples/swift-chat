@@ -291,7 +291,7 @@ function SettingsScreen(): React.JSX.Element {
     if (ollamaApiUrl === getOllamaApiUrl()) {
       return;
     }
-    saveOllamaApiURL(ollamaApiUrl);
+    saveOllamaApiURL(ollamaApiUrl.trim());
     fetchAndSetModelNamesRef.current(true, false).then();
   }, [ollamaApiUrl]);
 
@@ -299,7 +299,7 @@ function SettingsScreen(): React.JSX.Element {
     if (ollamaApiKey === getOllamaApiKey()) {
       return;
     }
-    saveOllamaApiKey(ollamaApiKey);
+    saveOllamaApiKey(ollamaApiKey.trim());
     fetchAndSetModelNamesRef.current(true, false).then();
   }, [ollamaApiKey]);
 
@@ -307,7 +307,7 @@ function SettingsScreen(): React.JSX.Element {
     if (deepSeekApiKey === getDeepSeekApiKey()) {
       return;
     }
-    saveDeepSeekApiKey(deepSeekApiKey);
+    saveDeepSeekApiKey(deepSeekApiKey.trim());
     fetchAndSetModelNamesRef.current(false, false).then();
   }, [deepSeekApiKey]);
 
@@ -315,7 +315,7 @@ function SettingsScreen(): React.JSX.Element {
     if (openAIApiKey === getOpenAIApiKey()) {
       return;
     }
-    saveOpenAIApiKey(openAIApiKey);
+    saveOpenAIApiKey(openAIApiKey.trim());
     fetchAndSetModelNamesRef.current(false, false).then();
   }, [openAIApiKey]);
 
@@ -334,16 +334,16 @@ function SettingsScreen(): React.JSX.Element {
     if (bedrockConfigMode === getBedrockConfigMode()) {
       return;
     }
-    fetchAndSetModelNamesRef.current(false, true).then();
     saveBedrockConfigMode(bedrockConfigMode);
+    fetchAndSetModelNamesRef.current(false, true).then();
   }, [bedrockConfigMode]);
 
   useEffect(() => {
     if (bedrockApiKey === getBedrockApiKey()) {
       return;
     }
+    saveBedrockApiKey(bedrockApiKey.trim());
     fetchAndSetModelNamesRef.current(false, true).then();
-    saveBedrockApiKey(bedrockApiKey);
   }, [bedrockApiKey]);
 
   const fetchUpgradeInfo = async () => {

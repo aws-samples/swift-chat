@@ -53,7 +53,7 @@ export default function OpenAICompatConfigComponent({
       <CustomTextInput
         label="Base URL"
         value={config.baseUrl}
-        onChangeText={value => onUpdate(config.id, 'baseUrl', value)}
+        onChangeText={value => onUpdate(config.id, 'baseUrl', value.trim())}
         placeholder="Enter Base URL"
         secureTextEntry={false}
       />
@@ -61,7 +61,7 @@ export default function OpenAICompatConfigComponent({
       <CustomTextInput
         label="API Key"
         value={config.apiKey}
-        onChangeText={value => onUpdate(config.id, 'apiKey', value)}
+        onChangeText={value => onUpdate(config.id, 'apiKey', value.trim())}
         placeholder="Enter API Key"
         secureTextEntry={true}
       />
@@ -69,7 +69,7 @@ export default function OpenAICompatConfigComponent({
       <CustomTextInput
         label="Model ID"
         value={config.modelIds}
-        onChangeText={value => onUpdate(config.id, 'modelIds', value)}
+        onChangeText={value => onUpdate(config.id, 'modelIds', value.trim())}
         placeholder="Enter Model IDs, split by comma"
         secureTextEntry={false}
         numberOfLines={4}
