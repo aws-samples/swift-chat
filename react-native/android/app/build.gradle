@@ -122,6 +122,118 @@ android {
             resources.pickFirsts.add('com/facebook/react/modules/network/ProgressiveStringDecoder.class')
         }
     }
+
+    // delete the duplicate class before R8 (only for release builds)
+    applicationVariants.all { variant ->
+        // only run during release
+        if (variant.name.contains('release')) {
+            def r8Task = tasks.findByName("minify${variant.name.capitalize()}WithR8")
+            if (r8Task) {
+                r8Task.doFirst {
+                    // Search and handle all react-android related JAR file
+                    def processedJars = []
+
+                    // Search Gradle Cached JAR file - support multiple env
+                    def gradleCachePaths = [
+                        file("${System.getProperty('user.home')}/.gradle/caches"),
+                        file("${gradle.gradleUserHomeDir}/caches"),
+                        file("${System.getProperty('GRADLE_USER_HOME', System.getProperty('user.home') + '/.gradle')}/caches")
+                    ]
+
+                    def gradleCache = gradleCachePaths.find { it.exists() }
+                    if (gradleCache) {
+                        println "Using Gradle cache directory: ${gradleCache.absolutePath}"
+                        gradleCache.eachFileRecurse { file ->
+                            if (file.name.contains('react-android') && file.name.endsWith('.jar')) {
+                                def tmpDir = new File("${buildDir}/tmp/modifiedReactAndroid_${file.name}/")
+                                def backupFile = new File("${buildDir}/tmp/backup_${file.name}")
+
+                                tmpDir.deleteDir()
+                                tmpDir.mkdirs()
+                                backupFile.parentFile.mkdirs()
+
+                                println "Processing cached react-android JAR: ${file.absolutePath}"
+
+                                try {
+                                    // backup JAR file
+                                    copy {
+                                        from file
+                                        into backupFile.parent
+                                        rename { backupFile.name }
+                                    }
+                                    if (!project.ext.has('backupMap')) {
+                                        project.ext.backupMap = [:]
+                                    }
+                                    project.ext.backupMap[file.absolutePath] = backupFile.absolutePath
+                                    println "Backed up ${file.name} to ${backupFile.absolutePath}"
+
+                                    // unzip JAR
+                                    copy {
+                                        from zipTree(file)
+                                        into tmpDir
+                                    }
+
+                                    // Delete duplicated class file
+                                    def conflictClass = new File("${tmpDir}/com/facebook/react/modules/network/ProgressiveStringDecoder.class")
+                                    if (conflictClass.exists()) {
+                                        conflictClass.delete()
+                                        println "Removed conflicting ProgressiveStringDecoder.class from ${file.name}"
+
+                                        // RePackage JAR
+                                        ant.jar(destfile: file) {
+                                            fileset(dir: tmpDir)
+                                        }
+
+                                        processedJars.add(file.name)
+                                    }
+                                } catch (Exception e) {
+                                    println "Warning: Could not process ${file.name}: ${e.message}"
+                                }
+                            }
+                        }
+                    } else {
+                        println "No Gradle cache directory found in any of the expected locations"
+                    }
+
+                    if (processedJars.size() > 0) {
+                        println "Successfully processed ${processedJars.size()} react-android JAR files: ${processedJars}"
+                    } else {
+                        println "No react-android JAR files found to process"
+                    }
+                }
+
+                // revert the changes
+                r8Task.doLast {
+                    def backupMap = project.ext.has('backupMap') ? project.ext.backupMap : [:]
+                    backupMap.each { originalPath, backupPath ->
+                        try {
+                            def originalFile = new File(originalPath)
+                            def backupFile = new File(backupPath)
+
+                            if (backupFile.exists()) {
+                                copy {
+                                    from backupFile
+                                    into originalFile.parent
+                                    rename { originalFile.name }
+                                }
+                                backupFile.delete()
+                                println "Restored ${originalFile.name} from backup"
+                            }
+                        } catch (Exception e) {
+                            println "Warning: Could not restore ${originalPath}: ${e.message}"
+                        }
+                    }
+
+                    if (backupMap.size() > 0) {
+                        println "Successfully restored ${backupMap.size()} JAR files from backup"
+                        if (project.ext.has('backupMap')) {
+                            project.ext.backupMap = [:]
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 dependencies {
