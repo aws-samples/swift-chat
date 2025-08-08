@@ -982,7 +982,7 @@ function ChatScreen(): React.JSX.Element {
                 setTimeout(() => {
                   textInputViewRef.current?.clear();
                   textInputViewRef.current?.focus();
-                }, 20);
+                }, 50);
               } else {
                 setTimeout(() => {
                   textInputViewRef.current?.focus();

@@ -91,10 +91,12 @@ static IMP originalPressesEnded = NULL;
         if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftGUI ||
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightGUI) {
             commandPressed = YES;
+            didHandleEvent = YES;
         }
         if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftShift ||
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightShift) {
             shiftPressed = YES;
+            didHandleEvent = YES;
         }
         if (press.key.keyCode == UIKeyboardHIDUsageKeyboardV) {
             [RCTTextInputPatch copyPasteboardFilesToClipboardDirectoryWithCompletion:^{
@@ -128,10 +130,12 @@ static IMP originalPressesEnded = NULL;
         if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftGUI ||
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightGUI) {
             commandPressed = NO;
+            didHandleEvent = YES;
         }
         if (press.key.keyCode == UIKeyboardHIDUsageKeyboardLeftShift ||
             press.key.keyCode == UIKeyboardHIDUsageKeyboardRightShift) {
             shiftPressed = NO;
+            didHandleEvent = YES;
         }
     }
 
