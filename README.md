@@ -235,7 +235,7 @@ can enable the **Use Proxy** option to forward your requests.
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/gen_image.avif" width=24%>
-<img src="assets/animations/virtual_try_on.avif" width=24%>
+<img src="assets/animations/virtual_try_on_demo.avif" width=24%>
 <img src="assets/animations/similar_style.avif" width=24%>
 <img src="assets/animations/remove_background.avif" width=24%>
 </div>
