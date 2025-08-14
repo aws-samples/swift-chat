@@ -1,7 +1,7 @@
 {
   "name": "swift-chat",
   "description": "Sample Bedrock Cross-platform App - SwiftChat",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
