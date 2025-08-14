@@ -100,6 +100,14 @@ export const invokeOllamaWithCallBack = async (
             callback(completeMessage, done, false);
           }
           if (done) {
+            if (lastChunk.length > 0) {
+              callback(
+                completeMessage + '\n\n' + '**Parse error**:\n' + lastChunk,
+                true,
+                true,
+                undefined
+              );
+            }
             return;
           }
         } catch (readError) {
@@ -155,11 +163,10 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
         };
       }
     } catch (error) {
-      if (lastChunk.length > 0) {
-        return { error: error + chunk };
-      }
-      if (content.length > 0) {
+      if (dataChunk === dataChunks[dataChunks.length - 1]) {
         return { content, dataChunk, usage };
+      } else {
+        return { error: chunk };
       }
     }
   }

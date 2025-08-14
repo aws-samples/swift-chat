@@ -134,6 +134,15 @@ export const invokeOpenAIWithCallBack = async (
             );
           }
           if (done) {
+            if (lastChunk.length > 0) {
+              callback(
+                completeMessage + '\n\n' + '**Parse error**:\n' + lastChunk,
+                true,
+                true,
+                undefined,
+                completeReasoning
+              );
+            }
             return;
           }
         } catch (readError) {
@@ -226,16 +235,10 @@ const parseStreamData = (chunk: string, lastChunk: string = '') => {
         };
       }
     } catch (error) {
-      if (lastChunk.length > 0) {
+      if (dataChunk === dataChunks[dataChunks.length - 1]) {
         return { reason, content, dataChunk, usage };
-      } else if (reason === '' && content === '') {
-        if (dataChunk === 'data: ') {
-          return { reason, content, dataChunk, usage };
-        }
+      } else {
         return { error: chunk };
-      }
-      if (reason || content) {
-        return { reason, content, dataChunk, usage };
       }
     }
   }
