@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { ViewStyle } from 'react-native';
+import { useTheme } from '../../../theme';
 
 interface MermaidRendererProps {
   code: string;
@@ -24,6 +25,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     const [currentCode, setCurrentCode] = useState(code);
     const webViewRef = useRef<WebView>(null);
     const initialCodeRef = useRef<string>(code);
+    const { isDark } = useTheme();
 
     const updateContent = useCallback(
       (newCode: string) => {
@@ -154,10 +156,10 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     
     <script type="module">
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-      
-      mermaid.initialize({ 
+
+      mermaid.initialize({
         startOnLoad: true,
-        theme: 'default',
+        theme: '${isDark ? 'dark' : 'default'}',
         securityLevel: 'loose',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       });
@@ -252,7 +254,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     </script>
   </body>
 </html>`;
-    }, []);
+    }, [isDark]);
 
     const handleMessage = (event: WebViewMessageEvent) => {
       try {
