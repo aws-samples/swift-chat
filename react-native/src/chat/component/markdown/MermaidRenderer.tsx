@@ -1,5 +1,13 @@
-import React, { useMemo, useState, useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { WebView } from 'react-native-webview';
+import React, {
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+} from 'react';
+import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { ViewStyle } from 'react-native';
 
 interface MermaidRendererProps {
@@ -7,34 +15,40 @@ interface MermaidRendererProps {
   style?: ViewStyle;
 }
 
-const MermaidRenderer = forwardRef<any, MermaidRendererProps>(({ code, style }, ref) => {
-  const [currentCode, setCurrentCode] = useState(code);
-  const webViewRef = useRef<WebView>(null);
-  const lastUpdateTimeRef = useRef<number>(0);
-  
-  useEffect(() => {
-    if (code !== currentCode) {
-      setCurrentCode(code);
-    }
-  }, [code, currentCode]);
+interface MermaidRendererRef {
+  updateContent: (newCode: string) => void;
+}
 
-  const updateContent = useCallback((newCode: string) => {
-    if (newCode === currentCode) {
-      return;
-    }
+const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
+  ({ code, style }, ref) => {
+    const [currentCode, setCurrentCode] = useState(code);
+    const webViewRef = useRef<WebView>(null);
+    const lastUpdateTimeRef = useRef<number>(0);
 
-    const now = Date.now();
-    const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+    useEffect(() => {
+      if (code !== currentCode) {
+        setCurrentCode(code);
+      }
+    }, [code, currentCode]);
 
-    if (timeSinceLastUpdate < 25) {
-      setTimeout(() => updateContent(newCode), 25 - timeSinceLastUpdate);
-      return;
-    }
+    const updateContent = useCallback(
+      (newCode: string) => {
+        if (newCode === currentCode) {
+          return;
+        }
 
-    lastUpdateTimeRef.current = now;
+        const now = Date.now();
+        const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
 
-    if (webViewRef.current) {
-      const jsCode = `
+        if (timeSinceLastUpdate < 25) {
+          setTimeout(() => updateContent(newCode), 25 - timeSinceLastUpdate);
+          return;
+        }
+
+        lastUpdateTimeRef.current = now;
+
+        if (webViewRef.current) {
+          const jsCode = `
         (function() {
           try {
             const container = document.getElementById('mermaid-container');
@@ -82,21 +96,27 @@ const MermaidRenderer = forwardRef<any, MermaidRendererProps>(({ code, style }, 
           }
         })();
       `;
-      
-      webViewRef.current.injectJavaScript(jsCode);
-    }
-    
-    setCurrentCode(newCode);
-  }, [currentCode]);
 
-  useImperativeHandle(ref, () => ({
-    updateContent
-  }), [updateContent]);
+          webViewRef.current.injectJavaScript(jsCode);
+        }
 
-  const htmlContent = useMemo(() => {
-    return `
+        setCurrentCode(newCode);
+      },
+      [currentCode]
+    );
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        updateContent,
+      }),
+      [updateContent]
+    );
+
+    const htmlContent = useMemo(() => {
+      return `
 <!DOCTYPE html>
-<html>
+<html lang="">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -190,7 +210,7 @@ const MermaidRenderer = forwardRef<any, MermaidRendererProps>(({ code, style }, 
       }
 
       // Set up parse error handler
-      mermaid.parseError = function(err, hash) {
+      mermaid.parseError = function(err, _) {
         console.log('Mermaid parse error:', err);
       };
 
@@ -221,34 +241,48 @@ const MermaidRenderer = forwardRef<any, MermaidRendererProps>(({ code, style }, 
     </script>
   </body>
 </html>`;
-  }, [currentCode]);
+    }, [currentCode]);
 
-  const handleMessage = (event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log(data);
-    } catch (error) {
-    }
-  };
+    const handleMessage = (event: WebViewMessageEvent) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        if (data.type === 'log') {
+          console.log('[WebView]', data.message);
+        } else {
+          console.log('[WebView]', data);
+        }
+      } catch (error) {
+        console.log('[WebView] Raw message:', event.nativeEvent.data);
+      }
+    };
 
-  return (
-    <WebView
-      ref={webViewRef}
-      source={{ html: htmlContent }}
-      style={[{ height: 380, backgroundColor: 'transparent' }, style]}
-      javaScriptEnabled={true}
-      domStorageEnabled={true}
-      allowFileAccess={true}
-      allowUniversalAccessFromFileURLs={true}
-      mixedContentMode="compatibility"
-      originWhitelist={['*']}
-      scalesPageToFit={false}
-      showsHorizontalScrollIndicator={false}
-      showsVerticalScrollIndicator={false}
-      onMessage={handleMessage}
-      scrollEnabled={false}
-    />
-  );
-});
+    const styles = {
+      webView: {
+        height: 380,
+        backgroundColor: 'transparent' as const,
+      },
+    };
+
+    return (
+      <WebView
+        ref={webViewRef}
+        source={{ html: htmlContent }}
+        style={[styles.webView, style]}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        allowFileAccess={true}
+        allowUniversalAccessFromFileURLs={true}
+        allowFileAccessFromFileURLs={true}
+        mixedContentMode="compatibility"
+        originWhitelist={['*']}
+        scalesPageToFit={false}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        onMessage={handleMessage}
+        scrollEnabled={false}
+      />
+    );
+  }
+);
 
 export default MermaidRenderer;

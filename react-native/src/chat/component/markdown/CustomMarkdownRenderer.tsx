@@ -113,10 +113,9 @@ const MemoizedCodeHighlighter = React.memo(
     }, [text]);
 
     const hljsStyle = isDark ? vs2015 : github;
-    // 检测是否是Mermaid代码
     if (language === 'mermaid') {
       return (
-        <MermaidCodeRenderer 
+        <MermaidCodeRenderer
           text={text}
           colors={colors}
           isDark={isDark}
@@ -160,10 +159,12 @@ const MemoizedCodeHighlighter = React.memo(
     if (prevProps.language === 'mermaid' || nextProps.language === 'mermaid') {
       return false;
     }
-    return prevProps.text === nextProps.text &&
+    return (
+      prevProps.text === nextProps.text &&
       prevProps.language === nextProps.language &&
       prevProps.colors === nextProps.colors &&
-      prevProps.isDark === nextProps.isDark;
+      prevProps.isDark === nextProps.isDark
+    );
   }
 );
 
@@ -297,7 +298,8 @@ export class CustomMarkdownRenderer
     _textStyle?: TextStyle
   ): ReactNode {
     if (text && text !== '') {
-      const componentKey = language === 'mermaid' ? 'mermaid-code-block' : this.getKey();
+      const componentKey =
+        language === 'mermaid' ? 'mermaid-code-block' : this.getKey();
       return (
         <MemoizedCodeHighlighter
           key={componentKey}
