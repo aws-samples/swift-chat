@@ -23,7 +23,6 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
   ({ code, style }, ref) => {
     const [currentCode, setCurrentCode] = useState(code);
     const webViewRef = useRef<WebView>(null);
-    const lastUpdateTimeRef = useRef<number>(0);
     const initialCodeRef = useRef<string>(code);
 
     const updateContent = useCallback(
@@ -31,35 +30,29 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
         if (newCode === currentCode) {
           return;
         }
-
-        const now = Date.now();
-        const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-
-        if (timeSinceLastUpdate < 20) {
-          setTimeout(() => updateContent(newCode), 20 - timeSinceLastUpdate);
-          return;
-        }
-
-        lastUpdateTimeRef.current = now;
-
         if (webViewRef.current) {
+          const escapedCode = newCode
+            .replace(/`/g, '\\`')
+            .replace(/\$/g, '\\$');
           const jsCode = `
         (function() {
           try {
             const container = document.getElementById('mermaid-container');
             const displayContainer = document.getElementById('mermaid-display');
             if (!container || !displayContainer) return;
-            
+
+            const newCodeContent = \`${escapedCode}\`;
+
             // Store the new code in a hidden container
-            container.textContent = \`${newCode}\`;
+            container.textContent = newCodeContent;
             container.style.display = 'none';
-            
+
             // Try to parse and validate
-            window.mermaid.parse(\`${newCode}\`, { suppressErrors: true })
+            window.mermaid.parse(newCodeContent, { suppressErrors: true })
               .then((result) => {
                 if (result) {
                   // Valid syntax, try to render
-                  return window.mermaid.render('mermaid-graph', \`${newCode}\`);
+                  return window.mermaid.render('mermaid-graph', newCodeContent);
                 } else {
                   throw new Error('Invalid syntax');
                 }
@@ -67,27 +60,28 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
               .then((result) => {
                 // Rendering successful, update display
                 displayContainer.innerHTML = result.svg;
-                window.lastValidCode = \`${newCode}\`;
+                window.lastValidCode = newCodeContent;
                 // Mark that we have a successful render and hide any errors
                 window.hasSuccessfulRender = true;
-                window.hideError();
+                if (window.hideError) window.hideError();
               })
               .catch((error) => {
                 // Either invalid syntax or rendering failed
                 // Only start error timer if we've never had a successful render
                 // This prevents showing errors after we've already shown a valid diagram
                 if (!window.hasSuccessfulRender && !window.lastValidCode) {
-                  window.showErrorAfterDelay();
+                  if (window.showErrorAfterDelay) window.showErrorAfterDelay();
                 }
               });
           } catch (error) {
             console.error('Update failed:', error);
             // Only show error if we've never had a successful render
             if (!window.hasSuccessfulRender && !window.lastValidCode) {
-              window.showErrorAfterDelay();
+              if (window.showErrorAfterDelay) window.showErrorAfterDelay();
             }
           }
         })();
+        true;
       `;
 
           webViewRef.current.injectJavaScript(jsCode);
