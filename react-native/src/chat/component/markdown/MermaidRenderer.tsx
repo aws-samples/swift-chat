@@ -24,12 +24,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     const [currentCode, setCurrentCode] = useState(code);
     const webViewRef = useRef<WebView>(null);
     const lastUpdateTimeRef = useRef<number>(0);
-
-    useEffect(() => {
-      if (code !== currentCode) {
-        setCurrentCode(code);
-      }
-    }, [code, currentCode]);
+    const initialCodeRef = useRef<string>(code);
 
     const updateContent = useCallback(
       (newCode: string) => {
@@ -40,8 +35,8 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
         const now = Date.now();
         const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
 
-        if (timeSinceLastUpdate < 25) {
-          setTimeout(() => updateContent(newCode), 25 - timeSinceLastUpdate);
+        if (timeSinceLastUpdate < 20) {
+          setTimeout(() => updateContent(newCode), 20 - timeSinceLastUpdate);
           return;
         }
 
@@ -79,8 +74,6 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
               })
               .catch((error) => {
                 // Either invalid syntax or rendering failed
-                console.log('Keeping previous diagram due to:', error.message);
-                
                 // Only start error timer if we've never had a successful render
                 // This prevents showing errors after we've already shown a valid diagram
                 if (!window.hasSuccessfulRender && !window.lastValidCode) {
@@ -104,6 +97,12 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
       },
       [currentCode]
     );
+
+    useEffect(() => {
+      if (code !== currentCode) {
+        updateContent(code);
+      }
+    }, [code, currentCode, updateContent]);
 
     useImperativeHandle(
       ref,
@@ -154,7 +153,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
   </head>
   <body>
     <div class="mermaid" id="mermaid-container" style="display: none;">
-    ${currentCode}
+    ${initialCodeRef.current}
     </div>
     <div id="mermaid-display"></div>
     <div id="error-message" class="error-message">Invalid Mermaid syntax</div>
@@ -174,6 +173,24 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
       window.errorTimer = null;
       window.hasError = false;
       window.hasSuccessfulRender = false;
+      window.showErrorAfterDelay = showErrorAfterDelay;
+      window.hideError = hideError;
+
+      // Override console.log to send logs to React Native
+      const originalLog = console.log;
+      console.log = function(...args) {
+        originalLog.apply(console, args);
+        try {
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'log',
+              message: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ')
+            }));
+          }
+        } catch (e) {
+          originalLog('Failed to send log to RN:', e);
+        }
+      };
 
       // Function to show error message after delay
       function showErrorAfterDelay() {
@@ -241,16 +258,11 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     </script>
   </body>
 </html>`;
-    }, [currentCode]);
+    }, []);
 
     const handleMessage = (event: WebViewMessageEvent) => {
       try {
-        const data = JSON.parse(event.nativeEvent.data);
-        if (data.type === 'log') {
-          console.log('[WebView]', data.message);
-        } else {
-          console.log('[WebView]', data);
-        }
+        // console.log('[WebView]', JSON.parse(event.nativeEvent.data));
       } catch (error) {
         console.log('[WebView] Raw message:', event.nativeEvent.data);
       }
