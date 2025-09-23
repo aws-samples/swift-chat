@@ -15,6 +15,7 @@ import {
   StatusBar,
   Platform,
   Image,
+  Dimensions,
 } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import {
@@ -39,8 +40,6 @@ interface MermaidFullScreenViewerProps {
   code: string;
 }
 
-// const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
   visible,
   onClose,
@@ -49,6 +48,10 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
   const { colors, isDark } = useTheme();
   const webViewRef = useRef<WebView>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [isLandscape, setIsLandscape] = useState(
+    screenData.width > screenData.height
+  );
 
   // Animation values for pan and zoom
   const translateX = useSharedValue(0);
@@ -57,6 +60,16 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
   const baseScale = useSharedValue(1);
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
+
+  // Listen for orientation changes
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenData(window);
+      setIsLandscape(window.width > window.height);
+    });
+
+    return () => subscription?.remove();
+  }, []);
 
   // Reset transforms when modal opens
   useEffect(() => {
@@ -264,11 +277,14 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
       }
       #mermaid-display {
         width: 100vw;
-        padding-top: 45px;
-        padding-bottom: 60px;
+        padding-top: ${isLandscape ? '25px' : '45px'};
+        padding-bottom: ${isLandscape ? '25px' : '60px'};
+        padding-left: ${isLandscape ? '60px' : '20px'};
+        padding-right: ${isLandscape ? '60px' : '20px'};
         display: flex;
         align-items: center;
         justify-content: center;
+        box-sizing: border-box;
       }
       svg {
         width: 100% !important;
@@ -372,7 +388,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
     </script>
   </body>
 </html>`;
-  }, [code, isDark]);
+  }, [code, isDark, isLandscape]);
 
   const styles = StyleSheet.create({
     modal: {
@@ -381,8 +397,13 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
     },
     closeButtonTopLeft: {
       position: 'absolute',
-      top: Platform.OS === 'ios' ? 60 : (StatusBar.currentHeight || 20) + 20,
-      left: 20,
+      top:
+        Platform.OS === 'ios'
+          ? isLandscape
+            ? 40
+            : 60
+          : (StatusBar.currentHeight || 20) + (isLandscape ? 10 : 20),
+      left: isLandscape ? 40 : 20,
       width: 36,
       height: 36,
       borderRadius: 18,
@@ -399,8 +420,8 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
     },
     saveButtonBottomRight: {
       position: 'absolute',
-      bottom: 40,
-      right: 20,
+      bottom: isLandscape ? 20 : 40,
+      right: isLandscape ? 40 : 20,
       width: 48,
       height: 48,
       borderRadius: 12,
@@ -449,6 +470,12 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
       visible={visible}
       animationType="fade"
       statusBarTranslucent={true}
+      supportedOrientations={[
+        'portrait',
+        'landscape',
+        'landscape-left',
+        'landscape-right',
+      ]}
       onRequestClose={onClose}>
       <View style={styles.modal}>
         <StatusBar
