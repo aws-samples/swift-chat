@@ -8,8 +8,9 @@ import React, {
   useEffect,
 } from 'react';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
-import { ViewStyle } from 'react-native';
+import { ViewStyle, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../theme';
+import MermaidFullScreenViewer from './MermaidFullScreenViewer';
 
 interface MermaidRendererProps {
   code: string;
@@ -23,6 +24,7 @@ interface MermaidRendererRef {
 const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
   ({ code, style }, ref) => {
     const [currentCode, setCurrentCode] = useState(code);
+    const [showFullScreen, setShowFullScreen] = useState(false);
     const webViewRef = useRef<WebView>(null);
     const initialCodeRef = useRef<string>(code);
     const { isDark } = useTheme();
@@ -211,7 +213,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
         }, 1000);
       }
 
-      // Function to hide error message
+      // Function to hide an error message
       function hideError() {
         if (window.errorTimer) {
           clearTimeout(window.errorTimer);
@@ -272,23 +274,36 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     };
 
     return (
-      <WebView
-        ref={webViewRef}
-        source={{ html: htmlContent }}
-        style={[styles.webView, style]}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        allowFileAccess={true}
-        allowUniversalAccessFromFileURLs={true}
-        allowFileAccessFromFileURLs={true}
-        mixedContentMode="compatibility"
-        originWhitelist={['*']}
-        scalesPageToFit={false}
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        onMessage={handleMessage}
-        scrollEnabled={false}
-      />
+      <>
+        <TouchableOpacity
+          onPress={() => setShowFullScreen(true)}
+          activeOpacity={0.8}>
+          <WebView
+            ref={webViewRef}
+            source={{ html: htmlContent }}
+            style={[styles.webView, style]}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            allowFileAccess={true}
+            allowUniversalAccessFromFileURLs={true}
+            allowFileAccessFromFileURLs={true}
+            mixedContentMode="compatibility"
+            originWhitelist={['*']}
+            scalesPageToFit={false}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            onMessage={handleMessage}
+            scrollEnabled={false}
+            pointerEvents="none"
+          />
+        </TouchableOpacity>
+
+        <MermaidFullScreenViewer
+          visible={showFullScreen}
+          onClose={() => setShowFullScreen(false)}
+          code={currentCode}
+        />
+      </>
     );
   }
 );
