@@ -333,6 +333,8 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
         max-height: none;
         height: 100% !important;
         vector-effect: non-scaling-stroke;
+        display: block; 
+        margin: 0 auto;
       }
       .error-message {
         color: #999;
