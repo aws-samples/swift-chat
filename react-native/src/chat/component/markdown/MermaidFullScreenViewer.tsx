@@ -277,10 +277,11 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
       }
       #mermaid-display {
         width: 100vw;
+        height: ${isLandscape ? '100vh' : 'auto'};
         padding-top: ${isLandscape ? '25px' : '45px'};
-        padding-bottom: ${isLandscape ? '25px' : '60px'};
-        padding-left: ${isLandscape ? '60px' : '20px'};
-        padding-right: ${isLandscape ? '60px' : '20px'};
+        padding-bottom: ${isLandscape ? '45px' : '60px'};
+        padding-left: ${isLandscape ? '60px' : '0px'};
+        padding-right: ${isLandscape ? '60px' : '0px'};
         display: flex;
         align-items: center;
         justify-content: center;
@@ -290,7 +291,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
         width: 100% !important;
         max-width: none;
         max-height: none;
-        height: auto;
+        height: 100% !important;
         vector-effect: non-scaling-stroke;
       }
       .error-message {
@@ -470,12 +471,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
       visible={visible}
       animationType="fade"
       statusBarTranslucent={true}
-      supportedOrientations={[
-        'portrait',
-        'landscape',
-        'landscape-left',
-        'landscape-right',
-      ]}
+      supportedOrientations={['portrait', 'landscape']}
       onRequestClose={onClose}>
       <View style={styles.modal}>
         <StatusBar
