@@ -149,7 +149,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
     }
 
     try {
-      // Inject JavaScript to capture SVG and convert to data URL
+      // Inject JavaScript to capture complete SVG and convert to data URL
       const captureJS = `
         (function() {
           try {
@@ -162,40 +162,80 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
               return;
             }
 
-            // Create a canvas to render the SVG
+            // Clone the SVG to avoid modifying the original
+            const svgClone = svg.cloneNode(true);
+
+            // Get the actual SVG dimensions from viewBox or computed values
+            let svgWidth, svgHeight;
+            const viewBox = svg.getAttribute('viewBox');
+
+            if (viewBox) {
+              // Use viewBox dimensions if available
+              const [x, y, width, height] = viewBox.split(' ').map(Number);
+              svgWidth = width;
+              svgHeight = height;
+              svgClone.setAttribute('width', width);
+              svgClone.setAttribute('height', height);
+            } else {
+              // Fallback to intrinsic dimensions
+              svgWidth = svg.scrollWidth || svg.clientWidth || parseFloat(svg.getAttribute('width')) || 800;
+              svgHeight = svg.scrollHeight || svg.clientHeight || parseFloat(svg.getAttribute('height')) || 600;
+              svgClone.setAttribute('width', svgWidth);
+              svgClone.setAttribute('height', svgHeight);
+            }
+
+            // Ensure the SVG has proper styling for export
+            svgClone.style.background = '${isDark ? '#1a1a1a' : '#ffffff'}';
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+            // Serialize the complete SVG
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+
+            // Create canvas with actual SVG dimensions at higher resolution
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const svgData = new XMLSerializer().serializeToString(svg);
+            const scale = 2; // Higher resolution multiplier
 
-            // Get SVG dimensions
-            const svgRect = svg.getBoundingClientRect();
-            canvas.width = svgRect.width * 2; // Higher resolution
-            canvas.height = svgRect.height * 2;
+            canvas.width = svgWidth * scale;
+            canvas.height = svgHeight * scale;
 
             const img = new Image();
             img.onload = function() {
-              ctx.scale(2, 2); // Higher resolution
-              ctx.fillStyle = '${isDark ? '#1a1a1a' : '#ffffff'}';
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              ctx.drawImage(img, 0, 0);
+              try {
+                // Scale context for higher resolution
+                ctx.scale(scale, scale);
 
-              const dataURL = canvas.toDataURL('image/png');
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'capture_success',
-                data: dataURL
-              }));
+                // Fill background
+                ctx.fillStyle = '${isDark ? '#1a1a1a' : '#ffffff'}';
+                ctx.fillRect(0, 0, svgWidth, svgHeight);
+
+                // Draw the complete SVG
+                ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+
+                const dataURL = canvas.toDataURL('image/png', 0.95);
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'capture_success',
+                  data: dataURL
+                }));
+              } catch (error) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'capture_error',
+                  message: 'Canvas operation failed: ' + error.message
+                }));
+              }
             };
 
-            img.onerror = function() {
+            img.onerror = function(error) {
               window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'capture_error',
-                message: 'Failed to load image'
+                message: 'Failed to load image: ' + error
               }));
             };
 
-            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
-            const url = URL.createObjectURL(svgBlob);
-            img.src = url;
+            // Use Data URL instead of Blob URL to avoid security issues
+            const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+            img.src = svgDataUrl;
 
           } catch (error) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
