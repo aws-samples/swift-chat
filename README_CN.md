@@ -84,15 +84,15 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ### 步骤 2：部署堆栈并获取 API URL
 
-1. 点击以下按钮之一在创建 API Key 的同一区域启动 CloudFormation 堆栈。
+1. 前往 [CloudFormation 控制台](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChat)，在**指定模板**下选择**上传模板文件**，然后使用以下模板之一进行部署。（确保您所在的区域与创建 API Key 的区域相同。）
 
     - **App Runner**
 
-      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      下载 [CloudFormation 模板](https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatAppRunner.template) 并上传文件。
 
     - **Lambda**（注意：仅供 AWS 客户使用）
 
-      [![启动堆栈](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      下载 [CloudFormation 模板](https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatLambda.template) 并上传文件。
 
 2. 点击 **下一步**，在"指定堆栈详细信息"页面，提供以下信息：
     - 用您存储 API 密钥的参数名称填写 `ApiKeyParam`（例如 "SwiftChatAPIKey"）。

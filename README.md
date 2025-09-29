@@ -92,16 +92,15 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 ### Step 2: Deploy stack and get your API URL
 
-1. Click one of the following buttons to launch the CloudFormation Stack in the same region where your API Key was
-   created.
+1. Go to [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChat) and select **Upload a template file** under **Specify template**, then use one of the following templates to deploy. (Make sure you are in the same region where your API Key was created.)
 
     - **App Runner**
 
-      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatAppRunner.template)
+      Download [CloudFormation Template](https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatAppRunner.template) and upload the file.
 
     - **Lambda** (Note: For AWS customer use only)
 
-      [![Launch Stack](assets/launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatLambda&templateURL=https://aws-gcr-solutions.s3.amazonaws.com/swift-chat/latest/SwiftChatLambda.template)
+      Download [CloudFormation Template](https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatLambda.template) and upload the file.
 
 2. Click **Next**, On the "Specify stack details" page, provide the following information:
     - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
