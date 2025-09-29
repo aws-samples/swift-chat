@@ -96,7 +96,7 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
     - **App Runner**
 
-      Download [CloudFormation Template](https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatAppRunner.template) and upload the file.
+      Download <a href="https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatAppRunner.template" download="SwiftChatAppRunner.template">CloudFormation Template</a> and upload the file.
 
     - **Lambda** (Note: For AWS customer use only)
 
