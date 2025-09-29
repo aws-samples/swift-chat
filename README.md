@@ -96,11 +96,11 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
     - **App Runner**
 
-      Download <a href="https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatAppRunner.template" download="SwiftChatAppRunner.template">CloudFormation Template</a> and upload the file.
+      Open [SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template), then download and upload the file.
 
     - **Lambda** (Note: For AWS customer use only)
 
-      Download [CloudFormation Template](https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatLambda.template) and upload the file.
+      Open [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template) then download and upload the file.
 
 2. Click **Next**, On the "Specify stack details" page, provide the following information:
     - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").

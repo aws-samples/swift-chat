@@ -88,11 +88,11 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
     - **App Runner**
 
-      下载 [CloudFormation 模板](https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatAppRunner.template) 并上传文件。
+      打开 [SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template)，然后下载并上传文件。
 
     - **Lambda**（注意：仅供 AWS 客户使用）
 
-      下载 [CloudFormation 模板](https://raw.githubusercontent.com/aws-samples/swift-chat/refs/heads/main/server/template/SwiftChatLambda.template) 并上传文件。
+      打开 [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)，然后下载并上传文件。
 
 2. 点击 **下一步**，在"指定堆栈详细信息"页面，提供以下信息：
     - 用您存储 API 密钥的参数名称填写 `ApiKeyParam`（例如 "SwiftChatAPIKey"）。
