@@ -108,6 +108,9 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
    - ECR repository name (or use default: `swift-chat-api`)
    - Image tag (or use default: `latest`)
    - AWS region (or use default: `us-east-1`)
+   - Deployment type:
+     - Option 1 (default): **AppRunner** - uses amd64 architecture
+     - Option 2: **Lambda** - uses arm64 architecture
 
 4. The script will build and push the Docker image to your ECR repository.
 

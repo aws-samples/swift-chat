@@ -100,6 +100,9 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
    - ECR 仓库名称（或使用默认值：`swift-chat-api`）
    - 镜像标签（或使用默认值：`latest`）
    - AWS 区域（或使用默认值：`us-east-1`）
+   - 部署类型：
+     - 选项 1（默认）：**AppRunner** - 使用 amd64 架构
+     - 选项 2：**Lambda** - 使用 arm64 架构
 
 4. 脚本将构建并推送 Docker 镜像到您的 ECR 仓库。
 
