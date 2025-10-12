@@ -60,11 +60,37 @@ TAG=${TAG:-latest}
 read -p "Enter AWS region (default: us-east-1): " AWS_REGION
 AWS_REGION=${AWS_REGION:-us-east-1}
 
+# Get deployment type
+echo ""
+echo "Select deployment type:"
+echo "  1) AppRunner (default) - uses amd64 architecture"
+echo "  2) Lambda - uses arm64 architecture"
+read -p "Enter deployment type (1 or 2, default: 1): " DEPLOY_TYPE
+DEPLOY_TYPE=${DEPLOY_TYPE:-1}
+
+# Determine architecture based on deployment type
+case $DEPLOY_TYPE in
+    1)
+        DEPLOY_TYPE_NAME="AppRunner"
+        ARCH="amd64"
+        ;;
+    2)
+        DEPLOY_TYPE_NAME="Lambda"
+        ARCH="arm64"
+        ;;
+    *)
+        echo "❌ ERROR: Invalid deployment type. Please enter 1 or 2."
+        exit 1
+        ;;
+esac
+
 echo ""
 echo "Configuration:"
 echo "  Repository: $REPO_NAME"
 echo "  Image Tag: $TAG"
 echo "  AWS Region: $AWS_REGION"
+echo "  Deployment Type: $DEPLOY_TYPE_NAME"
+echo "  Architecture: $ARCH"
 echo ""
 read -p "Continue with these settings? (y/n): " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
@@ -96,8 +122,8 @@ build_and_push_image() {
     local IMAGE_NAME=$1
     local TAG=$2
     local DOCKERFILE_PATH=$3
+    local BUILD_ARCH=$4
     local REGION=$AWS_REGION
-    local ARCH="amd64"  # Single architecture for simplicity
 
     echo "Logging in to AWS Public ECR..."
     # Log in to AWS Public ECR for pulling base images
@@ -106,10 +132,10 @@ build_and_push_image() {
         exit 1
     fi
 
-    echo "Building $IMAGE_NAME:$TAG..."
+    echo "Building $IMAGE_NAME:$TAG for linux/$BUILD_ARCH..."
 
     # Build Docker image
-    if ! docker buildx build --platform linux/$ARCH -t $IMAGE_NAME:$TAG -f $DOCKERFILE_PATH --load ../src/; then
+    if ! docker buildx build --platform linux/$BUILD_ARCH -t $IMAGE_NAME:$TAG -f $DOCKERFILE_PATH --load ../src/; then
         echo "❌ ERROR: Failed to build Docker image."
         exit 1
     fi
@@ -157,7 +183,7 @@ build_and_push_image() {
 }
 
 echo "Building and pushing SwiftChat image..."
-IMAGE_URI=$(build_and_push_image "$REPO_NAME" "$TAG" "../src/Dockerfile")
+IMAGE_URI=$(build_and_push_image "$REPO_NAME" "$TAG" "../src/Dockerfile" "$ARCH")
 
 echo "================================================"
 echo "✅ Image successfully pushed!"
