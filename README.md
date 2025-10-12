@@ -131,7 +131,7 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 5. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
 
-Wait about 10-15 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
+Wait about 3–5 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
 can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or `https://xxx.lambda-url.xxx.on.aws`
 
 ### Step 4: Open the App and setup with API URL and API Key

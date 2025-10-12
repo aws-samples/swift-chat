@@ -74,36 +74,57 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 2. 检查您是否在 [支持的区域](#支持的区域)，然后点击 **创建参数** 按钮。
 3. 填入以下参数，其他选项保持默认：
 
-    - **名称**：输入参数名称（例如 "SwiftChatAPIKey"，将在步骤 2 中用作 `ApiKeyParam`）。
+    - **名称**：输入参数名称（例如 "SwiftChatAPIKey"，将在步骤 3 中用作 `ApiKeyParam`）。
 
     - **类型**：选择 `SecureString`
 
-    - **值**：输入任何不含空格的字符串（这将是步骤 3 中您的 `API Key`）
+    - **值**：输入任何不含空格的字符串（这将是步骤 4 中您的 `API Key`）
 
 4. 点击 **创建参数**。
 
-### 步骤 2：部署堆栈并获取 API URL
+### 步骤 2：构建并推送容器镜像到 ECR
 
-1. 前往 [CloudFormation 控制台](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChat)，在**指定模板**下选择**上传模板文件**，然后使用以下模板之一进行部署。（确保您所在的区域与创建 API Key 的区域相同。）
+1. 克隆此仓库：
+   ```bash
+   git clone https://github.com/aws-samples/swift-chat.git
+   cd swift-chat
+   ```
 
-    - **App Runner**
+2. 运行构建和推送脚本：
+   ```bash
+   cd server/scripts
+   bash ./push-to-ecr.sh
+   ```
 
-      打开 [SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template)，然后下载并上传文件。
+3. 按照提示进行配置：
+   - ECR 仓库名称（或使用默认值：`swift-chat-api`）
+   - 镜像标签（或使用默认值：`latest`）
+   - AWS 区域（或使用默认值：`us-east-1`）
 
-    - **Lambda**（注意：仅供 AWS 客户使用）
+4. 脚本将构建并推送 Docker 镜像到您的 ECR 仓库。
 
-      打开 [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)，然后下载并上传文件。
+5. **重要**：复制脚本输出末尾显示的镜像 URI。您将在下一步中需要它。
 
-2. 点击 **下一步**，在"指定堆栈详细信息"页面，提供以下信息：
-    - 用您存储 API 密钥的参数名称填写 `ApiKeyParam`（例如 "SwiftChatAPIKey"）。
-    - 对于 App Runner，根据您的需求选择 `InstanceTypeParam`。
-3. 点击 **下一步**，保持"配置堆栈选项"页面为默认，阅读功能并勾选底部的"我确认 AWS CloudFormation 可能会创建 IAM 资源"复选框。
-4. 点击 **下一步**，在"审核并创建"中检查您的配置并点击 **提交**。
+### 步骤 3：部署堆栈并获取 API URL
 
-等待约 3-5 分钟完成部署，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到类似
-`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws` 的 **API URL**。
+1. 下载您想使用的 CloudFormation 模板：
+   - App Runner：[SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template)
+   - Lambda：[SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
 
-### 步骤 3：打开应用并使用 API URL 和 API Key 进行设置
+2. 前往 [CloudFormation 控制台](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI)，在**指定模板**下选择**上传模板文件**，然后上传您下载的模板文件。（确保您所在的区域与创建 API Key 的区域相同。）
+
+3. 点击 **下一步**，在"指定堆栈详细信息"页面，提供以下信息：
+    - **Stack name**：保持默认的 "SwiftChatAPI" 或根据需要更改
+    - **ApiKeyParam**：输入您用于存储 API 密钥的参数名称（例如 "SwiftChatAPIKey"）
+    - **ContainerImageUri**：输入步骤 2 输出的 ECR 镜像 URI
+    - 对于 App Runner，根据您的需求选择 **InstanceTypeParam**
+
+4. 点击 **下一步**，保持"配置堆栈选项"页面为默认，阅读功能并勾选底部的"我确认 AWS CloudFormation 可能会创建 IAM 资源"复选框。
+5. 点击 **下一步**，在"审核并创建"中检查您的配置并点击 **提交**。
+
+等待约 3-5 分钟完成部署，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到 **API URL**，类似于：`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws`
+
+### 步骤 4：打开应用并使用 API URL 和 API Key 进行设置
 
 1. 启动应用，打开抽屉菜单，点击 **设置**。
 2. 粘贴 `API URL` 和 `API Key`（您在 Parameter Store 中输入的 **值**）到 Amazon Bedrock -> SwiftChat Server 下，然后选择您的区域。
