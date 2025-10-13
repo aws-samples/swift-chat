@@ -1,77 +1,199 @@
 # NOTE: The script will try to create the ECR repository if it doesn't exist. Please grant the necessary permissions to the IAM user or role.
 # Usage:
-#    cd scripts
+#    cd server/scripts
 #    bash ./push-to-ecr.sh
 
 set -o errexit  # exit on first error
 set -o nounset  # exit on using unset variables
 set -o pipefail # exit on any error in a pipeline
 
-# Define variables
-TAG="latest"
-ARCHS=("amd64" "arm64")
-AWS_REGIONS=("us-east-1") # List of AWS region, use below list if you don't enable ECR repository replication
-# AWS_REGIONS=("us-west-2" "us-east-1" "ap-south-1" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" "ca-central-1"
-# "eu-central-1" "eu-west-2" "eu-west-3" "sa-east-1") # List of supported AWS regions
+# Check prerequisites
+echo "================================================"
+echo "SwiftChat - Build and Push to ECR"
+echo "================================================"
+echo ""
 
-build_and_push_images() {
+echo "Checking prerequisites..."
+
+# Check if Docker is available
+if ! command -v docker &> /dev/null; then
+    echo "❌ ERROR: Docker is not installed or not in PATH."
+    echo "Please install Docker Desktop or Docker Engine before running this script."
+    exit 1
+fi
+
+# Check if Docker daemon is running
+if ! docker info >/dev/null 2>&1; then
+    echo "❌ ERROR: Docker daemon is not running."
+    echo "Please start Docker Desktop or Docker daemon before running this script."
+    exit 1
+fi
+
+# Check if AWS CLI is available
+if ! command -v aws &> /dev/null; then
+    echo "❌ ERROR: AWS CLI is not installed or not in PATH."
+    echo "Please install AWS CLI before running this script."
+    exit 1
+fi
+
+# Check if AWS credentials are configured
+if ! aws sts get-caller-identity >/dev/null 2>&1; then
+    echo "❌ ERROR: AWS credentials are not configured."
+    echo "Please run 'aws configure' or set up your AWS credentials before running this script."
+    exit 1
+fi
+
+echo "✅ All prerequisites are met."
+echo ""
+
+# Prompt user for inputs
+
+# Get repository name
+read -p "Enter ECR repository name (default: swift-chat-api): " REPO_NAME
+REPO_NAME=${REPO_NAME:-swift-chat-api}
+
+# Get image tag
+read -p "Enter image tag (default: latest): " TAG
+TAG=${TAG:-latest}
+
+# Get AWS region
+read -p "Enter AWS region (default: us-east-1): " AWS_REGION
+AWS_REGION=${AWS_REGION:-us-east-1}
+
+# Get deployment type
+echo ""
+echo "Select deployment type:"
+echo "  1) AppRunner (default) - uses amd64 architecture"
+echo "  2) Lambda - uses arm64 architecture"
+read -p "Enter deployment type (1 or 2, default: 1): " DEPLOY_TYPE
+DEPLOY_TYPE=${DEPLOY_TYPE:-1}
+
+# Determine architecture based on deployment type
+case $DEPLOY_TYPE in
+    1)
+        DEPLOY_TYPE_NAME="AppRunner"
+        ARCH="amd64"
+        ;;
+    2)
+        DEPLOY_TYPE_NAME="Lambda"
+        ARCH="arm64"
+        ;;
+    *)
+        echo "❌ ERROR: Invalid deployment type. Please enter 1 or 2."
+        exit 1
+        ;;
+esac
+
+echo ""
+echo "Configuration:"
+echo "  Repository: $REPO_NAME"
+echo "  Image Tag: $TAG"
+echo "  AWS Region: $AWS_REGION"
+echo "  Deployment Type: $DEPLOY_TYPE_NAME"
+echo "  Architecture: $ARCH"
+echo ""
+read -p "Continue with these settings? (y/n): " CONFIRM
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 1
+fi
+echo ""
+
+# Acknowledgment about ECR repository creation
+echo "ℹ️  NOTICE: This script will automatically create ECR repository if it doesn't exist."
+echo "   The repository will be created with the following default settings:"
+echo "   - Image tag mutability: MUTABLE (allows overwriting tags)"
+echo "   - Image scanning: Disabled"
+echo "   - Encryption: AES256 (AWS managed encryption)"
+echo ""
+echo "   You can modify these settings later in the AWS ECR Console if needed."
+echo "   Required IAM permissions: ecr:CreateRepository, ecr:GetAuthorizationToken,"
+echo "   ecr:BatchCheckLayerAvailability, ecr:InitiateLayerUpload, ecr:UploadLayerPart,"
+echo "   ecr:CompleteLayerUpload, ecr:PutImage, ecr-public:GetAuthorizationToken"
+echo ""
+read -p "Do you acknowledge and want to proceed? (y/n): " ACK_CONFIRM
+if [[ ! "$ACK_CONFIRM" =~ ^[Yy]$ ]]; then
+    echo "Aborted."
+    exit 1
+fi
+echo ""
+
+build_and_push_image() {
     local IMAGE_NAME=$1
     local TAG=$2
-    local ENABLE_MULTI_ARCH=${3:-true}  # Parameter for enabling multi-arch build, default is true
-    local DOCKERFILE_PATH=${4:-"../src/Dockerfile"}  # Parameter for Dockerfile path, default is "../src/Dockerfile_ecs"
+    local DOCKERFILE_PATH=$3
+    local BUILD_ARCH=$4
+    local REGION=$AWS_REGION
 
-    # Build Docker image for each architecture
-    if [ "$ENABLE_MULTI_ARCH" == "true" ]; then
-        for ARCH in "${ARCHS[@]}"
-        do
-            # Build multi-architecture Docker image
-            docker buildx build --platform linux/$ARCH -t $IMAGE_NAME:$TAG-$ARCH -f $DOCKERFILE_PATH --load ../src/
-        done
-    else
-        # Build single architecture Docker image
-        docker buildx build --platform linux/${ARCHS[0]} -t $IMAGE_NAME:$TAG -f $DOCKERFILE_PATH --load ../src/
+    echo "Logging in to AWS Public ECR..."
+    # Log in to AWS Public ECR for pulling base images
+    if ! aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws; then
+        echo "❌ ERROR: Failed to login to AWS Public ECR. Please check your AWS credentials."
+        exit 1
     fi
 
-    # Push Docker image to ECR for each architecture in each AWS region
-    for REGION in "${AWS_REGIONS[@]}"
-    do
-        # Get the account ID for the current region
-        ACCOUNT_ID=$(aws sts get-caller-identity --region $REGION --query Account --output text)
+    echo "Building $IMAGE_NAME:$TAG for linux/$BUILD_ARCH..."
 
-        # Create repository URI
-        REPOSITORY_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${IMAGE_NAME}"
+    # Build Docker image
+    if ! docker buildx build --platform linux/$BUILD_ARCH -t $IMAGE_NAME:$TAG -f $DOCKERFILE_PATH --load ../src/; then
+        echo "❌ ERROR: Failed to build Docker image."
+        exit 1
+    fi
 
-        # Create ECR repository if it doesn't exist
-        aws ecr create-repository --repository-name "${IMAGE_NAME}" --region $REGION || true
+    echo "Getting AWS account ID..."
+    # Get the account ID
+    if ! ACCOUNT_ID=$(aws sts get-caller-identity --region $REGION --query Account --output text 2>/dev/null); then
+        echo "❌ ERROR: Failed to get AWS account ID. Please check your AWS credentials and region."
+        exit 1
+    fi
 
-        # Log in to ECR
-        aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+    # Create repository URI
+    REPOSITORY_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${IMAGE_NAME}"
 
-        # Push the image to ECR for each architecture
-        if [ "$ENABLE_MULTI_ARCH" == "true" ]; then
-            for ARCH in "${ARCHS[@]}"
-            do
-                # Tag the image for the current region
-                docker tag $IMAGE_NAME:$TAG-$ARCH $REPOSITORY_URI:$TAG-$ARCH
-                # Push the image to ECR
-                docker push $REPOSITORY_URI:$TAG-$ARCH
-                # Create a manifest for the image
-                docker manifest create $REPOSITORY_URI:$TAG $REPOSITORY_URI:$TAG-$ARCH --amend
-                # Annotate the manifest with architecture information
-                docker manifest annotate $REPOSITORY_URI:$TAG "$REPOSITORY_URI:$TAG-$ARCH" --os linux --arch $ARCH
-            done
+    echo "Creating ECR repository if it doesn't exist..."
+    # Create ECR repository if it doesn't exist
+    aws ecr create-repository --repository-name "${IMAGE_NAME}" --region $REGION >/dev/null 2>&1 || true
 
-            # Push the manifest to ECR
-            docker manifest push $REPOSITORY_URI:$TAG
-        else
-            # Tag the image for the current region
-            docker tag $IMAGE_NAME:$TAG $REPOSITORY_URI:$TAG
-            # Push the image to ECR
-            docker push $REPOSITORY_URI:$TAG
-        fi
+    echo "Logging in to ECR..."
+    # Log in to ECR
+    if ! aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $REPOSITORY_URI; then
+        echo "❌ ERROR: Failed to login to ECR. Please check your AWS credentials and permissions."
+        exit 1
+    fi
 
-        echo "Pushed $IMAGE_NAME:$TAG to $REPOSITORY_URI"
-    done
+    echo "Tagging image for ECR..."
+    # Tag the image for ECR
+    if ! docker tag $IMAGE_NAME:$TAG $REPOSITORY_URI:$TAG; then
+        echo "❌ ERROR: Failed to tag Docker image."
+        exit 1
+    fi
+
+    echo "Pushing image to ECR..."
+    # Push the image to ECR
+    if ! docker push $REPOSITORY_URI:$TAG; then
+        echo "❌ ERROR: Failed to push image to ECR."
+        exit 1
+    fi
+
+    echo "✅ Successfully pushed $IMAGE_NAME:$TAG to $REPOSITORY_URI"
+    echo ""
+
+    # Return the image URI for later use
+    echo "$REPOSITORY_URI:$TAG"
 }
 
-build_and_push_images "swift-chat-api" "$TAG" "true" "../src/Dockerfile"
+echo "Building and pushing SwiftChat image..."
+IMAGE_URI=$(build_and_push_image "$REPO_NAME" "$TAG" "../src/Dockerfile" "$ARCH")
+
+echo "================================================"
+echo "✅ Image successfully pushed!"
+echo "================================================"
+echo ""
+echo "Your container image URI:"
+echo "  $IMAGE_URI"
+echo ""
+echo "Next steps:"
+echo "  1. Download the CloudFormation templates from server/template/ folder"
+echo "  2. Update the ContainerImageUri parameter with your image URI above"
+echo "  3. Deploy the stack via AWS CloudFormation Console"
+echo ""

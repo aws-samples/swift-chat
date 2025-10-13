@@ -82,37 +82,62 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 2. Check whether you are in the [supported region](#supported-region), then click on the **Create parameter** button.
 3. Fill in the parameters below, leaving other options as default:
 
-    - **Name**: Enter a parameter name (e.g., "SwiftChatAPIKey", will be used as `ApiKeyParam` in Step 2).
+    - **Name**: Enter a parameter name (e.g., "SwiftChatAPIKey", will be used as `ApiKeyParam` in Step 3).
 
     - **Type**: Select `SecureString`
 
-    - **Value**: Enter any string without spaces.(this will be your `API Key` in Step 3)
+    - **Value**: Enter any string without spaces.(this will be your `API Key` in Step 4)
 
 4. Click **Create parameter**.
 
-### Step 2: Deploy stack and get your API URL
+### Step 2: Build and push container images to ECR
 
-1. Go to [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChat) and select **Upload a template file** under **Specify template**, then use one of the following templates to deploy. (Make sure you are in the same region where your API Key was created.)
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/aws-samples/swift-chat.git
+   cd swift-chat
+   ```
 
-    - **App Runner**
+2. Run the build and push script:
+   ```bash
+   cd server/scripts
+   bash ./push-to-ecr.sh
+   ```
 
-      Open [SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template), then download and upload the file.
+3. Follow the prompts to configure:
+   - ECR repository name (or use default: `swift-chat-api`)
+   - Image tag (please use default: `latest`)
+   - AWS region (the region you want to deploy, e.g.,: `us-east-1`)
+   - Deployment type:
+     - Option 1 (default): **AppRunner** - uses amd64 architecture
+     - Option 2: **Lambda** - uses arm64 architecture
 
-    - **Lambda** (Note: For AWS customer use only)
+4. The script will build and push the Docker image to your ECR repository.
 
-      Open [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template) then download and upload the file.
+5. **Important**: Copy the image URI displayed at the end of the script output. You'll need this in the next step.
 
-2. Click **Next**, On the "Specify stack details" page, provide the following information:
-    - Fill the `ApiKeyParam` with the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey").
-    - For App Runner, choose an `InstanceTypeParam` based on your needs.
-3. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
+### Step 3: Deploy stack and get your API URL
+
+1. Download the CloudFormation template you want to use:
+   - For App Runner: [SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template)
+   - For Lambda: [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
+
+2. Go to [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI) and select **Upload a template file** under **Specify template**, then upload the template file you downloaded. (Make sure you are in the same region where your API Key was created.)
+
+3. Click **Next**, On the "Specify stack details" page, provide the following information:
+    - **Stack name**: Keep the default "SwiftChatAPI" or change if needed
+    - **ApiKeyParam**: Enter the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey")
+    - **ContainerImageUri**: Enter the ECR image URI from Step 2 output
+    - For App Runner, choose an **InstanceTypeParam** based on your needs
+
+4. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
-4. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
+5. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
 
-Wait about 3-5 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
+Wait about 3–5 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
 can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or `https://xxx.lambda-url.xxx.on.aws`
 
-### Step 3: Open the App and setup with API URL and API Key
+### Step 4: Open the App and setup with API URL and API Key
 
 1. Launch the App, open the drawer menu, and tap **Settings**.
 2. Paste the `API URL` and `API Key`(The **Value** you typed in Parameter Store) Under Amazon Bedrock -> SwiftChat

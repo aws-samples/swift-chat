@@ -18,6 +18,10 @@
         "2 vCPU 4 GB"
       ],
       "Description": "Select CPU and Memory configuration"
+    },
+    "ContainerImageUri": {
+      "Type": "String",
+      "Description": "The ECR image URI for the App Runner service (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com/swift-chat-api:latest)"
     }
   },
   "Resources": {
@@ -190,7 +194,54 @@
                     {
                       "Ref": "AWS::Region"
                     },
-                    ":366590864501:repository/swift-chat-api"
+                    ":",
+                    {
+                      "Fn::Select": [
+                        0,
+                        {
+                          "Fn::Split": [
+                            ".",
+                            {
+                              "Fn::Select": [
+                                0,
+                                {
+                                  "Fn::Split": [
+                                    "/",
+                                    {
+                                      "Ref": "ContainerImageUri"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    ":repository/",
+                    {
+                      "Fn::Select": [
+                        0,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Fn::Select": [
+                                1,
+                                {
+                                  "Fn::Split": [
+                                    "/",
+                                    {
+                                      "Ref": "ContainerImageUri"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
                   ]
                 ]
               }
@@ -321,20 +372,7 @@
               ]
             },
             "ImageIdentifier": {
-              "Fn::Join": [
-                "",
-                [
-                  "366590864501.dkr.ecr.",
-                  {
-                    "Ref": "AWS::Region"
-                  },
-                  ".",
-                  {
-                    "Ref": "AWS::URLSuffix"
-                  },
-                  "/swift-chat-api:latest-amd64"
-                ]
-              ]
+              "Ref": "ContainerImageUri"
             },
             "ImageRepositoryType": "ECR"
           }
