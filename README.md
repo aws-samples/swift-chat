@@ -106,8 +106,8 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 3. Follow the prompts to configure:
    - ECR repository name (or use default: `swift-chat-api`)
-   - Image tag (or use default: `latest`)
-   - AWS region (or use default: `us-east-1`)
+   - Image tag (please use default: `latest`)
+   - AWS region (the region you want to deploy, e.g.,: `us-east-1`)
    - Deployment type:
      - Option 1 (default): **AppRunner** - uses amd64 architecture
      - Option 2: **Lambda** - uses arm64 architecture
