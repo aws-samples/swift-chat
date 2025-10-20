@@ -8,7 +8,13 @@ import React, {
   useEffect,
 } from 'react';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
-import { ViewStyle, TouchableOpacity } from 'react-native';
+import {
+  ViewStyle,
+  TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+} from 'react-native';
 import { useTheme } from '../../../theme';
 import MermaidFullScreenViewer from './MermaidFullScreenViewer';
 
@@ -25,9 +31,11 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
   ({ code, style }, ref) => {
     const [currentCode, setCurrentCode] = useState(code);
     const [showFullScreen, setShowFullScreen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
     const webViewRef = useRef<WebView>(null);
     const initialCodeRef = useRef<string>(code);
-    const { isDark } = useTheme();
+    const { isDark, colors } = useTheme();
 
     const updateContent = useCallback(
       (newCode: string) => {
@@ -65,23 +73,22 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
                 // Rendering successful, update display
                 displayContainer.innerHTML = result.svg;
                 window.lastValidCode = newCodeContent;
-                // Mark that we have a successful render and hide any errors
                 window.hasSuccessfulRender = true;
-                if (window.hideError) window.hideError();
+                if (window.notifyRN) {
+                  window.notifyRN('update_rendered', { success: true }, 0);
+                }
               })
               .catch((error) => {
-                // Either invalid syntax or rendering failed
-                // Only start error timer if we've never had a successful render
-                // This prevents showing errors after we've already shown a valid diagram
-                if (!window.hasSuccessfulRender && !window.lastValidCode) {
-                  if (window.showErrorAfterDelay) window.showErrorAfterDelay();
+                // Only notify error if we've never had a successful render
+                // Use 1 second delay to avoid showing errors during streaming
+                if (!window.hasSuccessfulRender && !window.lastValidCode && window.notifyRN) {
+                  window.notifyRN('update_rendered', { success: false, error: error.message }, 1000);
                 }
               });
           } catch (error) {
             console.error('Update failed:', error);
-            // Only show error if we've never had a successful render
-            if (!window.hasSuccessfulRender && !window.lastValidCode) {
-              if (window.showErrorAfterDelay) window.showErrorAfterDelay();
+            if (!window.hasSuccessfulRender && !window.lastValidCode && window.notifyRN) {
+              window.notifyRN('update_rendered', { success: false, error: error.message }, 1000);
             }
           }
         })();
@@ -137,16 +144,6 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
         max-height: 360px;
         height: auto;
       }
-      .error-message {
-        color: #999;
-        font-size: 14px;
-        text-align: center;
-        padding: 20px;
-        display: none;
-      }
-      .error-message.show {
-        display: block;
-      }
     </style>
   </head>
   <body>
@@ -154,8 +151,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     ${initialCodeRef.current}
     </div>
     <div id="mermaid-display"></div>
-    <div id="error-message" class="error-message">Invalid Mermaid syntax</div>
-    
+
     <script type="module">
       import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
 
@@ -168,76 +164,45 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
 
       window.mermaid = mermaid;
       window.lastValidCode = null;
-      window.errorTimer = null;
-      window.hasError = false;
       window.hasSuccessfulRender = false;
-      window.showErrorAfterDelay = showErrorAfterDelay;
-      window.hideError = hideError;
+      window.errorTimer = null;
 
-      // Override console.log to send logs to React Native
-      const originalLog = console.log;
-      console.log = function(...args) {
-        originalLog.apply(console, args);
-        try {
-          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'log',
-              message: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ')
-            }));
-          }
-        } catch (e) {
-          originalLog('Failed to send log to RN:', e);
-        }
-      };
-
-      // Function to show error message after delay
-      function showErrorAfterDelay() {
-        // Don't start error timer if we already have a successful render
-        if (window.hasSuccessfulRender) {
-          return;
-        }
-        
+      window.notifyRN = function(type, data = {}, delay = 0) {
         // Clear any existing timer
-        if (window.errorTimer) {
-          clearTimeout(window.errorTimer);
-        }
-        
-        // Set a new timer to show error after 1 second
-        window.errorTimer = setTimeout(() => {
-          // Only show error if we still don't have a successful render
-          if (!window.hasSuccessfulRender) {
-            document.getElementById('error-message').classList.add('show');
-            document.getElementById('mermaid-display').style.display = 'none';
-            window.hasError = true;
-          }
-        }, 1000);
-      }
-
-      // Function to hide an error message
-      function hideError() {
         if (window.errorTimer) {
           clearTimeout(window.errorTimer);
           window.errorTimer = null;
         }
-        document.getElementById('error-message').classList.remove('show');
-        document.getElementById('mermaid-display').style.display = 'block';
-        window.hasError = false;
-      }
 
-      // Set up parse error handler
-      mermaid.parseError = function(err, _) {
-        console.log('Mermaid parse error:', err);
+        const notify = () => {
+          try {
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: type,
+                ...data
+              }));
+            }
+          } catch (e) {
+            console.log('Failed to notify RN:', e);
+          }
+        };
+
+        if (delay > 0) {
+          window.errorTimer = setTimeout(notify, delay);
+        } else {
+          notify();
+        }
       };
 
       // Validate and render initial content
       const initialCode = document.getElementById('mermaid-container').textContent.trim();
       const displayContainer = document.getElementById('mermaid-display');
-      
+
       if (initialCode && displayContainer) {
         mermaid.parse(initialCode, { suppressErrors: true })
           .then((result) => {
             if (result) {
-              return mermaid.render('mermaid-graph', initialCode);
+              return mermaid.render('mermaid-graph-' + Date.now(), initialCode);
             } else {
               throw new Error('Invalid initial syntax');
             }
@@ -246,38 +211,71 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
             displayContainer.innerHTML = result.svg;
             window.lastValidCode = initialCode;
             window.hasSuccessfulRender = true;
-            hideError();
+            window.notifyRN('rendered', { success: true }, 0);
           })
           .catch((error) => {
             console.log('Initial mermaid code error:', error.message);
-            showErrorAfterDelay();
+            window.notifyRN('rendered', { success: false, error: error.message }, 1000);
           });
+      } else {
+        window.notifyRN('rendered', { success: false, error: 'No initial code' }, 1000);
       }
     </script>
   </body>
 </html>`;
     }, [isDark]);
 
-    const handleMessage = (event: WebViewMessageEvent) => {
-      try {
-        // console.log('[WebView]', JSON.parse(event.nativeEvent.data));
-      } catch (error) {
-        console.log('[WebView] Raw message:', event.nativeEvent.data);
-      }
-    };
+    const handleMessage = useCallback(
+      (event: WebViewMessageEvent) => {
+        try {
+          const message = JSON.parse(event.nativeEvent.data);
+          if (
+            message.type === 'rendered' ||
+            message.type === 'update_rendered'
+          ) {
+            if (isLoading) {
+              setIsLoading(false);
+            }
+            setHasError(!message.success);
+          }
+        } catch (error) {
+          console.log('[WebView] Raw message:', event.nativeEvent.data);
+        }
+      },
+      [isLoading]
+    );
 
-    const styles = {
+    const styles = StyleSheet.create({
+      container: {
+        position: 'relative' as const,
+      },
       webView: {
         height: 380,
         backgroundColor: 'transparent' as const,
       },
-    };
+      loadingContainer: {
+        position: 'absolute' as const,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center' as const,
+        alignItems: 'center' as const,
+        backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)',
+      },
+      loadingText: {
+        marginTop: 10,
+        fontSize: 14,
+        color: colors.text,
+      },
+    });
 
     return (
       <>
         <TouchableOpacity
           onPress={() => setShowFullScreen(true)}
-          activeOpacity={0.8}>
+          activeOpacity={0.8}
+          style={styles.container}>
           <WebView
             ref={webViewRef}
             source={{ html: htmlContent }}
@@ -296,6 +294,14 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
             scrollEnabled={false}
             pointerEvents="none"
           />
+
+          {(isLoading || hasError) && (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>
+                {hasError ? 'Invalid Mermaid syntax' : 'Loading diagram...'}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
 
         <MermaidFullScreenViewer
