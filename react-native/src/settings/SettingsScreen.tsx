@@ -135,6 +135,7 @@ function SettingsScreen(): React.JSX.Element {
   const { sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
   const openAICompatConfigsRef = useRef(openAICompatConfigs);
+  const bedrockConfigModeRef = useRef(bedrockConfigMode);
 
   // Handle OpenAI Compatible configs change
   const handleOpenAICompatConfigsChange = useCallback(
@@ -166,7 +167,7 @@ function SettingsScreen(): React.JSX.Element {
       };
       if (shouldFetchBedrock) {
         bedrockResponse =
-          bedrockConfigMode === 'bedrock'
+          bedrockConfigModeRef.current === 'bedrock'
             ? await requestAllModelsByBedrockAPI()
             : await requestAllModels();
         addBedrockPrefixToDeepseekModels(bedrockResponse.textModel);
@@ -250,7 +251,7 @@ function SettingsScreen(): React.JSX.Element {
         });
       }
     },
-    [bedrockConfigMode, textModels, imageModels]
+    [textModels, imageModels]
   );
 
   const fetchAndSetModelNamesRef = useRef(fetchAndSetModelNames);
@@ -331,6 +332,7 @@ function SettingsScreen(): React.JSX.Element {
   }, [openAICompatConfigs]);
 
   useEffect(() => {
+    bedrockConfigModeRef.current = bedrockConfigMode;
     if (bedrockConfigMode === getBedrockConfigMode()) {
       return;
     }

@@ -15,7 +15,7 @@ import {
   Text,
   StyleSheet,
 } from 'react-native';
-import { useTheme } from '../../../theme';
+import { ColorScheme, useTheme } from '../../../theme';
 import MermaidFullScreenViewer from './MermaidFullScreenViewer';
 
 interface MermaidRendererProps {
@@ -36,6 +36,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     const webViewRef = useRef<WebView>(null);
     const initialCodeRef = useRef<string>(code);
     const { isDark, colors } = useTheme();
+    const styles = createStyles(colors);
 
     const updateContent = useCallback(
       (newCode: string) => {
@@ -66,16 +67,25 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
                   // Valid syntax, try to render
                   return window.mermaid.render('mermaid-graph', newCodeContent);
                 } else {
-                  throw new Error('Invalid syntax');
+                  // Only notify parse failure if we've never had a successful render
+                  // This prevents error notifications during streaming updates
+                  if (!window.hasSuccessfulRender && !window.lastValidCode && window.notifyRN) {
+                    window.notifyRN('update_rendered', { success: false }, 1000);
+                  }
+                  // Terminate the promise chain
+                  return Promise.reject(new Error('Parse failed'));
                 }
               })
               .then((result) => {
                 // Rendering successful, update display
-                displayContainer.innerHTML = result.svg;
-                window.lastValidCode = newCodeContent;
-                window.hasSuccessfulRender = true;
-                if (window.notifyRN) {
-                  window.notifyRN('update_rendered', { success: true }, 0);
+                if (result && result.svg) {
+                  displayContainer.innerHTML = result.svg;
+                  window.lastValidCode = newCodeContent;
+                  window.hasSuccessfulRender = true;
+                  if (window.notifyRN) {
+                    // Cancel any pending error notifications and immediately notify success
+                    window.notifyRN('update_rendered', { success: true }, 0);
+                  }
                 }
               })
               .catch((error) => {
@@ -167,6 +177,24 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
       window.hasSuccessfulRender = false;
       window.errorTimer = null;
 
+      // Override console.log to send logs to React Native
+      const originalLog = console.log;
+      console.log = function(...args) {
+        originalLog.apply(console, args);
+        try {
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'console_log',
+              message: args.map(arg =>
+                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+              ).join(' ')
+            }));
+          }
+        } catch (e) {
+          originalLog('Failed to send log to RN:', e);
+        }
+      };
+
       window.notifyRN = function(type, data = {}, delay = 0) {
         // Clear any existing timer
         if (window.errorTimer) {
@@ -202,23 +230,32 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
         mermaid.parse(initialCode, { suppressErrors: true })
           .then((result) => {
             if (result) {
-              return mermaid.render('mermaid-graph-' + Date.now(), initialCode);
+              return mermaid.render('mermaid-graph', initialCode);
             } else {
-              throw new Error('Invalid initial syntax');
+              // Don't use delay for initial render - notify immediately
+              window.notifyRN('rendered', { success: false }, 0);
+              // Terminate the promise chain
+              return Promise.reject(new Error('Parse failed'));
             }
           })
           .then((result) => {
-            displayContainer.innerHTML = result.svg;
-            window.lastValidCode = initialCode;
-            window.hasSuccessfulRender = true;
-            window.notifyRN('rendered', { success: true }, 0);
+            if (result && result.svg) {
+              displayContainer.innerHTML = result.svg;
+              window.lastValidCode = initialCode;
+              window.hasSuccessfulRender = true;
+              window.notifyRN('rendered', { success: true }, 0);
+            }
           })
           .catch((error) => {
-            console.log('Initial mermaid code error:', error.message);
-            window.notifyRN('rendered', { success: false, error: error.message }, 1000);
+            // Only notify if we haven't already notified
+            // Don't use delay for initial render errors
+            if (error.message !== 'Parse failed') {
+              window.notifyRN('rendered', { success: false, error: error.message }, 0);
+            }
           });
       } else {
-        window.notifyRN('rendered', { success: false, error: 'No initial code' }, 1000);
+        // Don't use delay for initial render - notify immediately
+        window.notifyRN('rendered', { success: false, error: 'No initial code' }, 0);
       }
     </script>
   </body>
@@ -229,6 +266,13 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
       (event: WebViewMessageEvent) => {
         try {
           const message = JSON.parse(event.nativeEvent.data);
+
+          // Handle console logs from WebView
+          if (message.type === 'console_log') {
+            console.log('[WebView]', message.message);
+            return;
+          }
+
           if (
             message.type === 'rendered' ||
             message.type === 'update_rendered'
@@ -244,31 +288,6 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
       },
       [isLoading]
     );
-
-    const styles = StyleSheet.create({
-      container: {
-        position: 'relative' as const,
-      },
-      webView: {
-        height: 380,
-        backgroundColor: 'transparent' as const,
-      },
-      loadingContainer: {
-        position: 'absolute' as const,
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: 'center' as const,
-        alignItems: 'center' as const,
-        backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)',
-      },
-      loadingText: {
-        marginTop: 10,
-        fontSize: 14,
-        color: colors.text,
-      },
-    });
 
     return (
       <>
@@ -313,5 +332,31 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     );
   }
 );
+
+const createStyles = (colors: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      position: 'relative' as const,
+    },
+    webView: {
+      height: 380,
+      backgroundColor: 'transparent' as const,
+    },
+    loadingContainer: {
+      position: 'absolute' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      backgroundColor: colors.input,
+    },
+    loadingText: {
+      marginTop: 10,
+      fontSize: 14,
+      color: colors.text,
+    },
+  });
 
 export default MermaidRenderer;
