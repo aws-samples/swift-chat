@@ -13,6 +13,7 @@ import MermaidRenderer from './MermaidRenderer';
 import { CopyButton } from './CustomMarkdownRenderer';
 import { vs2015, github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Platform } from 'react-native';
+import { useAppContext } from '../../../history/AppProvider.tsx';
 
 const CustomCodeHighlighter = React.lazy(
   () => import('./CustomCodeHighlighter')
@@ -38,7 +39,9 @@ const MermaidCodeRenderer = forwardRef<
   MermaidCodeRendererProps
 >(({ text, colors, isDark, onCopy }, ref) => {
   const [showCode, setShowCode] = useState(false);
+  const [showNewMermaid, setShowNewMermaid] = useState(false);
   const [currentText, setCurrentText] = useState(text);
+  const { event } = useAppContext();
   const mermaidRendererRef = useRef<MermaidRendererRef>(null);
   const styles = createStyles(colors);
   const hljsStyle = isDark ? vs2015 : github;
@@ -72,6 +75,13 @@ const MermaidCodeRenderer = forwardRef<
   const setCodeMode = () => {
     setShowCode(true);
   };
+
+  // Listen for refresh event from ChatScreen and update key to remount WebView
+  useEffect(() => {
+    if (event?.event === 'refreshMermaid') {
+      setShowNewMermaid(true);
+    }
+  }, [event]);
 
   return (
     <View style={styles.container}>
@@ -122,7 +132,7 @@ const MermaidCodeRenderer = forwardRef<
       ) : (
         <MermaidRenderer
           ref={mermaidRendererRef}
-          code={currentText}
+          code={showNewMermaid ? currentText : currentText + ' '}
           style={styles.mermaidRenderer}
         />
       )}
