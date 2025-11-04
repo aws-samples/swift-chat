@@ -337,7 +337,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
         margin: 0 auto;
       }
       .error-message {
-        color: #999;
+        color: ${colors.text};
         font-size: 16px;
         text-align: center;
         padding: 20px;
@@ -362,7 +362,31 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
         startOnLoad: true,
         theme: '${isDark ? 'dark' : 'default'}',
         securityLevel: 'loose',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        gantt: {
+          axisFormat: '%m-%d',
+          topAxis: false,
+          displayMode: 'compact',
+          useWidth: 680
+        },
+        xyChart: {
+          titlePadding: 10,
+          titleFontSize: 18,
+          showTitle: true,
+          xAxis: {
+            labelFontSize: 14,
+            labelPadding: 10,
+            titleFontSize: 16,
+            titlePadding: 15
+          },
+          yAxis: {
+            labelFontSize: 14,
+            labelPadding: 20,
+            titleFontSize: 16,
+            titlePadding: 25
+          },
+          plotReservedSpacePercent: 55
+        }
       });
 
       window.mermaid = mermaid;

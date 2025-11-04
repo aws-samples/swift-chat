@@ -137,22 +137,30 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
     <style>
       body {
         margin: 0;
-        padding: 10px;
+        padding: 8px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background-color: transparent;
         overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         min-height: 360px;
       }
       .mermaid {
         text-align: center;
+        width: 100%;
+      }
+      #mermaid-display {
+        width: 100%;
+        min-height: 360px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
       }
       svg {
-        max-width: 100%;
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
         max-height: 360px;
-        height: auto;
+        display: block;
       }
     </style>
   </head>
@@ -169,7 +177,31 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
         startOnLoad: true,
         theme: '${isDark ? 'dark' : 'default'}',
         securityLevel: 'loose',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        gantt: {
+          axisFormat: '%m-%d',
+          topAxis: false,
+          displayMode: 'compact',
+          useWidth: 680
+        },
+        xyChart: {
+          titlePadding: 10,
+          titleFontSize: 16,
+          showTitle: true,
+          xAxis: {
+            labelFontSize: 12,
+            labelPadding: 8,
+            titleFontSize: 14,
+            titlePadding: 12
+          },
+          yAxis: {
+            labelFontSize: 12,
+            labelPadding: 8,
+            titleFontSize: 14,
+            titlePadding: 20
+          },
+          plotReservedSpacePercent: 55
+        }
       });
 
       window.mermaid = mermaid;
