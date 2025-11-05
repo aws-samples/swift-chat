@@ -32,7 +32,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '../../../theme';
+import { isMac } from '../../../App.tsx';
 
 interface MermaidFullScreenViewerProps {
   visible: boolean;
@@ -48,9 +50,10 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
   const { colors, isDark } = useTheme();
   const webViewRef = useRef<WebView>(null);
   const [hasError, setHasError] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const [isLandscape, setIsLandscape] = useState(
-    screenData.width > screenData.height
+    isMac ? false : screenData.width > screenData.height
   );
 
   // Animation values for pan and zoom
@@ -65,11 +68,22 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setScreenData(window);
-      setIsLandscape(window.width > window.height);
+      setIsLandscape(isMac ? true : window.width > window.height);
     });
 
     return () => subscription?.remove();
   }, []);
+
+  // Reset copied state after 2 seconds
+  useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
 
   // Reset transforms when modal opens
   useEffect(() => {
@@ -143,144 +157,180 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
     };
   });
 
+  const captureImageJS = useCallback(() => {
+    return `
+      (function() {
+        try {
+          const svg = document.querySelector('#mermaid-display svg');
+          if (!svg) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'capture_error',
+              message: 'No SVG found'
+            }));
+            return;
+          }
+
+          // Clone the SVG to avoid modifying the original
+          const svgClone = svg.cloneNode(true);
+
+          // Get the actual SVG dimensions from viewBox or computed values
+          let svgWidth, svgHeight;
+          const viewBox = svg.getAttribute('viewBox');
+
+          if (viewBox) {
+            // Use viewBox dimensions if available
+            const [x, y, width, height] = viewBox.split(' ').map(Number);
+            svgWidth = width;
+            svgHeight = height;
+            svgClone.setAttribute('width', width);
+            svgClone.setAttribute('height', height);
+          } else {
+            // Fallback to intrinsic dimensions
+            svgWidth = svg.scrollWidth || svg.clientWidth || parseFloat(svg.getAttribute('width')) || 800;
+            svgHeight = svg.scrollHeight || svg.clientHeight || parseFloat(svg.getAttribute('height')) || 600;
+            svgClone.setAttribute('width', svgWidth);
+            svgClone.setAttribute('height', svgHeight);
+          }
+
+          // Ensure the SVG has proper styling for export
+          svgClone.style.background = '${isDark ? '#1a1a1a' : '#ffffff'}';
+          svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+          svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+          // Serialize the complete SVG
+          const svgData = new XMLSerializer().serializeToString(svgClone);
+
+          // Create canvas with actual SVG dimensions at higher resolution
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const scale = 2; // Higher resolution multiplier
+
+          canvas.width = svgWidth * scale;
+          canvas.height = svgHeight * scale;
+
+          const img = new Image();
+          img.onload = function() {
+            try {
+              // Scale context for higher resolution
+              ctx.scale(scale, scale);
+
+              // Fill background
+              ctx.fillStyle = '${isDark ? '#1a1a1a' : '#ffffff'}';
+              ctx.fillRect(0, 0, svgWidth, svgHeight);
+
+              // Draw the complete SVG
+              ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+
+              const dataURL = canvas.toDataURL('image/png', 0.95);
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'capture_success',
+                data: dataURL
+              }));
+            } catch (error) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'capture_error',
+                message: 'Canvas operation failed: ' + error.message
+              }));
+            }
+          };
+
+          img.onerror = function(error) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'capture_error',
+              message: 'Failed to load image: ' + error
+            }));
+          };
+
+          // Use Data URL instead of Blob URL to avoid security issues
+          const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+          img.src = svgDataUrl;
+
+        } catch (error) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'capture_error',
+            message: error.message
+          }));
+        }
+      })();
+      true;
+    `;
+  }, [isDark]);
+
+  const copyImage = useCallback(async () => {
+    if (!webViewRef.current) {
+      return;
+    }
+
+    try {
+      const copyJS = captureImageJS().replace(
+        "'capture_success'",
+        "'copy_success'"
+      );
+      webViewRef.current.injectJavaScript(copyJS);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy image');
+    }
+  }, [captureImageJS]);
+
   const saveImage = useCallback(async () => {
     if (!webViewRef.current) {
       return;
     }
 
     try {
-      // Inject JavaScript to capture complete SVG and convert to data URL
-      const captureJS = `
-        (function() {
-          try {
-            const svg = document.querySelector('#mermaid-display svg');
-            if (!svg) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'capture_error',
-                message: 'No SVG found'
-              }));
-              return;
-            }
-
-            // Clone the SVG to avoid modifying the original
-            const svgClone = svg.cloneNode(true);
-
-            // Get the actual SVG dimensions from viewBox or computed values
-            let svgWidth, svgHeight;
-            const viewBox = svg.getAttribute('viewBox');
-
-            if (viewBox) {
-              // Use viewBox dimensions if available
-              const [x, y, width, height] = viewBox.split(' ').map(Number);
-              svgWidth = width;
-              svgHeight = height;
-              svgClone.setAttribute('width', width);
-              svgClone.setAttribute('height', height);
-            } else {
-              // Fallback to intrinsic dimensions
-              svgWidth = svg.scrollWidth || svg.clientWidth || parseFloat(svg.getAttribute('width')) || 800;
-              svgHeight = svg.scrollHeight || svg.clientHeight || parseFloat(svg.getAttribute('height')) || 600;
-              svgClone.setAttribute('width', svgWidth);
-              svgClone.setAttribute('height', svgHeight);
-            }
-
-            // Ensure the SVG has proper styling for export
-            svgClone.style.background = '${isDark ? '#1a1a1a' : '#ffffff'}';
-            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-            svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-
-            // Serialize the complete SVG
-            const svgData = new XMLSerializer().serializeToString(svgClone);
-
-            // Create canvas with actual SVG dimensions at higher resolution
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const scale = 2; // Higher resolution multiplier
-
-            canvas.width = svgWidth * scale;
-            canvas.height = svgHeight * scale;
-
-            const img = new Image();
-            img.onload = function() {
-              try {
-                // Scale context for higher resolution
-                ctx.scale(scale, scale);
-
-                // Fill background
-                ctx.fillStyle = '${isDark ? '#1a1a1a' : '#ffffff'}';
-                ctx.fillRect(0, 0, svgWidth, svgHeight);
-
-                // Draw the complete SVG
-                ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
-
-                const dataURL = canvas.toDataURL('image/png', 0.95);
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                  type: 'capture_success',
-                  data: dataURL
-                }));
-              } catch (error) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                  type: 'capture_error',
-                  message: 'Canvas operation failed: ' + error.message
-                }));
-              }
-            };
-
-            img.onerror = function(error) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'capture_error',
-                message: 'Failed to load image: ' + error
-              }));
-            };
-
-            // Use Data URL instead of Blob URL to avoid security issues
-            const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-            img.src = svgDataUrl;
-
-          } catch (error) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'capture_error',
-              message: error.message
-            }));
-          }
-        })();
-        true;
-      `;
-
-      webViewRef.current.injectJavaScript(captureJS);
+      const saveJS = captureImageJS().replace(
+        "'capture_success'",
+        "'save_success'"
+      );
+      webViewRef.current.injectJavaScript(saveJS);
     } catch (error) {
       Alert.alert('Error', 'Failed to capture image');
     }
-  }, [isDark]);
+  }, [captureImageJS]);
+
+  // Memoize the copy icon source to prevent flickering
+  const copyIconSource = useMemo(() => {
+    return copied
+      ? isDark
+        ? require('../../../assets/done_dark.png')
+        : require('../../../assets/done.png')
+      : require('../../../assets/copy_grey.png');
+  }, [copied, isDark]);
 
   const handleWebViewMessage = useCallback(
     async (event: WebViewMessageEvent) => {
       try {
         const message = JSON.parse(event.nativeEvent.data);
 
-        if (message.type === 'capture_success') {
+        if (message.type === 'copy_success') {
+          const base64Data = message.data.replace(
+            /^data:image\/png;base64,/,
+            ''
+          );
+          // Copy image to clipboard (mac only)
+          try {
+            Clipboard.setImage(base64Data);
+            setCopied(true);
+          } catch (clipboardError) {
+            console.log('[MermaidFullScreenViewer] Clipboard error:', clipboardError);
+            Alert.alert('Error', 'Failed to copy image to clipboard');
+          }
+        } else if (message.type === 'save_success') {
           const base64Data = message.data.replace(
             /^data:image\/png;base64,/,
             ''
           );
           const fileName = `mermaid_diagram_${Date.now()}.png`;
-          const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+          const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
           await RNFS.writeFile(filePath, base64Data, 'base64');
 
           const shareOptions = {
-            title: 'Save Mermaid Diagram',
-            message: 'Mermaid Diagram',
-            url: `file://${filePath}`,
+            url: filePath,
             type: 'image/png',
+            title: 'Save Mermaid Diagram'
           };
-
           await Share.open(shareOptions);
-
-          // Clean up the temporary file after sharing
-          setTimeout(() => {
-            RNFS.unlink(filePath).catch(() => {});
-          }, 5000);
         } else if (message.type === 'capture_error') {
           Alert.alert('Error', `Failed to capture image: ${message.message}`);
         } else if (message.type === 'rendered') {
@@ -484,8 +534,21 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
     closeButtonX: {
       fontSize: 20,
       fontWeight: '400',
+      marginBottom: -2,
       color: '#ffffff',
       lineHeight: 20,
+    },
+    copyButtonBottomRight: {
+      position: 'absolute',
+      bottom: isLandscape ? 80 : 100,
+      right: isLandscape ? 40 : 20,
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: 'rgba(50, 50, 50, 0.8)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
     },
     saveButtonBottomRight: {
       position: 'absolute',
@@ -502,6 +565,11 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
     saveIcon: {
       width: 24,
       height: 24,
+      tintColor: '#ffffff',
+    },
+    copyIcon: {
+      width: 18,
+      height: 18,
       tintColor: '#ffffff',
     },
     webViewContainer: {
@@ -581,6 +649,19 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
             </PinchGestureHandler>
           </Animated.View>
         </PanGestureHandler>
+
+        {/* Copy button in bottom-right (above save button) */}
+        {isMac && (
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.copyButtonBottomRight}
+            onPress={copyImage}>
+            <Image
+              source={copyIconSource}
+              style={styles.copyIcon}
+            />
+          </TouchableOpacity>
+        )}
 
         {/* Save button in bottom-right */}
         <TouchableOpacity
