@@ -47,7 +47,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const webViewRef = useRef<WebView>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const [isLandscape, setIsLandscape] = useState(
     screenData.width > screenData.height
@@ -80,7 +80,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
       baseScale.value = 1;
       savedTranslateX.value = 0;
       savedTranslateY.value = 0;
-      setIsLoading(true);
+      setHasError(false);
     }
   }, [
     visible,
@@ -284,7 +284,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
         } else if (message.type === 'capture_error') {
           Alert.alert('Error', `Failed to capture image: ${message.message}`);
         } else if (message.type === 'rendered') {
-          setIsLoading(false);
+          setHasError(!message.success);
         }
       } catch (error) {
         console.log('[MermaidFullScreenViewer] Message parse error:', error);
@@ -438,7 +438,8 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
             // Notify React Native that rendering is complete
             if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
               window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'rendered'
+                type: 'rendered',
+                success: true
               }));
             }
           })
@@ -447,7 +448,8 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
             showError();
             if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
               window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'rendered'
+                type: 'rendered',
+                success: false
               }));
             }
           });
@@ -518,7 +520,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
       bottom: 0,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)',
+      backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,1)',
       zIndex: 998,
     },
     loadingText: {
@@ -590,10 +592,12 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
           />
         </TouchableOpacity>
 
-        {/* Loading indicator */}
-        {isLoading && (
+        {/* Error overlay */}
+        {hasError && (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading diagram...</Text>
+            <Text style={styles.loadingText}>
+              {'Invalid Mermaid syntax'}
+            </Text>
           </View>
         )}
       </View>

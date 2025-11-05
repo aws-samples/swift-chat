@@ -27,24 +27,70 @@ interface MermaidRendererRef {
   updateContent: (newCode: string) => void;
 }
 
+/**
+ * Validates and filters Gantt chart code lines.
+ * For Gantt charts, checks the last line:
+ * - If the last line doesn't start with a digit, removes it
+ * - If the last line starts with a digit, must contain both colon and comma, and end with a digit
+ * - Otherwise returns original code
+ */
+const validateGanttChartCode = (code: string): string => {
+  const isGantt = code.startsWith('gantt');
+  if (!isGantt) {
+    return code;
+  }
+
+  const lines = code.split('\n');
+  if (lines.length < 2) {
+    return code;
+  }
+
+  const lastLine = lines[lines.length - 1];
+  const trimmedLast = lastLine.trim();
+
+  // If last line is empty, keep it
+  if (trimmedLast === '') {
+    return code;
+  }
+
+  // Check if last line starts with a digit
+  if (/^\d/.test(trimmedLast)) {
+    // Must contain both colon and comma, and end with a digit
+    const hasColon = trimmedLast.includes(':');
+    const hasComma = trimmedLast.includes(',');
+    const endsWithDigit = /\d$/.test(trimmedLast);
+
+    if (hasColon && hasComma && endsWithDigit) {
+      return code; // Valid, return original code
+    } else {
+      // Invalid, remove last line
+      return lines.slice(0, -1).join('\n');
+    }
+  } else {
+    // Last line doesn't start with a digit, remove it
+    return lines.slice(0, -1).join('\n');
+  }
+};
+
 const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
   ({ code, style }, ref) => {
-    const [currentCode, setCurrentCode] = useState(code);
+    const validatedCode = useMemo(() => validateGanttChartCode(code), [code]);
+    const [currentCode, setCurrentCode] = useState(validatedCode);
     const [showFullScreen, setShowFullScreen] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const webViewRef = useRef<WebView>(null);
-    const initialCodeRef = useRef<string>(code);
+    const initialCodeRef = useRef<string>(validatedCode);
     const { isDark, colors } = useTheme();
     const styles = createStyles(colors);
 
     const updateContent = useCallback(
       (newCode: string) => {
-        if (newCode === currentCode) {
+        const validatedNewCode = validateGanttChartCode(newCode);
+        if (validatedNewCode === currentCode) {
           return;
         }
         if (webViewRef.current) {
-          const escapedCode = newCode
+          const escapedCode = validatedNewCode
             .replace(/`/g, '\\`')
             .replace(/\$/g, '\\$');
           const jsCode = `
@@ -67,9 +113,8 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
                   // Valid syntax, try to render
                   return window.mermaid.render('mermaid-graph', newCodeContent);
                 } else {
-                  // Only notify parse failure if we've never had a successful render
-                  // This prevents error notifications during streaming updates
-                  if (!window.hasSuccessfulRender && !window.lastValidCode && window.notifyRN) {
+                  // Don't update display, schedule error notification after 1 second
+                  if (window.notifyRN) {
                     window.notifyRN('update_rendered', { success: false }, 1000);
                   }
                   // Terminate the promise chain
@@ -81,7 +126,6 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
                 if (result && result.svg) {
                   displayContainer.innerHTML = result.svg;
                   window.lastValidCode = newCodeContent;
-                  window.hasSuccessfulRender = true;
                   if (window.notifyRN) {
                     // Cancel any pending error notifications and immediately notify success
                     window.notifyRN('update_rendered', { success: true }, 0);
@@ -89,15 +133,14 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
                 }
               })
               .catch((error) => {
-                // Only notify error if we've never had a successful render
-                // Use 1 second delay to avoid showing errors during streaming
-                if (!window.hasSuccessfulRender && !window.lastValidCode && window.notifyRN) {
+                // Schedule error notification after 1 second
+                if (window.notifyRN) {
                   window.notifyRN('update_rendered', { success: false, error: error.message }, 1000);
                 }
               });
           } catch (error) {
-            console.error('Update failed:', error);
-            if (!window.hasSuccessfulRender && !window.lastValidCode && window.notifyRN) {
+            // Don't update display, schedule error notification after 1 second
+            if (window.notifyRN) {
               window.notifyRN('update_rendered', { success: false, error: error.message }, 1000);
             }
           }
@@ -108,7 +151,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
           webViewRef.current.injectJavaScript(jsCode);
         }
 
-        setCurrentCode(newCode);
+        setCurrentCode(validatedNewCode);
       },
       [currentCode]
     );
@@ -153,9 +196,9 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
+        overflow: visible;
       }
-      svg {
+      #mermaid-display svg {
         width: 100% !important;
         height: auto !important;
         max-width: 100% !important;
@@ -182,7 +225,7 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
           axisFormat: '%m-%d',
           topAxis: false,
           displayMode: 'compact',
-          useWidth: 680
+          useWidth: 800
         },
         xyChart: {
           titlePadding: 10,
@@ -206,7 +249,6 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
 
       window.mermaid = mermaid;
       window.lastValidCode = null;
-      window.hasSuccessfulRender = false;
       window.errorTimer = null;
 
       // Override console.log to send logs to React Native
@@ -264,9 +306,8 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
             if (result) {
               return mermaid.render('mermaid-graph', initialCode);
             } else {
-              // Don't use delay for initial render - notify immediately
-              window.notifyRN('rendered', { success: false }, 0);
-              // Terminate the promise chain
+              // Initial render: notify immediately without delay
+              window.notifyRN('rendered', { success: false }, 1000);
               return Promise.reject(new Error('Parse failed'));
             }
           })
@@ -274,20 +315,18 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
             if (result && result.svg) {
               displayContainer.innerHTML = result.svg;
               window.lastValidCode = initialCode;
-              window.hasSuccessfulRender = true;
               window.notifyRN('rendered', { success: true }, 0);
             }
           })
           .catch((error) => {
-            // Only notify if we haven't already notified
-            // Don't use delay for initial render errors
+            // Initial render: notify immediately without delay
             if (error.message !== 'Parse failed') {
-              window.notifyRN('rendered', { success: false, error: error.message }, 0);
+              window.notifyRN('rendered', { success: false, error: error.message }, 1000);
             }
           });
       } else {
-        // Don't use delay for initial render - notify immediately
-        window.notifyRN('rendered', { success: false, error: 'No initial code' }, 0);
+        // Initial render: notify immediately without delay
+        window.notifyRN('rendered', { success: false, error: 'No initial code' }, 1000);
       }
     </script>
   </body>
@@ -309,16 +348,13 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
             message.type === 'rendered' ||
             message.type === 'update_rendered'
           ) {
-            if (isLoading) {
-              setIsLoading(false);
-            }
             setHasError(!message.success);
           }
         } catch (error) {
           console.log('[WebView] Raw message:', event.nativeEvent.data);
         }
       },
-      [isLoading]
+      []
     );
 
     return (
@@ -346,10 +382,10 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
             pointerEvents="none"
           />
 
-          {(isLoading || hasError) && (
+          {(hasError) && (
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>
-                {hasError ? 'Invalid Mermaid syntax' : 'Loading diagram...'}
+                {'Invalid Mermaid syntax'}
               </Text>
             </View>
           )}

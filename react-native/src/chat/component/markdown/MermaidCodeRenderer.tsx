@@ -39,7 +39,6 @@ const MermaidCodeRenderer = forwardRef<
   MermaidCodeRendererProps
 >(({ text, colors, isDark, onCopy }, ref) => {
   const [showCode, setShowCode] = useState(false);
-  const [showNewMermaid, setShowNewMermaid] = useState(false);
   const [currentText, setCurrentText] = useState(text);
   const { event } = useAppContext();
   const mermaidRendererRef = useRef<MermaidRendererRef>(null);
@@ -75,13 +74,6 @@ const MermaidCodeRenderer = forwardRef<
   const setCodeMode = () => {
     setShowCode(true);
   };
-
-  // Listen for refresh event from ChatScreen and update key to remount WebView
-  useEffect(() => {
-    if (event?.event === 'refreshMermaid') {
-      setShowNewMermaid(true);
-    }
-  }, [event]);
 
   return (
     <View style={styles.container}>
@@ -132,7 +124,7 @@ const MermaidCodeRenderer = forwardRef<
       ) : (
         <MermaidRenderer
           ref={mermaidRendererRef}
-          code={showNewMermaid ? currentText : currentText + ' '}
+          code={currentText}
           style={styles.mermaidRenderer}
         />
       )}

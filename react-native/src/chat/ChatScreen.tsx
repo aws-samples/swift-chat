@@ -410,10 +410,6 @@ function ChatScreen(): React.JSX.Element {
           });
         }, 100);
       }
-      // Notify Mermaid renderers to refresh after streaming completes
-      setTimeout(() => {
-        sendEventRef.current('refreshMermaid');
-      }, 150);
       setChatStatus(ChatStatus.Init);
     }
   }, [chatStatus]);
