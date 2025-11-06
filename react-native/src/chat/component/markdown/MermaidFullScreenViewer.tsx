@@ -321,10 +321,12 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
             ''
           );
           const fileName = `mermaid_diagram_${Date.now()}.png`;
-          const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+          let filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
           await RNFS.writeFile(filePath, base64Data, 'base64');
-
+          if(Platform.OS === "android"){
+            filePath = "file://"+filePath; 
+          }
           const shareOptions = {
             url: filePath,
             type: 'image/png',
