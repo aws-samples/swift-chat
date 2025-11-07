@@ -312,7 +312,10 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
             Clipboard.setImage(base64Data);
             setCopied(true);
           } catch (clipboardError) {
-            console.log('[MermaidFullScreenViewer] Clipboard error:', clipboardError);
+            console.log(
+              '[MermaidFullScreenViewer] Clipboard error:',
+              clipboardError
+            );
             Alert.alert('Error', 'Failed to copy image to clipboard');
           }
         } else if (message.type === 'save_success') {
@@ -324,13 +327,13 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
           let filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
           await RNFS.writeFile(filePath, base64Data, 'base64');
-          if(Platform.OS === "android"){
-            filePath = "file://"+filePath; 
+          if (Platform.OS === 'android') {
+            filePath = 'file://' + filePath;
           }
           const shareOptions = {
             url: filePath,
             type: 'image/png',
-            title: 'Save Mermaid Diagram'
+            title: 'Save Mermaid Diagram',
           };
           await Share.open(shareOptions);
         } else if (message.type === 'capture_error') {
@@ -509,7 +512,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
     </script>
   </body>
 </html>`;
-  }, [code, isDark, isLandscape]);
+  }, [code, colors.text, isDark, isLandscape]);
 
   const styles = StyleSheet.create({
     modal: {
@@ -658,10 +661,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
             activeOpacity={1}
             style={styles.copyButtonBottomRight}
             onPress={copyImage}>
-            <Image
-              source={copyIconSource}
-              style={styles.copyIcon}
-            />
+            <Image source={copyIconSource} style={styles.copyIcon} />
           </TouchableOpacity>
         )}
 
@@ -678,9 +678,7 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
         {/* Error overlay */}
         {hasError && (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>
-              {'Invalid Mermaid syntax'}
-            </Text>
+            <Text style={styles.loadingText}>{'Invalid Mermaid syntax'}</Text>
           </View>
         )}
       </View>

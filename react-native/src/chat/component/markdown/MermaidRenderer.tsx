@@ -333,29 +333,23 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
 </html>`;
     }, [isDark]);
 
-    const handleMessage = useCallback(
-      (event: WebViewMessageEvent) => {
-        try {
-          const message = JSON.parse(event.nativeEvent.data);
+    const handleMessage = useCallback((event: WebViewMessageEvent) => {
+      try {
+        const message = JSON.parse(event.nativeEvent.data);
 
-          // Handle console logs from WebView
-          if (message.type === 'console_log') {
-            console.log('[WebView]', message.message);
-            return;
-          }
-
-          if (
-            message.type === 'rendered' ||
-            message.type === 'update_rendered'
-          ) {
-            setHasError(!message.success);
-          }
-        } catch (error) {
-          console.log('[WebView] Raw message:', event.nativeEvent.data);
+        // Handle console logs from WebView
+        if (message.type === 'console_log') {
+          console.log('[WebView]', message.message);
+          return;
         }
-      },
-      []
-    );
+
+        if (message.type === 'rendered' || message.type === 'update_rendered') {
+          setHasError(!message.success);
+        }
+      } catch (error) {
+        console.log('[WebView] Raw message:', event.nativeEvent.data);
+      }
+    }, []);
 
     return (
       <>
@@ -382,11 +376,9 @@ const MermaidRenderer = forwardRef<MermaidRendererRef, MermaidRendererProps>(
             pointerEvents="none"
           />
 
-          {(hasError) && (
+          {hasError && (
             <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>
-                {'Invalid Mermaid syntax'}
-              </Text>
+              <Text style={styles.loadingText}>{'Invalid Mermaid syntax'}</Text>
             </View>
           )}
         </TouchableOpacity>
