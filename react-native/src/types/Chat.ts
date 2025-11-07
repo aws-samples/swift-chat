@@ -17,6 +17,10 @@ export enum ChatStatus {
 export interface EventData {
   id?: number;
   prompt?: SystemPrompt;
+  // WebView search events
+  url?: string;
+  script?: string;
+  data?: string;
 }
 
 export type Model = {

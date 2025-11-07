@@ -74,6 +74,10 @@ import {
 import HeaderTitle from './component/HeaderTitle.tsx';
 import { showInfo } from './util/ToastUtils.ts';
 import { HeaderOptions } from '@react-navigation/elements';
+import { intentAnalysisService } from '../websearch/services/IntentAnalysisService.ts';
+import { webViewSearchService } from '../websearch/services/WebViewSearchService.ts';
+import { contentFetchService } from '../websearch/services/ContentFetchService.ts';
+import { promptBuilderService } from '../websearch/services/PromptBuilderService.ts';
 
 const BOT_ID = 2;
 
@@ -143,6 +147,7 @@ function ChatScreen(): React.JSX.Element {
   const containerHeightRef = useRef(0);
   const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
   const audioWaveformRef = useRef<AudioWaveformRef>(null);
+  const webSearchSystemPromptRef = useRef<SystemPrompt | null>(null);
 
   const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
   const currentScrollOffsetRef = useRef(0);
@@ -564,10 +569,14 @@ function ChatScreen(): React.JSX.Element {
       const startRequestTime = new Date().getTime();
       let latencyMs = 0;
       let metrics: Metrics | undefined;
+
+      // 优先使用 web search system prompt，否则使用用户选择的 system prompt
+      const effectiveSystemPrompt = webSearchSystemPromptRef.current || systemPromptRef.current;
+
       invokeBedrockWithCallBack(
         bedrockMessages.current,
         modeRef.current,
-        systemPromptRef.current,
+        effectiveSystemPrompt,
         () => isCanceled.current,
         controllerRef.current,
         (
@@ -631,6 +640,8 @@ function ChatScreen(): React.JSX.Element {
           const setComplete = () => {
             trigger(HapticFeedbackTypes.notificationSuccess);
             setChatStatus(ChatStatus.Complete);
+            // 清除 web search system prompt，避免影响后续对话
+            webSearchSystemPromptRef.current = null;
           };
           if (modeRef.current === ChatMode.Text) {
             trigger(HapticFeedbackTypes.selection);
@@ -651,6 +662,8 @@ function ChatScreen(): React.JSX.Element {
           }
           if (needStop) {
             isCanceled.current = true;
+            // 请求被取消时也清除 web search system prompt
+            webSearchSystemPromptRef.current = null;
           }
         }
       ).then();
@@ -658,7 +671,7 @@ function ChatScreen(): React.JSX.Element {
   }, [messages]);
 
   // handle onSend
-  const onSend = useCallback((message: SwiftChatMessage[] = []) => {
+  const onSend = useCallback(async (message: SwiftChatMessage[] = []) => {
     // Reset user scroll state when sending a new message
     setUserScrolled(false);
     setShowSystemPrompt(modeRef.current === ChatMode.Image);
@@ -667,6 +680,99 @@ function ChatScreen(): React.JSX.Element {
       showInfo('please wait for all videos to be ready');
       return;
     }
+
+    // ============ Web Search Integration ============
+    const userMessage = message[0]?.text;
+    let webSearchSystemPrompt: SystemPrompt | null = null;
+
+    if (userMessage && modeRef.current === ChatMode.Text) {
+      try {
+        console.log('\n🔍 ========== WEB SEARCH START ==========');
+
+        // Phase 1: 提取搜索关键词
+        console.log('📝 Phase 1: Analyzing search intent...');
+        const intentResult = await intentAnalysisService.analyze(
+          userMessage,
+          bedrockMessages.current
+        );
+
+        if (intentResult.needsSearch && intentResult.keywords.length > 0) {
+          console.log('✅ Search needed! Keywords:', intentResult.keywords);
+
+          // Phase 2: 使用第一个关键词进行搜索
+          const keyword = intentResult.keywords[0];
+          console.log(`\n🌐 Phase 2: Searching for "${keyword}"...`);
+
+          const searchResults = await webViewSearchService.search(
+            keyword,
+            'google',
+            5
+          );
+
+          console.log('\n✅ ========== WEB SEARCH RESULTS ==========');
+          console.log('Total results:', searchResults.length);
+          searchResults.forEach((result, index) => {
+            console.log(`\n[${index + 1}] ${result.title}`);
+            console.log(`    URL: ${result.url}`);
+          });
+
+          // Phase 4+5: 获取并解析URL内容
+          if (searchResults.length > 0) {
+            console.log('\n📥 Phase 4+5: Fetching and parsing URL contents...');
+
+            const contents = await contentFetchService.fetchContents(
+              searchResults,
+              30000, // 30秒超时
+              5000   // 每个结果最大5000字符
+            );
+
+            console.log('\n✅ ========== FETCHED CONTENTS ==========');
+            console.log('Successfully fetched:', contents.length);
+
+            // Phase 6: 使用 PromptBuilderService 构建增强的 Prompt
+            if (contents.length > 0) {
+              console.log('\n📝 Phase 6: Building enhanced prompt with references...');
+
+              const enhancedPrompt = promptBuilderService.buildPromptWithReferences(
+                userMessage,
+                contents
+              );
+
+              console.log('\n✅ Enhanced prompt built successfully');
+              console.log(`Prompt length: ${enhancedPrompt.length} chars`);
+              console.log(`References included: ${contents.length}`);
+
+              // 🔑 关键：创建临时 SystemPrompt，将引用材料作为 system prompt
+              // 这样用户的原始问题会保留在 message 中，引用材料作为系统指令
+              webSearchSystemPrompt = {
+                id: -999, // 特殊ID标识这是web search生成的
+                name: 'Web Search References',
+                prompt: enhancedPrompt,
+                includeHistory: true, // 包含历史对话
+              };
+
+              // 保存到 ref 供 invokeBedrockWithCallBack 使用
+              webSearchSystemPromptRef.current = webSearchSystemPrompt;
+              console.log("webSearchSystemPrompt:\n\n"+enhancedPrompt+"\n\n")
+
+              console.log('\n✓ Web search system prompt created');
+            } else {
+              console.log('\n⚠️  No valid contents fetched, using original message');
+            }
+          }
+
+          console.log('========== WEB SEARCH COMPLETE ==========\n');
+        } else {
+          console.log('ℹ️  No search needed for this query');
+          console.log('========== WEB SEARCH END ==========\n');
+        }
+      } catch (error) {
+        console.log('❌ Web search error:', error);
+        console.log('⚠️  Falling back to normal chat flow');
+      }
+    }
+    // ============ End of Web Search Integration ============
+
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
         if (modeRef.current === ChatMode.Text) {

@@ -19,6 +19,7 @@ import { isAndroid, isMacCatalyst } from './utils/PlatformUtils';
 import { ThemeProvider, useTheme } from './theme';
 import { configureErrorHandling } from './utils/ErrorUtils';
 import { migrateOpenAICompatConfig } from './storage/StorageUtils.ts';
+import { SearchWebView } from './websearch/components/SearchWebView';
 
 export const isMac = isMacCatalyst;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -117,6 +118,9 @@ const AppWithTheme = () => {
         }}>
         <AppNavigator />
       </NavigationContainer>
+
+      {/* WebView用于web search */}
+      <SearchWebView />
     </>
   );
 };
