@@ -159,7 +159,8 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   const renderNode = useCallback(
     (nodes: rendererNode[]): ReactNode => {
       // Calculate margin bottom value once
-      const marginBottomValue = -nodes.length * (isMac ? 3 : 2.75);
+      const scale = rest.language === 'mermaid' ? 1.75 : isMac ? 3 : 2.75;
+      const marginBottomValue = -nodes.length * scale;
 
       // Optimization for streaming content - only process new nodes
       if (nodes.length >= prevNodesLength.current) {
@@ -200,7 +201,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
         </TextInput>
       );
     },
-    [processNode]
+    [processNode, rest.language]
   );
 
   const renderAndroidNode = useCallback(

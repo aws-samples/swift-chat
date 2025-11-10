@@ -40,6 +40,7 @@ import Disc from '@jsamr/counter-style/lib/es/presets/disc';
 import MathView from 'react-native-math-view';
 import { isAndroid } from '../../../utils/PlatformUtils.ts';
 import { ColorScheme } from '../../../theme';
+import MermaidCodeRenderer from './MermaidCodeRenderer';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
 let mathViewIndex = 0;
@@ -107,11 +108,25 @@ const MemoizedCodeHighlighter = React.memo(
     isDark: boolean;
   }) => {
     const styles = createCustomStyles(colors);
+    // Use useRef to always capture the latest text value
+    const textRef = React.useRef(text);
+    textRef.current = text;
+
     const handleCopy = useCallback(() => {
-      Clipboard.setString(text);
-    }, [text]);
+      Clipboard.setString(textRef.current);
+    }, []);
 
     const hljsStyle = isDark ? vs2015 : github;
+    if (language === 'mermaid') {
+      return (
+        <MermaidCodeRenderer
+          text={text}
+          colors={colors}
+          isDark={isDark}
+          onCopy={handleCopy}
+        />
+      );
+    }
 
     return (
       <View style={styles.container}>
@@ -144,11 +159,17 @@ const MemoizedCodeHighlighter = React.memo(
       </View>
     );
   },
-  (prevProps, nextProps) =>
-    prevProps.text === nextProps.text &&
-    prevProps.language === nextProps.language &&
-    prevProps.colors === nextProps.colors &&
-    prevProps.isDark === nextProps.isDark
+  (prevProps, nextProps) => {
+    if (prevProps.language === 'mermaid' || nextProps.language === 'mermaid') {
+      return false;
+    }
+    return (
+      prevProps.text === nextProps.text &&
+      prevProps.language === nextProps.language &&
+      prevProps.colors === nextProps.colors &&
+      prevProps.isDark === nextProps.isDark
+    );
+  }
 );
 
 export class CustomMarkdownRenderer
@@ -281,9 +302,11 @@ export class CustomMarkdownRenderer
     _textStyle?: TextStyle
   ): ReactNode {
     if (text && text !== '') {
+      const componentKey =
+        language === 'mermaid' ? 'mermaid-code-block' : this.getKey();
       return (
         <MemoizedCodeHighlighter
-          key={this.getKey()}
+          key={componentKey}
           text={text}
           language={language}
           colors={this.colors}
