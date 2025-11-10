@@ -16,18 +16,17 @@ across Android, iOS, and macOS platforms.
 ![](assets/promo.avif)
 
 ### What's New 🔥
-
+- 🚀 Support streaming rendering of Mermaid charts (From v2.6.0).
+   <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+   <img src="assets/animations/mermaid_en.avif" width=48%>
+   <img src="assets/animations/mermaid_save_en.avif" width=48%>
+   </div>
 - 🚀 Support using Bedrock API Key for Amazon Bedrock models (From v2.5.0).
 - 🚀 Support virtual try-on, automatically recognize clothes, pants, shoes and try them on (From v2.5.0).
 - 🚀 Support shortcuts for macOS (From v2.5.0).
     - Use `Shift + Enter`, `Control + Enter` or `Option + Enter` to add a line break.
     - Use `⌘ + V` to add images (Screenshot), videos, or documents from your clipboard.
     - Use `⌘ + N` to opening multiple Mac windows for parallel operations.
-- Support adds multiple OpenAI Compatible model providers. You can now
-  use [Easy Model Deployer](https://github.com/aws-samples/easy-model-deployer), OpenRouter, or any OpenAI-compatible
-  model provider. (From v2.5.0).
-- Supports dark mode on Android, iOS, and Mac (From v2.4.0).
-- Support Speech to Speech By Amazon Nova Sonic on Apple Platform. (From v2.3.0).
 
 ## 📱 Quick Download
 
@@ -207,6 +206,10 @@ Congratulations 🎉 Your SwiftChat App is ready to use!
     - `GPT-4.1`
     - `GPT-4.1 mini`
     - `GPT-4.1 nano`
+    - `GPT-5`
+    - `GPT-5 chat`
+    - `GPT-5 mini`
+    - `GPT-5 nano`
 
 Additionally, if you have deployed and configured the [SwiftChat Server](#getting-started-with-amazon-bedrock), you
 can enable the **Use Proxy** option to forward your requests.
@@ -232,7 +235,7 @@ can enable the **Use Proxy** option to forward your requests.
 ## Key Features
 
 - Real-time streaming chat with AI
-- Rich Markdown Support: Tables, Code Blocks, LaTeX and More
+- Rich Markdown Support: Tables, Code Blocks, LaTeX, Mermaid Chart and More
 - AI image generation with progress
 - Multimodal support (images, videos & documents)
 - Conversation history list view and management

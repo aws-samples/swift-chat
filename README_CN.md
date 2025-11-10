@@ -16,17 +16,17 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ### 新功能 🔥
 
+- 🚀 支持流式渲染 Mermaid 图表（自 v2.6.0 起）。
+   <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+   <img src="assets/animations/mermaid.avif" width=48%>
+   <img src="assets/animations/mermaid_save.avif" width=48%>
+   </div>
 - 🚀 支持使用 Bedrock API Key 连接 Amazon Bedrock 模型（自 v2.5.0 起）。
 - 🚀 支持虚拟试衣功能，自动识别衣服、裤子、鞋子并试穿（自 v2.5.0 起）。
 - 🚀 支持 macOS 快捷键操作（自 v2.5.0 起）。
     - 使用 `Shift + Enter`、`Control + Enter` 或 `Option + Enter` 添加换行。
     - 使用 `⌘ + V` 从剪贴板添加图片（截图）、视频或文档。
     - 使用 `⌘ + N` 打开多个 Mac 窗口进行并行操作。
-- 支持添加多个 OpenAI Compatible
-  模型提供商。您现在可以使用 [Easy Model Deployer](https://github.com/aws-samples/easy-model-deployer)、OpenRouter 或任何
-  OpenAI 兼容的模型提供商（自 v2.5.0 起）。
-- 支持 Android、iOS 和 Mac 上的暗黑模式（自 v2.4.0 起）。
-- 在 Apple 平台上支持 Amazon Nova Sonic 语音对语音功能（自 v2.3.0 起）。
 
 ## 📱 快速下载
 
@@ -195,6 +195,10 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
     - `GPT-4.1`
     - `GPT-4.1 mini`
     - `GPT-4.1 nano`
+    - `GPT-5`
+    - `GPT-5 chat`
+    - `GPT-5 mini`
+    - `GPT-5 nano`
 
 此外，如果您已部署并配置了 [SwiftChat 服务器](#amazon-bedrock-入门指南)，可以启用 **Use Proxy** 选项来转发您的请求。
 
@@ -218,7 +222,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 ## 主要功能
 
 - 与 AI 进行实时流式聊天
-- 丰富的 Markdown 支持：表格、代码块、LaTeX 等
+- 丰富的 Markdown 支持：表格、代码块、LaTeX, Mermaid图标等
 - 带进度显示的 AI 图像生成
 - 多模态支持（图像、视频和文档）
 - 对话历史列表查看和管理
