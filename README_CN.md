@@ -30,8 +30,8 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ## 📱 快速下载
 
-- [下载 Android 版本](https://github.com/aws-samples/swift-chat/releases/download/2.5.1/SwiftChat.apk)
-- [下载 macOS 版本](https://github.com/aws-samples/swift-chat/releases/download/2.5.1/SwiftChat.dmg)
+- [下载 Android 版本](https://github.com/aws-samples/swift-chat/releases/download/2.6.0/SwiftChat.apk)
+- [下载 macOS 版本](https://github.com/aws-samples/swift-chat/releases/download/2.6.0/SwiftChat.dmg)
 - iOS 版本：目前可通过 Xcode 本地构建使用
 
 ## Amazon Bedrock 入门指南
