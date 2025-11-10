@@ -108,9 +108,13 @@ const MemoizedCodeHighlighter = React.memo(
     isDark: boolean;
   }) => {
     const styles = createCustomStyles(colors);
+    // Use useRef to always capture the latest text value
+    const textRef = React.useRef(text);
+    textRef.current = text;
+
     const handleCopy = useCallback(() => {
-      Clipboard.setString(text);
-    }, [text]);
+      Clipboard.setString(textRef.current);
+    }, []);
 
     const hljsStyle = isDark ? vs2015 : github;
     if (language === 'mermaid') {
