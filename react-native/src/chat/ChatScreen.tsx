@@ -586,7 +586,7 @@ function ChatScreen(): React.JSX.Element {
               webSearchCitations = webSearchResult.citations;
             }
           } catch (error) {
-            console.log('❌ Web search error:', error);
+            console.log('❌ Web search error in ChatScreen:', error);
           }
         }
         // Clear searchPhase before starting AI response

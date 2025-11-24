@@ -48,17 +48,32 @@ export class WebSearchOrchestrator {
       console.log('\n🔍 ========== WEB SEARCH START ==========');
       const start = performance.now();
 
-      // Phase 1: Analyze search intent
-      onPhaseChange?.(WebSearchPhase.ANALYZING);
-      console.log('📝 Phase 1: Analyzing search intent...');
+      // Quick check: if query is short (<=30 chars), skip LLM intent analysis
+      const trimmed = userMessage.trim();
+      const length = trimmed.replace(/\s+/g, '').length;
 
-      const intentResult = await intentAnalysisService.analyze(
-        userMessage,
-        bedrockMessages
-      );
+      let intentResult;
+      let end1 = start;
+      if (bedrockMessages.length < 2 && length <= 30) {
+        // Direct search for short queries
+        console.log(`⚡ Short query (${length} chars), skipping intent analysis`);
+        intentResult = {
+          needsSearch: true,
+          keywords: [trimmed]
+        };
+      } else {
+        // Phase 1: Analyze search intent for complex queries
+        onPhaseChange?.(WebSearchPhase.ANALYZING);
+        console.log('📝 Phase 1: Analyzing search intent...');
 
-      const end1 = performance.now();
-      console.log(`AI intent analysis time: ${end1 - start} ms`);
+        intentResult = await intentAnalysisService.analyze(
+          userMessage,
+          bedrockMessages
+        );
+
+        end1 = performance.now();
+        console.log(`AI intent analysis time: ${end1 - start} ms`);
+      }
 
       // Return if search is not needed
       if (!intentResult.needsSearch || intentResult.keywords.length === 0) {
@@ -77,7 +92,7 @@ export class WebSearchOrchestrator {
       const searchResults = await webViewSearchService.search(
         keyword,
         'google',
-        5
+        8  // 获取8个结果，智能Early Exit会选择最快的3-5个
       );
 
       const end2 = performance.now();
@@ -102,8 +117,8 @@ export class WebSearchOrchestrator {
 
       const contents = await contentFetchService.fetchContents(
         searchResults,
-        30000, // 30s timeout
-        5000 // Max 5000 chars per result
+        8000, // 8s timeout per URL (智能Early Exit会更早返回)
+        10000 // Max 10000 chars per result
       );
 
       const end3 = performance.now();

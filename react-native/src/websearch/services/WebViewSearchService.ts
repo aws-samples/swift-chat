@@ -148,20 +148,27 @@ export class WebViewSearchService {
 
       // 设置用户关闭验证码窗口的回调
       this.addEventListener('webview:captchaClosed', () => {
-        console.log('[WebViewSearch] User closed CAPTCHA window');
+        console.log('[WebViewSearch] User closed CAPTCHA window, cancelling search');
+
+        // 清理超时计时器
         if (this.currentTimeoutId) {
           clearTimeout(this.currentTimeoutId);
           this.currentTimeoutId = null;
         }
+
+        // 清理回调和监听器
         this.messageCallback = null;
         this.eventListeners.clear();
+
+        // 隐藏 WebView
+        if (this.sendEvent) {
+          this.sendEvent('webview:hide');
+        }
+
+        // 拒绝 Promise，让上层处理
         reject(new Error('User cancelled CAPTCHA verification'));
       });
 
-      // 注册验证码关闭监听器
-      if (this.sendEvent) {
-        this.sendEvent('webview:setCaptchaClosedCallback', { data: 'enabled' });
-      }
 
       // 设置消息回调
       this.messageCallback = (message: WebViewMessage) => {
@@ -206,6 +213,9 @@ export class WebViewSearchService {
         }
       };
 
+      // 性能计时：记录开始时间
+      const perfStart = performance.now();
+
       // 获取provider
       const provider = this.getProvider(engine);
 
@@ -215,30 +225,50 @@ export class WebViewSearchService {
 
       // 设置加载完成回调，在页面加载完成后注入脚本
       this.addEventListener('webview:loadEndTriggered', () => {
-        console.log('[WebViewSearch] Page loaded, waiting 2000ms for JavaScript to execute');
+        const pageLoadTime = performance.now();
+        console.log(`[WebViewSearch] ⏱️  Page loaded (${(pageLoadTime - perfStart).toFixed(0)}ms), using progressive injection`);
 
-        // 等待2000ms确保页面完全渲染（Google搜索结果需要大量JavaScript渲染）
-        setTimeout(() => {
-          const script = provider.getExtractionScript();
-          console.log('[WebViewSearch] Injecting extraction script');
+        // 渐进式尝试注入：100ms → 200ms → 400ms → 800ms，最后兜底 1500ms
+        const delays = [100, 200, 400, 800];
+        let attemptCount = 0;
+        let injected = false;
 
-          if (this.sendEvent) {
-            this.sendEvent('webview:injectScript', { script });
-          } else {
-            if (this.currentTimeoutId) {
-              clearTimeout(this.currentTimeoutId);
-              this.currentTimeoutId = null;
+        const tryInject = () => {
+          if (injected) return;
+
+          attemptCount++;
+          const currentDelay = delays.shift() || 1500;
+
+          setTimeout(() => {
+            if (injected) return;
+
+            const beforeInjectTime = performance.now();
+            console.log(`[WebViewSearch] ⏱️  Attempt ${attemptCount} (${(beforeInjectTime - pageLoadTime).toFixed(0)}ms), injecting extraction script`);
+
+            const script = provider.getExtractionScript();
+
+            if (this.sendEvent) {
+              injected = true; // 标记已注入
+              this.sendEvent('webview:injectScript', { script });
+            } else {
+              if (this.currentTimeoutId) {
+                clearTimeout(this.currentTimeoutId);
+                this.currentTimeoutId = null;
+              }
+              this.messageCallback = null;
+              reject(new Error('WebView script injection not available'));
             }
-            this.messageCallback = null;
-            reject(new Error('WebView script injection not available'));
-          }
-        }, 2000); // 等待2秒，确保Google的JavaScript完全执行完毕
-      });
 
-      // 注册加载完成监听器
-      if (this.sendEvent) {
-        this.sendEvent('webview:setLoadEndCallback', { data: 'enabled' });
-      }
+            // 如果还有下一个延迟，继续尝试（作为备份）
+            if (delays.length > 0 && !injected) {
+              tryInject();
+            }
+          }, currentDelay);
+        };
+
+        // 开始首次尝试
+        tryInject();
+      });
 
       // 加载搜索页面
       if (this.sendEvent) {
@@ -246,7 +276,6 @@ export class WebViewSearchService {
       } else {
         this.eventListeners.clear();
         reject(new Error('WebView not initialized. Make sure App.tsx has loaded.'));
-        return;
       }
     });
   }

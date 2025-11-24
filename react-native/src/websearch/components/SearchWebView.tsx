@@ -19,11 +19,32 @@ export const SearchWebView: React.FC = () => {
   const loadEndCalledRef = useRef<boolean>(false);
   const onWebViewLoadEndRef = useRef<(() => void) | null>(null);
   const onCaptchaClosedRef = useRef<(() => void) | null>(null);
+  const loadStartTimeRef = useRef<number>(0);
+  const sendEventRef = useRef(sendEvent);
 
   // 初始化 webViewSearchService
   useEffect(() => {
     webViewSearchService.setSendEvent(sendEvent);
   }, [sendEvent]);
+
+  // 在组件mount时一次性注册回调（优化3）
+  useEffect(() => {
+    // 注册加载完成回调 - 使用 ref 避免闭包陷阱
+    onWebViewLoadEndRef.current = () => {
+      sendEventRef.current('webview:loadEndTriggered');
+    };
+
+    // 注册验证码关闭回调 - 使用 ref 避免闭包陷阱
+    onCaptchaClosedRef.current = () => {
+      sendEventRef.current('webview:captchaClosed');
+    };
+
+    // 组件卸载时清理
+    return () => {
+      onWebViewLoadEndRef.current = null;
+      onCaptchaClosedRef.current = null;
+    };
+  }, []); // ✅ 空依赖数组，只在mount时执行一次
 
   // 处理来自 webViewSearchService 的事件
   useEffect(() => {
@@ -47,11 +68,12 @@ export const SearchWebView: React.FC = () => {
       case 'webview:loadUrl':
         if (event.params?.url) {
           const newUrl = event.params.url;
-          console.log('[SearchWebView] Loading URL in VISIBLE WebView (DEBUG MODE):', newUrl);
+          loadStartTimeRef.current = performance.now();
+          console.log('[SearchWebView] ⏱️  Received loadUrl event, starting WebView load');
 
           loadEndCalledRef.current = false;
           setShowWebView(false);
-          
+
           // 检查 URL 是否相同，相同则复用 WebView 并 reload
           if (currentUrl === newUrl && webViewRef.current) {
             console.log('[SearchWebView] Same URL detected, reloading existing WebView');
@@ -81,27 +103,18 @@ export const SearchWebView: React.FC = () => {
         console.log('[SearchWebView] Hiding WebView');
         setShowWebView(false);
         break;
-
-      case 'webview:setLoadEndCallback':
-        // 保存加载完成回调
-        onWebViewLoadEndRef.current = event.params?.data ? () => {
-          sendEvent('webview:loadEndTriggered');
-        } : null;
-        break;
-
-      case 'webview:setCaptchaClosedCallback':
-        // 保存验证码关闭回调
-        onCaptchaClosedRef.current = event.params?.data ? () => {
-          sendEvent('webview:captchaClosed');
-        } : null;
-        break;
     }
   }, [event, sendEvent]);
 
   // WebView加载完成回调
   const handleLoadEnd = () => {
+    const loadEndTime = performance.now();
+    const loadDuration = loadStartTimeRef.current > 0
+      ? (loadEndTime - loadStartTimeRef.current).toFixed(0)
+      : 'N/A';
+
     const logType = showWebView ? '' : ' (hidden)';
-    console.log(`[SearchWebView] WebView load complete${logType}`);
+    console.log(`[SearchWebView] ⏱️  WebView load complete${logType} (${loadDuration}ms)`);
 
     if (!loadEndCalledRef.current && onWebViewLoadEndRef.current) {
       loadEndCalledRef.current = true;
@@ -123,8 +136,15 @@ export const SearchWebView: React.FC = () => {
   // 用户点击关闭按钮
   const handleClose = () => {
     setShowWebView(false);
+    // 清理所有回调，防止后续误触发
+    loadEndCalledRef.current = false;
+    onWebViewLoadEndRef.current = null;
+    // 通知 service 用户取消了验证
     if (onCaptchaClosedRef.current) {
       onCaptchaClosedRef.current();
+      onCaptchaClosedRef.current = null;
+    } else {
+      console.log('[SearchWebView] WARNING: onCaptchaClosedRef is null!');
     }
   };
 

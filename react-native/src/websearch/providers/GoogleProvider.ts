@@ -36,46 +36,8 @@ export class GoogleProvider {
     return `
       (function() {
         try {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Script started'
-          }));
-
-          // 调试信息：当前页面URL和标题
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Current URL: ' + window.location.href
-          }));
-
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Page title: ' + document.title
-          }));
-
-          // 调试：检查完整的HTML内容
-          const fullHTML = document.documentElement.outerHTML;
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] HTML length: ' + fullHTML.length + ' chars'
-          }));
-
-          // 调试：输出HTML片段（前500字符）
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] HTML preview: ' + fullHTML.substring(0, 3000)
-          }));
-
-          // 调试：检查body内容
-          const bodyHTML = document.body ? document.body.innerHTML : 'NO BODY';
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Body length: ' + (document.body ? bodyHTML.length : 0) + ' chars'
-          }));
-
           // 检查是否包含搜索结果的关键字
-          const hasSearchDiv = fullHTML.includes('id="search"');
-          const hasRsoDiv = fullHTML.includes('id="rso"');
-          const hasMjjYud = fullHTML.includes('MjjYud');
+          const fullHTML = document.documentElement.outerHTML;
           const hasCaptcha = fullHTML.includes('captcha') || fullHTML.includes('recaptcha');
           const hasRobotCheck = fullHTML.toLowerCase().includes('unusual traffic') || fullHTML.toLowerCase().includes('automated');
 
@@ -83,32 +45,14 @@ export class GoogleProvider {
           const h3Count = document.querySelectorAll('h3').length;
           const hasActualContent = h3Count >= 3; // 至少3个h3元素表示有实际搜索结果
 
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Contains #search: ' + hasSearchDiv + ', #rso: ' + hasRsoDiv + ', MjjYud: ' + hasMjjYud
-          }));
-
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Has captcha: ' + hasCaptcha + ', Has robot check: ' + hasRobotCheck + ', H3 count: ' + h3Count
-          }));
-
           // 只有在明确检测到CAPTCHA标识，且没有实际内容时，才判定为CAPTCHA页面
           // 避免因HTML结构变化导致的误判
-          if ((hasCaptcha || hasRobotCheck) || !hasActualContent) {
+          if ((hasCaptcha || hasRobotCheck) && !hasActualContent) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'captcha_required',
               message: 'CAPTCHA verification required'
             }));
             return; // 暂停处理，等待用户完成验证
-          }
-
-          // 如果没有CAPTCHA标识，但也没有内容，记录警告但继续尝试提取
-          if (!hasActualContent && !hasCaptcha && !hasRobotCheck) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'console_log',
-              log: '[GoogleProvider] Warning: No h3 elements found and no clear CAPTCHA indicators, will attempt extraction anyway'
-            }));
           }
 
           const results = [];
@@ -128,33 +72,17 @@ export class GoogleProvider {
           ];
 
           let items = null;
-          let usedSelector = '';
 
           for (const selector of selectors) {
             items = document.querySelectorAll(selector);
             if (items && items.length > 0) {
-              usedSelector = selector;
               break;
             }
           }
 
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Used selector: ' + usedSelector + ', found ' + (items ? items.length : 0) + ' items'
-          }));
-
           if (!items || items.length === 0) {
             // Fallback: 直接查找所有h3标签（通常是搜索结果标题）
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'console_log',
-              log: '[GoogleProvider] Fallback: searching for h3 elements'
-            }));
-
             const h3Elements = document.querySelectorAll('h3');
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'console_log',
-              log: '[GoogleProvider] Found ' + h3Elements.length + ' h3 elements'
-            }));
 
             // 遍历h3元素，找到父级的a链接
             h3Elements.forEach((h3) => {
@@ -188,10 +116,6 @@ export class GoogleProvider {
                         title: title,
                         url: url
                       });
-                      window.ReactNativeWebView.postMessage(JSON.stringify({
-                        type: 'console_log',
-                        log: '[GoogleProvider] Result ' + results.length + ': ' + title.substring(0, 50)
-                      }));
                     }
                   }
                 }
@@ -218,25 +142,13 @@ export class GoogleProvider {
                       title: title.trim(),
                       url: url
                     });
-                    window.ReactNativeWebView.postMessage(JSON.stringify({
-                      type: 'console_log',
-                      log: '[GoogleProvider] Result ' + results.length + ': ' + title.substring(0, 50)
-                    }));
                   }
                 }
               } catch (error) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                  type: 'console_log',
-                  log: '[GoogleProvider] Error parsing item ' + index + ': ' + error.message
-                }));
+                // 忽略单个元素的错误
               }
             });
           }
-
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Total valid results: ' + results.length
-          }));
 
           // 发送结果回React Native
           window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -244,10 +156,6 @@ export class GoogleProvider {
             results: results
           }));
         } catch (error) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: '[GoogleProvider] Fatal error: ' + error.message
-          }));
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'search_error',
             error: error.message
