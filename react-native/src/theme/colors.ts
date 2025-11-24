@@ -47,6 +47,10 @@ export interface ColorScheme {
   fileItemBorder: string;
   addButtonBackground: string;
   chatScreenSplit: string;
+  citationBackground: string;
+  citationText: string;
+  citationListBackground: string;
+  citationBorder: string;
 }
 
 export const lightColors: ColorScheme = {
@@ -98,6 +102,10 @@ export const lightColors: ColorScheme = {
   fileItemBorder: '#e0e0e0',
   addButtonBackground: '#f0f0f0',
   chatScreenSplit: '#c7c7c7',
+  citationBackground: '#E3F2FD',
+  citationText: '#1976D2',
+  citationListBackground: '#F5F5F5',
+  citationBorder: '#E0E0E0',
 };
 
 export const darkColors: ColorScheme = {
@@ -149,4 +157,8 @@ export const darkColors: ColorScheme = {
   fileItemBorder: '#cccccc',
   addButtonBackground: '#333333',
   chatScreenSplit: '#404040',
+  citationBackground: '#1E3A5F',
+  citationText: '#64B5F6',
+  citationListBackground: '#1E1E1E',
+  citationBorder: '#333333',
 };

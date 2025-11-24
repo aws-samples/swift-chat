@@ -22,7 +22,6 @@ export const SearchWebView: React.FC = () => {
 
   // 初始化 webViewSearchService
   useEffect(() => {
-    console.log('[SearchWebView] Initializing webViewSearchService with sendEvent');
     webViewSearchService.setSendEvent(sendEvent);
   }, [sendEvent]);
 
@@ -47,10 +46,20 @@ export const SearchWebView: React.FC = () => {
     switch (event.event) {
       case 'webview:loadUrl':
         if (event.params?.url) {
-          console.log('[SearchWebView] Loading URL in VISIBLE WebView (DEBUG MODE):', event.params.url);
+          const newUrl = event.params.url;
+          console.log('[SearchWebView] Loading URL in VISIBLE WebView (DEBUG MODE):', newUrl);
+
           loadEndCalledRef.current = false;
-          setCurrentUrl(event.params.url);
-          setShowWebView(true); // DEBUG: 显示WebView用于调试
+          setShowWebView(false);
+          
+          // 检查 URL 是否相同，相同则复用 WebView 并 reload
+          if (currentUrl === newUrl && webViewRef.current) {
+            console.log('[SearchWebView] Same URL detected, reloading existing WebView');
+            webViewRef.current.reload();
+          } else {
+            console.log('[SearchWebView] Different URL, setting new URL');
+            setCurrentUrl(newUrl);
+          }
         }
         break;
 
@@ -63,6 +72,8 @@ export const SearchWebView: React.FC = () => {
 
       case 'webview:showCaptcha':
         console.log('[SearchWebView] Showing WebView for CAPTCHA verification');
+        // 重置加载标志，以便能够捕获验证码通过后的加载完成事件
+        loadEndCalledRef.current = false;
         setShowWebView(true);
         break;
 
@@ -91,6 +102,7 @@ export const SearchWebView: React.FC = () => {
   const handleLoadEnd = () => {
     const logType = showWebView ? '' : ' (hidden)';
     console.log(`[SearchWebView] WebView load complete${logType}`);
+
     if (!loadEndCalledRef.current && onWebViewLoadEndRef.current) {
       loadEndCalledRef.current = true;
       console.log('[SearchWebView] First load complete, triggering callback');

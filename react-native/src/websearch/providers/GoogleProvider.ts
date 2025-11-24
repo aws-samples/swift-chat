@@ -5,6 +5,16 @@
 
 import { SearchResultItem } from '../types';
 
+interface RawSearchResult {
+  title: string;
+  url: string;
+}
+
+interface ParsedSearchData {
+  type: string;
+  results?: RawSearchResult[];
+}
+
 export class GoogleProvider {
   /**
    * 搜索引擎名称
@@ -52,7 +62,7 @@ export class GoogleProvider {
           // 调试：输出HTML片段（前500字符）
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'console_log',
-            log: '[GoogleProvider] HTML preview: ' + fullHTML.substring(0, 500)
+            log: '[GoogleProvider] HTML preview: ' + fullHTML.substring(0, 3000)
           }));
 
           // 调试：检查body内容
@@ -85,7 +95,7 @@ export class GoogleProvider {
 
           // 只有在明确检测到CAPTCHA标识，且没有实际内容时，才判定为CAPTCHA页面
           // 避免因HTML结构变化导致的误判
-          if ((hasCaptcha || hasRobotCheck) && !hasActualContent) {
+          if ((hasCaptcha || hasRobotCheck) || !hasActualContent) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'captcha_required',
               message: 'CAPTCHA verification required'
@@ -252,9 +262,9 @@ export class GoogleProvider {
   /**
    * 解析从WebView返回的结果
    */
-  parseResults(data: any): SearchResultItem[] {
+  parseResults(data: ParsedSearchData): SearchResultItem[] {
     if (data.type === 'search_results' && Array.isArray(data.results)) {
-      return data.results.map(item => ({
+      return data.results.map((item: RawSearchResult) => ({
         title: item.title,
         url: item.url,
       }));

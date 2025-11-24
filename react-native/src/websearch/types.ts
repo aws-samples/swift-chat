@@ -40,6 +40,8 @@ export interface WebContent {
   url: string;
   /** Markdown格式的内容 */
   content: string;
+  /** 简介/摘要 */
+  excerpt?: string;
 }
 
 /**

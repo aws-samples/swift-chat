@@ -1,142 +1,172 @@
 /**
  * Web Search Orchestrator
- * 统一协调整个Web搜索流程
+ * Orchestrates all phases of web search and encapsulates search logic
  */
 
+import { SystemPrompt, Citation } from '../../types/Chat';
 import { BedrockMessage } from '../../chat/util/BedrockMessageConvertor';
-import { SearchProgressCallback, WebSearchConfig, WebSearchResult } from '../types';
 import { intentAnalysisService } from './IntentAnalysisService';
 import { webViewSearchService } from './WebViewSearchService';
 import { contentFetchService } from './ContentFetchService';
 import { promptBuilderService } from './PromptBuilderService';
 
 /**
- * 默认配置
+ * Web search phase enum
  */
-const DEFAULT_CONFIG: WebSearchConfig = {
-  engine: 'google',
-  maxResults: 5,
-  maxCharsPerResult: 5000,
-  timeout: 30000,
-};
+export enum WebSearchPhase {
+  ANALYZING = 'Analyzing search intent...',
+  SEARCHING = 'Searching the web...',
+  FETCHING = 'Fetching content...',
+  BUILDING = 'Building enhanced prompt...',
+}
 
 /**
- * Web搜索编排器
+ * Web search result
+ */
+export interface WebSearchResult {
+  systemPrompt: SystemPrompt | null;
+  citations: Citation[];
+}
+
+/**
+ * Web Search Orchestrator
  */
 export class WebSearchOrchestrator {
-  private config: WebSearchConfig;
-
-  constructor(config: Partial<WebSearchConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
-  }
-
   /**
-   * 执行完整的Web搜索流程
-   * @param userMessage 用户输入
-   * @param conversationHistory 对话历史
-   * @param onProgress 进度回调
-   * @returns 完整的搜索结果
+   * Execute web search flow
+   * @param userMessage User message
+   * @param bedrockMessages Conversation history
+   * @param onPhaseChange Phase change callback
+   * @returns Web search result with system prompt and citations, or null if search is not needed
    */
-  async search(
+  async execute(
     userMessage: string,
-    conversationHistory: BedrockMessage[] = [],
-    onProgress?: SearchProgressCallback
+    bedrockMessages: BedrockMessage[],
+    onPhaseChange?: (phase: string) => void
   ): Promise<WebSearchResult | null> {
     try {
-      // 阶段1: 意图分析
-      onProgress?.('intent_analysis', '正在分析搜索意图...');
+      console.log('\n🔍 ========== WEB SEARCH START ==========');
+      const start = performance.now();
+
+      // Phase 1: Analyze search intent
+      onPhaseChange?.(WebSearchPhase.ANALYZING);
+      console.log('📝 Phase 1: Analyzing search intent...');
+
       const intentResult = await intentAnalysisService.analyze(
         userMessage,
-        conversationHistory
+        bedrockMessages
       );
 
-      if (!intentResult.needsSearch) {
-        console.log('[WebSearch] No search needed, skipping');
+      const end1 = performance.now();
+      console.log(`AI intent analysis time: ${end1 - start} ms`);
+
+      // Return if search is not needed
+      if (!intentResult.needsSearch || intentResult.keywords.length === 0) {
+        console.log('ℹ️  No search needed for this query');
+        console.log('========== WEB SEARCH END ==========\n');
         return null;
       }
 
-      // 获取第一个关键词进行搜索
+      console.log('✅ Search needed! Keywords:', intentResult.keywords);
+
+      // Phase 2: Execute web search
+      onPhaseChange?.(WebSearchPhase.SEARCHING);
       const keyword = intentResult.keywords[0];
-      if (!keyword) {
-        console.log('[WebSearch] No keywords found, skipping');
+      console.log(`\n🌐 Phase 2: Searching for "${keyword}"...`);
+
+      const searchResults = await webViewSearchService.search(
+        keyword,
+        'google',
+        5
+      );
+
+      const end2 = performance.now();
+      console.log(`WebView search time: ${end2 - end1} ms`);
+      console.log('\n✅ ========== WEB SEARCH RESULTS ==========');
+      console.log('Total results:', searchResults.length);
+      searchResults.forEach((result, index) => {
+        console.log(`\n[${index + 1}] ${result.title}`);
+        console.log(`    URL: ${result.url}`);
+      });
+
+      // Return if no search results
+      if (searchResults.length === 0) {
+        console.log('\n⚠️  No search results found');
+        console.log('========== WEB SEARCH END ==========\n');
         return null;
       }
 
-      // 阶段2: WebView搜索
-      onProgress?.('webview_search', `正在搜索: ${keyword}...`);
-      const searchItems = await webViewSearchService.search(keyword);
+      // Phase 3: Fetch and parse content
+      onPhaseChange?.(WebSearchPhase.FETCHING);
+      console.log('\n📥 Phase 3: Fetching and parsing URL contents...');
 
-      if (!searchItems || searchItems.length === 0) {
-        console.log('[WebSearch] No search results found');
-        return {
-          originalQuery: userMessage,
-          keywords: intentResult.keywords,
-          items: [],
-        };
-      }
-
-      // 限制结果数量
-      const limitedItems = searchItems.slice(0, this.config.maxResults);
-
-      // 阶段4-5: 并发获取网页内容并解析为Markdown
-      onProgress?.(
-        'content_fetch',
-        `正在获取 ${limitedItems.length} 个网页内容...`
-      );
       const contents = await contentFetchService.fetchContents(
-        limitedItems,
-        this.config.timeout,
-        this.config.maxCharsPerResult
+        searchResults,
+        30000, // 30s timeout
+        5000 // Max 5000 chars per result
       );
 
+      const end3 = performance.now();
+      console.log(`Concurrent fetch time: ${end3 - end2} ms`);
+      console.log('\n✅ ========== FETCHED CONTENTS ==========');
+      console.log('Successfully fetched:', contents.length);
+
+      // Return if no valid content
       if (contents.length === 0) {
-        console.log('[WebSearch] No valid content fetched');
-        return {
-          originalQuery: userMessage,
-          keywords: intentResult.keywords,
-          items: limitedItems,
-          contents: [],
-        };
+        console.log('\n⚠️  No valid contents fetched');
+        console.log('========== WEB SEARCH END ==========\n');
+        return null;
       }
 
-      // 阶段6: 构建带引用的Prompt
-      onProgress?.('build_prompt', '正在构建增强提示...');
+      // Phase 4: Build enhanced prompt
+      onPhaseChange?.(WebSearchPhase.BUILDING);
+      console.log('\n📝 Phase 4: Building enhanced prompt with references...');
+
       const enhancedPrompt = promptBuilderService.buildPromptWithReferences(
         userMessage,
         contents
       );
 
-      onProgress?.('complete', '搜索完成');
+      console.log('\n✅ Enhanced prompt built successfully');
+      console.log(`Prompt length: ${enhancedPrompt.length} chars`);
+      console.log(`References included: ${contents.length}`);
+      console.log(`Total time: ${end3 - start} ms`);
+
+      // Create temporary SystemPrompt
+      const webSearchSystemPrompt: SystemPrompt = {
+        id: -999, // Special ID to identify web search generated prompt
+        name: 'Web Search References',
+        prompt: enhancedPrompt,
+        includeHistory: true,
+      };
+
+      // Extract citations from contents
+      const citations: Citation[] = contents.map((content, index) => ({
+        number: index + 1,
+        title: content.title,
+        url: content.url,
+        excerpt: content.excerpt,
+      }));
+
+      console.log('webSearchSystemPrompt length:' + enhancedPrompt.length);
+      console.log('✓ Web search system prompt created');
+      console.log(`✓ Citations extracted: ${citations.length}`);
+      console.log('========== WEB SEARCH COMPLETE ==========\n');
 
       return {
-        originalQuery: userMessage,
-        keywords: intentResult.keywords,
-        items: limitedItems,
-        contents,
-        enhancedPrompt,
+        systemPrompt: webSearchSystemPrompt,
+        citations: citations,
       };
-    } catch (error) {
-      console.error('[WebSearch] Search failed:', error);
-      throw error;
+    } catch (error: any) {
+      console.log('❌ Web search error:', error);
+      console.log('⚠️  Falling back to normal chat flow');
+      console.log('========== WEB SEARCH END ==========\n');
+      return null;
     }
-  }
-
-  /**
-   * 更新配置
-   */
-  updateConfig(config: Partial<WebSearchConfig>) {
-    this.config = { ...this.config, ...config };
-  }
-
-  /**
-   * 获取当前配置
-   */
-  getConfig(): WebSearchConfig {
-    return { ...this.config };
   }
 }
 
 /**
- * 单例实例
+ * Global singleton instance
  */
 export const webSearchOrchestrator = new WebSearchOrchestrator();

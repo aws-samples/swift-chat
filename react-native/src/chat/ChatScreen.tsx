@@ -74,10 +74,8 @@ import {
 import HeaderTitle from './component/HeaderTitle.tsx';
 import { showInfo } from './util/ToastUtils.ts';
 import { HeaderOptions } from '@react-navigation/elements';
-import { intentAnalysisService } from '../websearch/services/IntentAnalysisService.ts';
-import { webViewSearchService } from '../websearch/services/WebViewSearchService.ts';
-import { contentFetchService } from '../websearch/services/ContentFetchService.ts';
-import { promptBuilderService } from '../websearch/services/PromptBuilderService.ts';
+import { webSearchOrchestrator } from '../websearch/services/WebSearchOrchestrator.ts';
+import { Citation } from '../types/Chat.ts';
 
 const BOT_ID = 2;
 
@@ -147,7 +145,7 @@ function ChatScreen(): React.JSX.Element {
   const containerHeightRef = useRef(0);
   const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
   const audioWaveformRef = useRef<AudioWaveformRef>(null);
-  const webSearchSystemPromptRef = useRef<SystemPrompt | null>(null);
+  const [searchPhase, setSearchPhase] = useState<string>('');
 
   const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
   const currentScrollOffsetRef = useRef(0);
@@ -564,109 +562,139 @@ function ChatScreen(): React.JSX.Element {
       if (modeRef.current === ChatMode.Image) {
         sendEventRef.current('onImageStart');
       }
-      controllerRef.current = new AbortController();
-      isCanceled.current = false;
-      const startRequestTime = new Date().getTime();
-      let latencyMs = 0;
-      let metrics: Metrics | undefined;
 
-      // 优先使用 web search system prompt，否则使用用户选择的 system prompt
-      const effectiveSystemPrompt = webSearchSystemPromptRef.current || systemPromptRef.current;
+      // Wrap in async function to support await
+      (async () => {
+        // Get the last user message (the one after bot message)
+        const userMessage = messages.length > 1 ? messages[1]?.text : null;
 
-      invokeBedrockWithCallBack(
-        bedrockMessages.current,
-        modeRef.current,
-        effectiveSystemPrompt,
-        () => isCanceled.current,
-        controllerRef.current,
-        (
-          msg: string,
-          complete: boolean,
-          needStop: boolean,
-          usageInfo?: Usage,
-          reasoning?: string
-        ) => {
-          if (chatStatusRef.current !== ChatStatus.Running) {
-            return;
-          }
-          if (latencyMs === 0) {
-            latencyMs = new Date().getTime() - startRequestTime;
-          }
-          const updateMessage = () => {
-            if (usageInfo) {
-              setUsage(prevUsage => ({
-                modelName: usageInfo.modelName,
-                inputTokens:
-                  (prevUsage?.inputTokens || 0) + usageInfo.inputTokens,
-                outputTokens:
-                  (prevUsage?.outputTokens || 0) + usageInfo.outputTokens,
-                totalTokens:
-                  (prevUsage?.totalTokens || 0) + usageInfo.totalTokens,
-              }));
-              updateTotalUsage(usageInfo);
-              const renderSec =
-                (new Date().getTime() - startRequestTime - latencyMs) / 1000;
-              const speed = usageInfo.outputTokens / renderSec;
-              if (!metrics && modeRef.current === ChatMode.Text) {
-                metrics = {
-                  latencyMs: (latencyMs / 1000).toFixed(2),
-                  speed: speed.toFixed(speed > 100 ? 1 : 2),
-                };
+        let webSearchSystemPrompt = undefined;
+        let webSearchCitations: Citation[] | undefined = undefined;
+        // Execute web search only in text mode with user message
+        if (userMessage && modeRef.current === ChatMode.Text) {
+          try {
+            const webSearchResult = await webSearchOrchestrator.execute(
+              userMessage,
+              bedrockMessages.current,
+              (phase: string) => {
+                // Update search phase in real-time
+                setSearchPhase(phase);
               }
+            );
+            if (webSearchResult) {
+              webSearchSystemPrompt = webSearchResult.systemPrompt;
+              webSearchCitations = webSearchResult.citations;
             }
-            const previousMessage = messagesRef.current[0];
-            if (
-              previousMessage.text !== msg ||
-              previousMessage.reasoning !== reasoning ||
-              (!previousMessage.metrics && metrics)
-            ) {
-              setMessages(prevMessages => {
-                const newMessages = [...prevMessages];
-                newMessages[0] = {
-                  ...prevMessages[0],
-                  text:
-                    isCanceled.current &&
-                    (previousMessage.text === textPlaceholder ||
-                      previousMessage.text === '')
-                      ? 'Canceled...'
-                      : msg,
-                  reasoning: reasoning,
-                  metrics: metrics,
-                };
-                return newMessages;
-              });
-            }
-          };
-          const setComplete = () => {
-            trigger(HapticFeedbackTypes.notificationSuccess);
-            setChatStatus(ChatStatus.Complete);
-            // 清除 web search system prompt，避免影响后续对话
-            webSearchSystemPromptRef.current = null;
-          };
-          if (modeRef.current === ChatMode.Text) {
-            trigger(HapticFeedbackTypes.selection);
-            updateMessage();
-            if (complete) {
-              setComplete();
-            }
-          } else {
-            if (needStop) {
-              sendEventRef.current('onImageStop');
-            } else {
-              sendEventRef.current('onImageComplete');
-            }
-            setTimeout(() => {
-              updateMessage();
-              setComplete();
-            }, 1000);
-          }
-          if (needStop) {
-            isCanceled.current = true;
-            // 请求被取消时也清除 web search system prompt
-            webSearchSystemPromptRef.current = null;
+          } catch (error) {
+            console.log('❌ Web search error:', error);
           }
         }
-      ).then();
+        // Clear searchPhase before starting AI response
+        setSearchPhase('');
+
+        // Continue to invoke bedrock API
+        controllerRef.current = new AbortController();
+        isCanceled.current = false;
+        const startRequestTime = new Date().getTime();
+        let latencyMs = 0;
+        let metrics: Metrics | undefined;
+
+        // Prioritize web search system prompt, otherwise use user-selected system prompt
+        const effectiveSystemPrompt =
+          webSearchSystemPrompt || systemPromptRef.current;
+
+        invokeBedrockWithCallBack(
+          bedrockMessages.current,
+          modeRef.current,
+          effectiveSystemPrompt,
+          () => isCanceled.current,
+          controllerRef.current,
+          (
+            msg: string,
+            complete: boolean,
+            needStop: boolean,
+            usageInfo?: Usage,
+            reasoning?: string
+          ) => {
+            if (chatStatusRef.current !== ChatStatus.Running) {
+              return;
+            }
+            if (latencyMs === 0) {
+              latencyMs = new Date().getTime() - startRequestTime;
+            }
+            const updateMessage = () => {
+              if (usageInfo) {
+                setUsage(prevUsage => ({
+                  modelName: usageInfo.modelName,
+                  inputTokens:
+                    (prevUsage?.inputTokens || 0) + usageInfo.inputTokens,
+                  outputTokens:
+                    (prevUsage?.outputTokens || 0) + usageInfo.outputTokens,
+                  totalTokens:
+                    (prevUsage?.totalTokens || 0) + usageInfo.totalTokens,
+                }));
+                updateTotalUsage(usageInfo);
+                const renderSec =
+                  (new Date().getTime() - startRequestTime - latencyMs) / 1000;
+                const speed = usageInfo.outputTokens / renderSec;
+                if (!metrics && modeRef.current === ChatMode.Text) {
+                  metrics = {
+                    latencyMs: (latencyMs / 1000).toFixed(2),
+                    speed: speed.toFixed(speed > 100 ? 1 : 2),
+                  };
+                }
+              }
+              const previousMessage = messagesRef.current[0];
+              if (
+                previousMessage.text !== msg ||
+                previousMessage.reasoning !== reasoning ||
+                (!previousMessage.metrics && metrics)
+              ) {
+                setMessages(prevMessages => {
+                  const newMessages = [...prevMessages];
+                  newMessages[0] = {
+                    ...prevMessages[0],
+                    text:
+                      isCanceled.current &&
+                      (previousMessage.text === textPlaceholder ||
+                        previousMessage.text === '')
+                        ? 'Canceled...'
+                        : msg,
+                    reasoning: reasoning,
+                    metrics: metrics,
+                    citations: webSearchCitations,
+                  };
+                  return newMessages;
+                });
+              }
+            };
+            const setComplete = () => {
+              trigger(HapticFeedbackTypes.notificationSuccess);
+              setChatStatus(ChatStatus.Complete);
+            };
+            if (modeRef.current === ChatMode.Text) {
+              trigger(HapticFeedbackTypes.selection);
+              updateMessage();
+              if (complete) {
+                setComplete();
+              }
+            } else {
+              if (needStop) {
+                sendEventRef.current('onImageStop');
+              } else {
+                sendEventRef.current('onImageComplete');
+              }
+              setTimeout(() => {
+                updateMessage();
+                setComplete();
+              }, 1000);
+            }
+            if (needStop) {
+              isCanceled.current = true;
+            }
+          }
+        ).then();
+      })(); // Close async IIFE
     }
   }, [messages]);
 
@@ -680,98 +708,6 @@ function ChatScreen(): React.JSX.Element {
       showInfo('please wait for all videos to be ready');
       return;
     }
-
-    // ============ Web Search Integration ============
-    const userMessage = message[0]?.text;
-    let webSearchSystemPrompt: SystemPrompt | null = null;
-
-    if (userMessage && modeRef.current === ChatMode.Text) {
-      try {
-        console.log('\n🔍 ========== WEB SEARCH START ==========');
-
-        // Phase 1: 提取搜索关键词
-        console.log('📝 Phase 1: Analyzing search intent...');
-        const intentResult = await intentAnalysisService.analyze(
-          userMessage,
-          bedrockMessages.current
-        );
-
-        if (intentResult.needsSearch && intentResult.keywords.length > 0) {
-          console.log('✅ Search needed! Keywords:', intentResult.keywords);
-
-          // Phase 2: 使用第一个关键词进行搜索
-          const keyword = intentResult.keywords[0];
-          console.log(`\n🌐 Phase 2: Searching for "${keyword}"...`);
-
-          const searchResults = await webViewSearchService.search(
-            keyword,
-            'google',
-            5
-          );
-
-          console.log('\n✅ ========== WEB SEARCH RESULTS ==========');
-          console.log('Total results:', searchResults.length);
-          searchResults.forEach((result, index) => {
-            console.log(`\n[${index + 1}] ${result.title}`);
-            console.log(`    URL: ${result.url}`);
-          });
-
-          // Phase 4+5: 获取并解析URL内容
-          if (searchResults.length > 0) {
-            console.log('\n📥 Phase 4+5: Fetching and parsing URL contents...');
-
-            const contents = await contentFetchService.fetchContents(
-              searchResults,
-              30000, // 30秒超时
-              5000   // 每个结果最大5000字符
-            );
-
-            console.log('\n✅ ========== FETCHED CONTENTS ==========');
-            console.log('Successfully fetched:', contents.length);
-
-            // Phase 6: 使用 PromptBuilderService 构建增强的 Prompt
-            if (contents.length > 0) {
-              console.log('\n📝 Phase 6: Building enhanced prompt with references...');
-
-              const enhancedPrompt = promptBuilderService.buildPromptWithReferences(
-                userMessage,
-                contents
-              );
-
-              console.log('\n✅ Enhanced prompt built successfully');
-              console.log(`Prompt length: ${enhancedPrompt.length} chars`);
-              console.log(`References included: ${contents.length}`);
-
-              // 🔑 关键：创建临时 SystemPrompt，将引用材料作为 system prompt
-              // 这样用户的原始问题会保留在 message 中，引用材料作为系统指令
-              webSearchSystemPrompt = {
-                id: -999, // 特殊ID标识这是web search生成的
-                name: 'Web Search References',
-                prompt: enhancedPrompt,
-                includeHistory: true, // 包含历史对话
-              };
-
-              // 保存到 ref 供 invokeBedrockWithCallBack 使用
-              webSearchSystemPromptRef.current = webSearchSystemPrompt;
-              console.log("webSearchSystemPrompt:\n\n"+enhancedPrompt+"\n\n")
-
-              console.log('\n✓ Web search system prompt created');
-            } else {
-              console.log('\n⚠️  No valid contents fetched, using original message');
-            }
-          }
-
-          console.log('========== WEB SEARCH COMPLETE ==========\n');
-        } else {
-          console.log('ℹ️  No search needed for this query');
-          console.log('========== WEB SEARCH END ==========\n');
-        }
-      } catch (error) {
-        console.log('❌ Web search error:', error);
-        console.log('⚠️  Falling back to normal chat flow');
-      }
-    }
-    // ============ End of Web Search Integration ============
 
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
@@ -1001,14 +937,16 @@ function ChatScreen(): React.JSX.Element {
             msg => msg._id === props.currentMessage?._id
           );
 
+          const isLastAIMessage =
+            props.currentMessage?._id === messages[0]?._id &&
+            props.currentMessage?.user._id !== 1;
+
           return (
             <CustomMessageComponent
               {...props}
               chatStatus={chatStatus}
-              isLastAIMessage={
-                props.currentMessage?._id === messages[0]?._id &&
-                props.currentMessage?.user._id !== 1
-              }
+              isLastAIMessage={isLastAIMessage}
+              searchPhase={isLastAIMessage ? searchPhase : ''}
               onReasoningToggle={(expanded, height, animated) => {
                 scrollUpByHeight(expanded, height, animated);
               }}

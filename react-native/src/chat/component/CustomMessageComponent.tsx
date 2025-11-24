@@ -43,10 +43,12 @@ import {
   getReasoningExpanded,
   saveReasoningExpanded,
 } from '../../storage/StorageUtils.ts';
+import CitationList from './CitationList';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
   isLastAIMessage?: boolean;
+  searchPhase?: string;
   onRegenerate?: () => void;
   onReasoningToggle?: (
     expanded: boolean,
@@ -61,6 +63,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   currentMessage,
   chatStatus,
   isLastAIMessage,
+  searchPhase,
   onRegenerate,
   onReasoningToggle,
 }) => {
@@ -499,12 +502,15 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       <View style={styles.marked_box}>
         {hasReasoning && reasoningSection}
         {showLoading && (
-          <View style={styles.loading}>
+          <View style={styles.loadingContainer}>
             <ImageSpinner
               visible={true}
               size={18}
               source={require('../../assets/loading.png')}
             />
+            {searchPhase && (
+              <Text style={styles.searchPhaseText}>{searchPhase}</Text>
+            )}
           </View>
         )}
         {!isLoading && !isEdit && (
@@ -549,6 +555,9 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             textAlignVertical="top">
             {currentMessage.text}
           </TextInput>
+        )}
+        {!isUser.current && (chatStatus !== ChatStatus.Running) && currentMessage.citations && (
+          <CitationList citations={currentMessage.citations} />
         )}
         {((isLastAIMessage && chatStatus !== ChatStatus.Running) ||
           forceShowButtons) &&
@@ -656,9 +665,16 @@ const createStyles = (colors: ColorScheme) =>
       paddingHorizontal: 8,
       paddingVertical: 4,
     },
-    loading: {
+    loadingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
       marginTop: 12,
       marginBottom: 10,
+    },
+    searchPhaseText: {
+      marginLeft: 8,
+      fontSize: 14,
+      color: colors.textTertiary,
     },
     actionButtonsContainer: {
       flexDirection: 'row',
@@ -709,6 +725,7 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
       nextProps.currentMessage?.reasoning &&
     prevProps.chatStatus === nextProps.chatStatus &&
     prevProps.isLastAIMessage === nextProps.isLastAIMessage &&
+    prevProps.searchPhase === nextProps.searchPhase &&
     prevProps.onRegenerate === nextProps.onRegenerate &&
     prevProps.onReasoningToggle === nextProps.onReasoningToggle
   );

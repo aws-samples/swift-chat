@@ -6,6 +6,7 @@
 import { SearchResultItem, WebContent } from '../types';
 import { parseHTML } from 'linkedom';
 import { Readability } from '@mozilla/readability';
+import TurndownService from 'turndown';
 
 const NO_CONTENT = 'No content found';
 
@@ -42,6 +43,7 @@ async function fetchSingleUrl(
 
     try {
       // 发起HTTP请求
+      const start = performance.now();
       const response = await fetch(item.url, {
         headers: {
           'User-Agent':
@@ -50,7 +52,8 @@ async function fetchSingleUrl(
         signal: controller.signal,
         reactNative: { textStreaming: true },
       });
-
+      const end1 = performance.now();
+      console.log(`Fetch Cost: ${end1 - start} ms`);  
       clearTimeout(timeoutId);
 
       if (!response.ok) {
@@ -84,19 +87,35 @@ async function fetchSingleUrl(
         };
       }
 
-      // 使用 content（HTML格式）而不是 textContent
-      // 原因：HTML 保留了结构信息（标题、段落、列表等），AI 能更好地理解
+      // 使用 Turndown 将 HTML 转换为 Markdown
+      // 原因：Markdown 格式更简洁，占用 token 更少，且 AI 能更好地理解
       const htmlContent = article.content.trim();
+
+      console.log(`[ContentFetch] Converting HTML to Markdown...`);
+
+      const turndownService = new TurndownService();
+
+      // 重新解析 article.content 为 DOM 节点，因为 turndown 需要 DOM 对象
+      // 不能直接传 HTML 字符串给 turndown，因为 React Native 环境中缺少完整的浏览器 API
+      // 注意：parseHTML 返回的 document.body 可能是空的，要直接传 document
+      const contentParsed = parseHTML(htmlContent) as any;
+      const contentDoc = contentParsed.document;
+
+      const markdownContent = turndownService.turndown(contentDoc);
 
       console.log(`[ContentFetch] ✓ Extracted: ${item.url}`);
       console.log(`[ContentFetch]   - Title: ${article.title}`);
-      console.log(`[ContentFetch]   - HtmlContent length: ${htmlContent.length} chars`);
+      console.log(`[ContentFetch]   - HTML length: ${htmlContent.length} chars`);
+      console.log(`[ContentFetch]   - Markdown length: ${markdownContent.length} chars`);
+      console.log(`[ContentFetch]   - Token savings: ${((1 - markdownContent.length / htmlContent.length) * 100).toFixed(1)}%`);
       console.log(`[ContentFetch]   - Excerpt: ${article.excerpt?.substring(0, 100) || 'N/A'}...`);
-
+      const end2 = performance.now();
+      console.log(`Parse Cost: ${end2 - end1} ms`);
       return {
         title: article.title || item.title,
         url: item.url,
-        content: htmlContent || NO_CONTENT,
+        content: markdownContent || NO_CONTENT,
+        excerpt: article.excerpt || NO_CONTENT,
       };
     } catch (error: any) {
       clearTimeout(timeoutId);

@@ -50,7 +50,8 @@
     "react-native-svg": "^15.4.0",
     "react-native-toast-message": "^2.2.1",
     "react-native-webview": "^13.16.0",
-    "react-syntax-highlighter": "^15.5.0"
+    "react-syntax-highlighter": "^15.5.0",
+    "turndown": "^7.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
@@ -65,6 +66,7 @@
     "@types/react-native-table-component": "^1.2.8",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/react-test-renderer": "^18.0.0",
+    "@types/turndown": "^5.0.6",
     "@types/uuid": "3.4.0",
     "babel-jest": "^29.6.3",
     "core-js": "^3.37.1",

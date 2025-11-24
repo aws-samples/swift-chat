@@ -135,7 +135,7 @@ export class WebViewSearchService {
     this.currentEngine = engine;
 
     return new Promise((resolve, reject) => {
-      // 初始超时时间60秒（给用户足够时间完成验证）
+      // 初始超时时间120秒（给用户足够时间完成验证）
       this.currentTimeoutId = setTimeout(() => {
         this.messageCallback = null;
         this.currentTimeoutId = null;
