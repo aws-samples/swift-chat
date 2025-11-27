@@ -62,21 +62,18 @@ export class WebSearchOrchestrator {
       console.log(`Using search engine: ${engine}`);
       const start = performance.now();
 
-      // Quick check: if query is short (<=30 chars), skip LLM intent analysis
       const trimmed = userMessage.trim();
       const length = trimmed.replace(/\s+/g, '').length;
 
       let intentResult;
       let end1 = start;
       if (bedrockMessages.length < 2 && length <= 30) {
-        // Direct search for short queries
         console.log(`⚡ Short query (${length} chars), skipping intent analysis`);
         intentResult = {
           needsSearch: true,
           keywords: [trimmed]
         };
       } else {
-        // Phase 1: Analyze search intent for complex queries
         onPhaseChange?.(WebSearchPhase.ANALYZING);
         console.log('📝 Phase 1: Analyzing search intent...');
 
@@ -89,7 +86,6 @@ export class WebSearchOrchestrator {
         console.log(`AI intent analysis time: ${end1 - start} ms`);
       }
 
-      // Return if search is not needed
       if (!intentResult.needsSearch || intentResult.keywords.length === 0) {
         console.log('ℹ️  No search needed for this query');
         console.log('========== WEB SEARCH END ==========\n');
@@ -111,7 +107,6 @@ export class WebSearchOrchestrator {
 
       const end2 = performance.now();
       console.log(`WebView search time: ${end2 - end1} ms`);
-      // Return if no search results
       if (searchResults.length === 0) {
         console.log('\n⚠️  No search results found');
         console.log('========== WEB SEARCH END ==========\n');
@@ -124,8 +119,8 @@ export class WebSearchOrchestrator {
 
       const contents = await contentFetchService.fetchContents(
         searchResults,
-        8000, // 8s timeout per URL (智能Early Exit会更早返回)
-        10000 // Max 10000 chars per result
+        8000,
+        10000
       );
 
       const end3 = performance.now();
@@ -133,7 +128,6 @@ export class WebSearchOrchestrator {
       console.log('\n✅ ========== FETCHED CONTENTS ==========');
       console.log('Successfully fetched:', contents.length);
 
-      // Return if no valid content
       if (contents.length === 0) {
         console.log('\n⚠️  No valid contents fetched');
         console.log('========== WEB SEARCH END ==========\n');
@@ -154,15 +148,13 @@ export class WebSearchOrchestrator {
       console.log(`References included: ${contents.length}`);
       console.log(`Total time: ${end3 - start} ms`);
 
-      // Create temporary SystemPrompt
       const webSearchSystemPrompt: SystemPrompt = {
-        id: -999, // Special ID to identify web search generated prompt
+        id: -999,
         name: 'Web Search References',
         prompt: enhancedPrompt,
         includeHistory: true,
       };
 
-      // Extract citations from contents
       const citations: Citation[] = contents.map((content, index) => ({
         number: index + 1,
         title: content.title,
@@ -187,7 +179,4 @@ export class WebSearchOrchestrator {
   }
 }
 
-/**
- * Global singleton instance
- */
 export const webSearchOrchestrator = new WebSearchOrchestrator();

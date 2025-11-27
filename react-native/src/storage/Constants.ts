@@ -224,13 +224,6 @@ If code is already optimal: Reply "Code is well written, no significant optimiza
 Stay focused on practical improvements only.`,
     includeHistory: false,
   },
-  {
-    id: -3,
-    name: 'CreateStory',
-    prompt:
-      'You are an AI assistant with a passion for creative writing and storytelling. Your task is to collaborate with users to create engaging stories, offering imaginative plot twists and dynamic character development. Encourage the user to contribute their ideas and build upon them to create a captivating narrative.',
-    includeHistory: true,
-  },
   ...DefaultVoiceSystemPrompts,
   ...DefaultImageSystemPrompts,
 ];

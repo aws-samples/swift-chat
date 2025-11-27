@@ -1,6 +1,6 @@
 /**
  * Intent Analysis Service
- * 阶段1: 分析用户意图并提取搜索关键词
+ * Phase 1: Analyze user intent and extract search keywords
  */
 
 import { BedrockMessage } from '../../chat/util/BedrockMessageConvertor';
@@ -9,9 +9,6 @@ import { invokeBedrockWithCallBack } from '../../api/bedrock-api';
 import { ChatMode } from '../../types/Chat';
 import { jsonrepair } from 'jsonrepair';
 
-/**
- * 意图分析Prompt
- */
 const INTENT_ANALYSIS_PROMPT = `You are an AI question rephraser. Your role is to rephrase follow-up queries from a conversation into standalone queries that can be used to retrieve information through web search.
 
 ## Guidelines:
@@ -80,17 +77,10 @@ Output:
 
 Now analyze this conversation and extract search queries if needed. Respond with ONLY valid JSON, no other text.`;
 
-/**
- * 从JSON响应中提取信息
- * 使用jsonrepair库自动修复各种JSON格式问题
- */
 function extractInfoFromJSON(response: string): SearchIntentResult {
 
   try {
-    // 使用jsonrepair自动修复JSON格式问题
     const repairedJson = jsonrepair(response);
-
-    // 解析修复后的JSON
     const parsed = JSON.parse(repairedJson);
 
     const result: SearchIntentResult = {
@@ -109,16 +99,7 @@ function extractInfoFromJSON(response: string): SearchIntentResult {
   }
 }
 
-/**
- * 意图分析服务
- */
 export class IntentAnalysisService {
-  /**
-   * 分析用户输入是否需要搜索，并提取关键词
-   * @param userMessage 用户最新输入
-   * @param conversationHistory 对话历史
-   * @returns 搜索意图结果
-   */
   async analyze(
     userMessage: string,
     conversationHistory: BedrockMessage[]
@@ -129,7 +110,6 @@ export class IntentAnalysisService {
     console.log('========================================\n');
 
     try {
-      // 构建prompt messages
       const messages: BedrockMessage[] = [
         {
           role: 'user',
@@ -147,13 +127,11 @@ export class IntentAnalysisService {
         },
       ];
 
-      // 使用Promise包装流式API，等待完整响应
       const fullResponse = await this.invokeModelSync(messages);
 
       console.log('\n[IntentAnalysis] Full response received');
       console.log('[IntentAnalysis] Response length:', fullResponse.length);
 
-      // 解析JSON
       const result = extractInfoFromJSON(fullResponse);
 
       console.log('\n========================================');
@@ -168,14 +146,10 @@ export class IntentAnalysisService {
       return result;
     } catch (error) {
       console.error('[IntentAnalysis] Error:', error);
-      // 发生错误时，降级为不搜索
       return { needsSearch: false, keywords: [] };
     }
   }
 
-  /**
-   * 将流式API转换为同步调用
-   */
   private async invokeModelSync(messages: BedrockMessage[]): Promise<string> {
     return new Promise((resolve, reject) => {
       let fullResponse = '';
@@ -184,14 +158,13 @@ export class IntentAnalysisService {
       invokeBedrockWithCallBack(
         messages,
         ChatMode.Text,
-        null, // 不需要system prompt
-        () => false, // 不中断
+        null,
+        () => false,
         controller,
         (text: string, complete: boolean, needStop: boolean) => {
           fullResponse = text;
 
           if (!complete) {
-            // 实时打印进度
             console.log(".")
           }
 
@@ -207,15 +180,11 @@ export class IntentAnalysisService {
     });
   }
 
-  /**
-   * 格式化对话历史
-   */
   private formatConversationHistory(messages: BedrockMessage[]): string {
     if (messages.length === 0) {
       return 'No previous conversation';
     }
 
-    // 只取最近3轮对话（6条消息）
     const recentMessages = messages.slice(-6);
 
     return recentMessages
@@ -224,7 +193,6 @@ export class IntentAnalysisService {
         let text = '';
 
         if (Array.isArray(msg.content)) {
-          // 提取文本内容
           text = msg.content
             .filter(c => 'text' in c)
             .map(c => (c as any).text)
@@ -233,7 +201,6 @@ export class IntentAnalysisService {
           text = msg.content;
         }
 
-        // 截断过长的文本
         if (text.length > 200) {
           text = text.slice(0, 200) + '...';
         }
@@ -244,7 +211,4 @@ export class IntentAnalysisService {
   }
 }
 
-/**
- * 单例实例
- */
 export const intentAnalysisService = new IntentAnalysisService();

@@ -1,6 +1,5 @@
 /**
  * Baidu Search Provider
- * 百度搜索引擎的DOM选择器和URL生成
  */
 
 import { SearchResultItem } from '../types';
@@ -16,40 +15,26 @@ interface ParsedSearchData {
 }
 
 export class BaiduProvider {
-  /**
-   * 搜索引擎名称
-   */
   readonly name = 'Baidu';
 
-  /**
-   * 生成搜索URL
-   */
   getSearchUrl(query: string): string {
     const encodedQuery = encodeURIComponent(query);
     return `https://www.baidu.com/s?wd=${encodedQuery}`;
   }
 
-  /**
-   * 生成注入的JavaScript代码，用于提取搜索结果
-   */
   getExtractionScript(): string {
     return `
       (function() {
         try {
           const results = [];
 
-          // 策略: 尝试多个选择器来适配不同版本的百度搜索页面
           const selectors = [
-            // 最新版本的百度搜索结果
             '#content_left .result h3 a',
             '#content_left .c-container h3 a',
-            // 新版百度
             '.result h3 a',
             '.c-container h3.c-title a',
             '.c-container h3.t a',
-            // 移动端适配
             '.result-op h3 a',
-            // 通用回退方案
             'h3 a[href]',
           ];
 
@@ -71,7 +56,6 @@ export class BaiduProvider {
                     const title = linkElement.textContent || linkElement.innerText || '';
                     let url = linkElement.href;
 
-                    // 基本过滤：排除明显的内部链接
                     const isValidUrl =
                       title.trim() &&
                       url &&
@@ -82,7 +66,6 @@ export class BaiduProvider {
                       !url.includes('passport.baidu.com');
 
                     if (isValidUrl) {
-                      // 避免重复
                       const isDuplicate = results.some(r => r.url === url || r.title === title.trim());
                       if (!isDuplicate) {
                         results.push({
@@ -108,7 +91,6 @@ export class BaiduProvider {
             log: 'Baidu extraction complete, found ' + results.length + ' results'
           }));
 
-          // 发送结果回React Native
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'search_results',
             results: results
@@ -120,14 +102,11 @@ export class BaiduProvider {
           }));
         }
 
-        true; // 必须返回true
+        true;
       })();
     `;
   }
 
-  /**
-   * 解析从WebView返回的结果
-   */
   parseResults(data: ParsedSearchData): SearchResultItem[] {
     if (data.type === 'search_results' && Array.isArray(data.results)) {
       return data.results.map((item: RawSearchResult) => ({
