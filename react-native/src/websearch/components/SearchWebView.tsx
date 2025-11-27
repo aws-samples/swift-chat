@@ -130,7 +130,24 @@ export const SearchWebView: React.FC = () => {
 
   // WebView错误回调
   const handleError = (nativeEvent: any) => {
-    console.error('[SearchWebView] WebView error:', nativeEvent);
+    console.log('[SearchWebView] WebView error:', nativeEvent);
+
+    const description = (nativeEvent.description || '').toLowerCase();
+    const isFatalError =
+      nativeEvent.code < 0 ||
+      description.includes('redirect') ||
+      description.includes('ssl') ||
+      description.includes('cannot');
+
+    if (isFatalError) {
+      console.log('[SearchWebView] Fatal error detected, terminating search');
+      console.log('[SearchWebView] Directly calling handleEvent with error');
+
+      webViewSearchService.handleEvent('webview:error', {
+        error: nativeEvent.description || 'WebView load failed',
+        code: nativeEvent.code
+      });
+    }
   };
 
   // 用户点击关闭按钮

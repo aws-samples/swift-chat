@@ -5,9 +5,11 @@
 
 import { SearchResultItem, SearchEngine } from '../types';
 import { googleProvider } from '../providers/GoogleProvider';
+import { baiduProvider } from '../providers/BaiduProvider';
+import { bingProvider } from '../providers/BingProvider';
 
 // 事件发送函数类型
-type SendEventFunc = (event: string, params?: { url?: string; script?: string; data?: string }) => void;
+type SendEventFunc = (event: string, params?: { url?: string; script?: string; data?: string; error?: string; code?: number }) => void;
 
 /**
  * WebView消息类型
@@ -29,7 +31,7 @@ export class WebViewSearchService {
   private currentEngine: SearchEngine = 'google';
   private currentTimeoutId: NodeJS.Timeout | null = null;
   private sendEvent: SendEventFunc | null = null;
-  private eventListeners: Map<string, (params?: { data?: string }) => void> = new Map();
+  private eventListeners: Map<string, (params?: { data?: string; error?: string; code?: number }) => void> = new Map();
 
   /**
    * 设置事件发送函数（由外部调用，通常在初始化时）
@@ -41,14 +43,14 @@ export class WebViewSearchService {
   /**
    * 监听来自App的事件
    */
-  addEventListener(eventName: string, callback: (params?: { data?: string }) => void) {
+  addEventListener(eventName: string, callback: (params?: { data?: string; error?: string; code?: number }) => void) {
     this.eventListeners.set(eventName, callback);
   }
 
   /**
    * 处理来自App的事件（由外部调用）
    */
-  handleEvent(eventName: string, params?: { data?: string }) {
+  handleEvent(eventName: string, params?: { data?: string; error?: string; code?: number }) {
     const callback = this.eventListeners.get(eventName);
     if (callback) {
       callback(params);
@@ -169,6 +171,25 @@ export class WebViewSearchService {
         reject(new Error('User cancelled CAPTCHA verification'));
       });
 
+      this.addEventListener('webview:error', (params) => {
+        const errorMsg = params?.error || 'WebView load failed';
+        const errorCode = params?.code || 'unknown';
+        console.log('[WebViewSearch] WebView error, terminating search:', errorMsg, 'Code:', errorCode);
+        // 清理超时计时器
+        if (this.currentTimeoutId) {
+          clearTimeout(this.currentTimeoutId);
+          this.currentTimeoutId = null;
+        }
+
+        this.messageCallback = null;
+        this.eventListeners.clear();
+
+        if (this.sendEvent) {
+          this.sendEvent('webview:hide');
+        }
+
+        reject(new Error(`WebView error (${errorCode}): ${errorMsg}`));
+      });
 
       // 设置消息回调
       this.messageCallback = (message: WebViewMessage) => {
@@ -288,11 +309,9 @@ export class WebViewSearchService {
       case 'google':
         return googleProvider;
       case 'bing':
-        // TODO: 实现BingProvider
-        throw new Error('Bing provider not implemented yet');
+        return bingProvider;
       case 'baidu':
-        // TODO: 实现BaiduProvider
-        throw new Error('Baidu provider not implemented yet');
+        return baiduProvider;
       default:
         return googleProvider;
     }

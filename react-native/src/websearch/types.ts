@@ -9,6 +9,20 @@
 export type SearchEngine = 'google' | 'bing' | 'baidu';
 
 /**
+ * Extended search engine type with disabled option
+ */
+export type SearchEngineOption = 'disabled' | SearchEngine;
+
+/**
+ * Search provider configuration for UI
+ */
+export interface SearchProviderConfig {
+  id: SearchEngineOption;
+  name: string;
+  description?: string;
+}
+
+/**
  * 搜索意图分析结果
  */
 export interface SearchIntentResult {

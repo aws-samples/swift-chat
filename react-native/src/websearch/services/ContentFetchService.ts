@@ -27,7 +27,8 @@ function isValidUrl(urlString: string): boolean {
  */
 async function fetchSingleUrl(
   item: SearchResultItem,
-  timeout: number = 30000
+  timeout: number = 30000,
+  globalAbortController?: AbortController
 ): Promise<WebContent> {
   try {
     // 验证URL
@@ -41,6 +42,9 @@ async function fetchSingleUrl(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+    const globalAbortListener = () => controller.abort();
+    globalAbortController?.signal.addEventListener('abort', globalAbortListener);
+
     try {
       // 发起HTTP请求
       const start = performance.now();
@@ -50,39 +54,52 @@ async function fetchSingleUrl(
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
         signal: controller.signal,
+        redirect: 'follow', // 确保跟随重定向（这是fetch的默认行为）
+        // @ts-ignore - React Native specific option
         reactNative: { textStreaming: true },
-      });
+      } as RequestInit);
       const end1 = performance.now();
-      console.log(`Fetch Cost: ${end1 - start} ms`);  
+      console.log(`Fetch Cost: ${end1 - start} ms`);
       clearTimeout(timeoutId);
+      globalAbortController?.signal.removeEventListener('abort', globalAbortListener);
 
       if (!response.ok) {
         throw new Error(`HTTP error: ${response.status}`);
       }
 
+      const finalUrl = response.url || item.url;
+
       // 获取HTML内容
       const html = await response.text();
 
       console.log(
-        `[ContentFetch] ✓ Fetched: ${item.url} (${html.length} chars)`
+        `[ContentFetch] ✓ Fetched: ${finalUrl} (${html.length} chars)`
       );
 
       // 优化1: 限制HTML大小，避免解析超大HTML
-      const MAX_HTML_SIZE = 200 * 1024; // 200KB
+      const MAX_HTML_SIZE = 2 * 1024 * 1024; // 2MB
       if (html.length > MAX_HTML_SIZE) {
         console.log(`[ContentFetch] ⚠️  HTML too large (${(html.length / 1024).toFixed(0)}KB), skipping to avoid slow parsing`);
         return {
           title: item.title,
-          url: item.url,
+          url: finalUrl,
           content: NO_CONTENT,
         };
+      }
+
+      if (globalAbortController?.signal.aborted) {
+        throw new Error('Aborted');
       }
 
       // 使用 linkedom 解析 HTML 为 DOM
       console.log(`[ContentFetch] Parsing HTML with linkedom...`);
       const { document } = parseHTML(html, {
-        url: item.url
+        url: finalUrl
       });
+
+      if (globalAbortController?.signal.aborted) {
+        throw new Error('Aborted');
+      }
 
       // 使用 Readability 提取核心内容
       console.log(`[ContentFetch] Extracting content with Readability...`);
@@ -90,10 +107,10 @@ async function fetchSingleUrl(
       const article = reader.parse();
 
       if (!article || !article.content) {
-        console.log(`[ContentFetch] ✗ No readable content found: ${item.url}`);
+        console.log(`[ContentFetch] ✗ No readable content found: ${finalUrl}`);
         return {
           title: item.title,
-          url: item.url,
+          url: finalUrl,
           content: NO_CONTENT,
         };
       }
@@ -101,6 +118,10 @@ async function fetchSingleUrl(
       // 使用 Turndown 将 HTML 转换为 Markdown
       // 原因：Markdown 格式更简洁，占用 token 更少，且 AI 能更好地理解
       const htmlContent = article.content.trim();
+
+      if (globalAbortController?.signal.aborted) {
+        throw new Error('Aborted');
+      }
 
       console.log(`[ContentFetch] Converting HTML to Markdown...`);
 
@@ -114,7 +135,7 @@ async function fetchSingleUrl(
 
       const markdownContent = turndownService.turndown(contentDoc);
 
-      console.log(`[ContentFetch] ✓ Extracted: ${item.url}`);
+      console.log(`[ContentFetch] ✓ Extracted: ${finalUrl}`);
       console.log(`[ContentFetch]   - Title: ${article.title}`);
       console.log(`[ContentFetch]   - HTML length: ${htmlContent.length} chars`);
       console.log(`[ContentFetch]   - Markdown length: ${markdownContent.length} chars`);
@@ -124,18 +145,19 @@ async function fetchSingleUrl(
       console.log(`Parse Cost: ${end2 - end1} ms`);
       return {
         title: article.title || item.title,
-        url: item.url,
+        url: finalUrl,
         content: markdownContent || NO_CONTENT,
         excerpt: article.excerpt || NO_CONTENT,
       };
     } catch (error: any) {
       clearTimeout(timeoutId);
+      globalAbortController?.signal.removeEventListener('abort', globalAbortListener);
       throw error;
     }
   } catch (error: any) {
     // 处理超时或网络错误
     if (error.name === 'AbortError') {
-      console.log(`[ContentFetch] ✗ Timeout: ${item.url}`);
+      console.log(`[ContentFetch] ✗ Cancelled or timeout: ${item.url}`);
     } else {
       console.log(`[ContentFetch] ✗ Error: ${item.url}`, error.message);
     }
@@ -183,9 +205,11 @@ export class ContentFetchService {
         console.log(`  ${i + 1}. ${item.url}`);
       });
 
+      const globalAbortController = new AbortController();
+
       // 启动所有fetch任务
       const fetchPromises = extendedItems.map((item, index) =>
-        fetchSingleUrl(item, timeout).then(content => ({ content, index }))
+        fetchSingleUrl(item, timeout, globalAbortController).then(content => ({ content, index }))
       );
 
       // 动态收集完成的结果
@@ -221,14 +245,17 @@ export class ContentFetchService {
             if (top3Count === 3 && totalCompleted >= 3) {
               // 最优：前3名都完成了，至少有3个结果
               console.log(`[ContentFetch] ⚡ Early exit: All top3 completed with ${totalCompleted} results`);
+              globalAbortController.abort();
               break;
             } else if (top3Count === 2 && totalCompleted >= 4) {
               // 良好：前3名完成了2个，且总共有4个结果
               console.log(`[ContentFetch] ⚡ Early exit: 2/3 top3 completed with ${totalCompleted} results`);
+              globalAbortController.abort();
               break;
             } else if (totalCompleted >= 6) {
               // 可接受：已完成6个，取前5个
               console.log(`[ContentFetch] ⚡ Early exit: 6 URLs completed, using top 5`);
+              globalAbortController.abort();
               break;
             }
           }

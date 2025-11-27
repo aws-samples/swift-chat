@@ -28,6 +28,8 @@ export interface EventData {
   url?: string;
   script?: string;
   data?: string;
+  error?: string;
+  code?: number;
 }
 
 export type Model = {

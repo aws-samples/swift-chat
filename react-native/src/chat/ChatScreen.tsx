@@ -116,7 +116,6 @@ function ChatScreen(): React.JSX.Element {
   const [systemPrompt, setSystemPrompt] = useState<SystemPrompt | null>(
     isNovaSonic ? getCurrentVoiceSystemPrompt : getCurrentSystemPrompt
   );
-  const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(true);
   const [screenDimensions, setScreenDimensions] = useState(
     Dimensions.get('window')
   );
@@ -221,7 +220,6 @@ function ChatScreen(): React.JSX.Element {
 
       setMessages([]);
       bedrockMessages.current = [];
-      setShowSystemPrompt(true);
       showKeyboard();
     }, [])
   );
@@ -243,8 +241,6 @@ function ChatScreen(): React.JSX.Element {
           }
           usage={usage}
           onDoubleTap={scrollToTop}
-          onShowSystemPrompt={() => setShowSystemPrompt(true)}
-          isShowSystemPrompt={showSystemPrompt}
         />
       ),
       // eslint-disable-next-line react/no-unstable-nested-components
@@ -271,7 +267,7 @@ function ChatScreen(): React.JSX.Element {
       ),
     };
     navigation.setOptions(headerOptions);
-  }, [usage, navigation, mode, systemPrompt, showSystemPrompt, isDark]);
+  }, [usage, navigation, mode, systemPrompt, isDark]);
 
   // sessionId changes (start new chat or click another session)
   useEffect(() => {
@@ -289,9 +285,6 @@ function ChatScreen(): React.JSX.Element {
           }
         }
         saveCurrentMessages();
-      }
-      if (modeRef.current === ChatMode.Image) {
-        setShowSystemPrompt(true);
       }
       if (modeRef.current !== mode) {
         // when change chat mode, clear system prompt and files
@@ -577,7 +570,6 @@ function ChatScreen(): React.JSX.Element {
               userMessage,
               bedrockMessages.current,
               (phase: string) => {
-                // Update search phase in real-time
                 setSearchPhase(phase);
               }
             );
@@ -702,7 +694,6 @@ function ChatScreen(): React.JSX.Element {
   const onSend = useCallback(async (message: SwiftChatMessage[] = []) => {
     // Reset user scroll state when sending a new message
     setUserScrolled(false);
-    setShowSystemPrompt(modeRef.current === ChatMode.Image);
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
       showInfo('please wait for all videos to be ready');
@@ -925,7 +916,6 @@ function ChatScreen(): React.JSX.Element {
               endVoiceConversationRef.current?.();
             }}
             chatMode={modeRef.current}
-            isShowSystemPrompt={showSystemPrompt}
             hasInputText={hasInputText}
             chatStatus={chatStatus}
             systemPrompt={systemPrompt}

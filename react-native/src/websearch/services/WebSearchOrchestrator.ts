@@ -5,10 +5,12 @@
 
 import { SystemPrompt, Citation } from '../../types/Chat';
 import { BedrockMessage } from '../../chat/util/BedrockMessageConvertor';
+import { SearchEngine, SearchEngineOption } from '../types';
 import { intentAnalysisService } from './IntentAnalysisService';
 import { webViewSearchService } from './WebViewSearchService';
 import { contentFetchService } from './ContentFetchService';
 import { promptBuilderService } from './PromptBuilderService';
+import { getSearchProvider } from '../../storage/StorageUtils';
 
 /**
  * Web search phase enum
@@ -37,15 +39,27 @@ export class WebSearchOrchestrator {
    * @param userMessage User message
    * @param bedrockMessages Conversation history
    * @param onPhaseChange Phase change callback
+   * @param searchEngine Optional search engine to use
    * @returns Web search result with system prompt and citations, or null if search is not needed
    */
   async execute(
     userMessage: string,
     bedrockMessages: BedrockMessage[],
-    onPhaseChange?: (phase: string) => void
+    onPhaseChange?: (phase: string) => void,
+    searchEngine?: SearchEngine
   ): Promise<WebSearchResult | null> {
     try {
+      const providerOption = searchEngine || (getSearchProvider() as SearchEngineOption);
+
+      if (providerOption === 'disabled') {
+        console.log('🔍 Web search is disabled by user');
+        return null;
+      }
+
+      const engine = providerOption as SearchEngine;
+
       console.log('\n🔍 ========== WEB SEARCH START ==========');
+      console.log(`Using search engine: ${engine}`);
       const start = performance.now();
 
       // Quick check: if query is short (<=30 chars), skip LLM intent analysis
@@ -87,23 +101,16 @@ export class WebSearchOrchestrator {
       // Phase 2: Execute web search
       onPhaseChange?.(WebSearchPhase.SEARCHING);
       const keyword = intentResult.keywords[0];
-      console.log(`\n🌐 Phase 2: Searching for "${keyword}"...`);
+      console.log(`\n🌐 Phase 2: Searching for "${keyword}" using ${engine}...`);
 
-      const searchResults = await webViewSearchService.search(
+      let searchResults = await webViewSearchService.search(
         keyword,
-        'google',
-        8  // 获取8个结果，智能Early Exit会选择最快的3-5个
+        engine,
+        8
       );
 
       const end2 = performance.now();
       console.log(`WebView search time: ${end2 - end1} ms`);
-      console.log('\n✅ ========== WEB SEARCH RESULTS ==========');
-      console.log('Total results:', searchResults.length);
-      searchResults.forEach((result, index) => {
-        console.log(`\n[${index + 1}] ${result.title}`);
-        console.log(`    URL: ${result.url}`);
-      });
-
       // Return if no search results
       if (searchResults.length === 0) {
         console.log('\n⚠️  No search results found');
@@ -164,7 +171,6 @@ export class WebSearchOrchestrator {
       }));
 
       console.log('webSearchSystemPrompt length:' + enhancedPrompt.length);
-      console.log('✓ Web search system prompt created');
       console.log(`✓ Citations extracted: ${citations.length}`);
       console.log('========== WEB SEARCH COMPLETE ==========\n');
 

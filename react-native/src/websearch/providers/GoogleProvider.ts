@@ -47,7 +47,7 @@ export class GoogleProvider {
 
           // 只有在明确检测到CAPTCHA标识，且没有实际内容时，才判定为CAPTCHA页面
           // 避免因HTML结构变化导致的误判
-          if ((hasCaptcha || hasRobotCheck) && !hasActualContent) {
+          if ((hasCaptcha || hasRobotCheck) || !hasActualContent) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'captcha_required',
               message: 'CAPTCHA verification required'
