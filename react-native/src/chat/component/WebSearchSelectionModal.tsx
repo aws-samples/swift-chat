@@ -17,11 +17,14 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
+import Dialog from 'react-native-dialog';
 import { useTheme, ColorScheme } from '../../theme';
 import { getSearchProviderIcon } from '../../utils/SearchIconUtils';
-import { getSearchProvider, saveSearchProvider } from '../../storage/StorageUtils';
+import { getSearchProvider, saveSearchProvider, getTavilyApiKey } from '../../storage/StorageUtils';
 import { SEARCH_PROVIDER_CONFIGS } from '../../websearch/constants/SearchProviderConstants';
 import { SearchEngineOption } from '../../websearch/types';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { RouteParamList } from '../../types/RouteTypes';
 
 interface WebSearchSelectionModalProps {
   visible: boolean;
@@ -43,9 +46,11 @@ export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = (
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
   const { sendEvent } = useAppContext();
+  const navigation = useNavigation<NavigationProp<RouteParamList>>();
   const [selectedProvider, setSelectedProvider] = useState<SearchEngineOption>(
     getSearchProvider() as SearchEngineOption
   );
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
 
   const translateX = useSharedValue(100);
   const translateY = useSharedValue(100);
@@ -81,6 +86,15 @@ export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = (
   };
 
   const handleProviderSelect = (provider: SearchEngineOption) => {
+    // Check if Tavily is selected and API key is not configured
+    if (provider === 'tavily') {
+      const tavilyApiKey = getTavilyApiKey();
+      if (!tavilyApiKey || tavilyApiKey.trim() === '') {
+        setShowApiKeyDialog(true);
+        return;
+      }
+    }
+
     setSelectedProvider(provider);
     saveSearchProvider(provider);
 
@@ -88,6 +102,17 @@ export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = (
 
     startCloseAnimation(() => {
       onClose();
+    });
+  };
+
+  const handleGoToSettings = () => {
+    setShowApiKeyDialog(false);
+    startCloseAnimation(() => {
+      onClose();
+      // Navigate to Settings screen after modal closes
+      setTimeout(() => {
+        navigation.navigate('Settings', {});
+      }, 300);
     });
   };
 
@@ -179,6 +204,20 @@ export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = (
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+      <Dialog.Container visible={showApiKeyDialog}>
+        <Dialog.Title>Tavily API Key Required</Dialog.Title>
+        <Dialog.Description>
+          Please configure your Tavily API key in Settings before using Tavily search.
+        </Dialog.Description>
+        <Dialog.Button
+          label="Cancel"
+          onPress={() => setShowApiKeyDialog(false)}
+        />
+        <Dialog.Button
+          label="Go to Settings"
+          onPress={handleGoToSettings}
+        />
+      </Dialog.Container>
     </Modal>
   );
 };

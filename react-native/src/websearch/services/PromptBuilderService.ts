@@ -17,12 +17,6 @@ export class PromptBuilderService {
     userQuestion: string,
     contents: WebContent[]
   ): string {
-    console.log('\n========================================');
-    console.log('[PromptBuilder] Building enhanced prompt');
-    console.log(`[PromptBuilder] Question: ${userQuestion}`);
-    console.log(`[PromptBuilder] References: ${contents.length}`);
-    console.log('========================================\n');
-
     const currentTime = new Date();
     const year = currentTime.getFullYear();
     const month = String(currentTime.getMonth() + 1).padStart(2, '0');
@@ -47,7 +41,7 @@ export class PromptBuilderService {
 ## Current Time:
 ${formattedTime}
 
-Please use this as the reference time when answering time-sensitive questions (e.g., "today", "this week", "recently", "latest"). The search results were fetched at this time, so they contain the most up-to-date information available.
+Please use this as the reference time when answering time-sensitive questions (e.g., "today", "this week", "recently", "latest"). The search results were fetched at this time, so they contain the most up-to-date information available. When answering, prioritize reference materials with timestamps or dates closest to the current time.
 
 ## Citation Rules:
 - Please cite the context at the end of sentences when appropriate.
@@ -64,9 +58,6 @@ ${userQuestion}
 ${referencesText}
 
 Please respond in the same language as the user's question.`;
-
-    console.log('[PromptBuilder] ✓ Prompt built successfully');
-    console.log(`[PromptBuilder] Total prompt length: ${prompt.length} chars\n`);
 
     return prompt;
   }

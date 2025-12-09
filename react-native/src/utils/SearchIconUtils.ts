@@ -17,10 +17,12 @@ export const getSearchProviderIcon = (
       return isDark
         ? require('../assets/baidu_dark.png')
         : require('../assets/baidu.png');
+    case 'tavily':
+      return isDark
+        ? require('../assets/tavily_dark.png')
+        : require('../assets/tavily.png');
     case 'disabled':
     default:
-      return isDark
-        ? require('../assets/web_search_dark.png')
-        : require('../assets/web_search.png');
+      return require('../assets/web_search_grey.png');
   }
 };

@@ -54,6 +54,8 @@ import {
   saveBedrockApiKey,
   generateOpenAICompatModels,
   getOpenAICompatConfigs,
+  getTavilyApiKey,
+  saveTavilyApiKey,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -132,6 +134,7 @@ function SettingsScreen(): React.JSX.Element {
   const [bedrockConfigMode, setBedrockConfigMode] =
     useState(getBedrockConfigMode);
   const [bedrockApiKey, setBedrockApiKey] = useState(getBedrockApiKey);
+  const [tavilyApiKey, setTavilyApiKey] = useState(getTavilyApiKey);
   const { sendEvent } = useAppContext();
   const sendEventRef = useRef(sendEvent);
   const openAICompatConfigsRef = useRef(openAICompatConfigs);
@@ -669,6 +672,19 @@ function SettingsScreen(): React.JSX.Element {
             }
           }}
           placeholder="Select image size"
+        />
+        
+        <Text style={[styles.label, styles.middleLabel]}>Web Search</Text>
+
+        <CustomTextInput
+          label="Tavily API Key"
+          value={tavilyApiKey}
+          onChangeText={text => {
+            setTavilyApiKey(text);
+            saveTavilyApiKey(text);
+          }}
+          placeholder="Enter Tavily API Key"
+          secureTextEntry={true}
         />
         <TouchableOpacity
           activeOpacity={1}

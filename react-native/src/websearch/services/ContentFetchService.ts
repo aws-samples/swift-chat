@@ -66,6 +66,18 @@ async function fetchSingleUrl(
         `[ContentFetch] ✓ Fetched: ${finalUrl} (${html.length} chars)`
       );
 
+      // Detect CAPTCHA pages (Baidu, Google, etc.)
+      const isCaptchaPage =
+        finalUrl.includes('baidu.com/static/captcha');
+      if (isCaptchaPage) {
+        console.log(`[ContentFetch] ⚠️  CAPTCHA page detected, skipping: ${finalUrl}`);
+        return {
+          title: item.title,
+          url: finalUrl,
+          content: NO_CONTENT,
+        };
+      }
+
       const MAX_HTML_SIZE = 2 * 1024 * 1024;
       if (html.length > MAX_HTML_SIZE) {
         console.log(`[ContentFetch] ⚠️  HTML too large (${(html.length / 1024).toFixed(0)}KB), skipping to avoid slow parsing`);

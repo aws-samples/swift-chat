@@ -11,6 +11,7 @@ import { webViewSearchService } from './WebViewSearchService';
 import { contentFetchService } from './ContentFetchService';
 import { promptBuilderService } from './PromptBuilderService';
 import { getSearchProvider } from '../../storage/StorageUtils';
+import { tavilyProvider } from '../providers/TavilyProvider';
 
 /**
  * Web search phase enum
@@ -62,29 +63,18 @@ export class WebSearchOrchestrator {
       console.log(`Using search engine: ${engine}`);
       const start = performance.now();
 
-      const trimmed = userMessage.trim();
-      const length = trimmed.replace(/\s+/g, '').length;
-
       let intentResult;
       let end1 = start;
-      if (bedrockMessages.length < 2 && length <= 30) {
-        console.log(`⚡ Short query (${length} chars), skipping intent analysis`);
-        intentResult = {
-          needsSearch: true,
-          keywords: [trimmed]
-        };
-      } else {
-        onPhaseChange?.(WebSearchPhase.ANALYZING);
-        console.log('📝 Phase 1: Analyzing search intent...');
+      onPhaseChange?.(WebSearchPhase.ANALYZING);
+      console.log('📝 Phase 1: Analyzing search intent...');
 
-        intentResult = await intentAnalysisService.analyze(
-          userMessage,
-          bedrockMessages
-        );
+      intentResult = await intentAnalysisService.analyze(
+        userMessage,
+        bedrockMessages
+      );
 
-        end1 = performance.now();
-        console.log(`AI intent analysis time: ${end1 - start} ms`);
-      }
+      end1 = performance.now();
+      console.log(`AI intent analysis time: ${end1 - start} ms`);
 
       if (!intentResult.needsSearch || intentResult.keywords.length === 0) {
         console.log('ℹ️  No search needed for this query');
@@ -99,45 +89,56 @@ export class WebSearchOrchestrator {
       const keyword = intentResult.keywords[0];
       console.log(`\n🌐 Phase 2: Searching for "${keyword}" using ${engine}...`);
 
-      let searchResults = await webViewSearchService.search(
-        keyword,
-        engine,
-        8
-      );
+      let contents;
+      let end3 = end1;
 
-      const end2 = performance.now();
-      console.log(`WebView search time: ${end2 - end1} ms`);
-      if (searchResults.length === 0) {
-        console.log('\n⚠️  No search results found');
-        console.log('========== WEB SEARCH END ==========\n');
-        return null;
+      // Tavily returns full content directly, skip fetch phase!
+      if (engine === 'tavily') {
+        contents = await tavilyProvider.search(keyword, 5);
+        const end2 = performance.now();
+        console.log(`Tavily API search time: ${end2 - end1} ms`);
+        end3 = end2;
+      } else {
+        // Traditional search engines: get URLs then fetch content
+        const searchResults = await webViewSearchService.search(
+          keyword,
+          engine,
+          8
+        );
+
+        const end2 = performance.now();
+        console.log(`WebView search time: ${end2 - end1} ms`);
+
+        if (searchResults.length === 0) {
+          console.log('\n⚠️  No search results found');
+          console.log('========== WEB SEARCH END ==========\n');
+          return null;
+        }
+
+        // Phase 3: Fetch and parse content
+        onPhaseChange?.(WebSearchPhase.FETCHING);
+        console.log('\n📥 Phase 3: Fetching and parsing URL contents...');
+
+        contents = await contentFetchService.fetchContents(
+          searchResults,
+          8000,
+          10000
+        );
+
+        end3 = performance.now();
+        console.log(`Concurrent fetch time: ${end3 - end2} ms`);
+        console.log('\n✅ ========== FETCHED CONTENTS ==========');
+        console.log('Successfully fetched:', contents.length);
       }
 
-      // Phase 3: Fetch and parse content
-      onPhaseChange?.(WebSearchPhase.FETCHING);
-      console.log('\n📥 Phase 3: Fetching and parsing URL contents...');
-
-      const contents = await contentFetchService.fetchContents(
-        searchResults,
-        8000,
-        10000
-      );
-
-      const end3 = performance.now();
-      console.log(`Concurrent fetch time: ${end3 - end2} ms`);
-      console.log('\n✅ ========== FETCHED CONTENTS ==========');
-      console.log('Successfully fetched:', contents.length);
-
       if (contents.length === 0) {
-        console.log('\n⚠️  No valid contents fetched');
+        console.log('\n⚠️  No valid contents');
         console.log('========== WEB SEARCH END ==========\n');
         return null;
       }
 
       // Phase 4: Build enhanced prompt
       onPhaseChange?.(WebSearchPhase.BUILDING);
-      console.log('\n📝 Phase 4: Building enhanced prompt with references...');
-
       const enhancedPrompt = promptBuilderService.buildPromptWithReferences(
         userMessage,
         contents

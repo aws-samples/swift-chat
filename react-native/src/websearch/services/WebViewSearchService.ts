@@ -22,6 +22,7 @@ export class WebViewSearchService {
   private messageCallback: ((message: WebViewMessage) => void) | null = null;
   private currentEngine: SearchEngine = 'google';
   private currentTimeoutId: NodeJS.Timeout | null = null;
+  private currentReject: ((error: Error) => void) | null = null;
   private sendEvent: SendEventFunc | null = null;
   private eventListeners: Map<string, (params?: { data?: string; error?: string; code?: number }) => void> = new Map();
 
@@ -55,6 +56,25 @@ export class WebViewSearchService {
 
       if (message.type === 'captcha_required') {
         console.log('[WebViewSearch] CAPTCHA detected, showing WebView to user');
+
+        // Extend timeout to 120 seconds for CAPTCHA verification
+        if (this.currentTimeoutId) {
+          clearTimeout(this.currentTimeoutId);
+          console.log('[WebViewSearch] Extending timeout to 120 seconds for CAPTCHA');
+          this.currentTimeoutId = setTimeout(() => {
+            this.messageCallback = null;
+            this.currentTimeoutId = null;
+            this.eventListeners.clear();
+            if (this.sendEvent) {
+              this.sendEvent('webview:hide');
+            }
+            if (this.currentReject) {
+              this.currentReject(new Error('CAPTCHA verification timeout after 120 seconds'));
+              this.currentReject = null;
+            }
+          }, 120000);
+        }
+
         if (this.sendEvent) {
           this.sendEvent('webview:showCaptcha');
         }
@@ -98,15 +118,20 @@ export class WebViewSearchService {
     this.currentEngine = engine;
 
     return new Promise((resolve, reject) => {
+      // Save reject for CAPTCHA timeout extension
+      this.currentReject = reject;
+
+      // Initial timeout: 15 seconds for normal search
       this.currentTimeoutId = setTimeout(() => {
         this.messageCallback = null;
         this.currentTimeoutId = null;
+        this.currentReject = null;
         this.eventListeners.clear();
         if (this.sendEvent) {
           this.sendEvent('webview:hide');
         }
-        reject(new Error('Search timeout after 120 seconds'));
-      }, 120000);
+        reject(new Error('Search timeout after 15 seconds'));
+      }, 15000);
 
       this.addEventListener('webview:captchaClosed', () => {
         console.log('[WebViewSearch] User closed CAPTCHA window, cancelling search');
@@ -117,6 +142,7 @@ export class WebViewSearchService {
         }
 
         this.messageCallback = null;
+        this.currentReject = null;
         this.eventListeners.clear();
 
         if (this.sendEvent) {
@@ -136,6 +162,7 @@ export class WebViewSearchService {
         }
 
         this.messageCallback = null;
+        this.currentReject = null;
         this.eventListeners.clear();
 
         if (this.sendEvent) {
@@ -151,6 +178,7 @@ export class WebViewSearchService {
           this.currentTimeoutId = null;
         }
         this.messageCallback = null;
+        this.currentReject = null;
         this.eventListeners.clear();
 
         if (message.type === 'search_error') {
@@ -223,6 +251,7 @@ export class WebViewSearchService {
                 this.currentTimeoutId = null;
               }
               this.messageCallback = null;
+              this.currentReject = null;
               reject(new Error('WebView script injection not available'));
             }
 
@@ -238,6 +267,7 @@ export class WebViewSearchService {
       if (this.sendEvent) {
         this.sendEvent('webview:loadUrl', { url: searchUrl });
       } else {
+        this.currentReject = null;
         this.eventListeners.clear();
         reject(new Error('WebView not initialized. Make sure App.tsx has loaded.'));
       }

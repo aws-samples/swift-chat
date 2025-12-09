@@ -1,8 +1,9 @@
 import React from 'react';
 import { Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { getSearchProvider } from '../../storage/StorageUtils';
+import { getSearchProvider, saveSearchProvider } from '../../storage/StorageUtils';
 import { getSearchProviderIcon } from '../../utils/SearchIconUtils';
 import { useTheme } from '../../theme';
+import { useAppContext } from '../../history/AppProvider';
 
 interface WebSearchIconButtonProps {
   onPress: () => void;
@@ -12,11 +13,23 @@ export const WebSearchIconButton: React.FC<WebSearchIconButtonProps> = ({
   onPress,
 }) => {
   const { isDark } = useTheme();
+  const { sendEvent } = useAppContext();
   const searchProvider = getSearchProvider();
   const searchIcon = getSearchProviderIcon(searchProvider as any, isDark);
 
+  const handlePress = () => {
+    // If current provider is not disabled (google/bing/baidu/tavily), toggle to disabled
+    if (searchProvider !== 'disabled') {
+      saveSearchProvider('disabled');
+      sendEvent('searchProviderChanged');
+    } else {
+      // If disabled, show modal to select a provider
+      onPress();
+    }
+  };
+
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity style={styles.container} onPress={handlePress}>
       <Image source={searchIcon} style={styles.icon} />
     </TouchableOpacity>
   );
@@ -24,15 +37,14 @@ export const WebSearchIconButton: React.FC<WebSearchIconButtonProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: 42,
+    width: 40,
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
   },
   icon: {
-    width: 32,
-    height: 32,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
     marginBottom: -6,
   },
 });

@@ -2,7 +2,7 @@
  * Web Search Types
  */
 
-export type SearchEngine = 'google' | 'bing' | 'baidu';
+export type SearchEngine = 'google' | 'bing' | 'baidu' | 'tavily';
 
 export type SearchEngineOption = 'disabled' | SearchEngine;
 

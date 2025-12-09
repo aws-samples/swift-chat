@@ -76,6 +76,7 @@ const bedrockConfigModeKey = keyPrefix + 'bedrockConfigModeKey';
 const bedrockApiKeyTag = keyPrefix + 'bedrockApiKeyTag';
 const lastVirtualTryOnImgFileTag = keyPrefix + 'lastVirtualTryOnImgFileTag';
 const searchProviderKey = keyPrefix + 'searchProviderKey';
+const tavilyApiKeyTag = keyPrefix + 'tavilyApiKeyTag';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -98,6 +99,7 @@ let currentBedrockConfigMode: string | undefined;
 let currentBedrockApiKey: string | undefined;
 let currentOpenAICompatibleConfig: OpenAICompatConfig[] | undefined;
 let currentVirtualTryOnImgFile: FileInfo | undefined;
+let currentTavilyApiKey: string | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -715,8 +717,22 @@ export function getSearchProvider(): string {
   if (currentSearchProvider) {
     return currentSearchProvider;
   }
-  currentSearchProvider = storage.getString(searchProviderKey) ?? 'bing';
+  currentSearchProvider = storage.getString(searchProviderKey) ?? 'disabled';
   return currentSearchProvider;
+}
+
+export function saveTavilyApiKey(apiKey: string) {
+  currentTavilyApiKey = apiKey;
+  encryptStorage.set(tavilyApiKeyTag, apiKey);
+}
+
+export function getTavilyApiKey(): string {
+  if (currentTavilyApiKey) {
+    return currentTavilyApiKey;
+  } else {
+    currentTavilyApiKey = encryptStorage.getString(tavilyApiKeyTag) ?? '';
+    return currentTavilyApiKey;
+  }
 }
 
 // OpenAI Compatible configurations functions

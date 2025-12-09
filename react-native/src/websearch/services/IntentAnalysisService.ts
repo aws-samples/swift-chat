@@ -9,19 +9,19 @@ import { invokeBedrockWithCallBack } from '../../api/bedrock-api';
 import { ChatMode } from '../../types/Chat';
 import { jsonrepair } from 'jsonrepair';
 
-const INTENT_ANALYSIS_PROMPT = `You are an AI question rephraser. Your role is to rephrase follow-up queries from a conversation into standalone queries that can be used to retrieve information through web search.
+const INTENT_ANALYSIS_PROMPT = `You are an AI question rephraser. Your role is to rephrase follow-up queries from a conversation into a standalone search query that can be used to retrieve information through web search.
 
 ## Guidelines:
 1. If the question is a simple writing task, greeting, or general conversation, set "need_search" to false
 2. If the user asks about specific URLs, include them in the "links" array
-3. Extract search keywords into the "question" array, and use the SAME LANGUAGE as the user's question
-4. For comparative questions, create multiple queries
+3. Extract ONE most comprehensive and appropriate search keyword into the "question" field, and use the SAME LANGUAGE as the user's question
+4. Combine all aspects of the question into a single, complete search query
 5. ONLY respond with valid JSON format, no other text or markdown code blocks
 
 ## Output Format:
 {
   "need_search": boolean,
-  "question": string[],
+  "question": string,
   "links": string[]
 }
 
@@ -31,7 +31,7 @@ Input: "Hello, how are you?"
 Output:
 {
   "need_search": false,
-  "question": [],
+  "question": "",
   "links": []
 }
 
@@ -39,7 +39,7 @@ Input: "Write a story about a cat"
 Output:
 {
   "need_search": false,
-  "question": [],
+  "question": "",
   "links": []
 }
 
@@ -47,7 +47,7 @@ Input: "What's the weather in Tokyo today?"
 Output:
 {
   "need_search": true,
-  "question": ["Tokyo weather today"],
+  "question": "Tokyo weather today",
   "links": []
 }
 
@@ -55,7 +55,7 @@ Input: "今天北京天气怎么样？"
 Output:
 {
   "need_search": true,
-  "question": ["北京天气"],
+  "question": "北京天气",
   "links": []
 }
 
@@ -63,7 +63,7 @@ Input: "Which company had higher revenue in 2022, Amazon or Google?"
 Output:
 {
   "need_search": true,
-  "question": ["Amazon revenue 2022", "Google revenue 2022"],
+  "question": "Amazon vs Google revenue comparison 2022",
   "links": []
 }
 
@@ -71,11 +71,11 @@ Input: "Summarize this doc: https://example.com/doc"
 Output:
 {
   "need_search": true,
-  "question": [],
+  "question": "",
   "links": ["https://example.com/doc"]
 }
 
-Now analyze this conversation and extract search queries if needed. Respond with ONLY valid JSON, no other text.`;
+Now analyze this conversation and extract a search query if needed. Respond with ONLY valid JSON, no other text.`;
 
 function extractInfoFromJSON(response: string): SearchIntentResult {
 
@@ -83,9 +83,13 @@ function extractInfoFromJSON(response: string): SearchIntentResult {
     const repairedJson = jsonrepair(response);
     const parsed = JSON.parse(repairedJson);
 
+    const keyword = typeof parsed.question === 'string' && parsed.question.trim()
+      ? parsed.question.trim()
+      : '';
+
     const result: SearchIntentResult = {
       needsSearch: parsed.need_search === true,
-      keywords: Array.isArray(parsed.question) ? parsed.question : [],
+      keywords: keyword ? [keyword] : [],
       links: Array.isArray(parsed.links) && parsed.links.length > 0 ? parsed.links : undefined,
     };
     return result;

@@ -1001,6 +1001,8 @@ function ChatScreen(): React.JSX.Element {
           ...{
             fontWeight: isMac ? '300' : 'normal',
             color: colors.text,
+            smartInsertDelete: false,
+            spellCheck: false,
             blurOnSubmit: isMac,
             onSubmitEditing: () => {
               if (

@@ -26,21 +26,6 @@ export class GoogleProvider {
     return `
       (function() {
         try {
-          const fullHTML = document.documentElement.outerHTML;
-          const hasCaptcha = fullHTML.includes('captcha') || fullHTML.includes('recaptcha');
-          const hasRobotCheck = fullHTML.toLowerCase().includes('unusual traffic') || fullHTML.toLowerCase().includes('automated');
-
-          const h3Count = document.querySelectorAll('h3').length;
-          const hasActualContent = h3Count >= 3;
-
-          if ((hasCaptcha || hasRobotCheck) || !hasActualContent) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'captcha_required',
-              message: 'CAPTCHA verification required'
-            }));
-            return;
-          }
-
           const results = [];
 
           const selectors = [
@@ -125,9 +110,29 @@ export class GoogleProvider {
             });
           }
 
+          // If we successfully extracted results, return them immediately
+          if (results.length > 0) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'search_results',
+              results: results
+            }));
+            return;
+          }
+
+          const h3Count = document.querySelectorAll('h3').length;
+          const hasActualContent = h3Count >= 3;
+          if (!hasActualContent) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'captcha_required',
+              message: 'CAPTCHA verification required'
+            }));
+            return;
+          }
+
+          // No results and no CAPTCHA, return empty results
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'search_results',
-            results: results
+            results: []
           }));
         } catch (error) {
           window.ReactNativeWebView.postMessage(JSON.stringify({
