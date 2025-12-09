@@ -41,13 +41,15 @@ export class WebSearchOrchestrator {
    * @param bedrockMessages Conversation history
    * @param onPhaseChange Phase change callback
    * @param searchEngine Optional search engine to use
+   * @param abortController Optional abort controller to cancel the search
    * @returns Web search result with system prompt and citations, or null if search is not needed
    */
   async execute(
     userMessage: string,
     bedrockMessages: BedrockMessage[],
     onPhaseChange?: (phase: string) => void,
-    searchEngine?: SearchEngine
+    searchEngine?: SearchEngine,
+    abortController?: AbortController
   ): Promise<WebSearchResult | null> {
     try {
       const providerOption = searchEngine || (getSearchProvider() as SearchEngineOption);
@@ -68,16 +70,28 @@ export class WebSearchOrchestrator {
       onPhaseChange?.(WebSearchPhase.ANALYZING);
       console.log('📝 Phase 1: Analyzing search intent...');
 
+      // Check if aborted
+      if (abortController?.signal.aborted) {
+        console.log('⚠️  Web search aborted during phase 1');
+        return null;
+      }
+
       intentResult = await intentAnalysisService.analyze(
         userMessage,
-        bedrockMessages
+        bedrockMessages,
+        abortController
       );
 
       end1 = performance.now();
       console.log(`AI intent analysis time: ${end1 - start} ms`);
 
       if (!intentResult.needsSearch || intentResult.keywords.length === 0) {
-        console.log('ℹ️  No search needed for this query');
+        // Check if this is due to abort
+        if (abortController?.signal.aborted) {
+          console.log('⚠️  Web search aborted by user');
+        } else {
+          console.log('ℹ️  No search needed for this query');
+        }
         console.log('========== WEB SEARCH END ==========\n');
         return null;
       }
@@ -89,12 +103,18 @@ export class WebSearchOrchestrator {
       const keyword = intentResult.keywords[0];
       console.log(`\n🌐 Phase 2: Searching for "${keyword}" using ${engine}...`);
 
+      // Check if aborted
+      if (abortController?.signal.aborted) {
+        console.log('⚠️  Web search aborted during phase 2');
+        return null;
+      }
+
       let contents;
       let end3 = end1;
 
       // Tavily returns full content directly, skip fetch phase!
       if (engine === 'tavily') {
-        contents = await tavilyProvider.search(keyword, 5);
+        contents = await tavilyProvider.search(keyword, 5, abortController);
         const end2 = performance.now();
         console.log(`Tavily API search time: ${end2 - end1} ms`);
         end3 = end2;
@@ -103,7 +123,8 @@ export class WebSearchOrchestrator {
         const searchResults = await webViewSearchService.search(
           keyword,
           engine,
-          8
+          8,
+          abortController
         );
 
         const end2 = performance.now();
@@ -115,6 +136,12 @@ export class WebSearchOrchestrator {
           return null;
         }
 
+        // Check if aborted
+        if (abortController?.signal.aborted) {
+          console.log('⚠️  Web search aborted during phase 3');
+          return null;
+        }
+
         // Phase 3: Fetch and parse content
         onPhaseChange?.(WebSearchPhase.FETCHING);
         console.log('\n📥 Phase 3: Fetching and parsing URL contents...');
@@ -122,7 +149,8 @@ export class WebSearchOrchestrator {
         contents = await contentFetchService.fetchContents(
           searchResults,
           8000,
-          10000
+          10000,
+          abortController
         );
 
         end3 = performance.now();
@@ -172,6 +200,13 @@ export class WebSearchOrchestrator {
         citations: citations,
       };
     } catch (error: any) {
+      // If aborted, log and return null gracefully
+      if (error instanceof Error && error.message === 'Search aborted by user') {
+        console.log('⚠️  Web search aborted by user');
+        console.log('========== WEB SEARCH END ==========\n');
+        return null;
+      }
+
       console.log('❌ Web search error:', error);
       console.log('⚠️  Falling back to normal chat flow');
       console.log('========== WEB SEARCH END ==========\n');

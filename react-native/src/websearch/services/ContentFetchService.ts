@@ -167,7 +167,8 @@ export class ContentFetchService {
   async fetchContents(
     items: SearchResultItem[],
     timeout: number = 8000,
-    maxCharsPerResult: number = 3000
+    maxCharsPerResult: number = 3000,
+    abortController?: AbortController
   ): Promise<WebContent[]> {
     console.log('\n========================================');
     console.log('[ContentFetch] Starting smart concurrent fetch');
@@ -179,6 +180,12 @@ export class ContentFetchService {
     const startTime = performance.now();
 
     try {
+      // Check if aborted before starting
+      if (abortController?.signal.aborted) {
+        console.log('[ContentFetch] Aborted before starting');
+        return [];
+      }
+
       const extendedItems = items.slice(0, 8);
       const top3Indices = new Set([0, 1, 2]);
 
@@ -188,6 +195,13 @@ export class ContentFetchService {
       });
 
       const globalAbortController = new AbortController();
+
+      // Listen to external abort signal
+      const abortListener = () => {
+        console.log('[ContentFetch] Aborted by user');
+        globalAbortController.abort();
+      };
+      abortController?.signal.addEventListener('abort', abortListener);
 
       const fetchPromises = extendedItems.map((item, index) =>
         fetchSingleUrl(item, timeout, globalAbortController).then(content => ({ content, index }))
@@ -255,6 +269,9 @@ export class ContentFetchService {
 
       const endTime = performance.now();
       const totalTime = (endTime - startTime).toFixed(0);
+
+      // Clean up abort listener
+      abortController?.signal.removeEventListener('abort', abortListener);
 
       console.log('\n========================================');
       console.log('[ContentFetch] Smart fetch complete');

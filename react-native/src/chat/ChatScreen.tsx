@@ -558,6 +558,10 @@ function ChatScreen(): React.JSX.Element {
 
       // Wrap in async function to support await
       (async () => {
+        // Create AbortController before web search so it can be used throughout
+        controllerRef.current = new AbortController();
+        isCanceled.current = false;
+
         // Get the last user message (the one after bot message)
         const userMessage = messages.length > 1 ? messages[1]?.text : null;
 
@@ -571,22 +575,30 @@ function ChatScreen(): React.JSX.Element {
               bedrockMessages.current,
               (phase: string) => {
                 setSearchPhase(phase);
-              }
+              },
+              undefined,
+              controllerRef.current
             );
             if (webSearchResult) {
               webSearchSystemPrompt = webSearchResult.systemPrompt;
               webSearchCitations = webSearchResult.citations;
             }
           } catch (error) {
+            // For errors, log and continue without web search
             console.log('❌ Web search error in ChatScreen:', error);
           }
         }
+
+        // Check if aborted after web search completes
+        if (isCanceled.current) {
+          console.log('⚠️  Operation aborted, stopping');
+          setChatStatus(ChatStatus.Init);
+          setSearchPhase('');
+          return;
+        }
+
         // Clear searchPhase before starting AI response
         setSearchPhase('');
-
-        // Continue to invoke bedrock API
-        controllerRef.current = new AbortController();
-        isCanceled.current = false;
         const startRequestTime = new Date().getTime();
         let latencyMs = 0;
         let metrics: Metrics | undefined;

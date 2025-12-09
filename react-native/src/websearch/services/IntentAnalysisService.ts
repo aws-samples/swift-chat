@@ -106,7 +106,8 @@ function extractInfoFromJSON(response: string): SearchIntentResult {
 export class IntentAnalysisService {
   async analyze(
     userMessage: string,
-    conversationHistory: BedrockMessage[]
+    conversationHistory: BedrockMessage[],
+    abortController?: AbortController
   ): Promise<SearchIntentResult> {
     console.log('\n========================================');
     console.log('[IntentAnalysis] Starting intent analysis');
@@ -131,7 +132,7 @@ export class IntentAnalysisService {
         },
       ];
 
-      const fullResponse = await this.invokeModelSync(messages);
+      const fullResponse = await this.invokeModelSync(messages, abortController);
 
       console.log('\n[IntentAnalysis] Full response received');
       console.log('[IntentAnalysis] Response length:', fullResponse.length);
@@ -149,21 +150,37 @@ export class IntentAnalysisService {
 
       return result;
     } catch (error) {
+      // If aborted, return needsSearch: false to stop the flow gracefully
+      if (error instanceof Error && error.message === 'Search aborted by user') {
+        console.log('[IntentAnalysis] ⚠️  Aborted by user');
+        return { needsSearch: false, keywords: [] };
+      }
       console.error('[IntentAnalysis] Error:', error);
       return { needsSearch: false, keywords: [] };
     }
   }
 
-  private async invokeModelSync(messages: BedrockMessage[]): Promise<string> {
+  private invokeModelSync(
+    messages: BedrockMessage[],
+    abortController?: AbortController
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       let fullResponse = '';
-      const controller = new AbortController();
+      const controller = abortController || new AbortController();
+
+      // Listen to abort signal
+      if (abortController) {
+        abortController.signal.addEventListener('abort', () => {
+          controller.abort();
+          reject(new Error('Search aborted by user'));
+        });
+      }
 
       invokeBedrockWithCallBack(
         messages,
         ChatMode.Text,
         null,
-        () => false,
+        () => abortController?.signal.aborted || false,
         controller,
         (text: string, complete: boolean, needStop: boolean) => {
           fullResponse = text;

@@ -30,9 +30,10 @@ export class TavilyProvider {
    * Perform Tavily search via API with raw content
    * @param query Search query
    * @param maxResults Maximum number of results (default: 5)
+   * @param abortController Optional abort controller to cancel the search
    * @returns Array of search results with full content (skips fetch phase)
    */
-  async search(query: string, maxResults: number = 5): Promise<WebContent[]> {
+  async search(query: string, maxResults: number = 5, abortController?: AbortController): Promise<WebContent[]> {
     const apiKey = getTavilyApiKey();
 
     if (!apiKey) {
@@ -46,6 +47,11 @@ export class TavilyProvider {
     console.log('========================================\n');
 
     try {
+      // Check if aborted before starting
+      if (abortController?.signal.aborted) {
+        throw new Error('Search aborted by user');
+      }
+
       const response = await fetch(`${this.apiHost}/search`, {
         method: 'POST',
         headers: {
@@ -53,6 +59,7 @@ export class TavilyProvider {
           'Authorization': `Bearer ${apiKey}`,
 
         },
+        signal: abortController?.signal,
         reactNative: { textStreaming: true },
         body: JSON.stringify({
           query,

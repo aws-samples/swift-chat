@@ -106,7 +106,8 @@ export class WebViewSearchService {
   async search(
     query: string,
     engine: SearchEngine = 'google',
-    maxResults: number = 5
+    maxResults: number = 5,
+    abortController?: AbortController
   ): Promise<SearchResultItem[]> {
     console.log('\n========================================');
     console.log('[WebViewSearch] Starting search');
@@ -118,6 +119,30 @@ export class WebViewSearchService {
     this.currentEngine = engine;
 
     return new Promise((resolve, reject) => {
+      // Check if already aborted
+      if (abortController?.signal.aborted) {
+        reject(new Error('Search aborted by user'));
+        return;
+      }
+
+      // Listen to abort signal
+      const abortListener = () => {
+        console.log('[WebViewSearch] Search aborted by user');
+        if (this.currentTimeoutId) {
+          clearTimeout(this.currentTimeoutId);
+          this.currentTimeoutId = null;
+        }
+        this.messageCallback = null;
+        this.currentReject = null;
+        this.eventListeners.clear();
+        if (this.sendEvent) {
+          this.sendEvent('webview:hide');
+        }
+        reject(new Error('Search aborted by user'));
+      };
+
+      abortController?.signal.addEventListener('abort', abortListener);
+
       // Save reject for CAPTCHA timeout extension
       this.currentReject = reject;
 
@@ -180,6 +205,7 @@ export class WebViewSearchService {
         this.messageCallback = null;
         this.currentReject = null;
         this.eventListeners.clear();
+        abortController?.signal.removeEventListener('abort', abortListener);
 
         if (message.type === 'search_error') {
           console.error('[WebViewSearch] Search error:', message.error);
