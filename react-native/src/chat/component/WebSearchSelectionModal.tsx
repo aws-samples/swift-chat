@@ -20,7 +20,11 @@ import Animated, {
 import Dialog from 'react-native-dialog';
 import { useTheme, ColorScheme } from '../../theme';
 import { getSearchProviderIcon } from '../../utils/SearchIconUtils';
-import { getSearchProvider, saveSearchProvider, getTavilyApiKey } from '../../storage/StorageUtils';
+import {
+  getSearchProvider,
+  saveSearchProvider,
+  getTavilyApiKey,
+} from '../../storage/StorageUtils';
 import { SEARCH_PROVIDER_CONFIGS } from '../../websearch/constants/SearchProviderConstants';
 import { SearchEngineOption } from '../../websearch/types';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
@@ -35,7 +39,9 @@ interface WebSearchSelectionModalProps {
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const MODAL_HEIGHT = 240;
 
-export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = ({
+export const WebSearchSelectionModal: React.FC<
+  WebSearchSelectionModalProps
+> = ({
   visible,
   onClose,
   iconPosition = {
@@ -130,7 +136,7 @@ export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = (
     item,
     index,
   }: {
-    item: typeof SEARCH_PROVIDER_CONFIGS[0];
+    item: (typeof SEARCH_PROVIDER_CONFIGS)[0];
     index: number;
   }) => {
     const isSelected = selectedProvider === item.id;
@@ -138,7 +144,7 @@ export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = (
 
     return (
       <TouchableOpacity
-        style={[styles.providerItem, isLastItem && { borderBottomWidth: 0 }]}
+        style={[styles.providerItem, isLastItem && styles.providerItemLastItem]}
         onPress={() => handleProviderSelect(item.id)}>
         <View style={styles.providerItemContent}>
           <Image
@@ -177,12 +183,10 @@ export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = (
             <Animated.View
               style={[
                 styles.modalContainer,
+                styles.modalContainerPositioned,
                 animatedStyle,
                 {
-                  position: 'absolute',
-                  right: 10,
                   top: Math.max(iconPosition.y - 10, 10),
-                  transformOrigin: 'right top',
                 },
               ]}>
               <View style={styles.header}>
@@ -207,16 +211,14 @@ export const WebSearchSelectionModal: React.FC<WebSearchSelectionModalProps> = (
       <Dialog.Container visible={showApiKeyDialog}>
         <Dialog.Title>Tavily API Key Required</Dialog.Title>
         <Dialog.Description>
-          Please configure your Tavily API key in Settings before using Tavily search.
+          Please configure your Tavily API key in Settings before using Tavily
+          search.
         </Dialog.Description>
         <Dialog.Button
           label="Cancel"
           onPress={() => setShowApiKeyDialog(false)}
         />
-        <Dialog.Button
-          label="Go to Settings"
-          onPress={handleGoToSettings}
-        />
+        <Dialog.Button label="Go to Settings" onPress={handleGoToSettings} />
       </Dialog.Container>
     </Modal>
   );
@@ -239,6 +241,11 @@ const createStyles = (colors: ColorScheme) =>
       shadowOpacity: 0.25,
       shadowRadius: 3.84,
       elevation: 5,
+    },
+    modalContainerPositioned: {
+      position: 'absolute',
+      right: 10,
+      transformOrigin: 'right top',
     },
     header: {
       flexDirection: 'row',
@@ -272,6 +279,9 @@ const createStyles = (colors: ColorScheme) =>
       paddingVertical: 12,
       borderBottomWidth: 0.5,
       borderBottomColor: colors.borderLight,
+    },
+    providerItemLastItem: {
+      borderBottomWidth: 0,
     },
     providerItemContent: {
       flexDirection: 'row',

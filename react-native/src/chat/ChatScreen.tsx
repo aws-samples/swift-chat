@@ -565,8 +565,8 @@ function ChatScreen(): React.JSX.Element {
         // Get the last user message (the one after bot message)
         const userMessage = messages.length > 1 ? messages[1]?.text : null;
 
-        let webSearchSystemPrompt = undefined;
-        let webSearchCitations: Citation[] | undefined = undefined;
+        let webSearchSystemPrompt;
+        let webSearchCitations: Citation[] | undefined;
         // Execute web search only in text mode with user message
         if (userMessage && modeRef.current === ChatMode.Text) {
           try {

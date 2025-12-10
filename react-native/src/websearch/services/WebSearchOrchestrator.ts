@@ -52,7 +52,8 @@ export class WebSearchOrchestrator {
     abortController?: AbortController
   ): Promise<WebSearchResult | null> {
     try {
-      const providerOption = searchEngine || (getSearchProvider() as SearchEngineOption);
+      const providerOption =
+        searchEngine || (getSearchProvider() as SearchEngineOption);
 
       if (providerOption === 'disabled') {
         console.log('🔍 Web search is disabled by user');
@@ -65,8 +66,6 @@ export class WebSearchOrchestrator {
       console.log(`Using search engine: ${engine}`);
       const start = performance.now();
 
-      let intentResult;
-      let end1 = start;
       onPhaseChange?.(WebSearchPhase.ANALYZING);
       console.log('📝 Phase 1: Analyzing search intent...');
 
@@ -76,13 +75,13 @@ export class WebSearchOrchestrator {
         return null;
       }
 
-      intentResult = await intentAnalysisService.analyze(
+      const intentResult = await intentAnalysisService.analyze(
         userMessage,
         bedrockMessages,
         abortController
       );
 
-      end1 = performance.now();
+      const end1 = performance.now();
       console.log(`AI intent analysis time: ${end1 - start} ms`);
 
       if (!intentResult.needsSearch || intentResult.keywords.length === 0) {
@@ -101,7 +100,9 @@ export class WebSearchOrchestrator {
       // Phase 2: Execute web search
       onPhaseChange?.(WebSearchPhase.SEARCHING);
       const keyword = intentResult.keywords[0];
-      console.log(`\n🌐 Phase 2: Searching for "${keyword}" using ${engine}...`);
+      console.log(
+        `\n🌐 Phase 2: Searching for "${keyword}" using ${engine}...`
+      );
 
       // Check if aborted
       if (abortController?.signal.aborted) {
@@ -199,9 +200,12 @@ export class WebSearchOrchestrator {
         systemPrompt: webSearchSystemPrompt,
         citations: citations,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If aborted, log and return null gracefully
-      if (error instanceof Error && error.message === 'Search aborted by user') {
+      if (
+        error instanceof Error &&
+        error.message === 'Search aborted by user'
+      ) {
         console.log('⚠️  Web search aborted by user');
         console.log('========== WEB SEARCH END ==========\n');
         return null;

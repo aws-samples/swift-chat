@@ -38,7 +38,7 @@ const CitationModal: React.FC<CitationModalProps> = ({
   const citationsWithFavicons = useMemo(() => {
     return citations.map(citation => ({
       ...citation,
-      faviconUrl: getFaviconUrl(citation.url)
+      faviconUrl: getFaviconUrl(citation.url),
     }));
   }, [citations]);
 

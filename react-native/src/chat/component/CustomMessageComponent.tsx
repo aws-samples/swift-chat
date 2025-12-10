@@ -556,9 +556,11 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
             {currentMessage.text}
           </TextInput>
         )}
-        {!isUser.current && (chatStatus !== ChatStatus.Running) && currentMessage.citations && (
-          <CitationList citations={currentMessage.citations} />
-        )}
+        {!isUser.current &&
+          chatStatus !== ChatStatus.Running &&
+          currentMessage.citations && (
+            <CitationList citations={currentMessage.citations} />
+          )}
         {((isLastAIMessage && chatStatus !== ChatStatus.Running) ||
           forceShowButtons) &&
           messageActionButtons}

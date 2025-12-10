@@ -8,7 +8,16 @@ import { googleProvider } from '../providers/GoogleProvider';
 import { baiduProvider } from '../providers/BaiduProvider';
 import { bingProvider } from '../providers/BingProvider';
 
-type SendEventFunc = (event: string, params?: { url?: string; script?: string; data?: string; error?: string; code?: number }) => void;
+type SendEventFunc = (
+  event: string,
+  params?: {
+    url?: string;
+    script?: string;
+    data?: string;
+    error?: string;
+    code?: number;
+  }
+) => void;
 
 interface WebViewMessage {
   type: string;
@@ -24,17 +33,30 @@ export class WebViewSearchService {
   private currentTimeoutId: NodeJS.Timeout | null = null;
   private currentReject: ((error: Error) => void) | null = null;
   private sendEvent: SendEventFunc | null = null;
-  private eventListeners: Map<string, (params?: { data?: string; error?: string; code?: number }) => void> = new Map();
+  private eventListeners: Map<
+    string,
+    (params?: { data?: string; error?: string; code?: number }) => void
+  > = new Map();
 
   setSendEvent(sendEvent: SendEventFunc) {
     this.sendEvent = sendEvent;
   }
 
-  addEventListener(eventName: string, callback: (params?: { data?: string; error?: string; code?: number }) => void) {
+  addEventListener(
+    eventName: string,
+    callback: (params?: {
+      data?: string;
+      error?: string;
+      code?: number;
+    }) => void
+  ) {
     this.eventListeners.set(eventName, callback);
   }
 
-  handleEvent(eventName: string, params?: { data?: string; error?: string; code?: number }) {
+  handleEvent(
+    eventName: string,
+    params?: { data?: string; error?: string; code?: number }
+  ) {
     const callback = this.eventListeners.get(eventName);
     if (callback) {
       callback(params);
@@ -55,12 +77,16 @@ export class WebViewSearchService {
       }
 
       if (message.type === 'captcha_required') {
-        console.log('[WebViewSearch] CAPTCHA detected, showing WebView to user');
+        console.log(
+          '[WebViewSearch] CAPTCHA detected, showing WebView to user'
+        );
 
         // Extend timeout to 120 seconds for CAPTCHA verification
         if (this.currentTimeoutId) {
           clearTimeout(this.currentTimeoutId);
-          console.log('[WebViewSearch] Extending timeout to 120 seconds for CAPTCHA');
+          console.log(
+            '[WebViewSearch] Extending timeout to 120 seconds for CAPTCHA'
+          );
           this.currentTimeoutId = setTimeout(() => {
             this.messageCallback = null;
             this.currentTimeoutId = null;
@@ -69,7 +95,9 @@ export class WebViewSearchService {
               this.sendEvent('webview:hide');
             }
             if (this.currentReject) {
-              this.currentReject(new Error('CAPTCHA verification timeout after 120 seconds'));
+              this.currentReject(
+                new Error('CAPTCHA verification timeout after 120 seconds')
+              );
               this.currentReject = null;
             }
           }, 120000);
@@ -80,11 +108,15 @@ export class WebViewSearchService {
         }
 
         this.addEventListener('webview:loadEndTriggered', () => {
-          console.log('[WebViewSearch] Page reloaded after CAPTCHA, waiting 500ms then retrying extraction');
+          console.log(
+            '[WebViewSearch] Page reloaded after CAPTCHA, waiting 500ms then retrying extraction'
+          );
           setTimeout(() => {
             const provider = this.getProvider(this.currentEngine);
             const script = provider.getExtractionScript();
-            console.log('[WebViewSearch] Re-injecting extraction script after CAPTCHA');
+            console.log(
+              '[WebViewSearch] Re-injecting extraction script after CAPTCHA'
+            );
             if (this.sendEvent) {
               this.sendEvent('webview:injectScript', { script });
             }
@@ -159,7 +191,9 @@ export class WebViewSearchService {
       }, 15000);
 
       this.addEventListener('webview:captchaClosed', () => {
-        console.log('[WebViewSearch] User closed CAPTCHA window, cancelling search');
+        console.log(
+          '[WebViewSearch] User closed CAPTCHA window, cancelling search'
+        );
 
         if (this.currentTimeoutId) {
           clearTimeout(this.currentTimeoutId);
@@ -177,10 +211,15 @@ export class WebViewSearchService {
         reject(new Error('User cancelled CAPTCHA verification'));
       });
 
-      this.addEventListener('webview:error', (params) => {
+      this.addEventListener('webview:error', params => {
         const errorMsg = params?.error || 'WebView load failed';
         const errorCode = params?.code || 'unknown';
-        console.log('[WebViewSearch] WebView error, terminating search:', errorMsg, 'Code:', errorCode);
+        console.log(
+          '[WebViewSearch] WebView error, terminating search:',
+          errorMsg,
+          'Code:',
+          errorCode
+        );
         if (this.currentTimeoutId) {
           clearTimeout(this.currentTimeoutId);
           this.currentTimeoutId = null;
@@ -220,7 +259,9 @@ export class WebViewSearchService {
           const provider = this.getProvider(engine);
           const results = provider.parseResults(message);
 
-          console.log('[WebViewSearch] Got search results, hiding CAPTCHA window if visible');
+          console.log(
+            '[WebViewSearch] Got search results, hiding CAPTCHA window if visible'
+          );
           if (this.sendEvent) {
             this.sendEvent('webview:hide');
           }
@@ -248,23 +289,35 @@ export class WebViewSearchService {
 
       this.addEventListener('webview:loadEndTriggered', () => {
         const pageLoadTime = performance.now();
-        console.log(`[WebViewSearch] ⏱️  Page loaded (${(pageLoadTime - perfStart).toFixed(0)}ms), using progressive injection`);
+        console.log(
+          `[WebViewSearch] ⏱️  Page loaded (${(
+            pageLoadTime - perfStart
+          ).toFixed(0)}ms), using progressive injection`
+        );
 
         const delays = [100, 200, 400, 800];
         let attemptCount = 0;
         let injected = false;
 
         const tryInject = () => {
-          if (injected) return;
+          if (injected) {
+            return;
+          }
 
           attemptCount++;
           const currentDelay = delays.shift() || 1500;
 
           setTimeout(() => {
-            if (injected) return;
+            if (injected) {
+              return;
+            }
 
             const beforeInjectTime = performance.now();
-            console.log(`[WebViewSearch] ⏱️  Attempt ${attemptCount} (${(beforeInjectTime - pageLoadTime).toFixed(0)}ms), injecting extraction script`);
+            console.log(
+              `[WebViewSearch] ⏱️  Attempt ${attemptCount} (${(
+                beforeInjectTime - pageLoadTime
+              ).toFixed(0)}ms), injecting extraction script`
+            );
 
             const script = provider.getExtractionScript();
 
@@ -295,7 +348,9 @@ export class WebViewSearchService {
       } else {
         this.currentReject = null;
         this.eventListeners.clear();
-        reject(new Error('WebView not initialized. Make sure App.tsx has loaded.'));
+        reject(
+          new Error('WebView not initialized. Make sure App.tsx has loaded.')
+        );
       }
     });
   }

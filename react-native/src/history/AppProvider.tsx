@@ -1,4 +1,10 @@
-import React, { createContext, ReactNode, useCallback, useContext, useState } from 'react';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useState,
+} from 'react';
 import { EventData } from '../types/Chat.ts';
 
 export type DrawerType = 'permanent' | 'slide';

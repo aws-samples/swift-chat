@@ -78,19 +78,22 @@ Output:
 Now analyze this conversation and extract a search query if needed. Respond with ONLY valid JSON, no other text.`;
 
 function extractInfoFromJSON(response: string): SearchIntentResult {
-
   try {
     const repairedJson = jsonrepair(response);
     const parsed = JSON.parse(repairedJson);
 
-    const keyword = typeof parsed.question === 'string' && parsed.question.trim()
-      ? parsed.question.trim()
-      : '';
+    const keyword =
+      typeof parsed.question === 'string' && parsed.question.trim()
+        ? parsed.question.trim()
+        : '';
 
     const result: SearchIntentResult = {
       needsSearch: parsed.need_search === true,
       keywords: keyword ? [keyword] : [],
-      links: Array.isArray(parsed.links) && parsed.links.length > 0 ? parsed.links : undefined,
+      links:
+        Array.isArray(parsed.links) && parsed.links.length > 0
+          ? parsed.links
+          : undefined,
     };
     return result;
   } catch (error) {
@@ -123,7 +126,9 @@ export class IntentAnalysisService {
               text: INTENT_ANALYSIS_PROMPT,
             },
             {
-              text: `\n\n## Conversation History:\n${this.formatConversationHistory(conversationHistory)}`,
+              text: `\n\n## Conversation History:\n${this.formatConversationHistory(
+                conversationHistory
+              )}`,
             },
             {
               text: `\n\n## Current User Question:\n${userMessage}`,
@@ -132,7 +137,10 @@ export class IntentAnalysisService {
         },
       ];
 
-      const fullResponse = await this.invokeModelSync(messages, abortController);
+      const fullResponse = await this.invokeModelSync(
+        messages,
+        abortController
+      );
 
       console.log('\n[IntentAnalysis] Full response received');
       console.log('[IntentAnalysis] Response length:', fullResponse.length);
@@ -151,7 +159,10 @@ export class IntentAnalysisService {
       return result;
     } catch (error) {
       // If aborted, return needsSearch: false to stop the flow gracefully
-      if (error instanceof Error && error.message === 'Search aborted by user') {
+      if (
+        error instanceof Error &&
+        error.message === 'Search aborted by user'
+      ) {
         console.log('[IntentAnalysis] ⚠️  Aborted by user');
         return { needsSearch: false, keywords: [] };
       }
@@ -186,7 +197,7 @@ export class IntentAnalysisService {
           fullResponse = text;
 
           if (!complete) {
-            console.log(".")
+            console.log('.');
           }
 
           if (complete || needStop) {
@@ -215,8 +226,8 @@ export class IntentAnalysisService {
 
         if (Array.isArray(msg.content)) {
           text = msg.content
-            .filter(c => 'text' in c)
-            .map(c => (c as any).text)
+            .filter((c): c is { text: string } => 'text' in c)
+            .map(c => c.text)
             .join(' ');
         } else if (typeof msg.content === 'string') {
           text = msg.content;

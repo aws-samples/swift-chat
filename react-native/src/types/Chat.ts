@@ -2,10 +2,10 @@ import { IMessage } from 'react-native-gifted-chat';
 import { User } from 'react-native-gifted-chat/lib/Models';
 
 export interface Citation {
-  number: number;      // 引用编号 [1], [2], [3]...
-  title: string;       // 链接标题
-  url: string;         // 链接地址
-  excerpt?: string;    // 简介/摘要
+  number: number; // 引用编号 [1], [2], [3]...
+  title: string; // 链接标题
+  url: string; // 链接地址
+  excerpt?: string; // 简介/摘要
 }
 
 export type Chat = {
@@ -136,7 +136,7 @@ export interface SwiftChatMessage extends IMessage {
   reasoning?: string;
   user: SwiftChatUser;
   metrics?: Metrics;
-  citations?: Citation[];  // Web search 引用列表
+  citations?: Citation[]; // Web search 引用列表
 }
 
 interface SwiftChatUser extends User {

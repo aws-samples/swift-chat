@@ -36,7 +36,9 @@ export const getFaviconUrl = (url: string): string | null => {
     }
 
     // Default to favicon.splitbee for non-Chinese regions, Google for Chinese regions
-    const isChinese = locale.toLowerCase().includes('cn') || locale.toLowerCase().includes('zh');
+    const isChinese =
+      locale.toLowerCase().includes('cn') ||
+      locale.toLowerCase().includes('zh');
     const defaultService = isChinese ? 'favicon' : 'google';
 
     // Start background race to find fastest service (no await, fire and forget)
@@ -86,7 +88,7 @@ const getFaviconServiceUrl = (domain: string, service: string): string => {
       return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     case 'favicon':
       return `https://favicon.splitbee.io/?url=${domain}`;
-     case 'faviconim':
+    case 'faviconim':
       return `https://favicon.im/${domain}`;
     case 'direct':
       return `https://${domain}/favicon.ico`;
@@ -105,14 +107,16 @@ const findFastestService = async (domain: string) => {
 
   try {
     // Race all services
-    const promises = services.map(async (service) => {
+    const promises = services.map(async service => {
       const url = getFaviconServiceUrl(domain, service);
       const response = await fetch(url, {
         method: 'HEAD',
         signal: controller.signal,
         reactNative: { textStreaming: true },
       });
-      if (response.ok) return service;
+      if (response.ok) {
+        return service;
+      }
       throw new Error(`Failed: ${service}`);
     });
 

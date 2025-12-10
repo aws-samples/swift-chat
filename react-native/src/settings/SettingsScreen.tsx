@@ -673,7 +673,7 @@ function SettingsScreen(): React.JSX.Element {
           }}
           placeholder="Select image size"
         />
-        
+
         <Text style={[styles.label, styles.middleLabel]}>Web Search</Text>
 
         <CustomTextInput

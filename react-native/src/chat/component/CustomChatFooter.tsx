@@ -123,11 +123,11 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
         style={{
           ...styles.container,
           ...(files.length > 0 && {
-              height: 136,
-            }),
+            height: 136,
+          }),
           ...(files.length === 0 && {
-              height: 60,
-            }),
+            height: 60,
+          }),
         }}>
         {(isHideFileList || files.length > 0) && (
           <CustomFileListComponent
@@ -137,14 +137,13 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
             isHideFileList={isHideFileList}
           />
         )}
-        {((chatMode === ChatMode.Text) ||
-          chatMode === ChatMode.Image) && (
+        {(chatMode === ChatMode.Text || chatMode === ChatMode.Image) && (
           <View
             style={{
               ...styles.promptContainer,
               ...(files.length > 0 && {
-                  marginTop: -72,
-                }),
+                marginTop: -72,
+              }),
             }}>
             <PromptListComponent
               onSelectPrompt={prompt => {

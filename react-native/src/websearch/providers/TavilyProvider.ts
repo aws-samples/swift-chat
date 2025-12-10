@@ -33,7 +33,11 @@ export class TavilyProvider {
    * @param abortController Optional abort controller to cancel the search
    * @returns Array of search results with full content (skips fetch phase)
    */
-  async search(query: string, maxResults: number = 5, abortController?: AbortController): Promise<WebContent[]> {
+  async search(
+    query: string,
+    maxResults: number = 5,
+    abortController?: AbortController
+  ): Promise<WebContent[]> {
     const apiKey = getTavilyApiKey();
 
     if (!apiKey) {
@@ -56,8 +60,7 @@ export class TavilyProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-
+          Authorization: `Bearer ${apiKey}`,
         },
         signal: abortController?.signal,
         reactNative: { textStreaming: true },
@@ -70,23 +73,31 @@ export class TavilyProvider {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[TavilyProvider] API error:', response.status, errorText);
-        throw new Error(`Tavily API error: ${response.status} ${response.statusText}`);
+        console.error(
+          '[TavilyProvider] API error:',
+          response.status,
+          errorText
+        );
+        throw new Error(
+          `Tavily API error: ${response.status} ${response.statusText}`
+        );
       }
 
       const data: TavilyApiResponse = await response.json();
 
       // Transform Tavily results to WebContent format with full content
       // This allows skipping the fetch phase entirely!
-      return data.results.slice(0, maxResults).map((result) => ({
+      return data.results.slice(0, maxResults).map(result => ({
         title: result.title || 'No title',
         url: result.url || '',
-        content: result.raw_content || result.content || '',  // Use raw_content if available, fallback to summary
-        excerpt: result.content || '',  // Summary as excerpt
+        content: result.raw_content || result.content || '', // Use raw_content if available, fallback to summary
+        excerpt: result.content || '', // Summary as excerpt
       }));
-    } catch (error: any) {
-      console.error('[TavilyProvider] Search failed:', error.message || 'Unknown error');
-      throw new Error(`Tavily search failed: ${error.message || 'Unknown error'}`);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error('[TavilyProvider] Search failed:', errorMessage);
+      throw new Error(`Tavily search failed: ${errorMessage}`);
     }
   }
 }

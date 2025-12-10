@@ -46,7 +46,7 @@ const CitationList: React.FC<CitationListProps> = ({ citations }) => {
               key={index}
               style={[
                 styles.faviconContainer,
-                index > 0 && { marginLeft: -8 },
+                index > 0 && styles.faviconContainerOverlap,
               ]}>
               {faviconUrl ? (
                 <Image
@@ -98,6 +98,9 @@ const createStyles = (colors: ColorScheme) =>
       alignItems: 'center',
       borderWidth: 2,
       borderColor: colors.citationListBackground,
+    },
+    faviconContainerOverlap: {
+      marginLeft: -8,
     },
     faviconImage: {
       width: 20,

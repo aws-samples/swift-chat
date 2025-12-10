@@ -35,7 +35,10 @@ async function fetchSingleUrl(
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     const globalAbortListener = () => controller.abort();
-    globalAbortController?.signal.addEventListener('abort', globalAbortListener);
+    globalAbortController?.signal.addEventListener(
+      'abort',
+      globalAbortListener
+    );
 
     try {
       const start = performance.now();
@@ -46,13 +49,16 @@ async function fetchSingleUrl(
         },
         signal: controller.signal,
         redirect: 'follow',
-        // @ts-ignore
+        // @ts-expect-error - reactNative.textStreaming is a React Native specific option
         reactNative: { textStreaming: true },
-      } as RequestInit);
+      });
       const end1 = performance.now();
       console.log(`Fetch Cost: ${end1 - start} ms`);
       clearTimeout(timeoutId);
-      globalAbortController?.signal.removeEventListener('abort', globalAbortListener);
+      globalAbortController?.signal.removeEventListener(
+        'abort',
+        globalAbortListener
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error: ${response.status}`);
@@ -67,10 +73,11 @@ async function fetchSingleUrl(
       );
 
       // Detect CAPTCHA pages (Baidu, Google, etc.)
-      const isCaptchaPage =
-        finalUrl.includes('baidu.com/static/captcha');
+      const isCaptchaPage = finalUrl.includes('baidu.com/static/captcha');
       if (isCaptchaPage) {
-        console.log(`[ContentFetch] ⚠️  CAPTCHA page detected, skipping: ${finalUrl}`);
+        console.log(
+          `[ContentFetch] ⚠️  CAPTCHA page detected, skipping: ${finalUrl}`
+        );
         return {
           title: item.title,
           url: finalUrl,
@@ -80,7 +87,11 @@ async function fetchSingleUrl(
 
       const MAX_HTML_SIZE = 2 * 1024 * 1024;
       if (html.length > MAX_HTML_SIZE) {
-        console.log(`[ContentFetch] ⚠️  HTML too large (${(html.length / 1024).toFixed(0)}KB), skipping to avoid slow parsing`);
+        console.log(
+          `[ContentFetch] ⚠️  HTML too large (${(html.length / 1024).toFixed(
+            0
+          )}KB), skipping to avoid slow parsing`
+        );
         return {
           title: item.title,
           url: finalUrl,
@@ -92,16 +103,16 @@ async function fetchSingleUrl(
         throw new Error('Aborted');
       }
 
-      console.log(`[ContentFetch] Parsing HTML with linkedom...`);
+      console.log('[ContentFetch] Parsing HTML with linkedom...');
       const { document } = parseHTML(html, {
-        url: finalUrl
-      });
+        url: finalUrl,
+      }) as unknown as { document: Document };
 
       if (globalAbortController?.signal.aborted) {
         throw new Error('Aborted');
       }
 
-      console.log(`[ContentFetch] Extracting content with Readability...`);
+      console.log('[ContentFetch] Extracting content with Readability...');
       const reader = new Readability(document);
       const article = reader.parse();
 
@@ -120,21 +131,35 @@ async function fetchSingleUrl(
         throw new Error('Aborted');
       }
 
-      console.log(`[ContentFetch] Converting HTML to Markdown...`);
+      console.log('[ContentFetch] Converting HTML to Markdown...');
 
       const turndownService = new TurndownService();
 
-      const contentParsed = parseHTML(htmlContent) as any;
-      const contentDoc = contentParsed.document;
+      const contentParsed = parseHTML(htmlContent);
+      const contentDoc = (contentParsed as unknown as { document: Document })
+        .document;
 
       const markdownContent = turndownService.turndown(contentDoc);
 
       console.log(`[ContentFetch] ✓ Extracted: ${finalUrl}`);
       console.log(`[ContentFetch]   - Title: ${article.title}`);
-      console.log(`[ContentFetch]   - HTML length: ${htmlContent.length} chars`);
-      console.log(`[ContentFetch]   - Markdown length: ${markdownContent.length} chars`);
-      console.log(`[ContentFetch]   - Token savings: ${((1 - markdownContent.length / htmlContent.length) * 100).toFixed(1)}%`);
-      console.log(`[ContentFetch]   - Excerpt: ${article.excerpt?.substring(0, 100) || 'N/A'}...`);
+      console.log(
+        `[ContentFetch]   - HTML length: ${htmlContent.length} chars`
+      );
+      console.log(
+        `[ContentFetch]   - Markdown length: ${markdownContent.length} chars`
+      );
+      console.log(
+        `[ContentFetch]   - Token savings: ${(
+          (1 - markdownContent.length / htmlContent.length) *
+          100
+        ).toFixed(1)}%`
+      );
+      console.log(
+        `[ContentFetch]   - Excerpt: ${
+          article.excerpt?.substring(0, 100) || 'N/A'
+        }...`
+      );
       const end2 = performance.now();
       console.log(`Parse Cost: ${end2 - end1} ms`);
       return {
@@ -143,16 +168,22 @@ async function fetchSingleUrl(
         content: markdownContent || NO_CONTENT,
         excerpt: article.excerpt || NO_CONTENT,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
-      globalAbortController?.signal.removeEventListener('abort', globalAbortListener);
+      globalAbortController?.signal.removeEventListener(
+        'abort',
+        globalAbortListener
+      );
       throw error;
     }
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error: unknown) {
+    const isAbortError = error instanceof Error && error.name === 'AbortError';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown';
+
+    if (isAbortError) {
       console.log(`[ContentFetch] ✗ Cancelled or timeout: ${item.url}`);
     } else {
-      console.log(`[ContentFetch] ✗ Error: ${item.url}`, error.message);
+      console.log(`[ContentFetch] ✗ Error: ${item.url}`, errorMessage);
     }
 
     return {
@@ -189,7 +220,7 @@ export class ContentFetchService {
       const extendedItems = items.slice(0, 8);
       const top3Indices = new Set([0, 1, 2]);
 
-      console.log(`[ContentFetch] Top3 URLs (priority):`);
+      console.log('[ContentFetch] Top3 URLs (priority):');
       extendedItems.slice(0, 3).forEach((item, i) => {
         console.log(`  ${i + 1}. ${item.url}`);
       });
@@ -204,19 +235,28 @@ export class ContentFetchService {
       abortController?.signal.addEventListener('abort', abortListener);
 
       const fetchPromises = extendedItems.map((item, index) =>
-        fetchSingleUrl(item, timeout, globalAbortController).then(content => ({ content, index }))
+        fetchSingleUrl(item, timeout, globalAbortController).then(content => ({
+          content,
+          index,
+        }))
       );
 
-      const completedResults: Array<{ content: WebContent; index: number }> = [];
+      const completedResults: Array<{ content: WebContent; index: number }> =
+        [];
       let top3Count = 0;
 
       const remaining = [...fetchPromises];
 
-      while (remaining.length > 0 && completedResults.length < extendedItems.length) {
+      while (
+        remaining.length > 0 &&
+        completedResults.length < extendedItems.length
+      ) {
         try {
           const result = await Promise.race(remaining);
 
-          const completedIndex = remaining.findIndex(p => p === fetchPromises[result.index]);
+          const completedIndex = remaining.findIndex(
+            p => p === fetchPromises[result.index]
+          );
           if (completedIndex !== -1) {
             remaining.splice(completedIndex, 1);
           }
@@ -229,24 +269,32 @@ export class ContentFetchService {
             }
 
             const totalCompleted = completedResults.length;
-            console.log(`[ContentFetch] ✓ Completed: ${totalCompleted}/${extendedItems.length}, Top3: ${top3Count}/3`);
+            console.log(
+              `[ContentFetch] ✓ Completed: ${totalCompleted}/${extendedItems.length}, Top3: ${top3Count}/3`
+            );
 
             if (top3Count === 3 && totalCompleted >= 3) {
-              console.log(`[ContentFetch] ⚡ Early exit: All top3 completed with ${totalCompleted} results`);
+              console.log(
+                `[ContentFetch] ⚡ Early exit: All top3 completed with ${totalCompleted} results`
+              );
               globalAbortController.abort();
               break;
             } else if (top3Count === 2 && totalCompleted >= 4) {
-              console.log(`[ContentFetch] ⚡ Early exit: 2/3 top3 completed with ${totalCompleted} results`);
+              console.log(
+                `[ContentFetch] ⚡ Early exit: 2/3 top3 completed with ${totalCompleted} results`
+              );
               globalAbortController.abort();
               break;
             } else if (totalCompleted >= 6) {
-              console.log(`[ContentFetch] ⚡ Early exit: 6 URLs completed, using top 5`);
+              console.log(
+                '[ContentFetch] ⚡ Early exit: 6 URLs completed, using top 5'
+              );
               globalAbortController.abort();
               break;
             }
           }
         } catch (error) {
-          console.log(`[ContentFetch] ⚠️  One request failed, continuing...`);
+          console.log('[ContentFetch] ⚠️  One request failed, continuing...');
         }
       }
 
@@ -264,7 +312,10 @@ export class ContentFetchService {
       } else if (top3Count === 2 && validContents.length >= 4) {
         finalContents = validContents.slice(0, 4);
       } else {
-        finalContents = validContents.slice(0, Math.min(5, validContents.length));
+        finalContents = validContents.slice(
+          0,
+          Math.min(5, validContents.length)
+        );
       }
 
       const endTime = performance.now();
@@ -275,7 +326,9 @@ export class ContentFetchService {
 
       console.log('\n========================================');
       console.log('[ContentFetch] Smart fetch complete');
-      console.log(`[ContentFetch] Completed: ${validContents.length}/${extendedItems.length}`);
+      console.log(
+        `[ContentFetch] Completed: ${validContents.length}/${extendedItems.length}`
+      );
       console.log(`[ContentFetch] Top3 hits: ${top3Count}/3`);
       console.log(`[ContentFetch] Returned: ${finalContents.length} results`);
       console.log(`[ContentFetch] Total time: ${totalTime}ms`);

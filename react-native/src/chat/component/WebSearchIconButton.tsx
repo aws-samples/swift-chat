@@ -1,9 +1,13 @@
 import React from 'react';
 import { Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { getSearchProvider, saveSearchProvider } from '../../storage/StorageUtils';
+import {
+  getSearchProvider,
+  saveSearchProvider,
+} from '../../storage/StorageUtils';
 import { getSearchProviderIcon } from '../../utils/SearchIconUtils';
 import { useTheme } from '../../theme';
 import { useAppContext } from '../../history/AppProvider';
+import { SearchEngineOption } from '../../websearch/types';
 
 interface WebSearchIconButtonProps {
   onPress: () => void;
@@ -15,7 +19,10 @@ export const WebSearchIconButton: React.FC<WebSearchIconButtonProps> = ({
   const { isDark } = useTheme();
   const { sendEvent } = useAppContext();
   const searchProvider = getSearchProvider();
-  const searchIcon = getSearchProviderIcon(searchProvider as any, isDark);
+  const searchIcon = getSearchProviderIcon(
+    searchProvider as SearchEngineOption,
+    isDark
+  );
 
   const handlePress = () => {
     // If current provider is not disabled (google/bing/baidu/tavily), toggle to disabled

@@ -3,8 +3,8 @@
  * 封装所有WebView搜索相关的UI和事件处理逻辑
  */
 
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../../theme';
 import { useAppContext } from '../../history/AppProvider';
@@ -62,21 +62,27 @@ export const SearchWebView: React.FC = () => {
 
   // 监听并处理WebView相关事件
   useEffect(() => {
-    if (!event) return;
+    if (!event) {
+      return;
+    }
 
     switch (event.event) {
       case 'webview:loadUrl':
         if (event.params?.url) {
           const newUrl = event.params.url;
           loadStartTimeRef.current = performance.now();
-          console.log('[SearchWebView] ⏱️  Received loadUrl event, starting WebView load');
+          console.log(
+            '[SearchWebView] ⏱️  Received loadUrl event, starting WebView load'
+          );
 
           loadEndCalledRef.current = false;
           setShowWebView(false);
 
           // 检查 URL 是否相同，相同则复用 WebView 并 reload
           if (currentUrl === newUrl && webViewRef.current) {
-            console.log('[SearchWebView] Same URL detected, reloading existing WebView');
+            console.log(
+              '[SearchWebView] Same URL detected, reloading existing WebView'
+            );
             webViewRef.current.reload();
           } else {
             console.log('[SearchWebView] Different URL, setting new URL');
@@ -104,17 +110,20 @@ export const SearchWebView: React.FC = () => {
         setShowWebView(false);
         break;
     }
-  }, [event, sendEvent]);
+  }, [event, currentUrl, sendEvent]);
 
   // WebView加载完成回调
   const handleLoadEnd = () => {
     const loadEndTime = performance.now();
-    const loadDuration = loadStartTimeRef.current > 0
-      ? (loadEndTime - loadStartTimeRef.current).toFixed(0)
-      : 'N/A';
+    const loadDuration =
+      loadStartTimeRef.current > 0
+        ? (loadEndTime - loadStartTimeRef.current).toFixed(0)
+        : 'N/A';
 
     const logType = showWebView ? '' : ' (hidden)';
-    console.log(`[SearchWebView] ⏱️  WebView load complete${logType} (${loadDuration}ms)`);
+    console.log(
+      `[SearchWebView] ⏱️  WebView load complete${logType} (${loadDuration}ms)`
+    );
 
     if (!loadEndCalledRef.current && onWebViewLoadEndRef.current) {
       loadEndCalledRef.current = true;
@@ -129,7 +138,7 @@ export const SearchWebView: React.FC = () => {
   };
 
   // WebView错误回调
-  const handleError = (nativeEvent: any) => {
+  const handleError = (nativeEvent: { description?: string; code: number }) => {
     console.log('[SearchWebView] WebView error:', nativeEvent);
 
     const description = (nativeEvent.description || '').toLowerCase();
@@ -145,7 +154,7 @@ export const SearchWebView: React.FC = () => {
 
       webViewSearchService.handleEvent('webview:error', {
         error: nativeEvent.description || 'WebView load failed',
-        code: nativeEvent.code
+        code: nativeEvent.code,
       });
     }
   };
@@ -165,37 +174,32 @@ export const SearchWebView: React.FC = () => {
     }
   };
 
-  if (!currentUrl) {
-    return null;
-  }
-
-  return (
-    <View style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      // 隐藏模式：移到屏幕外，零尺寸，透明
-      // 显示模式：全屏遮罩
-      ...(showWebView ? {
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        zIndex: 9999,
-        justifyContent: 'center',
-        alignItems: 'center',
-      } : {
-        left: -10000,
-        width: 1,
-        height: 1,
-        backgroundColor: 'transparent',
-        zIndex: -1,
-        opacity: 0,
-        pointerEvents: 'none',
-      })
-    }}>
-      {/* 模态框容器 - 只在showWebView时显示标题栏等UI */}
-      {showWebView ? (
-        <View style={{
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        containerBase: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        },
+        containerVisible: {
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 9999,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        containerHidden: {
+          left: -10000,
+          width: 1,
+          height: 1,
+          backgroundColor: 'transparent',
+          zIndex: -1,
+          opacity: 0,
+          pointerEvents: 'none',
+        },
+        modalContainer: {
           width: '90%',
           height: '80%',
           backgroundColor: colors.background,
@@ -206,42 +210,79 @@ export const SearchWebView: React.FC = () => {
           shadowOpacity: 0.25,
           shadowRadius: 4,
           elevation: 5,
-        }}>
+        },
+        header: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: 16,
+          backgroundColor: colors.border,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        },
+        headerTitle: {
+          fontSize: 16,
+          fontWeight: '600',
+          color: colors.text,
+        },
+        closeButton: {
+          padding: 8,
+          borderRadius: 4,
+          backgroundColor: colors.background,
+        },
+        closeButtonText: {
+          fontSize: 16,
+          color: colors.text,
+        },
+        webViewContainer: {
+          flex: 1,
+        },
+        webViewStyle: {
+          flex: 1,
+        },
+        hiddenWebView: {
+          width: 800,
+          height: 600,
+        },
+      }),
+    [colors]
+  );
+
+  if (!currentUrl) {
+    return null;
+  }
+
+  return (
+    <View
+      style={[
+        styles.containerBase,
+        showWebView ? styles.containerVisible : styles.containerHidden,
+      ]}>
+      {/* 模态框容器 - 只在showWebView时显示标题栏等UI */}
+      {showWebView ? (
+        <View style={styles.modalContainer}>
           {/* 标题栏 */}
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: 16,
-            backgroundColor: colors.border,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
-          }}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
-              请完成验证
-            </Text>
-            <TouchableOpacity
-              onPress={handleClose}
-              style={{
-                padding: 8,
-                borderRadius: 4,
-                backgroundColor: colors.background,
-              }}
-            >
-              <Text style={{ fontSize: 16, color: colors.text }}>✕</Text>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>请完成验证</Text>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
           {/* WebView容器 */}
-          <View style={{ flex: 1 }}>
+          <View style={styles.webViewContainer}>
             <WebView
               ref={webViewRef}
               source={{ uri: currentUrl }}
               javaScriptEnabled={true}
               domStorageEnabled={true}
-              style={{ flex: 1 }}
-              onMessage={event => handleMessage(event.nativeEvent.data)}
+              style={styles.webViewStyle}
+              onMessage={messageEvent =>
+                handleMessage(messageEvent.nativeEvent.data)
+              }
               onLoadEnd={handleLoadEnd}
-              onError={syntheticEvent => handleError(syntheticEvent.nativeEvent)}
+              onError={syntheticEvent =>
+                handleError(syntheticEvent.nativeEvent)
+              }
               userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             />
           </View>
@@ -253,8 +294,10 @@ export const SearchWebView: React.FC = () => {
           source={{ uri: currentUrl }}
           javaScriptEnabled={true}
           domStorageEnabled={true}
-          style={{ width: 800, height: 600 }}
-          onMessage={event => handleMessage(event.nativeEvent.data)}
+          style={styles.hiddenWebView}
+          onMessage={messageEvent =>
+            handleMessage(messageEvent.nativeEvent.data)
+          }
           onLoadEnd={handleLoadEnd}
           onError={syntheticEvent => handleError(syntheticEvent.nativeEvent)}
           userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"

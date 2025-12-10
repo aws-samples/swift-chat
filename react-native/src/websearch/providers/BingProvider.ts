@@ -23,9 +23,10 @@ export class BingProvider {
     let locale = 'en';
     try {
       locale = Intl.DateTimeFormat().resolvedOptions().locale;
-    } catch (e) {
-    }
-    const isChinese = locale.toLowerCase().includes('cn') || locale.toLowerCase().includes('zh');
+    } catch (e) {}
+    const isChinese =
+      locale.toLowerCase().includes('cn') ||
+      locale.toLowerCase().includes('zh');
     if (isChinese) {
       return `https://cn.bing.com/search?q=${encodedQuery}`;
     } else {
