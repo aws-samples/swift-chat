@@ -97,8 +97,6 @@ function extractInfoFromJSON(response: string): SearchIntentResult {
     };
     return result;
   } catch (error) {
-    console.log('[IntentAnalysis] Failed to parse JSON:', error);
-    console.log('[IntentAnalysis] Falling back to: no search needed');
     return {
       needsSearch: false,
       keywords: [],
@@ -112,11 +110,6 @@ export class IntentAnalysisService {
     conversationHistory: BedrockMessage[],
     abortController?: AbortController
   ): Promise<SearchIntentResult> {
-    console.log('\n========================================');
-    console.log('[IntentAnalysis] Starting intent analysis');
-    console.log('[IntentAnalysis] User message:', userMessage);
-    console.log('========================================\n');
-
     try {
       const messages: BedrockMessage[] = [
         {
@@ -142,31 +135,16 @@ export class IntentAnalysisService {
         abortController
       );
 
-      console.log('\n[IntentAnalysis] Full response received');
-      console.log('[IntentAnalysis] Response length:', fullResponse.length);
-
       const result = extractInfoFromJSON(fullResponse);
-
-      console.log('\n========================================');
-      console.log('[IntentAnalysis] Analysis complete');
-      console.log('[IntentAnalysis] Needs search:', result.needsSearch);
-      console.log('[IntentAnalysis] Keywords:', result.keywords);
-      if (result.links) {
-        console.log('[IntentAnalysis] Links:', result.links);
-      }
-      console.log('========================================\n');
 
       return result;
     } catch (error) {
-      // If aborted, return needsSearch: false to stop the flow gracefully
       if (
         error instanceof Error &&
         error.message === 'Search aborted by user'
       ) {
-        console.log('[IntentAnalysis] ⚠️  Aborted by user');
         return { needsSearch: false, keywords: [] };
       }
-      console.log('[IntentAnalysis] Error:', error);
       return { needsSearch: false, keywords: [] };
     }
   }
@@ -179,7 +157,6 @@ export class IntentAnalysisService {
       let fullResponse = '';
       const controller = abortController || new AbortController();
 
-      // Listen to abort signal
       if (abortController) {
         abortController.signal.addEventListener('abort', () => {
           controller.abort();
@@ -195,10 +172,6 @@ export class IntentAnalysisService {
         controller,
         (text: string, complete: boolean, needStop: boolean) => {
           fullResponse = text;
-
-          if (!complete) {
-            console.log('.');
-          }
 
           if (complete || needStop) {
             if (needStop) {

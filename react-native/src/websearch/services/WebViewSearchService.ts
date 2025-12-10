@@ -73,22 +73,13 @@ export class WebViewSearchService {
     try {
       const message = JSON.parse(data) as WebViewMessage;
 
-      if (message.type === 'console_log' && message.log) {
-        console.log('[WebView]', message.log);
+      if (message.type === 'console_log') {
         return;
       }
 
       if (message.type === 'captcha_required') {
-        console.log(
-          '[WebViewSearch] CAPTCHA detected, showing WebView to user'
-        );
-
-        // Extend timeout to 120 seconds for CAPTCHA verification
         if (this.currentTimeoutId) {
           clearTimeout(this.currentTimeoutId);
-          console.log(
-            '[WebViewSearch] Extending timeout to 120 seconds for CAPTCHA'
-          );
           this.currentTimeoutId = setTimeout(() => {
             this.messageCallback = null;
             this.currentTimeoutId = null;
@@ -110,15 +101,9 @@ export class WebViewSearchService {
         }
 
         this.addEventListener('webview:loadEndTriggered', () => {
-          console.log(
-            '[WebViewSearch] Page reloaded after CAPTCHA, waiting 500ms then retrying extraction'
-          );
           setTimeout(() => {
             const provider = this.getProvider(this.currentEngine);
             const script = provider.getExtractionScript(this.currentQuery);
-            console.log(
-              '[WebViewSearch] Re-injecting extraction script after CAPTCHA'
-            );
             if (this.sendEvent) {
               this.sendEvent('webview:injectScript', { script });
             }
@@ -133,7 +118,6 @@ export class WebViewSearchService {
       }
     } catch (error) {
       console.log('[WebViewSearch] Failed to parse message:', error);
-      console.log('[WebViewSearch] Raw data:', data);
     }
   }
 
@@ -143,13 +127,6 @@ export class WebViewSearchService {
     maxResults: number = 5,
     abortController?: AbortController
   ): Promise<SearchResultItem[]> {
-    console.log('\n========================================');
-    console.log('[WebViewSearch] Starting search');
-    console.log('[WebViewSearch] Query:', query);
-    console.log('[WebViewSearch] Engine:', engine);
-    console.log('[WebViewSearch] Max results:', maxResults);
-    console.log('========================================\n');
-
     this.currentEngine = engine;
     this.currentQuery = query;
 
@@ -160,9 +137,7 @@ export class WebViewSearchService {
         return;
       }
 
-      // Listen to abort signal
       const abortListener = () => {
-        console.log('[WebViewSearch] Search aborted by user');
         if (this.currentTimeoutId) {
           clearTimeout(this.currentTimeoutId);
           this.currentTimeoutId = null;
@@ -194,10 +169,6 @@ export class WebViewSearchService {
       }, 15000);
 
       this.addEventListener('webview:captchaClosed', () => {
-        console.log(
-          '[WebViewSearch] User closed CAPTCHA window, cancelling search'
-        );
-
         if (this.currentTimeoutId) {
           clearTimeout(this.currentTimeoutId);
           this.currentTimeoutId = null;
@@ -217,12 +188,7 @@ export class WebViewSearchService {
       this.addEventListener('webview:error', params => {
         const errorMsg = params?.error || 'WebView load failed';
         const errorCode = params?.code || 'unknown';
-        console.log(
-          '[WebViewSearch] WebView error, terminating search:',
-          errorMsg,
-          'Code:',
-          errorCode
-        );
+
         if (this.currentTimeoutId) {
           clearTimeout(this.currentTimeoutId);
           this.currentTimeoutId = null;
@@ -250,7 +216,6 @@ export class WebViewSearchService {
         abortController?.signal.removeEventListener('abort', abortListener);
 
         if (message.type === 'search_error') {
-          console.log('[WebViewSearch] Search error:', message.error);
           if (this.sendEvent) {
             this.sendEvent('webview:hide');
           }
@@ -262,7 +227,6 @@ export class WebViewSearchService {
           const provider = this.getProvider(engine);
           const results = provider.parseResults(message);
 
-          // Record actual URL for Bing to avoid redirects next time
           if (
             engine === 'bing' &&
             message.actualUrl &&
@@ -273,44 +237,19 @@ export class WebViewSearchService {
             ).setLastUsedBaseUrl(message.actualUrl);
           }
 
-          console.log(
-            '[WebViewSearch] Got search results, hiding CAPTCHA window if visible'
-          );
           if (this.sendEvent) {
             this.sendEvent('webview:hide');
           }
-
-          console.log('\n========================================');
-          console.log('[WebViewSearch] Search complete');
-          console.log('[WebViewSearch] Total results:', results.length);
-          console.log('[WebViewSearch] Results:');
-          results.slice(0, maxResults).forEach((item, index) => {
-            console.log(`  ${index + 1}. ${item.title}`);
-            console.log(`     ${item.url}`);
-          });
-          console.log('========================================\n');
 
           resolve(results.slice(0, maxResults));
         }
       };
 
-      const perfStart = performance.now();
-
       const provider = this.getProvider(engine);
-
       const searchUrl = provider.getSearchUrl(query);
-      console.log('[WebViewSearch] Loading URL:', searchUrl);
 
       this.addEventListener('webview:loadEndTriggered', () => {
-        const pageLoadTime = performance.now();
-        console.log(
-          `[WebViewSearch] ⏱️  Page loaded (${(
-            pageLoadTime - perfStart
-          ).toFixed(0)}ms), using progressive injection`
-        );
-
         const delays = [100, 200, 400, 800];
-        let attemptCount = 0;
         let injected = false;
 
         const tryInject = () => {
@@ -318,20 +257,12 @@ export class WebViewSearchService {
             return;
           }
 
-          attemptCount++;
           const currentDelay = delays.shift() || 1500;
 
           setTimeout(() => {
             if (injected) {
               return;
             }
-
-            const beforeInjectTime = performance.now();
-            console.log(
-              `[WebViewSearch] ⏱️  Attempt ${attemptCount} (${(
-                beforeInjectTime - pageLoadTime
-              ).toFixed(0)}ms), injecting extraction script`
-            );
 
             const script = provider.getExtractionScript(query);
 

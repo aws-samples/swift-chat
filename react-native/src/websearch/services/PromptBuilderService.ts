@@ -26,8 +26,6 @@ export class PromptBuilderService {
     const seconds = String(currentTime.getSeconds()).padStart(2, '0');
     const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} UTC`;
 
-    console.log(`[PromptBuilder] Current time: ${formattedTime}`);
-
     const formattedReferences = this.formatReferences(contents);
 
     const referencesText = formattedReferences

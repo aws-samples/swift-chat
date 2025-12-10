@@ -51,10 +51,6 @@ export class BaiduProvider {
             if (foundResults) break;
 
             const items = document.querySelectorAll(selector);
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'console_log',
-              log: 'Trying selector: ' + selector + ', found ' + items.length + ' items'
-            }));
 
             if (items.length > 0) {
               items.forEach((linkElement) => {
@@ -84,19 +80,11 @@ export class BaiduProvider {
                     }
                   }
                 } catch (error) {
-                  window.ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'console_log',
-                    log: 'Error processing item: ' + error.message
-                  }));
+                  // Ignore errors
                 }
               });
             }
           }
-
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'console_log',
-            log: 'Baidu extraction complete, found ' + results.length + ' results'
-          }));
 
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'search_results',

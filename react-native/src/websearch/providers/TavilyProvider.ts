@@ -44,14 +44,7 @@ export class TavilyProvider {
       throw new Error('Tavily API key is not configured');
     }
 
-    console.log('\n========================================');
-    console.log('[TavilyProvider] Starting API search');
-    console.log('[TavilyProvider] Query:', query);
-    console.log('[TavilyProvider] Max results:', maxResults);
-    console.log('========================================\n');
-
     try {
-      // Check if aborted before starting
       if (abortController?.signal.aborted) {
         throw new Error('Search aborted by user');
       }
@@ -72,8 +65,6 @@ export class TavilyProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.log('[TavilyProvider] API error:', response.status, errorText);
         throw new Error(
           `Tavily API error: ${response.status} ${response.statusText}`
         );
@@ -81,18 +72,15 @@ export class TavilyProvider {
 
       const data: TavilyApiResponse = await response.json();
 
-      // Transform Tavily results to WebContent format with full content
-      // This allows skipping the fetch phase entirely!
       return data.results.slice(0, maxResults).map(result => ({
         title: result.title || 'No title',
         url: result.url || '',
-        content: result.raw_content || result.content || '', // Use raw_content if available, fallback to summary
-        excerpt: result.content || '', // Summary as excerpt
+        content: result.raw_content || result.content || '',
+        excerpt: result.content || '',
       }));
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      console.log('[TavilyProvider] Search failed:', errorMessage);
       throw new Error(`Tavily search failed: ${errorMessage}`);
     }
   }
