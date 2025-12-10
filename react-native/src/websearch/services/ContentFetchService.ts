@@ -336,7 +336,7 @@ export class ContentFetchService {
 
       return finalContents;
     } catch (error) {
-      console.error('[ContentFetch] Fatal error:', error);
+      console.log('[ContentFetch] Fatal error:', error);
       return [];
     }
   }

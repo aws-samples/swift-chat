@@ -19,25 +19,20 @@ export class BingProvider {
 
   getSearchUrl(query: string): string {
     const encodedQuery = encodeURIComponent(query);
-
-    let locale = 'en';
-    try {
-      locale = Intl.DateTimeFormat().resolvedOptions().locale;
-    } catch (e) {}
-    const isChinese =
-      locale.toLowerCase().includes('cn') ||
-      locale.toLowerCase().includes('zh');
-    if (isChinese) {
-      return `https://cn.bing.com/search?q=${encodedQuery}`;
-    } else {
-      return `https://www.bing.com/search?q=${encodedQuery}`;
-    }
+   return `https://www.bing.com/search?q=${encodedQuery}`;
   }
 
-  getExtractionScript(): string {
+  getExtractionScript(expectedQuery?: string): string {
     return `
       (function() {
         try {
+          ${
+            expectedQuery
+              ? `if (!window.location.href.includes('q=${encodeURIComponent(
+                  expectedQuery
+                )}')) return;`
+              : ''
+          }
           const results = [];
 
           const items = document.querySelectorAll('#b_results h2');

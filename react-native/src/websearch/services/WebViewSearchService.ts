@@ -25,11 +25,13 @@ interface WebViewMessage {
   error?: string;
   log?: string;
   message?: string;
+  actualUrl?: string;
 }
 
 export class WebViewSearchService {
   private messageCallback: ((message: WebViewMessage) => void) | null = null;
   private currentEngine: SearchEngine = 'google';
+  private currentQuery: string = '';
   private currentTimeoutId: NodeJS.Timeout | null = null;
   private currentReject: ((error: Error) => void) | null = null;
   private sendEvent: SendEventFunc | null = null;
@@ -113,7 +115,7 @@ export class WebViewSearchService {
           );
           setTimeout(() => {
             const provider = this.getProvider(this.currentEngine);
-            const script = provider.getExtractionScript();
+            const script = provider.getExtractionScript(this.currentQuery);
             console.log(
               '[WebViewSearch] Re-injecting extraction script after CAPTCHA'
             );
@@ -130,8 +132,8 @@ export class WebViewSearchService {
         this.messageCallback(message);
       }
     } catch (error) {
-      console.error('[WebViewSearch] Failed to parse message:', error);
-      console.error('[WebViewSearch] Raw data:', data);
+      console.log('[WebViewSearch] Failed to parse message:', error);
+      console.log('[WebViewSearch] Raw data:', data);
     }
   }
 
@@ -149,6 +151,7 @@ export class WebViewSearchService {
     console.log('========================================\n');
 
     this.currentEngine = engine;
+    this.currentQuery = query;
 
     return new Promise((resolve, reject) => {
       // Check if already aborted
@@ -247,7 +250,7 @@ export class WebViewSearchService {
         abortController?.signal.removeEventListener('abort', abortListener);
 
         if (message.type === 'search_error') {
-          console.error('[WebViewSearch] Search error:', message.error);
+          console.log('[WebViewSearch] Search error:', message.error);
           if (this.sendEvent) {
             this.sendEvent('webview:hide');
           }
@@ -258,6 +261,17 @@ export class WebViewSearchService {
         if (message.type === 'search_results') {
           const provider = this.getProvider(engine);
           const results = provider.parseResults(message);
+
+          // Record actual URL for Bing to avoid redirects next time
+          if (
+            engine === 'bing' &&
+            message.actualUrl &&
+            'setLastUsedBaseUrl' in provider
+          ) {
+            (
+              provider as { setLastUsedBaseUrl: (url: string) => void }
+            ).setLastUsedBaseUrl(message.actualUrl);
+          }
 
           console.log(
             '[WebViewSearch] Got search results, hiding CAPTCHA window if visible'
@@ -319,7 +333,7 @@ export class WebViewSearchService {
               ).toFixed(0)}ms), injecting extraction script`
             );
 
-            const script = provider.getExtractionScript();
+            const script = provider.getExtractionScript(query);
 
             if (this.sendEvent) {
               injected = true;

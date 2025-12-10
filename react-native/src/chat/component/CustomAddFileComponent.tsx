@@ -199,7 +199,7 @@ export const CustomAddFileComponent: React.FC<CustomRenderActionsProps> = ({
         onFileSelected(files);
       }
     } catch (error) {
-      console.error('Error handling paste files:', error);
+      console.log('Error handling paste files:', error);
       showInfo('Error processing pasted files');
     }
   }, [processFiles, onFileSelected]);

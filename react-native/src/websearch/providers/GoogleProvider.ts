@@ -22,10 +22,20 @@ export class GoogleProvider {
     return `https://www.google.com/search?q=${encodedQuery}`;
   }
 
-  getExtractionScript(): string {
+  getExtractionScript(expectedQuery?: string): string {
     return `
       (function() {
         try {
+          ${
+            expectedQuery
+              ? `
+                const expectedParam = 'q=${encodeURIComponent(expectedQuery)}';
+                if (!window.location.href.includes(expectedParam)) {
+                  return;
+                }
+              `
+              : ''
+          }
           const results = [];
 
           const selectors = [

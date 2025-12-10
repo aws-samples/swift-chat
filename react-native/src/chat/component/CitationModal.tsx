@@ -87,7 +87,7 @@ const CitationModal: React.FC<CitationModalProps> = ({
   const handleOpenUrl = (url: string) => {
     trigger(HapticFeedbackTypes.impactLight);
     Linking.openURL(url).catch(err => {
-      console.error('Failed to open URL:', err);
+      console.log('Failed to open URL:', err);
     });
   };
 

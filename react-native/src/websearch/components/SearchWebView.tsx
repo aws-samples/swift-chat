@@ -15,6 +15,7 @@ export const SearchWebView: React.FC = () => {
   const { event, sendEvent } = useAppContext();
   const webViewRef = useRef<WebView>(null);
   const [currentUrl, setCurrentUrl] = useState<string>('');
+  const currentUrlRef = useRef<string>('');
   const [showWebView, setShowWebView] = useState<boolean>(false);
   const loadEndCalledRef = useRef<boolean>(false);
   const onWebViewLoadEndRef = useRef<(() => void) | null>(null);
@@ -78,14 +79,15 @@ export const SearchWebView: React.FC = () => {
           loadEndCalledRef.current = false;
           setShowWebView(false);
 
-          // 检查 URL 是否相同，相同则复用 WebView 并 reload
-          if (currentUrl === newUrl && webViewRef.current) {
-            console.log(
-              '[SearchWebView] Same URL detected, reloading existing WebView'
-            );
-            webViewRef.current.reload();
+          // Check if URL is the same as current URL using ref to avoid dependency issues
+          if (currentUrlRef.current === newUrl) {
+            // URL hasn't changed, WebView won't reload, manually trigger the callback
+            if (onWebViewLoadEndRef.current) {
+              onWebViewLoadEndRef.current();
+            }
           } else {
-            console.log('[SearchWebView] Different URL, setting new URL');
+            // Different URL, set new URL to trigger WebView reload
+            currentUrlRef.current = newUrl;
             setCurrentUrl(newUrl);
           }
         }
@@ -110,7 +112,7 @@ export const SearchWebView: React.FC = () => {
         setShowWebView(false);
         break;
     }
-  }, [event, currentUrl, sendEvent]);
+  }, [event]);
 
   // WebView加载完成回调
   const handleLoadEnd = () => {
@@ -274,7 +276,7 @@ export const SearchWebView: React.FC = () => {
               ref={webViewRef}
               source={{ uri: currentUrl }}
               javaScriptEnabled={true}
-              domStorageEnabled={true}
+              domStorageEnabled={false}
               style={styles.webViewStyle}
               onMessage={messageEvent =>
                 handleMessage(messageEvent.nativeEvent.data)
@@ -293,7 +295,7 @@ export const SearchWebView: React.FC = () => {
           ref={webViewRef}
           source={{ uri: currentUrl }}
           javaScriptEnabled={true}
-          domStorageEnabled={true}
+          domStorageEnabled={false}
           style={styles.hiddenWebView}
           onMessage={messageEvent =>
             handleMessage(messageEvent.nativeEvent.data)

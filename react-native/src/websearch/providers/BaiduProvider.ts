@@ -22,10 +22,17 @@ export class BaiduProvider {
     return `https://www.baidu.com/s?wd=${encodedQuery}`;
   }
 
-  getExtractionScript(): string {
+  getExtractionScript(expectedQuery?: string): string {
     return `
       (function() {
         try {
+          ${
+            expectedQuery
+              ? `if (!window.location.href.includes('wd=${encodeURIComponent(
+                  expectedQuery
+                )}')) return;`
+              : ''
+          }
           const results = [];
 
           const selectors = [

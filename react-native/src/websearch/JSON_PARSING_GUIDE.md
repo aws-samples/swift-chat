@@ -252,7 +252,7 @@ try {
   const parsed = JSON.parse(repaired);
   return parseResult(parsed);
 } catch (error) {
-  console.error('JSON repair failed:', error);
+  console.log('JSON repair failed:', error);
   // 降级为安全的默认值
   return { needsSearch: false, keywords: [] };
 }

@@ -97,7 +97,7 @@ function extractInfoFromJSON(response: string): SearchIntentResult {
     };
     return result;
   } catch (error) {
-    console.error('[IntentAnalysis] Failed to parse JSON:', error);
+    console.log('[IntentAnalysis] Failed to parse JSON:', error);
     console.log('[IntentAnalysis] Falling back to: no search needed');
     return {
       needsSearch: false,
@@ -166,7 +166,7 @@ export class IntentAnalysisService {
         console.log('[IntentAnalysis] ⚠️  Aborted by user');
         return { needsSearch: false, keywords: [] };
       }
-      console.error('[IntentAnalysis] Error:', error);
+      console.log('[IntentAnalysis] Error:', error);
       return { needsSearch: false, keywords: [] };
     }
   }

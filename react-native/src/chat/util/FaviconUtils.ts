@@ -46,7 +46,7 @@ export const getFaviconUrl = (url: string): string | null => {
 
     return getFaviconServiceUrl(domain, defaultService);
   } catch (error) {
-    console.error('Failed to parse URL:', error);
+    console.log('Failed to parse URL:', error);
     return null;
   }
 };
@@ -75,7 +75,7 @@ const updateCache = (domain: string, service: string) => {
     };
     storage.set(FAVICON_CACHE_KEY, JSON.stringify(cache));
   } catch (error) {
-    console.error('Failed to update favicon cache:', error);
+    console.log('Failed to update favicon cache:', error);
   }
 };
 

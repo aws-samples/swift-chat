@@ -73,7 +73,7 @@ export class TavilyProvider {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(
+        console.log(
           '[TavilyProvider] API error:',
           response.status,
           errorText
@@ -96,7 +96,7 @@ export class TavilyProvider {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      console.error('[TavilyProvider] Search failed:', errorMessage);
+      console.log('[TavilyProvider] Search failed:', errorMessage);
       throw new Error(`Tavily search failed: ${errorMessage}`);
     }
   }
