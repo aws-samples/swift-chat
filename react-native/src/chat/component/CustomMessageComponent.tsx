@@ -202,8 +202,14 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   }, []);
 
   const customMarkdownRenderer = useMemo(
-    () => new CustomMarkdownRenderer(handleImagePress, colors, isDark),
-    [handleImagePress, colors, isDark]
+    () =>
+      new CustomMarkdownRenderer(
+        handleImagePress,
+        colors,
+        isDark,
+        currentMessage?.citations || []
+      ),
+    [handleImagePress, colors, isDark, currentMessage?.citations]
   );
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);

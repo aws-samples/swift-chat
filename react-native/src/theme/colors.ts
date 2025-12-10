@@ -51,6 +51,8 @@ export interface ColorScheme {
   citationText: string;
   citationListBackground: string;
   citationBorder: string;
+  citationBadgeBackground: string;
+  citationBadgeText: string;
 }
 
 export const lightColors: ColorScheme = {
@@ -106,6 +108,8 @@ export const lightColors: ColorScheme = {
   citationText: '#1976D2',
   citationListBackground: '#F5F5F5',
   citationBorder: '#E0E0E0',
+  citationBadgeBackground: '#E8E8E8',
+  citationBadgeText: '#888888',
 };
 
 export const darkColors: ColorScheme = {
@@ -161,4 +165,6 @@ export const darkColors: ColorScheme = {
   citationText: '#64B5F6',
   citationListBackground: '#1E1E1E',
   citationBorder: '#333333',
+  citationBadgeBackground: '#3A3A3A',
+  citationBadgeText: '#999999',
 };

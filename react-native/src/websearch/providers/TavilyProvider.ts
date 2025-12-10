@@ -73,11 +73,7 @@ export class TavilyProvider {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.log(
-          '[TavilyProvider] API error:',
-          response.status,
-          errorText
-        );
+        console.log('[TavilyProvider] API error:', response.status, errorText);
         throw new Error(
           `Tavily API error: ${response.status} ${response.statusText}`
         );

@@ -30,7 +30,7 @@ import RNFS from 'react-native-fs';
 import MDSvg from 'react-native-marked/src/components/MDSvg.tsx';
 import MDImage from 'react-native-marked/src/components/MDImage.tsx';
 import ImageProgressBar from '../ImageProgressBar.tsx';
-import { PressMode } from '../../../types/Chat.ts';
+import { Citation, PressMode } from '../../../types/Chat.ts';
 import Clipboard from '@react-native-clipboard/clipboard';
 import MarkedList from '@jsamr/react-native-li';
 import Decimal from '@jsamr/counter-style/lib/es/presets/decimal';
@@ -41,6 +41,7 @@ import MathView from 'react-native-math-view';
 import { isAndroid } from '../../../utils/PlatformUtils.ts';
 import { ColorScheme } from '../../../theme';
 import MermaidCodeRenderer from './MermaidCodeRenderer';
+import CitationBadge from '../CitationBadge';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
 let mathViewIndex = 0;
@@ -181,16 +182,19 @@ export class CustomMarkdownRenderer
   private colors: ColorScheme;
   private styles: ReturnType<typeof createCustomStyles>;
   private isDark: boolean;
+  private citations: Citation[];
 
   constructor(
     private onImagePress: (pressMode: PressMode, url: string) => void,
     colors: ColorScheme,
-    isDark: boolean
+    isDark: boolean,
+    citations: Citation[] = []
   ) {
     super();
     this.colors = colors;
     this.isDark = isDark;
     this.styles = createCustomStyles(colors);
+    this.citations = citations;
   }
 
   getTextView(children: string | ReactNode[], styles?: TextStyle): ReactNode {
@@ -211,6 +215,55 @@ export class CustomMarkdownRenderer
     return this.getTextView(text, styles);
   }
 
+  // Parse citation marks [1], [2], [3] etc. and replace with CitationBadge components
+  private parseCitationMarks(text: string): ReactNode[] {
+    if (!this.citations || this.citations.length === 0) {
+      return [text];
+    }
+
+    // Regular expression to match [number] pattern
+    const citationRegex = /\[(\d+)\]/g;
+    const parts: ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = citationRegex.exec(text)) !== null) {
+      const citationNumber = parseInt(match[1], 10);
+      const citation = this.citations.find(c => c.number === citationNumber);
+
+      // Add text before the citation mark
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+
+      // Add citation badge if we have a matching citation
+      if (citation) {
+        // Add space before citation badge
+        parts.push(' ');
+        parts.push(
+          <CitationBadge
+            key={`citation-${citationNumber}-${match.index}`}
+            number={citationNumber}
+            url={citation.url}
+          />
+        );
+        // Add space after citation badge
+      } else {
+        // If no matching citation found, keep the original text
+        parts.push(match[0]);
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text after the last match
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : [text];
+  }
+
   codespan(text: string, styles?: TextStyle): ReactNode {
     return this.getTextView(text, {
       ...styles,
@@ -222,7 +275,12 @@ export class CustomMarkdownRenderer
     if (Array.isArray(text)) {
       return this.getNodeForTextArray(text, styles);
     }
-    return this.getTextView(text, styles);
+    // Parse citation marks in the text
+    const parsedContent = this.parseCitationMarks(text);
+    if (parsedContent.length === 1 && typeof parsedContent[0] === 'string') {
+      return this.getTextView(parsedContent[0], styles);
+    }
+    return this.getTextView(parsedContent, styles);
   }
 
   strong(children: string | ReactNode[], styles?: TextStyle): ReactNode {
