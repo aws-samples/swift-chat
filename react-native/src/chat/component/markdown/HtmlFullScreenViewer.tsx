@@ -30,6 +30,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../../theme';
 import { isMac } from '../../../App.tsx';
+import { injectErrorScript, commonWebViewProps } from './htmlUtils';
 
 interface HtmlFullScreenViewerProps {
   visible: boolean;
@@ -156,39 +157,7 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
     setHasError(true);
   }, []);
 
-  // Inject error handling script into the HTML
-  const htmlContent = useMemo(() => {
-    const errorHandlingScript = `
-    <script>
-      window.onerror = function(message, source, lineno, colno, error) {
-        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'rendered',
-            success: false,
-            error: message
-          }));
-        }
-        return false;
-      };
-      window.addEventListener('load', function() {
-        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'rendered',
-            success: true
-          }));
-        }
-      });
-    </script>
-    `;
-
-    if (code.includes('</body>')) {
-      return code.replace('</body>', `${errorHandlingScript}</body>`);
-    } else if (code.includes('</html>')) {
-      return code.replace('</html>', `${errorHandlingScript}</html>`);
-    } else {
-      return code + errorHandlingScript;
-    }
-  }, [code]);
+  const htmlContent = useMemo(() => injectErrorScript(code), [code]);
 
   const styles = StyleSheet.create({
     modal: {
@@ -277,16 +246,7 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
                   ref={webViewRef}
                   source={{ html: htmlContent }}
                   style={styles.webView}
-                  javaScriptEnabled={true}
-                  domStorageEnabled={true}
-                  allowFileAccess={true}
-                  allowUniversalAccessFromFileURLs={true}
-                  allowFileAccessFromFileURLs={true}
-                  mixedContentMode="compatibility"
-                  originWhitelist={['*']}
-                  scalesPageToFit={false}
-                  showsHorizontalScrollIndicator={false}
-                  showsVerticalScrollIndicator={false}
+                  {...commonWebViewProps}
                   onMessage={handleWebViewMessage}
                   onError={handleError}
                   scrollEnabled={true}

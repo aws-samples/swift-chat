@@ -181,6 +181,22 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
               />
               <Text style={styles.settingsText}>Image</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.settingsTouch}
+              onPress={() => {
+                setDrawerToPermanent();
+                navigation.navigate('AppGallery');
+              }}>
+              <Image
+                source={
+                  isDark
+                    ? require('../assets/app_dark.png')
+                    : require('../assets/app.png')
+                }
+                style={styles.appLeftImg}
+              />
+              <Text style={styles.settingsText}>App</Text>
+            </TouchableOpacity>
           </View>
         }
         renderItem={({ item }) => {
@@ -296,10 +312,9 @@ const createStyles = (colors: ColorScheme) =>
       height: 24,
       borderRadius: 12,
     },
-    settingsRightImg: {
-      width: 16,
-      height: 16,
-      marginRight: 8,
+    appLeftImg: {
+      width: 24,
+      height: 24,
     },
     flatList: {
       marginVertical: 4,

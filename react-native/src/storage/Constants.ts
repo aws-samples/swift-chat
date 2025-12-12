@@ -217,7 +217,7 @@ No explanation or alternatives.`,
     id: -10,
     name: 'App',
     prompt: '', // Dynamic prompt, will be set in getDefaultSystemPrompts()
-    includeHistory: false,
+    includeHistory: true,
   },
   ...DefaultVoiceSystemPrompts,
   ...DefaultImageSystemPrompts,
@@ -251,10 +251,10 @@ const getAppPrompt = () => {
     : `
 IMPORTANT: The user is on a mobile device. You MUST:
 - Design for mobile-first, responsive layout
-- Use viewport meta tag with width=device-width
+- Use viewport meta tag with width=device-width, viewport-fit=cover
 - Ensure touch-friendly UI (minimum 44px touch targets)
 - Use flexible units (%, vh, vw) instead of fixed pixels
-- Test that content fits within mobile screen width`;
+- Use env(safe-area-inset-*) for padding to avoid notch and home indicator`;
 
   return `You are an expert HTML/CSS/JavaScript developer. Your task is to create fully functional, interactive single-page web applications based on user requirements.
 

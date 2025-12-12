@@ -1,4 +1,4 @@
-import { ChatMode, SystemPrompt } from './Chat.ts';
+import { ChatMode, SavedApp, SystemPrompt } from './Chat.ts';
 
 export type RouteParamList = {
   Bedrock: {
@@ -11,5 +11,9 @@ export type RouteParamList = {
   Prompt: {
     prompt?: SystemPrompt;
     promptType?: string | undefined;
+  };
+  AppGallery: NonNullable<unknown>;
+  AppViewer: {
+    app: SavedApp;
   };
 };

@@ -123,7 +123,7 @@ const PlainTextCodeView: FunctionComponent<{
     }, [code, lineCount]);
 
     const displayedLines = displayedCode.split('\n');
-    const scale = language === 'mermaid' ? 1.75 : isMac ? 2 : 2.75;
+    const scale = language === 'mermaid' ? 1.75 : isMac ? 2 : 1.85;
     const marginBottomValue = -displayedLines.length * scale;
 
     return (
@@ -283,7 +283,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   const renderNode = useCallback(
     (nodes: rendererNode[]): ReactNode => {
       // Calculate margin bottom value once
-      const scale = rest.language === 'mermaid' ? 1.75 : isMac ? 2 : 2.75;
+      const scale = rest.language === 'mermaid' ? 1.75 : isMac ? 2 : 1.85;
       const marginBottomValue = -nodes.length * scale;
 
       // Optimization for streaming content - only process new nodes

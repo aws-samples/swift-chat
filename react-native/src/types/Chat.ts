@@ -192,3 +192,11 @@ export interface Metrics {
   latencyMs: string;
   speed: string;
 }
+
+export interface SavedApp {
+  id: string;
+  name: string;
+  htmlCode: string;
+  screenshotPath?: string;
+  createdAt: number;
+}

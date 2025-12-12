@@ -11,6 +11,7 @@ import {
   OpenAICompatConfig,
   ModelTag,
   FileInfo,
+  SavedApp,
 } from '../types/Chat.ts';
 import uuid from 'uuid';
 import {
@@ -77,6 +78,7 @@ const bedrockApiKeyTag = keyPrefix + 'bedrockApiKeyTag';
 const lastVirtualTryOnImgFileTag = keyPrefix + 'lastVirtualTryOnImgFileTag';
 const searchProviderKey = keyPrefix + 'searchProviderKey';
 const tavilyApiKeyTag = keyPrefix + 'tavilyApiKeyTag';
+const savedAppsKey = keyPrefix + 'savedAppsKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -815,6 +817,70 @@ export function extractDomainFromUrl(url: string): string {
   } catch {
     return '';
   }
+}
+
+// Saved Apps functions
+// Store metadata separately from htmlCode to improve performance
+// Metadata list: savedAppsKey -> [{id, name, screenshotPath, createdAt}, ...]
+// HTML code: app_code_{id} -> htmlCode string
+
+export type AppMetadata = Omit<SavedApp, 'htmlCode'>;
+let cachedAppMetadata: AppMetadata[] | undefined;
+
+const getAppCodeKey = (appId: string) => `app_code_${appId}`;
+
+export function saveApp(app: SavedApp): void {
+  const { htmlCode, ...metadata } = app;
+
+  // Save htmlCode separately
+  storage.set(getAppCodeKey(app.id), htmlCode);
+
+  // Save metadata to list
+  const apps = getSavedApps();
+  const existingIndex = apps.findIndex(a => a.id === app.id);
+  if (existingIndex >= 0) {
+    apps[existingIndex] = metadata;
+  } else {
+    apps.unshift(metadata);
+  }
+  cachedAppMetadata = apps;
+  storage.set(savedAppsKey, JSON.stringify(apps));
+}
+
+export function getSavedApps(): AppMetadata[] {
+  if (cachedAppMetadata) {
+    return cachedAppMetadata;
+  }
+  const appsString = storage.getString(savedAppsKey) ?? '';
+  if (appsString.length > 0) {
+    cachedAppMetadata = JSON.parse(appsString) as AppMetadata[];
+    return cachedAppMetadata;
+  }
+  return [];
+}
+
+export function deleteApp(appId: string): void {
+  // Delete htmlCode
+  storage.delete(getAppCodeKey(appId));
+
+  // Delete from metadata list
+  const apps = getSavedApps().filter(a => a.id !== appId);
+  cachedAppMetadata = apps;
+  storage.set(savedAppsKey, JSON.stringify(apps));
+}
+
+export function getAppById(appId: string): SavedApp | undefined {
+  const metadata = getSavedApps().find(a => a.id === appId);
+  if (!metadata) {
+    return undefined;
+  }
+  // Load htmlCode on demand
+  const htmlCode = storage.getString(getAppCodeKey(appId)) ?? '';
+  return { ...metadata, htmlCode };
+}
+
+export function generateAppId(): string {
+  return uuid.v4();
 }
 
 // Generate OpenAI Compatible models from configs
