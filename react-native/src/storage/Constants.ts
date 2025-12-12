@@ -1,5 +1,6 @@
 import { Model, ModelTag, SystemPrompt } from '../types/Chat.ts';
 import { getDeepSeekApiKey, getOpenAIApiKey } from './StorageUtils.ts';
+import { isMac } from '../App.tsx';
 
 // AWS credentials - empty by default, to be filled by user
 const RegionList = [
@@ -213,15 +214,9 @@ No explanation or alternatives.`,
     includeHistory: false,
   },
   {
-    id: -2,
-    name: 'OptimizeCode',
-    prompt: `You are a code optimizer that focuses on identifying 1-3 key improvements in code snippets while maintaining core functionality. Analyze performance, readability and modern best practices.
-
-If no code is provided: Reply "Please share code for optimization."
-If code needs improvement: Provide optimized version with 1-3 specific changes and their benefits.
-If code is already optimal: Reply "Code is well written, no significant optimizations needed."
-
-Stay focused on practical improvements only.`,
+    id: -10,
+    name: 'App',
+    prompt: '', // Dynamic prompt, will be set in getDefaultSystemPrompts()
     includeHistory: false,
   },
   ...DefaultVoiceSystemPrompts,
@@ -250,6 +245,55 @@ export function getDefaultImageModels() {
   return [DefaultImageModel] as Model[];
 }
 
+const getAppPrompt = () => {
+  const deviceHint = isMac
+    ? ''
+    : `
+IMPORTANT: The user is on a mobile device. You MUST:
+- Design for mobile-first, responsive layout
+- Use viewport meta tag with width=device-width
+- Ensure touch-friendly UI (minimum 44px touch targets)
+- Use flexible units (%, vh, vw) instead of fixed pixels
+- Test that content fits within mobile screen width`;
+
+  return `You are an expert HTML/CSS/JavaScript developer. Your task is to create fully functional, interactive single-page web applications based on user requirements.
+
+## Output Format
+1. First, output the complete HTML code wrapped in \`\`\`html code block
+2. Then provide a brief introduction of the app and usage instructions
+
+## Code Requirements
+- Generate a complete, self-contained HTML file with embedded CSS and JavaScript
+- Include <!DOCTYPE html>, <html>, <head>, and <body> tags
+- All styles must be in <style> tags within <head>
+- All scripts must be in <script> tags before </body>
+- Code must be production-ready and error-free
+${deviceHint}
+
+## Design Guidelines
+- Modern, clean UI with good visual hierarchy
+- Smooth animations and transitions where appropriate
+- Clear user feedback for interactions
+- Accessible design (proper contrast, semantic HTML)
+
+## Examples of Apps You Can Create
+- Calculators, converters, timers, stopwatches
+- Todo lists, note-taking apps, kanban boards
+- Games (memory, quiz, snake, tetris, etc.)
+- Data visualizations, charts, dashboards
+- Form builders, surveys, polls
+- Drawing/painting tools, image editors
+- Music players, sound generators
+- Interactive tutorials, flashcards
+
+If the user's request is unclear, ask clarifying questions before generating code.`;
+};
+
 export function getDefaultSystemPrompts(): SystemPrompt[] {
-  return DefaultSystemPrompts;
+  return DefaultSystemPrompts.map(prompt => {
+    if (prompt.name === 'App') {
+      return { ...prompt, prompt: getAppPrompt() };
+    }
+    return prompt;
+  });
 }

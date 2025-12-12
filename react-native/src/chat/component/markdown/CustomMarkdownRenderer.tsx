@@ -41,6 +41,7 @@ import MathView from 'react-native-math-view';
 import { isAndroid } from '../../../utils/PlatformUtils.ts';
 import { ColorScheme } from '../../../theme';
 import MermaidCodeRenderer from './MermaidCodeRenderer';
+import HtmlCodeRenderer from './HtmlCodeRenderer';
 import CitationBadge from '../CitationBadge';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
@@ -129,6 +130,17 @@ const MemoizedCodeHighlighter = React.memo(
       );
     }
 
+    if (language === 'html') {
+      return (
+        <HtmlCodeRenderer
+          text={text}
+          colors={colors}
+          isDark={isDark}
+          onCopy={handleCopy}
+        />
+      );
+    }
+
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -162,6 +174,9 @@ const MemoizedCodeHighlighter = React.memo(
   },
   (prevProps, nextProps) => {
     if (prevProps.language === 'mermaid' || nextProps.language === 'mermaid') {
+      return false;
+    }
+    if (prevProps.language === 'html' || nextProps.language === 'html') {
       return false;
     }
     return (
@@ -360,8 +375,12 @@ export class CustomMarkdownRenderer
     _textStyle?: TextStyle
   ): ReactNode {
     if (text && text !== '') {
-      const componentKey =
-        language === 'mermaid' ? 'mermaid-code-block' : this.getKey();
+      let componentKey = this.getKey();
+      if (language === 'mermaid') {
+        componentKey = 'mermaid-code-block';
+      } else if (language === 'html') {
+        componentKey = 'html-code-block';
+      }
       return (
         <MemoizedCodeHighlighter
           key={componentKey}

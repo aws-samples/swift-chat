@@ -32,7 +32,7 @@ import { trimNewlines } from 'trim-newlines';
 // Time (ms) to wait after last content change before applying syntax highlighting
 const STREAMING_IDLE_THRESHOLD_MS = 400;
 // Minimum lines to enable streaming optimization (skip highlighting during streaming)
-const STREAMING_LINE_THRESHOLD = 50;
+const STREAMING_LINE_THRESHOLD = 25;
 
 type ReactStyle = Record<string, CSSProperties>;
 type HighlighterStyleSheet = { [key: string]: TextStyle };
@@ -85,7 +85,7 @@ const MemoizedText = memo(
 );
 
 // Threshold for throttling updates in plain text view
-const PLAIN_TEXT_THROTTLE_LINE_THRESHOLD = 80;
+const PLAIN_TEXT_THROTTLE_LINE_THRESHOLD = 50;
 
 // Plain text renderer for streaming mode - much faster than syntax highlighting
 const PlainTextCodeView: FunctionComponent<{
@@ -123,7 +123,7 @@ const PlainTextCodeView: FunctionComponent<{
     }, [code, lineCount]);
 
     const displayedLines = displayedCode.split('\n');
-    const scale = language === 'mermaid' ? 1.75 : isMac ? 3 : 2.75;
+    const scale = language === 'mermaid' ? 1.75 : isMac ? 2 : 2.75;
     const marginBottomValue = -displayedLines.length * scale;
 
     return (
@@ -283,7 +283,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   const renderNode = useCallback(
     (nodes: rendererNode[]): ReactNode => {
       // Calculate margin bottom value once
-      const scale = rest.language === 'mermaid' ? 1.75 : isMac ? 3 : 2.75;
+      const scale = rest.language === 'mermaid' ? 1.75 : isMac ? 2 : 2.75;
       const marginBottomValue = -nodes.length * scale;
 
       // Optimization for streaming content - only process new nodes

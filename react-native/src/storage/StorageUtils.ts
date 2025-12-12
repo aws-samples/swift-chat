@@ -512,6 +512,20 @@ export function getSystemPrompts(type?: string): SystemPrompt[] {
       );
       saveAllSystemPrompts(currentSystemPrompts);
     }
+    // Migration: Replace OptimizeCode with App
+    const hasOptimizeCode = currentSystemPrompts.some(
+      p => p.name === 'OptimizeCode'
+    );
+    const hasApp = currentSystemPrompts.some(p => p.name === 'App');
+    if (hasOptimizeCode && !hasApp) {
+      const appPrompt = getDefaultSystemPrompts().find(p => p.name === 'App');
+      if (appPrompt) {
+        currentSystemPrompts = currentSystemPrompts.map(p =>
+          p.name === 'OptimizeCode' ? { ...appPrompt, id: p.id } : p
+        );
+        saveAllSystemPrompts(currentSystemPrompts);
+      }
+    }
   } else {
     currentSystemPrompts = getDefaultSystemPrompts();
     saveAllSystemPrompts(currentSystemPrompts);
