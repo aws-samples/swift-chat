@@ -328,10 +328,16 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
           // On Mac, save directly to Downloads folder
           if (isMac) {
             try {
-              const downloadsPath = RNFS.DocumentDirectoryPath.replace('/Documents', '/Downloads');
+              const downloadsPath = RNFS.DocumentDirectoryPath.replace(
+                '/Documents',
+                '/Downloads'
+              );
               const filePath = `${downloadsPath}/${fileName}`;
               await RNFS.writeFile(filePath, base64Data, 'base64');
-              Alert.alert('Success', `Image saved to Downloads folder:\n${fileName}`);
+              Alert.alert(
+                'Success',
+                `Image saved to Downloads folder:\n${fileName}`
+              );
             } catch (error) {
               console.log('[MermaidFullScreenViewer] Save error:', error);
               Alert.alert('Error', 'Failed to save image to Downloads folder');
