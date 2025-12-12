@@ -1016,6 +1016,7 @@ function ChatScreen(): React.JSX.Element {
             smartInsertDelete: false,
             spellCheck: false,
             blurOnSubmit: isMac,
+            submitBehavior: isMac ? 'blurAndSubmit' : 'submit',
             onSubmitEditing: () => {
               if (
                 inputTextRef.current.length > 0 &&

@@ -154,7 +154,7 @@ static IMP originalPressesEnded = NULL;
     RCTBaseTextInputView *textInputView = (RCTBaseTextInputView *)self;
 
     if (altKeyPressed || shiftPressed) {
-        // Alt+Enter logic - insert newline
+        // Alt+Enter or Shift+Enter logic - insert newline
 
         id<RCTBackedTextInputViewProtocol> backedTextInputView = textInputView.backedTextInputView;
 
@@ -193,6 +193,11 @@ static IMP originalPressesEnded = NULL;
         // Trigger text change event
         [textInputView textInputDidChange];
 
+        // Reset modifier key states after processing
+        altKeyPressed = NO;
+        shiftPressed = NO;
+        commandPressed = NO;
+
         // Return NO to prevent submission when Alt is pressed
         return NO;
     } else {
@@ -214,6 +219,11 @@ static IMP originalPressesEnded = NULL;
                                                     eventCount:nativeEventCount];
             }
         }
+
+        // Reset modifier key states after processing to prevent state leakage
+        altKeyPressed = NO;
+        shiftPressed = NO;
+        commandPressed = NO;
 
         return shouldSubmit;
     }

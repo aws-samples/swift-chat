@@ -389,7 +389,7 @@ function SettingsScreen(): React.JSX.Element {
   }));
   const textModelsData: DropdownItem[] = textModels.map(model => ({
     label: model.modelName ?? '',
-    value: model.modelId ?? '',
+    value: model.modelName ?? '',
   }));
   const imageModelsData: DropdownItem[] = imageModels.map(model => ({
     label: model.modelName ?? '',
@@ -596,11 +596,11 @@ function SettingsScreen(): React.JSX.Element {
         <CustomDropdown
           label="Chat Model"
           data={textModelsData}
-          value={selectedTextModel.modelId}
+          value={selectedTextModel.modelName}
           onChange={(item: DropdownItem) => {
             if (item.value !== '') {
               const selectedModel = textModels.find(
-                model => model.modelId === item.value
+                model => model.modelName === item.value
               );
               if (selectedModel) {
                 saveTextModel(selectedModel);

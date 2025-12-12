@@ -19,7 +19,7 @@ export class BingProvider {
 
   getSearchUrl(query: string): string {
     const encodedQuery = encodeURIComponent(query);
-    return `https://www.bing.com/search?q=${encodedQuery}`;
+    return `https://cn.bing.com/search?q=${encodedQuery}&ensearch=1`;
   }
 
   getExtractionScript(expectedQuery?: string): string {

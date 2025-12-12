@@ -103,7 +103,8 @@ export class WebViewSearchService {
         this.addEventListener('webview:loadEndTriggered', () => {
           setTimeout(() => {
             const provider = this.getProvider(this.currentEngine);
-            const script = provider.getExtractionScript(this.currentQuery);
+            // Don't validate URL after CAPTCHA, as Google may have modified the URL parameters
+            const script = provider.getExtractionScript();
             if (this.sendEvent) {
               this.sendEvent('webview:injectScript', { script });
             }
