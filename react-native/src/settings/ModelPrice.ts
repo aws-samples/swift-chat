@@ -123,8 +123,8 @@ export const ModelPrice: ModelPriceType = {
       outputTokenPrice: 0.0006,
     },
     'Minimax M2': {
-      inputTokenPrice: 0.00030,
-      outputTokenPrice: 0.00120,
+      inputTokenPrice: 0.0003,
+      outputTokenPrice: 0.0012,
     },
     'Titan Text G1 - Lite': {
       inputTokenPrice: 0.00015,

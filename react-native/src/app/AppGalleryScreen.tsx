@@ -374,7 +374,10 @@ function AppGalleryScreen(): React.JSX.Element {
       const app = getAppById(selectedApp.id);
       if (app) {
         try {
-          const fileName = `${app.name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.html`;
+          const fileName = `${app.name.replace(
+            /[^a-zA-Z0-9\u4e00-\u9fa5]/g,
+            '_'
+          )}.html`;
 
           if (isMac) {
             // On Mac, save directly to Downloads folder
