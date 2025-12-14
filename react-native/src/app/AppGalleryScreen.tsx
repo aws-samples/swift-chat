@@ -33,11 +33,13 @@ import { useTheme, ColorScheme } from '../theme';
 import RNFS from 'react-native-fs';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { showInfo } from '../chat/util/ToastUtils';
+import { isMac } from '../App';
+import Share from 'react-native-share';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
 const getNumColumns = (width: number) => (width > 434 ? 4 : 2);
-const MENU_HEIGHT = 224; // 4 items * 56px each
+const MENU_HEIGHT = 280; // 5 items * 56px each
 
 // Context menu item
 interface MenuItemProps {
@@ -367,6 +369,50 @@ function AppGalleryScreen(): React.JSX.Element {
     closeMenu();
   }, [selectedApp, closeMenu]);
 
+  const handleSaveToFile = useCallback(async () => {
+    if (selectedApp) {
+      const app = getAppById(selectedApp.id);
+      if (app) {
+        try {
+          const fileName = `${app.name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.html`;
+
+          if (isMac) {
+            // On Mac, save directly to Downloads folder
+            const downloadsPath = RNFS.DocumentDirectoryPath.replace(
+              '/Documents',
+              '/Downloads'
+            );
+            const filePath = `${downloadsPath}/${fileName}`;
+            await RNFS.writeFile(filePath, app.htmlCode, 'utf8');
+            showInfo('Saved to Downloads');
+          } else if (Platform.OS === 'android') {
+            // On Android, save to Downloads folder
+            const filePath = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+            await RNFS.writeFile(filePath, app.htmlCode, 'utf8');
+            showInfo('Saved to Downloads');
+          } else {
+            // On iOS mobile, save to Documents then use Share sheet
+            const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+            await RNFS.writeFile(filePath, app.htmlCode, 'utf8');
+            const shareOptions = {
+              url: filePath,
+              type: 'text/html',
+              title: 'Save HTML File',
+            };
+            await Share.open(shareOptions);
+          }
+        } catch (error) {
+          console.error('Error saving file:', error);
+          // User cancelled share is not an error
+          if ((error as Error).message !== 'User did not share') {
+            Alert.alert('Error', 'Failed to save file');
+          }
+        }
+      }
+    }
+    closeMenu();
+  }, [selectedApp, closeMenu]);
+
   const handleDelete = useCallback(() => {
     if (selectedApp) {
       const app = selectedApp;
@@ -503,6 +549,12 @@ function AppGalleryScreen(): React.JSX.Element {
           label="Copy Code"
           icon={require('../assets/copy.png')}
           onPress={handleCopy}
+          colors={colors}
+        />
+        <MenuItem
+          label="Save to File"
+          icon={require('../assets/download.png')}
+          onPress={handleSaveToFile}
           colors={colors}
         />
         <MenuItem

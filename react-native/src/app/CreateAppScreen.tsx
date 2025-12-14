@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -25,6 +26,7 @@ import {
   commonWebViewProps,
 } from '../chat/component/markdown/htmlUtils';
 import { isMac } from '../App';
+import DocumentPicker from 'react-native-document-picker';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
@@ -73,6 +75,29 @@ function CreateAppScreen(): React.JSX.Element {
       setHasError(false);
     }
   }, []);
+
+  // Import file from document picker
+  const handleImportFile = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.plainText, 'text/html', 'public.html'],
+      });
+      const file = result[0];
+      if (file.uri) {
+        const filePath =
+          Platform.OS === 'ios'
+            ? decodeURIComponent(file.uri.replace('file://', ''))
+            : file.uri;
+        const content = await RNFS.readFile(filePath, 'utf8');
+        handleCodeChange(content);
+      }
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) {
+        console.error('Error picking file:', err);
+        Alert.alert('Error', 'Failed to read file');
+      }
+    }
+  }, [handleCodeChange]);
 
   const htmlContent = useMemo(
     () => (showPreview ? injectErrorScript(htmlCode) : ''),
@@ -290,22 +315,36 @@ function CreateAppScreen(): React.JSX.Element {
 
           {/* HTML Code Input or Preview */}
           {!showPreview ? (
-            <ScrollView
-              style={styles.codeScrollView}
-              horizontal
-              showsHorizontalScrollIndicator={true}
-              contentContainerStyle={styles.codeScrollContent}>
-              <TextInput
-                style={[styles.codeInput, isMac && styles.macInput]}
-                placeholder="Paste HTML code here..."
-                placeholderTextColor={colors.placeholder}
-                value={htmlCode}
-                onChangeText={handleCodeChange}
-                multiline
-                textAlignVertical="top"
-                scrollEnabled={true}
-              />
-            </ScrollView>
+            <View style={styles.codeInputContainer}>
+              <TouchableOpacity
+                style={styles.importButton}
+                onPress={handleImportFile}>
+                <Image
+                  source={
+                    isDark
+                      ? require('../assets/document_dark.png')
+                      : require('../assets/document.png')
+                  }
+                  style={styles.importIcon}
+                />
+              </TouchableOpacity>
+              <ScrollView
+                style={styles.codeScrollView}
+                horizontal
+                showsHorizontalScrollIndicator={true}
+                contentContainerStyle={styles.codeScrollContent}>
+                <TextInput
+                  style={[styles.codeInput, isMac && styles.macInput]}
+                  placeholder="Paste HTML code here..."
+                  placeholderTextColor={colors.placeholder}
+                  value={htmlCode}
+                  onChangeText={handleCodeChange}
+                  multiline
+                  textAlignVertical="top"
+                  scrollEnabled={true}
+                />
+              </ScrollView>
+            </View>
           ) : (
             <View style={styles.previewContainer}>
               <View style={styles.previewHeader}>
@@ -373,12 +412,31 @@ const createStyles = (colors: ColorScheme) =>
       color: colors.text,
       fontSize: 16,
     },
+    codeInputContainer: {
+      flex: 1,
+      marginBottom: 16,
+    },
+    importButton: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      zIndex: 1,
+      padding: 6,
+      backgroundColor: colors.card,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    importIcon: {
+      width: 18,
+      height: 18,
+      tintColor: colors.text,
+    },
     codeScrollView: {
       flex: 1,
       borderWidth: 1,
       borderColor: colors.promptScreenInputBorder,
       borderRadius: 8,
-      marginBottom: 16,
       backgroundColor: colors.inputBackground,
     },
     codeScrollContent: {

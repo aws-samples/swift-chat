@@ -38,11 +38,19 @@ const isHtmlComplete = (html: string): boolean => {
   return html.trimEnd().toLowerCase().endsWith('</html>');
 };
 
+// Check if HTML code exceeds 50 lines (should not be highlighted)
+const isLargeHtml = (html: string): boolean => {
+  return html.split('\n').length > 50;
+};
+
 const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
   ({ text, colors, isDark, onCopy }, ref) => {
-    const [showPreview, setShowPreview] = useState(false);
+    // Default to preview mode when HTML is complete
+    const [showPreview, setShowPreview] = useState(() => isHtmlComplete(text));
     const [currentText, setCurrentText] = useState(text);
-    const [hasAutoSwitched, setHasAutoSwitched] = useState(false);
+    const [hasAutoSwitched, setHasAutoSwitched] = useState(() =>
+      isHtmlComplete(text)
+    );
     const htmlRendererRef = useRef<HtmlPreviewRendererRef>(null);
     const styles = createStyles(colors);
     const hljsStyle = isDark ? vs2015 : github;
@@ -142,7 +150,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
               }}
               textStyle={styles.codeText}
               language="html"
-              forceHighlight={isHtmlComplete(currentText)}>
+              disableHighlight={isLargeHtml(currentText)}>
               {currentText}
             </CustomCodeHighlighter>
           </Suspense>

@@ -44,9 +44,9 @@ export interface CodeHighlighterProps extends SyntaxHighlighterProps {
    */
   containerStyle?: StyleProp<ViewStyle>;
   /**
-   * If true, always show syntax highlighting (skip streaming plain text mode)
+   * If true, always show plain text without syntax highlighting
    */
-  forceHighlight?: boolean;
+  disableHighlight?: boolean;
 }
 
 const getRNStylesFromHljsStyle = (
@@ -150,7 +150,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   hljsStyle,
   scrollViewProps,
   containerStyle,
-  forceHighlight,
+  disableHighlight,
   ...rest
 }) => {
   const stylesheet: HighlighterStyleSheet = useMemo(
@@ -166,8 +166,8 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   const prevLengthRef = useRef(childrenString.length);
 
   useEffect(() => {
-    // Skip auto-highlighting logic if forceHighlight is provided (controlled externally)
-    if (forceHighlight !== undefined) {
+    // Skip auto-highlighting logic if disableHighlight is true
+    if (disableHighlight) {
       return;
     }
 
@@ -191,7 +191,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
         streamingTimerRef.current = null;
       }, STREAMING_IDLE_THRESHOLD_MS);
     }
-  }, [childrenString.length, showHighlighted, forceHighlight]);
+  }, [childrenString.length, showHighlighted, disableHighlight]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -374,9 +374,8 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   );
 
   // Determine if we should show highlighting
-  // Use forceHighlight if provided, otherwise use internal showHighlighted state
-  const shouldHighlight =
-    forceHighlight !== undefined ? forceHighlight : showHighlighted;
+  // If disableHighlight is true, never highlight; otherwise use internal showHighlighted state
+  const shouldHighlight = disableHighlight ? false : showHighlighted;
 
   // During streaming, render plain text for performance
   if (!shouldHighlight) {
