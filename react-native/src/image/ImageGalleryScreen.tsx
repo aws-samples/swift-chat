@@ -355,8 +355,6 @@ const createStyles = (
       borderRadius: 8,
       marginBottom: gap,
       overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: colors.border,
     },
     thumbnail: {
       width: '100%',
