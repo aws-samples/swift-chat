@@ -1,10 +1,4 @@
-import React, {
-  useMemo,
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -16,18 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
-import {
-  PanGestureHandler,
-  PinchGestureHandler,
-  PanGestureHandlerGestureEvent,
-  PinchGestureHandlerGestureEvent,
-} from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedGestureHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 import { useTheme } from '../../../theme';
 import { isMac } from '../../../App.tsx';
 import { injectErrorScript, commonWebViewProps } from './htmlUtils';
@@ -51,14 +33,6 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
     isMac ? false : screenData.width > screenData.height
   );
 
-  // Animation values for pan and zoom
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const scale = useSharedValue(1);
-  const baseScale = useSharedValue(1);
-  const savedTranslateX = useSharedValue(0);
-  const savedTranslateY = useSharedValue(0);
-
   // Listen for orientation changes
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -69,77 +43,12 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
     return () => subscription?.remove();
   }, []);
 
-  // Reset transforms when modal opens
+  // Reset error state when modal opens
   useEffect(() => {
     if (visible) {
-      translateX.value = 0;
-      translateY.value = 0;
-      scale.value = 1;
-      baseScale.value = 1;
-      savedTranslateX.value = 0;
-      savedTranslateY.value = 0;
       setHasError(false);
     }
-  }, [
-    visible,
-    translateX,
-    translateY,
-    scale,
-    baseScale,
-    savedTranslateX,
-    savedTranslateY,
-  ]);
-
-  const pinchHandler =
-    useAnimatedGestureHandler<PinchGestureHandlerGestureEvent>({
-      onStart: () => {
-        baseScale.value = scale.value;
-      },
-      onActive: event => {
-        scale.value = Math.max(0.5, Math.min(baseScale.value * event.scale, 5));
-      },
-      onEnd: () => {
-        if (scale.value < 1) {
-          scale.value = withSpring(1);
-          translateX.value = withSpring(0);
-          translateY.value = withSpring(0);
-        }
-      },
-    });
-
-  const panHandler = useAnimatedGestureHandler<PanGestureHandlerGestureEvent>({
-    onStart: () => {
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
-    },
-    onActive: event => {
-      translateX.value = savedTranslateX.value + event.translationX;
-      translateY.value = savedTranslateY.value + event.translationY;
-    },
-    onEnd: () => {
-      // Only spring back to center if scale is 1 or less
-      if (scale.value <= 1) {
-        translateX.value = withSpring(0);
-        translateY.value = withSpring(0);
-        savedTranslateX.value = 0;
-        savedTranslateY.value = 0;
-      } else {
-        // Save the final position for next pan
-        savedTranslateX.value = translateX.value;
-        savedTranslateY.value = translateY.value;
-      }
-    },
-  });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { scale: scale.value },
-      ],
-    };
-  });
+  }, [visible]);
 
   const handleWebViewMessage = useCallback((event: WebViewMessageEvent) => {
     try {
@@ -237,26 +146,21 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
           <Text style={styles.closeButtonX}>×</Text>
         </TouchableOpacity>
 
-        {/* WebView with gesture handling */}
-        <PanGestureHandler onGestureEvent={panHandler}>
-          <Animated.View style={styles.webViewContainer}>
-            <PinchGestureHandler onGestureEvent={pinchHandler}>
-              <Animated.View style={[styles.webViewContainer, animatedStyle]}>
-                <WebView
-                  ref={webViewRef}
-                  source={{ html: htmlContent }}
-                  style={styles.webView}
-                  {...commonWebViewProps}
-                  onMessage={handleWebViewMessage}
-                  onError={handleError}
-                  scrollEnabled={true}
-                  bounces={false}
-                  decelerationRate="normal"
-                />
-              </Animated.View>
-            </PinchGestureHandler>
-          </Animated.View>
-        </PanGestureHandler>
+        {/* WebView */}
+        <View style={styles.webViewContainer}>
+          <WebView
+            ref={webViewRef}
+            source={{ html: htmlContent }}
+            style={styles.webView}
+            {...commonWebViewProps}
+            onMessage={handleWebViewMessage}
+            onError={handleError}
+            scrollEnabled={true}
+            bounces={false}
+            automaticallyAdjustsScrollIndicatorInsets={false}
+            contentInsetAdjustmentBehavior="never"
+          />
+        </View>
 
         {/* Error overlay */}
         {hasError && (
