@@ -29,5 +29,6 @@ export type RouteParamList = {
   AppViewer: {
     app: SavedApp;
   };
+  CreateApp: NonNullable<unknown>;
   ImageGallery: NonNullable<unknown>;
 };

@@ -137,15 +137,22 @@ const HtmlPreviewRenderer = forwardRef<
 
         const appId = generateAppId();
         const base64Data = data.replace(/^data:image\/(png|jpeg);base64,/, '');
-        const screenshotPath = `${APP_SCREENSHOTS_DIR}/${appId}.jpg`;
+        const screenshotFileName = `${appId}.jpg`;
+        const screenshotFullPath = `${APP_SCREENSHOTS_DIR}/${screenshotFileName}`;
 
-        await RNFS.writeFile(screenshotPath, base64Data, 'base64');
+        await RNFS.writeFile(screenshotFullPath, base64Data, 'base64');
+
+        // Store relative path for iOS (to survive app updates), full file:// URI for Android
+        const storedPath =
+          Platform.OS === 'android'
+            ? `file://${screenshotFullPath}`
+            : `app/${screenshotFileName}`;
 
         const app: SavedApp = {
           id: appId,
           name: appName.trim(),
           htmlCode: code,
-          screenshotPath: screenshotPath,
+          screenshotPath: storedPath,
           createdAt: Date.now(),
         };
 
@@ -354,7 +361,7 @@ const createStyles = (colors: ColorScheme) =>
       position: 'relative' as const,
     },
     webView: {
-      height: 580,
+      height: 480,
       backgroundColor: 'transparent' as const,
     },
     errorContainer: {

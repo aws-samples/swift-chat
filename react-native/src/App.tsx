@@ -17,6 +17,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
 import AppGalleryScreen from './app/AppGalleryScreen.tsx';
 import AppViewerScreen from './app/AppViewerScreen.tsx';
+import CreateAppScreen from './app/CreateAppScreen.tsx';
 import ImageGalleryScreen from './image/ImageGalleryScreen.tsx';
 import { isAndroid, isMacCatalyst } from './utils/PlatformUtils';
 import { ThemeProvider, useTheme } from './theme';
@@ -132,6 +133,20 @@ const AppNavigator = () => {
             headerStyle: { backgroundColor: colors.background },
             headerTintColor: colors.text,
           };
+        }}
+      />
+      <Stack.Screen
+        name="CreateApp"
+        component={CreateAppScreen}
+        options={{
+          title: 'Create App',
+          contentStyle: {
+            height: isMac ? 66 : undefined,
+            backgroundColor: colors.background,
+          },
+          headerTitleAlign: 'center',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
         }}
       />
       <Stack.Screen

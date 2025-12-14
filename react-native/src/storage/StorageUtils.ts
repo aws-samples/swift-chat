@@ -853,12 +853,12 @@ export function saveApp(app: SavedApp): void {
 
 export function getSavedApps(): AppMetadata[] {
   if (cachedAppMetadata) {
-    return cachedAppMetadata;
+    return [...cachedAppMetadata];
   }
   const appsString = storage.getString(savedAppsKey) ?? '';
   if (appsString.length > 0) {
     cachedAppMetadata = JSON.parse(appsString) as AppMetadata[];
-    return cachedAppMetadata;
+    return [...cachedAppMetadata];
   }
   return [];
 }
@@ -885,6 +885,27 @@ export function getAppById(appId: string): SavedApp | undefined {
 
 export function generateAppId(): string {
   return uuid.v4();
+}
+
+export function pinApp(appId: string): void {
+  const apps = getSavedApps();
+  const index = apps.findIndex(a => a.id === appId);
+  if (index > 0) {
+    const [app] = apps.splice(index, 1);
+    apps.unshift(app);
+    cachedAppMetadata = apps;
+    storage.set(savedAppsKey, JSON.stringify(apps));
+  }
+}
+
+export function renameApp(appId: string, newName: string): void {
+  const apps = getSavedApps();
+  const app = apps.find(a => a.id === appId);
+  if (app) {
+    app.name = newName;
+    cachedAppMetadata = apps;
+    storage.set(savedAppsKey, JSON.stringify(apps));
+  }
 }
 
 // Generate OpenAI Compatible models from configs
