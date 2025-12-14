@@ -16,7 +16,7 @@ import { ModelSelectionModal } from './ModelSelectionModal.tsx';
 import { WebSearchIconButton } from './WebSearchIconButton.tsx';
 import { WebSearchSelectionModal } from './WebSearchSelectionModal.tsx';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { isAndroid } from '../../utils/PlatformUtils.ts';
+import { isAndroid, isMacCatalyst } from '../../utils/PlatformUtils.ts';
 
 interface CustomComposerProps {
   files: FileInfo[];
@@ -127,6 +127,9 @@ export const CustomChatFooter: React.FC<CustomComposerProps> = ({
           }),
           ...(files.length === 0 && {
             height: 60,
+          }),
+          ...(isMacCatalyst && {
+            paddingBottom: 18,
           }),
         }}>
         {(isHideFileList || files.length > 0) && (

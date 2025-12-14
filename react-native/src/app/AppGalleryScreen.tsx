@@ -14,20 +14,27 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../types/RouteTypes';
-import { getSavedApps, deleteApp, getAppById, AppMetadata } from '../storage/StorageUtils';
+import {
+  getSavedApps,
+  deleteApp,
+  getAppById,
+  AppMetadata,
+} from '../storage/StorageUtils';
 import { HeaderLeftView } from '../prompt/HeaderLeftView';
 import { useTheme, ColorScheme } from '../theme';
 import RNFS from 'react-native-fs';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
-const getNumColumns = (width: number) => (width > 434 ? 3 : 2);
+const getNumColumns = (width: number) => (width > 434 ? 4 : 2);
 
 function AppGalleryScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp>();
   const { colors, isDark } = useTheme();
   const [apps, setApps] = useState<AppMetadata[]>([]);
-  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [screenWidth, setScreenWidth] = useState(
+    Dimensions.get('window').width
+  );
   const numColumns = getNumColumns(screenWidth);
   const styles = createStyles(colors, numColumns);
 
@@ -65,28 +72,32 @@ function AppGalleryScreen(): React.JSX.Element {
 
   const handleDeleteApp = useCallback(
     (app: AppMetadata) => {
-      Alert.alert('Delete App', `Are you sure you want to delete "${app.name}"?`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            // Delete screenshot file if exists
-            if (app.screenshotPath) {
-              try {
-                const exists = await RNFS.exists(app.screenshotPath);
-                if (exists) {
-                  await RNFS.unlink(app.screenshotPath);
+      Alert.alert(
+        'Delete App',
+        `Are you sure you want to delete "${app.name}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              // Delete screenshot file if exists
+              if (app.screenshotPath) {
+                try {
+                  const exists = await RNFS.exists(app.screenshotPath);
+                  if (exists) {
+                    await RNFS.unlink(app.screenshotPath);
+                  }
+                } catch (error) {
+                  console.log('Error deleting screenshot:', error);
                 }
-              } catch (error) {
-                console.log('Error deleting screenshot:', error);
               }
-            }
-            deleteApp(app.id);
-            loadApps();
+              deleteApp(app.id);
+              loadApps();
+            },
           },
-        },
-      ]);
+        ]
+      );
     },
     [loadApps]
   );
@@ -173,7 +184,7 @@ function AppGalleryScreen(): React.JSX.Element {
 const createStyles = (colors: ColorScheme, numColumns: number) => {
   // Calculate card width based on number of columns
   // 12px padding on each side, 8px gap between cards
-  const cardWidthPercent = numColumns === 3 ? '31.5%' : '48%';
+  const cardWidthPercent = numColumns === 4 ? '24.5%' : '48%';
 
   return StyleSheet.create({
     safeArea: {

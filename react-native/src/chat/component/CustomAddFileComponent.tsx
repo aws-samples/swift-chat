@@ -391,7 +391,7 @@ const getFileNameWithoutExtension = (fileName: string) => {
 
 export const isVideoSupported = (): boolean => {
   const textModelId = getTextModel().modelId;
-  return textModelId.includes('nova-pro') || textModelId.includes('nova-lite');
+  return textModelId.includes('nova');
 };
 
 const getFiles = async (res: ImagePickerResponse) => {
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 0,
-    marginRight: 6,
+    marginRight: 0,
     marginLeft: 10,
   },
   listContainerStyle: {

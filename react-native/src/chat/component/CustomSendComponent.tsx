@@ -160,7 +160,7 @@ const isModelSupportUploadImages = (chatMode: ChatMode): boolean => {
 const createStyles = (colors: ColorScheme) =>
   StyleSheet.create({
     stopContainer: {
-      marginRight: 15,
+      marginRight: 10,
       marginLeft: 10,
       width: 26,
       height: 26,
@@ -195,7 +195,7 @@ const createStyles = (colors: ColorScheme) =>
     loadingContainer: {
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: 15,
+      marginRight: 10,
       marginLeft: 10,
       height: 44,
     },
@@ -203,7 +203,7 @@ const createStyles = (colors: ColorScheme) =>
       width: 26,
       height: 26,
       borderRadius: 15,
-      marginRight: 15,
+      marginRight: 10,
       marginLeft: 10,
     },
   });

@@ -111,7 +111,6 @@ const MermaidCodeRenderer = forwardRef<
         <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
           <CustomCodeHighlighter
             hljsStyle={hljsStyle}
-            key={`code-${currentText.length}`}
             scrollViewProps={{
               contentContainerStyle: {
                 padding: 12,

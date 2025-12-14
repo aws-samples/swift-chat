@@ -815,8 +815,8 @@ function ChatScreen(): React.JSX.Element {
           Platform.OS === 'android'
             ? 0
             : screenHeight > screenWidth && screenWidth < 500
-            ? 32 // iphone in portrait
-            : 20
+            ? 28 // iphone in portrait
+            : 16
         }
         messages={messages}
         onSend={onSend}
@@ -1002,10 +1002,8 @@ function ChatScreen(): React.JSX.Element {
         renderInputToolbar={props => (
           <InputToolbar
             {...props}
-            containerStyle={{
-              backgroundColor: colors.background,
-              borderTopColor: colors.chatScreenSplit,
-            }}
+            containerStyle={styles.inputToolbarContainer}
+            primaryStyle={styles.inputToolbarPrimary}
           />
         )}
         textInputProps={{
@@ -1016,7 +1014,6 @@ function ChatScreen(): React.JSX.Element {
             smartInsertDelete: false,
             spellCheck: false,
             blurOnSubmit: isMac,
-            submitBehavior: isMac ? 'blurAndSubmit' : 'submit',
             onSubmitEditing: () => {
               if (
                 inputTextRef.current.length > 0 &&
@@ -1082,12 +1079,24 @@ const createStyles = (colors: ColorScheme) =>
       justifyContent: 'flex-end',
     },
     textInputStyle: {
-      marginLeft: 14,
+      marginLeft: 10,
       lineHeight: 22,
     },
     composerTextInput: {
-      backgroundColor: colors.background,
+      backgroundColor: 'transparent',
       color: colors.text,
+    },
+    inputToolbarContainer: {
+      backgroundColor: colors.background,
+      borderTopWidth: 0,
+      paddingHorizontal: 10,
+      paddingTop: 0,
+      paddingBottom: isMac ? 10 : 2,
+    },
+    inputToolbarPrimary: {
+      backgroundColor: colors.chatInputBackground,
+      borderRadius: 12,
+      paddingHorizontal: 0,
     },
   });
 

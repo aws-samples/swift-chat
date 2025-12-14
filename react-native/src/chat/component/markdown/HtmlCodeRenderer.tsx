@@ -98,7 +98,10 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
                 onPress={setCodeMode}
                 style={[styles.tabButton, !showPreview && styles.activeTab]}>
                 <Text
-                  style={[styles.tabText, !showPreview && styles.activeTabText]}>
+                  style={[
+                    styles.tabText,
+                    !showPreview && styles.activeTabText,
+                  ]}>
                   code
                 </Text>
               </TouchableOpacity>
@@ -125,7 +128,6 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
           <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
             <CustomCodeHighlighter
               hljsStyle={hljsStyle}
-              key={`code-${currentText.length}`}
               scrollViewProps={{
                 contentContainerStyle: {
                   padding: 12,
@@ -139,7 +141,8 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
                 backgroundColor: colors.codeBackground,
               }}
               textStyle={styles.codeText}
-              language="html">
+              language="html"
+              forceHighlight={isHtmlComplete(currentText)}>
               {currentText}
             </CustomCodeHighlighter>
           </Suspense>

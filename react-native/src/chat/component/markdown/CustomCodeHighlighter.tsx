@@ -31,8 +31,6 @@ import { trimNewlines } from 'trim-newlines';
 // Streaming optimization constants
 // Time (ms) to wait after last content change before applying syntax highlighting
 const STREAMING_IDLE_THRESHOLD_MS = 400;
-// Minimum lines to enable streaming optimization (skip highlighting during streaming)
-const STREAMING_LINE_THRESHOLD = 25;
 
 type ReactStyle = Record<string, CSSProperties>;
 type HighlighterStyleSheet = { [key: string]: TextStyle };
@@ -45,6 +43,10 @@ export interface CodeHighlighterProps extends SyntaxHighlighterProps {
    * @deprecated Use scrollViewProps.contentContainerStyle instead
    */
   containerStyle?: StyleProp<ViewStyle>;
+  /**
+   * If true, always show syntax highlighting (skip streaming plain text mode)
+   */
+  forceHighlight?: boolean;
 }
 
 const getRNStylesFromHljsStyle = (
@@ -87,45 +89,18 @@ const MemoizedText = memo(
 // Threshold for throttling updates in plain text view
 const PLAIN_TEXT_THROTTLE_LINE_THRESHOLD = 50;
 
-// Plain text renderer for streaming mode - much faster than syntax highlighting
-const PlainTextCodeView: FunctionComponent<{
+interface PlainTextCodeViewProps {
   code: string;
   textStyle?: StyleProp<TextStyle>;
   backgroundColor?: string;
   scrollViewProps?: ScrollViewProps;
   containerStyle?: StyleProp<ViewStyle>;
-  language?: string;
-}> = memo(
-  ({
-    code,
-    textStyle,
-    backgroundColor,
-    scrollViewProps,
-    containerStyle,
-    language,
-  }) => {
-    const lines = code.split('\n');
-    const lineCount = lines.length;
-    const prevLineCountRef = useRef(lineCount);
+}
 
-    // For large code blocks (>100 lines), only update when line count changes
-    const [displayedCode, setDisplayedCode] = useState(code);
-
-    useEffect(() => {
-      if (lineCount < PLAIN_TEXT_THROTTLE_LINE_THRESHOLD) {
-        // Small code blocks: update every change
-        setDisplayedCode(code);
-      } else if (lineCount !== prevLineCountRef.current) {
-        // Large code blocks: only update when line count changes
-        setDisplayedCode(code);
-      }
-      prevLineCountRef.current = lineCount;
-    }, [code, lineCount]);
-
-    const displayedLines = displayedCode.split('\n');
-    const scale = language === 'mermaid' ? 1.75 : isMac ? 2 : 1.85;
-    const marginBottomValue = -displayedLines.length * scale;
-
+// Plain text renderer for streaming mode
+// For large code blocks (>=10 lines), only re-renders when line count changes to prevent jitter
+const PlainTextCodeView: FunctionComponent<PlainTextCodeViewProps> = memo(
+  ({ code, textStyle, backgroundColor, scrollViewProps, containerStyle }) => {
     return (
       <ScrollView
         {...scrollViewProps}
@@ -138,21 +113,34 @@ const PlainTextCodeView: FunctionComponent<{
         <View onStartShouldSetResponder={() => true}>
           {Platform.OS === 'ios' ? (
             <TextInput
-              style={[
-                styles.inputText,
-                textStyle,
-                { marginBottom: marginBottomValue },
-              ]}
+              style={[styles.plainTextInput, textStyle]}
               editable={false}
               multiline>
-              {displayedCode}
+              {code}
             </TextInput>
           ) : (
-            <Text style={textStyle}>{displayedCode}</Text>
+            <Text style={textStyle}>{code}</Text>
           )}
         </View>
       </ScrollView>
     );
+  },
+  (prevProps, nextProps) => {
+    // Skip re-render if backgroundColor changes
+    if (prevProps.backgroundColor !== nextProps.backgroundColor) {
+      return false;
+    }
+
+    const prevLineCount = prevProps.code.split('\n').length;
+    const nextLineCount = nextProps.code.split('\n').length;
+
+    // Small blocks: re-render on any code change
+    if (nextLineCount < PLAIN_TEXT_THROTTLE_LINE_THRESHOLD) {
+      return prevProps.code === nextProps.code;
+    }
+
+    // Large blocks: only re-render when line count changes
+    return prevLineCount === nextLineCount;
   }
 );
 
@@ -162,6 +150,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   hljsStyle,
   scrollViewProps,
   containerStyle,
+  forceHighlight,
   ...rest
 }) => {
   const stylesheet: HighlighterStyleSheet = useMemo(
@@ -171,15 +160,17 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
 
   // Streaming detection state
   const childrenString = String(children);
-  const lineCount = childrenString.split('\n').length;
-  const isLargeCodeBlock = lineCount >= STREAMING_LINE_THRESHOLD;
-
   // Small code blocks always show highlighted, large ones start with plain text
-  const [showHighlighted, setShowHighlighted] = useState(!isLargeCodeBlock);
+  const [showHighlighted, setShowHighlighted] = useState(false);
   const streamingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevLengthRef = useRef(childrenString.length);
 
   useEffect(() => {
+    // Skip auto-highlighting logic if forceHighlight is provided (controlled externally)
+    if (forceHighlight !== undefined) {
+      return;
+    }
+
     const wasGrowing = childrenString.length > prevLengthRef.current;
     prevLengthRef.current = childrenString.length;
 
@@ -190,19 +181,17 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
     }
 
     // For large code blocks: disable highlighting during streaming, re-enable after idle
-    if (isLargeCodeBlock) {
-      if (wasGrowing) {
-        setShowHighlighted(false);
-      }
-      // Always set timer to enable highlighting after content stabilizes
-      if (!showHighlighted) {
-        streamingTimerRef.current = setTimeout(() => {
-          setShowHighlighted(true);
-          streamingTimerRef.current = null;
-        }, STREAMING_IDLE_THRESHOLD_MS);
-      }
+    if (wasGrowing) {
+      setShowHighlighted(false);
     }
-  }, [childrenString.length, isLargeCodeBlock, showHighlighted]);
+    // Always set timer to enable highlighting after content stabilizes
+    if (!showHighlighted) {
+      streamingTimerRef.current = setTimeout(() => {
+        setShowHighlighted(true);
+        streamingTimerRef.current = null;
+      }, STREAMING_IDLE_THRESHOLD_MS);
+    }
+  }, [childrenString.length, showHighlighted, forceHighlight]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -223,7 +212,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
     [stylesheet]
   );
 
-  // Calculate base text style once
+  // Calculate base text style once - used for both PlainTextCodeView and highlighted view
   const baseTextStyle = useMemo(
     () => [textStyle, { color: stylesheet.hljs?.color }],
     [textStyle, stylesheet.hljs?.color]
@@ -283,7 +272,16 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   const renderNode = useCallback(
     (nodes: rendererNode[]): ReactNode => {
       // Calculate margin bottom value once
-      const scale = rest.language === 'mermaid' ? 1.75 : isMac ? 2 : 1.85;
+      const scale =
+        rest.language === 'mermaid'
+          ? 1.75
+          : rest.language === 'html'
+          ? isMac
+            ? 2
+            : 1.85
+          : isMac
+          ? 3
+          : 2.75;
       const marginBottomValue = -nodes.length * scale;
 
       // Optimization for streaming content - only process new nodes
@@ -375,16 +373,19 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
     [stylesheet, scrollViewProps, containerStyle, renderNode, renderAndroidNode]
   );
 
+  // Determine if we should show highlighting
+  // Use forceHighlight if provided, otherwise use internal showHighlighted state
+  const shouldHighlight = forceHighlight !== undefined ? forceHighlight : showHighlighted;
+
   // During streaming, render plain text for performance
-  if (!showHighlighted) {
+  if (!shouldHighlight) {
     return (
       <PlainTextCodeView
         code={childrenString}
-        textStyle={[textStyle, { color: stylesheet.hljs?.color }]}
+        textStyle={baseTextStyle}
         backgroundColor={stylesheet.hljs?.backgroundColor as string}
         scrollViewProps={scrollViewProps}
         containerStyle={containerStyle}
-        language={rest.language}
       />
     );
   }
@@ -407,6 +408,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: -5,
   },
+  // Plain text input - no lineHeight override, let it use natural height based on fontSize
+  plainTextInput: {},
 });
 
 export default CustomCodeHighlighter;

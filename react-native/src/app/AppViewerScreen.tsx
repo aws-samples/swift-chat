@@ -1,15 +1,15 @@
 import React, { useMemo, useCallback } from 'react';
-import {
-  StyleSheet,
-  View,
-} from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../types/RouteTypes';
 import { HeaderLeftView } from '../prompt/HeaderLeftView';
 import { useTheme, ColorScheme } from '../theme';
-import { injectErrorScript, commonWebViewProps } from '../chat/component/markdown/htmlUtils';
+import {
+  injectErrorScript,
+  commonWebViewProps,
+} from '../chat/component/markdown/htmlUtils';
 
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 type AppViewerRouteProp = RouteProp<RouteParamList, 'AppViewer'>;
@@ -32,7 +32,10 @@ function AppViewerScreen(): React.JSX.Element {
     });
   }, [navigation, headerLeft]);
 
-  const htmlContent = useMemo(() => injectErrorScript(app.htmlCode), [app.htmlCode]);
+  const htmlContent = useMemo(
+    () => injectErrorScript(app.htmlCode),
+    [app.htmlCode]
+  );
 
   return (
     <View style={styles.container}>

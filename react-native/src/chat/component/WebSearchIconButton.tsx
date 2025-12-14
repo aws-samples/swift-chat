@@ -44,7 +44,7 @@ export const WebSearchIconButton: React.FC<WebSearchIconButtonProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: 40,
+    width: 44,
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',

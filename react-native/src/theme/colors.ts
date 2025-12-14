@@ -23,6 +23,7 @@ export interface ColorScheme {
   selectedBackground: string;
   selectedBackgroundMac: string;
   inputBackground: string;
+  chatInputBackground: string;
   labelBackground: string;
   messageBackground: string;
   reasoningBackground: string;
@@ -80,6 +81,7 @@ export const lightColors: ColorScheme = {
   selectedBackground: '#F5F5F5',
   selectedBackgroundMac: '#ECECEC',
   inputBackground: '#ffffff',
+  chatInputBackground: '#f2f2f7',
   labelBackground: '#ffffff',
   messageBackground: '#f2f2f2',
   reasoningBackground: '#f3f3f3',
@@ -137,6 +139,7 @@ export const darkColors: ColorScheme = {
   selectedBackground: '#2a2a2a',
   selectedBackgroundMac: '#333333',
   inputBackground: '#000000',
+  chatInputBackground: '#1c1c1e',
   labelBackground: '#000000',
   messageBackground: '#2a2a2a',
   reasoningBackground: '#2a2a2a',

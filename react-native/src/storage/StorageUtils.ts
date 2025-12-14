@@ -514,17 +514,21 @@ export function getSystemPrompts(type?: string): SystemPrompt[] {
       );
       saveAllSystemPrompts(currentSystemPrompts);
     }
-    // Migration: Replace OptimizeCode with App
-    const hasOptimizeCode = currentSystemPrompts.some(
-      p => p.name === 'OptimizeCode'
-    );
+    // Migration: Add App prompt if not exists
     const hasApp = currentSystemPrompts.some(p => p.name === 'App');
-    if (hasOptimizeCode && !hasApp) {
+    if (!hasApp) {
       const appPrompt = getDefaultSystemPrompts().find(p => p.name === 'App');
       if (appPrompt) {
-        currentSystemPrompts = currentSystemPrompts.map(p =>
-          p.name === 'OptimizeCode' ? { ...appPrompt, id: p.id } : p
+        const hasOptimizeCode = currentSystemPrompts.some(
+          p => p.name === 'OptimizeCode'
         );
+        if (hasOptimizeCode) {
+          currentSystemPrompts = currentSystemPrompts.map(p =>
+            p.name === 'OptimizeCode' ? { ...appPrompt, id: p.id } : p
+          );
+        } else {
+          currentSystemPrompts = [...currentSystemPrompts, appPrompt];
+        }
         saveAllSystemPrompts(currentSystemPrompts);
       }
     }
