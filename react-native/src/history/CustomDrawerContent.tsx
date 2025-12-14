@@ -165,11 +165,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
               style={styles.settingsTouch}
               onPress={() => {
                 setDrawerToPermanent();
-                navigation.navigate('Bedrock', {
-                  sessionId: -1,
-                  tapIndex: -2,
-                  mode: ChatMode.Image,
-                });
+                navigation.navigate('ImageGallery');
               }}>
               <Image
                 source={

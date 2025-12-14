@@ -375,7 +375,8 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
 
   // Determine if we should show highlighting
   // Use forceHighlight if provided, otherwise use internal showHighlighted state
-  const shouldHighlight = forceHighlight !== undefined ? forceHighlight : showHighlighted;
+  const shouldHighlight =
+    forceHighlight !== undefined ? forceHighlight : showHighlighted;
 
   // During streaming, render plain text for performance
   if (!shouldHighlight) {
