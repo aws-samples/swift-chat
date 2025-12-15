@@ -44,7 +44,7 @@ function ImageGalleryScreen(): React.JSX.Element {
     Dimensions.get('window').width
   );
   const numColumns = getNumColumns(screenWidth);
-  const styles = createStyles(colors, numColumns, screenWidth);
+  const styles = createStyles(colors, numColumns);
 
   // ImageView state
   const [visible, setIsVisible] = useState(false);
@@ -207,17 +207,19 @@ function ImageGalleryScreen(): React.JSX.Element {
   const renderImageItem = useCallback(
     ({ item, index }: { item: ImageItem; index: number }) => {
       return (
-        <TouchableOpacity
-          style={styles.imageCard}
-          onPress={() => handleOpenImage(item, index)}
-          onLongPress={() => handleDeleteImage(item)}
-          activeOpacity={0.7}>
-          <Image
-            source={{ uri: item.path }}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
+        <View style={styles.imageCard}>
+          <TouchableOpacity
+            style={styles.imageCardInner}
+            onPress={() => handleOpenImage(item, index)}
+            onLongPress={() => handleDeleteImage(item)}
+            activeOpacity={0.7}>
+            <Image
+              source={{ uri: item.path }}
+              style={styles.thumbnail}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        </View>
       );
     },
     [styles, handleOpenImage, handleDeleteImage]
@@ -294,17 +296,9 @@ function ImageGalleryScreen(): React.JSX.Element {
   );
 }
 
-const createStyles = (
-  colors: ColorScheme,
-  numColumns: number,
-  screenWidth: number
-) => {
-  // padding: 12 on each side, gap between items: 8
-  const padding = 12;
-  const gap = 8;
-  const availableWidth = screenWidth - padding * 2;
-  const totalGapWidth = gap * (numColumns - 1);
-  const cardWidth = (availableWidth - totalGapWidth) / numColumns;
+const createStyles = (colors: ColorScheme, numColumns: number) => {
+  // 均分宽度，间距通过 paddingLeft/paddingRight 实现
+  const cardWidthPercent = numColumns === 5 ? '20%' : '33.333%';
 
   return StyleSheet.create({
     safeArea: {
@@ -312,18 +306,25 @@ const createStyles = (
       backgroundColor: colors.background,
     },
     listContainer: {
-      padding: padding,
+      paddingTop: 12,
+      paddingRight: 8,
+      paddingBottom: 8,
+      paddingLeft: 8,
       flexGrow: 1,
     },
     columnWrapper: {
-      gap: gap,
+      justifyContent: 'flex-start',
     },
     imageCard: {
-      width: cardWidth,
-      height: cardWidth,
+      width: cardWidthPercent,
+      paddingLeft: 4,
+      paddingRight: 4,
+      marginBottom: 8,
+    },
+    imageCardInner: {
+      aspectRatio: 1,
       backgroundColor: colors.card,
       borderRadius: 8,
-      marginBottom: gap,
       overflow: 'hidden',
     },
     thumbnail: {

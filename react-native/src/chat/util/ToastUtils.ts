@@ -5,5 +5,6 @@ export const showInfo = (msg: string) => {
     type: 'info',
     text1: msg,
     position: 'bottom',
+    visibilityTime: 1500,
   });
 };

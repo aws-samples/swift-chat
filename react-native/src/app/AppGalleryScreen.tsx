@@ -455,35 +455,36 @@ function AppGalleryScreen(): React.JSX.Element {
           ? `${RNFS.DocumentDirectoryPath}/${item.screenshotPath}`
           : item.screenshotPath
         : null;
-
       return (
-        <TouchableOpacity
-          style={styles.appCard}
-          onPress={() => handleOpenApp(item)}
-          onLongPress={e => handleLongPress(item, e)}
-          activeOpacity={0.7}>
-          <View style={styles.screenshotContainer}>
-            {screenshotUri ? (
-              <Image
-                source={{ uri: screenshotUri }}
-                style={styles.screenshot}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.placeholderContainer}>
-                <Text style={styles.placeholderText}>No Preview</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.appInfo}>
-            <Text style={styles.appName} numberOfLines={1}>
-              {item.name}
-            </Text>
-            <Text style={styles.appDate}>
-              {new Date(item.createdAt).toLocaleDateString()}
-            </Text>
-          </View>
-        </TouchableOpacity>
+        <View style={styles.appCard}>
+          <TouchableOpacity
+            style={styles.appCardInner}
+            onPress={() => handleOpenApp(item)}
+            onLongPress={e => handleLongPress(item, e)}
+            activeOpacity={0.7}>
+            <View style={styles.screenshotContainer}>
+              {screenshotUri ? (
+                <Image
+                  source={{ uri: screenshotUri }}
+                  style={styles.screenshot}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.placeholderContainer}>
+                  <Text style={styles.placeholderText}>No Preview</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.appInfo}>
+              <Text style={styles.appName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text style={styles.appDate}>
+                {new Date(item.createdAt).toLocaleDateString()}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       );
     },
     [styles, handleOpenApp, handleLongPress]
@@ -603,7 +604,8 @@ function AppGalleryScreen(): React.JSX.Element {
 }
 
 const createStyles = (colors: ColorScheme, numColumns: number) => {
-  const cardWidthPercent = numColumns === 4 ? '24.5%' : '48%';
+  // 均分宽度，间距通过 paddingLeft 实现
+  const cardWidthPercent = numColumns === 4 ? '25%' : '50%';
 
   return StyleSheet.create({
     safeArea: {
@@ -611,17 +613,24 @@ const createStyles = (colors: ColorScheme, numColumns: number) => {
       backgroundColor: colors.background,
     },
     listContainer: {
-      padding: 12,
+      paddingTop: 12,
+      paddingRight: 6,
+      paddingBottom: 12,
+      paddingLeft: 6,
       flexGrow: 1,
     },
     columnWrapper: {
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
     },
     appCard: {
       width: cardWidthPercent,
+      paddingLeft: 6,
+      paddingRight: 6,
+      marginBottom: 12,
+    },
+    appCardInner: {
       backgroundColor: colors.card,
       borderRadius: 12,
-      marginBottom: 12,
       overflow: 'hidden',
       borderWidth: 1,
       borderColor: colors.border,
