@@ -815,8 +815,8 @@ function ChatScreen(): React.JSX.Element {
           Platform.OS === 'android'
             ? 0
             : screenHeight > screenWidth && screenWidth < 500
-            ? 28 // iphone in portrait
-            : 16
+            ? 24 // iphone in portrait
+            : 12
         }
         messages={messages}
         onSend={onSend}
