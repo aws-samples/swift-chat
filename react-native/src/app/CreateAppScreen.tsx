@@ -32,6 +32,7 @@ type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
 const MAX_NAME_LENGTH = 20;
 const APP_SCREENSHOTS_DIR = `${RNFS.DocumentDirectoryPath}/app`;
+const MAX_SCREENSHOT_RETRIES = 3;
 
 // Check if content looks like HTML
 const isHtmlContent = (content: string): boolean => {
@@ -53,6 +54,7 @@ function CreateAppScreen(): React.JSX.Element {
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  const screenshotRetryCount = useRef(0);
 
   const headerLeft = useCallback(
     () => HeaderLeftView(navigation, isDark),
@@ -90,6 +92,12 @@ function CreateAppScreen(): React.JSX.Element {
             : file.uri;
         const content = await RNFS.readFile(filePath, 'utf8');
         handleCodeChange(content);
+
+        // Auto-fill app name from file name (without extension)
+        if (file.name) {
+          const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+          setAppName(nameWithoutExt.slice(0, MAX_NAME_LENGTH));
+        }
       }
     } catch (err) {
       if (!DocumentPicker.isCancel(err)) {
@@ -97,7 +105,7 @@ function CreateAppScreen(): React.JSX.Element {
         Alert.alert('Error', 'Failed to read file');
       }
     }
-  }, [handleCodeChange]);
+  }, [handleCodeChange, appName]);
 
   const htmlContent = useMemo(
     () => (showPreview ? injectErrorScript(htmlCode) : ''),
@@ -209,6 +217,23 @@ function CreateAppScreen(): React.JSX.Element {
     [appName, htmlCode, navigation]
   );
 
+  // Retry screenshot capture
+  const retryScreenshot = useCallback(() => {
+    if (screenshotRetryCount.current < MAX_SCREENSHOT_RETRIES) {
+      screenshotRetryCount.current += 1;
+      console.log(
+        `[CreateApp] Retrying screenshot (${screenshotRetryCount.current}/${MAX_SCREENSHOT_RETRIES})`
+      );
+      setTimeout(() => {
+        if (webViewRef.current) {
+          webViewRef.current.injectJavaScript(captureScreenshot());
+        }
+      }, 500);
+      return true;
+    }
+    return false;
+  }, [captureScreenshot]);
+
   const handleSaveWithoutScreenshot = useCallback(async () => {
     try {
       await ensureAppDir();
@@ -251,18 +276,22 @@ function CreateAppScreen(): React.JSX.Element {
         }
 
         if (message.type === 'screenshot_success') {
+          screenshotRetryCount.current = 0;
           handleScreenshotMessage(message.data);
         }
 
         if (message.type === 'screenshot_error') {
           console.error('[CreateApp] Screenshot error:', message.message);
-          handleSaveWithoutScreenshot();
+          // Try to retry, if max retries reached, save without screenshot
+          if (!retryScreenshot()) {
+            handleSaveWithoutScreenshot();
+          }
         }
       } catch (error) {
         console.log('[CreateApp] Raw message:', event.nativeEvent.data);
       }
     },
-    [handleScreenshotMessage, handleSaveWithoutScreenshot]
+    [handleScreenshotMessage, handleSaveWithoutScreenshot, retryScreenshot]
   );
 
   const handleCreate = useCallback(() => {
@@ -287,6 +316,7 @@ function CreateAppScreen(): React.JSX.Element {
     }
 
     setIsSaving(true);
+    screenshotRetryCount.current = 0;
 
     // Capture screenshot
     if (webViewRef.current) {
