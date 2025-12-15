@@ -64,6 +64,8 @@ const DrawerNavigator = () => {
       drawerContent={renderCustomDrawerContent}>
       <Drawer.Screen name="Bedrock" component={ChatScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="ImageGallery" component={ImageGalleryScreen} />
+      <Drawer.Screen name="AppGallery" component={AppGalleryScreen} />
     </Drawer.Navigator>
   );
 };
@@ -105,20 +107,6 @@ const AppNavigator = () => {
         }}
       />
       <Stack.Screen
-        name="AppGallery"
-        component={AppGalleryScreen}
-        options={{
-          title: 'App Gallery',
-          contentStyle: {
-            height: isMac ? 66 : undefined,
-            backgroundColor: colors.background,
-          },
-          headerTitleAlign: 'center',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-        }}
-      />
-      <Stack.Screen
         name="AppViewer"
         component={AppViewerScreen}
         options={({ route }) => {
@@ -140,20 +128,6 @@ const AppNavigator = () => {
         component={CreateAppScreen}
         options={{
           title: 'Create App',
-          contentStyle: {
-            height: isMac ? 66 : undefined,
-            backgroundColor: colors.background,
-          },
-          headerTitleAlign: 'center',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-        }}
-      />
-      <Stack.Screen
-        name="ImageGallery"
-        component={ImageGalleryScreen}
-        options={{
-          title: 'Image Gallery',
           contentStyle: {
             height: isMac ? 66 : undefined,
             backgroundColor: colors.background,

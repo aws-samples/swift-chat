@@ -28,7 +28,7 @@ import {
   pinApp,
   renameApp,
 } from '../storage/StorageUtils';
-import { HeaderLeftView } from '../prompt/HeaderLeftView';
+import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton';
 import { useTheme, ColorScheme } from '../theme';
 import RNFS from 'react-native-fs';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -265,36 +265,22 @@ function AppGalleryScreen(): React.JSX.Element {
     }, [])
   );
 
-  const headerLeft = useCallback(
-    () => HeaderLeftView(navigation, isDark),
-    [navigation, isDark]
-  );
-
-  const headerRight = useCallback(
-    () => (
-      <TouchableOpacity
-        onPress={() => navigation.navigate('CreateApp', {})}
-        style={styles.headerRightButton}>
-        <Image
-          source={
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      // eslint-disable-next-line react/no-unstable-nested-components
+      headerRight: () => (
+        <CustomHeaderRightButton
+          onPress={() => navigation.navigate('CreateApp', {})}
+          imageSource={
             isDark
               ? require('../assets/add_dark.png')
               : require('../assets/add.png')
           }
-          style={styles.headerRightIcon}
         />
-      </TouchableOpacity>
-    ),
-    [navigation, isDark, styles]
-  );
-
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft,
-      headerRight,
+      ),
       title: 'App Gallery',
     });
-  }, [navigation, headerLeft, headerRight]);
+  }, [navigation, isDark]);
 
   const handleLongPress = useCallback(
     (app: AppMetadata, event: GestureResponderEvent) => {
@@ -686,13 +672,6 @@ const createStyles = (colors: ColorScheme, numColumns: number) => {
       fontSize: 14,
       color: colors.textSecondary,
       textAlign: 'center',
-    },
-    headerRightButton: {
-      padding: 2,
-    },
-    headerRightIcon: {
-      width: 20,
-      height: 20,
     },
     // Menu overlay
     menuOverlay: {

@@ -23,6 +23,7 @@ import Share from 'react-native-share';
 import { showInfo } from '../chat/util/ToastUtils';
 import { isMacCatalyst } from '../utils/PlatformUtils';
 import FileViewer from 'react-native-file-viewer';
+import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton';
 
 type NavigationProp = NativeStackNavigationProp<RouteParamList>;
 
@@ -95,60 +96,28 @@ function ImageGalleryScreen(): React.JSX.Element {
     }, [loadImages])
   );
 
-  const headerLeft = useCallback(
-    () => (
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.headerLeftButton}>
-        <Image
-          source={
-            isDark
-              ? require('../assets/back_dark.png')
-              : require('../assets/back.png')
-          }
-          style={styles.headerLeftIcon}
-        />
-      </TouchableOpacity>
-    ),
-    [navigation, isDark, styles]
-  );
-
-  const headerRight = useCallback(
-    () => (
-      <TouchableOpacity
-        onPress={() => {
-          // Go back first to remove ImageGallery from stack, then navigate to Image mode
-          navigation.goBack();
-          navigation.navigate('Drawer', {
-            screen: 'Bedrock',
-            params: {
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      // eslint-disable-next-line react/no-unstable-nested-components
+      headerRight: () => (
+        <CustomHeaderRightButton
+          onPress={() => {
+            navigation.navigate('Bedrock', {
               sessionId: -1,
               tapIndex: -2,
               mode: ChatMode.Image,
-            },
-          });
-        }}
-        style={styles.headerRightButton}>
-        <Image
-          source={
+            });
+          }}
+          imageSource={
             isDark
               ? require('../assets/add_dark.png')
               : require('../assets/add.png')
           }
-          style={styles.headerRightIcon}
         />
-      </TouchableOpacity>
-    ),
-    [navigation, isDark, styles]
-  );
-
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft,
-      headerRight,
+      ),
       title: 'Image Gallery',
     });
-  }, [navigation, headerLeft, headerRight]);
+  }, [navigation, isDark]);
 
   const handleDeleteImage = useCallback(
     (image: ImageItem) => {
@@ -376,22 +345,6 @@ const createStyles = (
       fontSize: 14,
       color: colors.textSecondary,
       textAlign: 'center',
-    },
-    headerLeftButton: {
-      marginLeft: -10,
-      paddingRight: 16,
-      padding: 10,
-    },
-    headerLeftIcon: {
-      width: 20,
-      height: 20,
-    },
-    headerRightButton: {
-      padding: 2,
-    },
-    headerRightIcon: {
-      width: 20,
-      height: 20,
     },
     footerContainer: {
       flexDirection: 'row',
