@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +6,7 @@ import {
   Text,
   StatusBar,
   Platform,
+  Animated,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -27,7 +28,16 @@ function AppViewerScreen(): React.JSX.Element {
   const { app } = route.params;
   const { colors, isDark } = useTheme();
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const styles = createStyles(colors, isFullScreen);
+
+  const handleLoadEnd = useCallback(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
   const headerLeft = useCallback(
     () => HeaderLeftView(navigation, isDark),
@@ -67,15 +77,18 @@ function AppViewerScreen(): React.JSX.Element {
           translucent={true}
         />
       )}
-      <WebView
-        source={{ html: htmlContent }}
-        style={styles.webView}
-        {...commonWebViewProps}
-        scrollEnabled={true}
-        bounces={false}
-        automaticallyAdjustsScrollIndicatorInsets={false}
-        contentInsetAdjustmentBehavior="never"
-      />
+      <Animated.View style={[styles.webView, { opacity: fadeAnim }]}>
+        <WebView
+          source={{ html: htmlContent, baseUrl: `https://app-${app.id}.local/` }}
+          style={styles.webView}
+          {...commonWebViewProps}
+          scrollEnabled={true}
+          bounces={false}
+          automaticallyAdjustsScrollIndicatorInsets={false}
+          contentInsetAdjustmentBehavior="never"
+          onLoadEnd={handleLoadEnd}
+        />
+      </Animated.View>
       {isFullScreen && (
         <TouchableOpacity
           style={styles.closeButton}
