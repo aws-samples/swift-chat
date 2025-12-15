@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Dialog from 'react-native-dialog';
+import RNFS from 'react-native-fs';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { setHapticFeedbackEnabled, trigger } from '../chat/util/HapticUtils.ts';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src';
@@ -56,6 +58,7 @@ import {
   getOpenAICompatConfigs,
   getTavilyApiKey,
   saveTavilyApiKey,
+  clearAllChatHistory,
 } from '../storage/StorageUtils.ts';
 import { CustomHeaderRightButton } from '../chat/component/CustomHeaderRightButton.tsx';
 import { RouteParamList } from '../types/RouteTypes.ts';
@@ -70,6 +73,7 @@ import {
 
 import packageJson from '../../package.json';
 import { isMac } from '../App.tsx';
+import { getBuildNumber } from '../utils/PlatformUtils.ts';
 import CustomDropdown from './DropdownComponent.tsx';
 import {
   addBedrockPrefixToDeepseekModels,
@@ -139,6 +143,10 @@ function SettingsScreen(): React.JSX.Element {
   const sendEventRef = useRef(sendEvent);
   const openAICompatConfigsRef = useRef(openAICompatConfigs);
   const bedrockConfigModeRef = useRef(bedrockConfigMode);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [clearCountdown, setClearCountdown] = useState(10);
+  const [isClearing, setIsClearing] = useState(false);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle OpenAI Compatible configs change
   const handleOpenAICompatConfigsChange = useCallback(
@@ -414,6 +422,74 @@ function SettingsScreen(): React.JSX.Element {
   const toggleThinking = (value: boolean) => {
     setThinkingEnabled(value);
     saveThinkingEnabled(value);
+  };
+
+  const handleOpenClearDialog = () => {
+    setShowClearDialog(true);
+    setClearCountdown(10);
+    countdownIntervalRef.current = setInterval(() => {
+      setClearCountdown(prev => {
+        if (prev <= 1) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleCloseClearDialog = () => {
+    setShowClearDialog(false);
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setClearCountdown(10);
+  };
+
+  const handleClearAllData = async () => {
+    if (clearCountdown > 0) {
+      return;
+    }
+    setIsClearing(true);
+    try {
+      // Clear all chat history from storage
+      clearAllChatHistory();
+
+      // Delete all files in DocumentDirectoryPath
+      const documentPath = RNFS.DocumentDirectoryPath;
+      const files = await RNFS.readDir(documentPath);
+      for (const file of files) {
+        // Skip system files and directories that shouldn't be deleted
+        if (
+          file.name.startsWith('.') ||
+          file.name === 'mmkv' ||
+          file.name === 'RCTAsyncLocalStorage' ||
+          file.name === 'RCTAsyncLocalStorage_V1'
+        ) {
+          continue;
+        }
+        try {
+          if (file.isDirectory()) {
+            await RNFS.unlink(file.path);
+          } else {
+            await RNFS.unlink(file.path);
+          }
+        } catch (e) {
+          console.warn('Failed to delete file:', file.path, e);
+        }
+      }
+
+      sendEvent('historyChanged');
+      handleCloseClearDialog();
+    } catch (error) {
+      console.error('Error clearing data:', error);
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   const renderProviderSettings = () => {
@@ -761,16 +837,17 @@ function SettingsScreen(): React.JSX.Element {
           />
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.versionContainer}
+          style={styles.itemContainer}
           activeOpacity={1}
           onPress={handleCheckUpgrade}>
           <Text style={styles.label}>App Version</Text>
           <View style={styles.arrowContainer}>
             <Text style={styles.text}>
               {packageJson.version +
-                (upgradeInfo.needUpgrade
-                  ? ' (' + upgradeInfo.version + ')'
-                  : '')}
+                (Platform.OS === 'ios' && getBuildNumber()
+                  ? ` (${getBuildNumber()})`
+                  : '') +
+                (upgradeInfo.needUpgrade ? ` → ${upgradeInfo.version}` : '')}
             </Text>
             <Image
               style={styles.arrowImage}
@@ -782,7 +859,30 @@ function SettingsScreen(): React.JSX.Element {
             />
           </View>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.clearDataButton}
+          activeOpacity={0.7}
+          onPress={handleOpenClearDialog}>
+          <Text style={styles.clearDataButtonText}>Clear All Chat History</Text>
+        </TouchableOpacity>
       </ScrollView>
+      <Dialog.Container visible={showClearDialog}>
+        <Dialog.Title>Clear All Data</Dialog.Title>
+        <Dialog.Description>
+          This will delete all chat history and saved files. This action cannot
+          be undone.
+          {clearCountdown > 0
+            ? `\n\nPlease wait ${clearCountdown} seconds to confirm.`
+            : '\n\nYou can now confirm the deletion.'}
+        </Dialog.Description>
+        <Dialog.Button label="Cancel" onPress={handleCloseClearDialog} />
+        <Dialog.Button
+          label={isClearing ? 'Clearing...' : 'Confirm'}
+          onPress={handleClearAllData}
+          disabled={clearCountdown > 0 || isClearing}
+          color={clearCountdown > 0 ? '#999' : '#FF3B30'}
+        />
+      </Dialog.Container>
     </SafeAreaView>
   );
 }
@@ -872,6 +972,20 @@ const createStyles = (colors: ColorScheme) =>
       justifyContent: 'space-between',
       marginVertical: 10,
       paddingBottom: 60,
+    },
+    clearDataButton: {
+      backgroundColor: '#F5F5F5',
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 20,
+      marginBottom: 80,
+    },
+    clearDataButtonText: {
+      color: '#FF3B30',
+      fontSize: 16,
+      fontWeight: '600',
     },
     apiKeyContainer: {
       flexDirection: 'row',

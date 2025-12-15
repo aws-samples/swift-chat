@@ -11,9 +11,12 @@ RCT_EXPORT_MODULE();
 #else
     BOOL isMacCatalyst = NO;
 #endif
-    
+
+    NSString *buildNumber = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
+
     return @{
-        @"isMacCatalyst": @(isMacCatalyst)
+        @"isMacCatalyst": @(isMacCatalyst),
+        @"buildNumber": buildNumber ?: @""
     };
 }
 

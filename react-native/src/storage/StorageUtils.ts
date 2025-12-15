@@ -908,6 +908,29 @@ export function renameApp(appId: string, newName: string): void {
   }
 }
 
+// Clear all chat history and related data
+export function clearAllChatHistory(): void {
+  // Get all message sessions and delete them
+  const chatList = getMessageList();
+  chatList.forEach(chat => {
+    storage.delete(sessionIdPrefix + chat.id);
+  });
+
+  // Clear the message list
+  storage.delete(messageListKey);
+
+  // Clear current session ID
+  storage.delete(currentSessionIdKey);
+
+  // Clear saved apps metadata and their code
+  const apps = getSavedApps();
+  apps.forEach(app => {
+    storage.delete(getAppCodeKey(app.id));
+  });
+  storage.delete(savedAppsKey);
+  cachedAppMetadata = undefined;
+}
+
 // Generate OpenAI Compatible models from configs
 export function generateOpenAICompatModels(
   configs: OpenAICompatConfig[]
