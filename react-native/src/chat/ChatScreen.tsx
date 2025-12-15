@@ -108,7 +108,7 @@ function ChatScreen(): React.JSX.Element {
   const mode = route.params?.mode ?? currentMode;
   const modeRef = useRef(mode);
   const isNovaSonic =
-    getTextModel().modelId.includes('nova-sonic') &&
+    getTextModel().modelId.includes('sonic') &&
     modeRef.current === ChatMode.Text;
 
   const [messages, setMessages] = useState<SwiftChatMessage[]>([]);
@@ -193,7 +193,7 @@ function ChatScreen(): React.JSX.Element {
       },
       // Handle error
       message => {
-        if (getTextModel().modelId.includes('nova-sonic')) {
+        if (getTextModel().modelId.includes('sonic')) {
           handleVoiceChatTranscript('ASSISTANT', message);
           endVoiceConversationRef.current?.();
           saveCurrentMessages();
@@ -803,7 +803,7 @@ function ChatScreen(): React.JSX.Element {
     }
   };
 
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isNovaSonic);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1066,7 +1066,7 @@ function ChatScreen(): React.JSX.Element {
   );
 }
 
-const createStyles = (colors: ColorScheme) =>
+const createStyles = (colors: ColorScheme, isNovaSonic: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -1094,7 +1094,7 @@ const createStyles = (colors: ColorScheme) =>
       paddingBottom: isMac ? 10 : 2,
     },
     inputToolbarPrimary: {
-      backgroundColor: colors.chatInputBackground,
+      backgroundColor: isNovaSonic ? 'transparent' : colors.chatInputBackground,
       borderRadius: 12,
       paddingHorizontal: 0,
     },

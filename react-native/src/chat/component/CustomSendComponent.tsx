@@ -38,7 +38,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   const { text } = props;
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors);
-  const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
+  const isNovaSonic = getTextModel().modelId.includes('sonic');
   const isVirtualTryOn = systemPrompt?.id === -7;
   let isShowSending = false;
   if (chatMode === ChatMode.Image) {

@@ -105,7 +105,7 @@ function CreateAppScreen(): React.JSX.Element {
         Alert.alert('Error', 'Failed to read file');
       }
     }
-  }, [handleCodeChange, appName]);
+  }, [handleCodeChange]);
 
   const htmlContent = useMemo(
     () => (showPreview ? injectErrorScript(htmlCode) : ''),

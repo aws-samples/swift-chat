@@ -79,7 +79,10 @@ function AppViewerScreen(): React.JSX.Element {
       )}
       <Animated.View style={[styles.webView, { opacity: fadeAnim }]}>
         <WebView
-          source={{ html: htmlContent, baseUrl: `https://app-${app.id}.local/` }}
+          source={{
+            html: htmlContent,
+            baseUrl: `https://app-${app.id}.local/`,
+          }}
           style={styles.webView}
           {...commonWebViewProps}
           scrollEnabled={true}

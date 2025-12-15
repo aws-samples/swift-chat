@@ -49,7 +49,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
   const navigation = useNavigation<NavigationProp>();
   const isImageMode = chatMode === ChatMode.Image;
   const [isNovaSonic, setIsNovaSonic] = useState(
-    getTextModel().modelId.includes('nova-sonic')
+    getTextModel().modelId.includes('sonic')
   );
   const promptType = isImageMode ? 'image' : isNovaSonic ? 'voice' : undefined;
   const [isEditMode, setIsEditMode] = useState(false);
@@ -119,7 +119,7 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
       setSelectedPrompt(null);
       onSelectPromptRef.current(null);
     } else if (event.event === 'modelChanged') {
-      const newIsNovaSonic = getTextModel().modelId.includes('nova-sonic');
+      const newIsNovaSonic = getTextModel().modelId.includes('sonic');
       if (isNovaSonicRef.current && !newIsNovaSonic) {
         onSwitchedToTextModelRef.current();
       }
