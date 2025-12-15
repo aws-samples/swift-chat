@@ -117,7 +117,8 @@ function ImageGalleryScreen(): React.JSX.Element {
     () => (
       <TouchableOpacity
         onPress={() => {
-          // Navigate to nested Drawer screen
+          // Go back first to remove ImageGallery from stack, then navigate to Image mode
+          navigation.goBack();
           navigation.navigate('Drawer', {
             screen: 'Bedrock',
             params: {
