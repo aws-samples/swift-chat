@@ -335,7 +335,10 @@
               "Statement": [
                 {
                   "Effect": "Allow",
-                  "Action": "lambda:InvokeFunctionWithResponseStream",
+                  "Action": [
+                    "lambda:InvokeFunction",
+                    "lambda:InvokeFunctionWithResponseStream"
+                  ],
                   "Resource": {
                     "Fn::GetAtt": ["APIHandler68F11976", "Arn"]
                   }

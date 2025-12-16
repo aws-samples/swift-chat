@@ -60,36 +60,14 @@ TAG=${TAG:-latest}
 read -p "Enter AWS region (default: us-east-1): " AWS_REGION
 AWS_REGION=${AWS_REGION:-us-east-1}
 
-# Get deployment type
-echo ""
-echo "Select deployment type:"
-echo "  1) AppRunner (default) - uses amd64 architecture"
-echo "  2) Lambda - uses arm64 architecture"
-read -p "Enter deployment type (1 or 2, default: 1): " DEPLOY_TYPE
-DEPLOY_TYPE=${DEPLOY_TYPE:-1}
-
-# Determine architecture based on deployment type
-case $DEPLOY_TYPE in
-    1)
-        DEPLOY_TYPE_NAME="AppRunner"
-        ARCH="amd64"
-        ;;
-    2)
-        DEPLOY_TYPE_NAME="Lambda"
-        ARCH="arm64"
-        ;;
-    *)
-        echo "❌ ERROR: Invalid deployment type. Please enter 1 or 2."
-        exit 1
-        ;;
-esac
+# Lambda uses arm64 architecture
+ARCH="arm64"
 
 echo ""
 echo "Configuration:"
 echo "  Repository: $REPO_NAME"
 echo "  Image Tag: $TAG"
 echo "  AWS Region: $AWS_REGION"
-echo "  Deployment Type: $DEPLOY_TYPE_NAME"
 echo "  Architecture: $ARCH"
 echo ""
 read -p "Continue with these settings? (y/n): " CONFIRM

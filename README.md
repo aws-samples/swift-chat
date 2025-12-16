@@ -36,11 +36,6 @@ across Android, iOS, and macOS platforms.
 
 ## Getting Started with Amazon Bedrock
 
-### Prerequisites
-
-Click [Amazon Bedrock Model access](https://console.aws.amazon.com/bedrock/home#/modelaccess) to enable your models
-access.
-
 ### Configuration
 
 You can choose one of the following two methods for configuration
@@ -64,14 +59,9 @@ You can choose one of the following two methods for configuration
 
 ### Architecture
 
-![](/assets/architecture.avif)
+![](/assets/architecture.png)
 
-By default, we use **AWS App Runner**, which is commonly used to host Python FastAPI servers, offering high performance,
-scalability and low latency.
-
-Alternatively, we provide the option to replace App Runner with **AWS Lambda** using Function URL for a more
-cost-effective
-solution, as shown in
+We use **API Gateway** combined with **AWS Lambda** to enable streaming responses for up to 15 minutes, as shown in
 this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming).
 
 ### Step 1: Set up your API Key
@@ -107,9 +97,6 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
    - ECR repository name (or use default: `swift-chat-api`)
    - Image tag (please use default: `latest`)
    - AWS region (the region you want to deploy, e.g.,: `us-east-1`)
-   - Deployment type:
-     - Option 1 (default): **AppRunner** - uses amd64 architecture
-     - Option 2: **Lambda** - uses arm64 architecture
 
 4. The script will build and push the Docker image to your ECR repository.
 
@@ -117,24 +104,21 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 ### Step 3: Deploy stack and get your API URL
 
-1. Download the CloudFormation template you want to use:
-   - For App Runner: [SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template)
-   - For Lambda: [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
+1. Download the CloudFormation template:
+   - Lambda: [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
 
 2. Go to [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI) and select **Upload a template file** under **Specify template**, then upload the template file you downloaded. (Make sure you are in the same region where your API Key was created.)
 
 3. Click **Next**, On the "Specify stack details" page, provide the following information:
-    - **Stack name**: Keep the default "SwiftChatAPI" or change if needed
     - **ApiKeyParam**: Enter the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey")
     - **ContainerImageUri**: Enter the ECR image URI from Step 2 output
-    - For App Runner, choose an **InstanceTypeParam** based on your needs
 
 4. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 5. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
 
 Wait about 3–5 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
-can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or `https://xxx.lambda-url.xxx.on.aws`
+can find the **API URL** which looks like: `https://xxx.execute-api.us-east-1.amazonaws.com/v1`
 
 ### Step 4: Open the App and setup with API URL and API Key
 
@@ -464,10 +448,14 @@ the [release notes](https://github.com/aws-samples/swift-chat/releases) to see i
 
 ### Upgrade API
 
-- **For AppRunner**: Click and open [App Runner Services](https://console.aws.amazon.com/apprunner/home#/services) page,
-  find and open `swiftchat-api`, click top right **Deploy** button.
-- **For Lambda**: Click and open [Lambda Services](https://console.aws.amazon.com/lambda/home#/functions), find and open
-  your Lambda which start with `SwiftChatLambda-xxx`, click the **Deploy new image** button and click Save.
+1. First, re-run the build script to update the image:
+   ```bash
+   cd server/scripts
+   bash ./push-to-ecr.sh
+   ```
+
+2. Click and open [Lambda Services](https://console.aws.amazon.com/lambda/home#/functions), find and open
+   your Lambda which starts with `SwiftChatAPILambda-xxx`, click the **Deploy new image** button and click Save.
 
 ## Security
 
