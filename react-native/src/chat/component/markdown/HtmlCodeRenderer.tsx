@@ -38,11 +38,6 @@ const isHtmlComplete = (html: string): boolean => {
   return html.trimEnd().toLowerCase().endsWith('</html>');
 };
 
-// Check if HTML code exceeds 50 lines (should not be highlighted)
-const isLargeHtml = (html: string): boolean => {
-  return html.split('\n').length > 50;
-};
-
 const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
   ({ text, colors, isDark, onCopy }, ref) => {
     // Default to preview mode when HTML is complete
@@ -149,8 +144,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
                 backgroundColor: colors.codeBackground,
               }}
               textStyle={styles.codeText}
-              language="html"
-              disableHighlight={isLargeHtml(currentText)}>
+              language="html">
               {currentText}
             </CustomCodeHighlighter>
           </Suspense>

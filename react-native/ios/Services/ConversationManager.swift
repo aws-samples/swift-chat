@@ -7,7 +7,7 @@
 
 import Foundation
 
-class ConversationManager {
+final class ConversationManager: @unchecked Sendable {
     // Services
     private var audioManager: AudioManager!
     private var novaSonicService: NovaSonicService?

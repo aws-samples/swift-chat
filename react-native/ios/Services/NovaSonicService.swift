@@ -21,7 +21,7 @@ enum NovaSonicError: Error {
     case microphoneError(String)
 }
 
-class NovaSonicService {
+final class NovaSonicService: @unchecked Sendable {
     // AWS Configuration
     private var client: BedrockRuntimeClient?
     private var region: String

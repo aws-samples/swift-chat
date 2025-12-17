@@ -13,6 +13,10 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
+import {
+  activateKeepAwake,
+  deactivateKeepAwake,
+} from '@sayem314/react-native-keep-awake';
 import { voiceChatService } from './service/VoiceChatService';
 import AudioWaveformComponent, {
   AudioWaveformRef,
@@ -174,6 +178,18 @@ function ChatScreen(): React.JSX.Element {
     chatStatusRef.current = chatStatus;
     usageRef.current = usage;
   }, [chatStatus, messages, usage]);
+
+  // Keep screen awake during streaming output
+  useEffect(() => {
+    if (chatStatus === ChatStatus.Running) {
+      activateKeepAwake();
+    } else {
+      deactivateKeepAwake();
+    }
+    return () => {
+      deactivateKeepAwake();
+    };
+  }, [chatStatus]);
 
   useEffect(() => {
     drawerTypeRef.current = drawerType;

@@ -1003,6 +1003,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-keep-awake (1.4.0):
+    - React-Core
   - react-native-mmkv (2.12.2):
     - DoubleConversion
     - glog
@@ -1393,6 +1395,7 @@ DEPENDENCIES:
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
+  - "react-native-keep-awake (from `../node_modules/@sayem314/react-native-keep-awake`)"
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-webview (from `../node_modules/react-native-webview`)
@@ -1506,6 +1509,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-get-random-values"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
+  react-native-keep-awake:
+    :path: "../node_modules/@sayem314/react-native-keep-awake"
   react-native-mmkv:
     :path: "../node_modules/react-native-mmkv"
   react-native-safe-area-context:
@@ -1616,6 +1621,7 @@ SPEC CHECKSUMS:
   react-native-document-picker: 451699da81cba8b40b596b8076019a4deb86f46e
   react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
   react-native-image-picker: f1006d8935a3bc0baf8157faaa7857c76a77c8bb
+  react-native-keep-awake: abdad45fbf0da6435d409fafa6a74c8a934a6f75
   react-native-mmkv: f8155c2efbe795cb0c7586d00ff484b1c9388af0
   react-native-safe-area-context: b72c4611af2e86d80a59ac76279043d8f75f454c
   react-native-webview: b836f1f162b87b5b8351611b5d5299f2b699360a
@@ -1654,6 +1660,6 @@ SPEC CHECKSUMS:
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Yoga: 348f8b538c3ed4423eb58a8e5730feec50bce372
 
-PODFILE CHECKSUM: eed3e49f72b6465b4551e72df9de6b83230c91ca
+PODFILE CHECKSUM: b1537eedcc91cb3f96078b5b2842c464a4102b64
 
 COCOAPODS: 1.16.2

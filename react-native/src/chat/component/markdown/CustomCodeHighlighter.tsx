@@ -27,6 +27,7 @@ import SyntaxHighlighter, {
 import transform, { StyleTuple } from 'css-to-react-native';
 import { isMac } from '../../../App.tsx';
 import { trimNewlines } from 'trim-newlines';
+import ChunkedCodeView from './ChunkedCodeView';
 
 // Streaming optimization constants
 // Time (ms) to wait after last content change before applying syntax highlighting
@@ -43,10 +44,6 @@ export interface CodeHighlighterProps extends SyntaxHighlighterProps {
    * @deprecated Use scrollViewProps.contentContainerStyle instead
    */
   containerStyle?: StyleProp<ViewStyle>;
-  /**
-   * If true, always show plain text without syntax highlighting
-   */
-  disableHighlight?: boolean;
 }
 
 const getRNStylesFromHljsStyle = (
@@ -86,71 +83,12 @@ const MemoizedText = memo(
   }) => <Text style={style}>{children}</Text>
 );
 
-// Threshold for throttling updates in plain text view
-const PLAIN_TEXT_THROTTLE_LINE_THRESHOLD = 50;
-
-interface PlainTextCodeViewProps {
-  code: string;
-  textStyle?: StyleProp<TextStyle>;
-  backgroundColor?: string;
-  scrollViewProps?: ScrollViewProps;
-  containerStyle?: StyleProp<ViewStyle>;
-}
-
-// Plain text renderer for streaming mode
-// For large code blocks (>=10 lines), only re-renders when line count changes to prevent jitter
-const PlainTextCodeView: FunctionComponent<PlainTextCodeViewProps> = memo(
-  ({ code, textStyle, backgroundColor, scrollViewProps, containerStyle }) => {
-    return (
-      <ScrollView
-        {...scrollViewProps}
-        horizontal
-        contentContainerStyle={[
-          { backgroundColor },
-          scrollViewProps?.contentContainerStyle,
-          containerStyle,
-        ]}>
-        <View onStartShouldSetResponder={() => true}>
-          {Platform.OS === 'ios' ? (
-            <TextInput
-              style={[styles.plainTextInput, textStyle]}
-              editable={false}
-              multiline>
-              {code}
-            </TextInput>
-          ) : (
-            <Text style={textStyle}>{code}</Text>
-          )}
-        </View>
-      </ScrollView>
-    );
-  },
-  (prevProps, nextProps) => {
-    // Skip re-render if backgroundColor changes
-    if (prevProps.backgroundColor !== nextProps.backgroundColor) {
-      return false;
-    }
-
-    const prevLineCount = prevProps.code.split('\n').length;
-    const nextLineCount = nextProps.code.split('\n').length;
-
-    // Small blocks: re-render on any code change
-    if (nextLineCount < PLAIN_TEXT_THROTTLE_LINE_THRESHOLD) {
-      return prevProps.code === nextProps.code;
-    }
-
-    // Large blocks: only re-render when line count changes
-    return prevLineCount === nextLineCount;
-  }
-);
-
 export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   children,
   textStyle,
   hljsStyle,
   scrollViewProps,
   containerStyle,
-  disableHighlight,
   ...rest
 }) => {
   const stylesheet: HighlighterStyleSheet = useMemo(
@@ -166,11 +104,6 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   const prevLengthRef = useRef(childrenString.length);
 
   useEffect(() => {
-    // Skip auto-highlighting logic if disableHighlight is true
-    if (disableHighlight) {
-      return;
-    }
-
     const wasGrowing = childrenString.length > prevLengthRef.current;
     prevLengthRef.current = childrenString.length;
 
@@ -191,7 +124,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
         streamingTimerRef.current = null;
       }, STREAMING_IDLE_THRESHOLD_MS);
     }
-  }, [childrenString.length, showHighlighted, disableHighlight]);
+  }, [childrenString.length, showHighlighted]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -281,7 +214,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
             : 1.85
           : isMac
           ? 3
-          : 2.75;
+          : 2.82;
       const marginBottomValue = -nodes.length * scale;
 
       // Optimization for streaming content - only process new nodes
@@ -374,13 +307,14 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   );
 
   // Determine if we should show highlighting
-  // If disableHighlight is true, never highlight; otherwise use internal showHighlighted state
-  const shouldHighlight = disableHighlight ? false : showHighlighted;
+  // HTML never gets highlighted; for others, use internal showHighlighted state
+  const isHtml = rest.language === 'html';
+  const shouldHighlight = isHtml ? false : showHighlighted;
 
-  // During streaming, render plain text for performance
+  // During streaming, render chunked plain text for performance
   if (!shouldHighlight) {
     return (
-      <PlainTextCodeView
+      <ChunkedCodeView
         code={childrenString}
         textStyle={baseTextStyle}
         backgroundColor={stylesheet.hljs?.backgroundColor as string}
@@ -408,8 +342,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: -5,
   },
-  // Plain text input - no lineHeight override, let it use natural height based on fontSize
-  plainTextInput: {},
 });
 
 export default CustomCodeHighlighter;

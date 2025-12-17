@@ -514,20 +514,31 @@ export function getSystemPrompts(type?: string): SystemPrompt[] {
       );
       saveAllSystemPrompts(currentSystemPrompts);
     }
-    // Migration: Add App prompt if not exists
-    const hasApp = currentSystemPrompts.some(p => p.name === 'App');
-    if (!hasApp) {
-      const appPrompt = getDefaultSystemPrompts().find(p => p.name === 'App');
-      if (appPrompt) {
+    // Migration: Add or update App prompt to ensure it's always up-to-date
+    const defaultAppPrompt = getDefaultSystemPrompts().find(
+      p => p.name === 'App'
+    );
+    if (defaultAppPrompt) {
+      const existingApp = currentSystemPrompts.find(p => p.name === 'App');
+      if (existingApp) {
+        // Update existing App prompt with latest content, preserving id
+        if (existingApp.prompt !== defaultAppPrompt.prompt) {
+          currentSystemPrompts = currentSystemPrompts.map(p =>
+            p.name === 'App' ? { ...defaultAppPrompt, id: p.id } : p
+          );
+          saveAllSystemPrompts(currentSystemPrompts);
+        }
+      } else {
+        // No App prompt exists, check for OptimizeCode to replace or add new
         const hasOptimizeCode = currentSystemPrompts.some(
           p => p.name === 'OptimizeCode'
         );
         if (hasOptimizeCode) {
           currentSystemPrompts = currentSystemPrompts.map(p =>
-            p.name === 'OptimizeCode' ? { ...appPrompt, id: p.id } : p
+            p.name === 'OptimizeCode' ? { ...defaultAppPrompt, id: p.id } : p
           );
         } else {
-          currentSystemPrompts = [...currentSystemPrompts, appPrompt];
+          currentSystemPrompts = [...currentSystemPrompts, defaultAppPrompt];
         }
         saveAllSystemPrompts(currentSystemPrompts);
       }

@@ -8,9 +8,9 @@ enum AudioError: Error {
     case microphoneAccessDenied(String)
 }
 
-class AudioManager: NSObject {
+final class AudioManager: NSObject, @unchecked Sendable {
     // Basic components
-    private var audioSession = AVAudioSession.sharedInstance()
+    private let audioSession = AVAudioSession.sharedInstance()
     private var audioRecorder: AVAudioRecorder?
     
     // Audio engine components

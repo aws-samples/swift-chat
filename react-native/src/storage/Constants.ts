@@ -268,6 +268,7 @@ IMPORTANT: The user is on a mobile device. You MUST:
 - All styles must be in <style> tags within <head>
 - All scripts must be in <script> tags before </body>
 - Code must be production-ready and error-free
+- Use localStorage if data persistence is needed
 ${deviceHint}
 
 ## Design Guidelines
