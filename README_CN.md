@@ -15,18 +15,11 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 ![](assets/promo.avif)
 
 ### 新功能 🔥
-
+- 🚀 支持网络搜索，获取实时信息（自 v2.7.0 起）。
+- 🚀 支持创建应用，生成并预览迷你 Web 应用（自 v2.7.0 起）。
+- 🚀 支持图片画廊，浏览和管理生成的图片（自 v2.7.0 起）。
 - 🚀 支持流式渲染 Mermaid 图表（自 v2.6.0 起）。
-   <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-   <img src="assets/animations/mermaid.avif" width=48%>
-   <img src="assets/animations/mermaid_save.avif" width=48%>
-   </div>
 - 🚀 支持使用 Bedrock API Key 连接 Amazon Bedrock 模型（自 v2.5.0 起）。
-- 🚀 支持虚拟试衣功能，自动识别衣服、裤子、鞋子并试穿（自 v2.5.0 起）。
-- 🚀 支持 macOS 快捷键操作（自 v2.5.0 起）。
-    - 使用 `Shift + Enter`、`Control + Enter` 或 `Option + Enter` 添加换行。
-    - 使用 `⌘ + V` 从剪贴板添加图片（截图）、视频或文档。
-    - 使用 `⌘ + N` 打开多个 Mac 窗口进行并行操作。
 
 ## 📱 快速下载
 
@@ -245,9 +238,14 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ![](assets/animations/english_teacher.avif)
 
-**丰富的 Markdown 支持**：段落、代码块、表格、LaTeX 等
+**丰富的 Markdown 支持**：段落、代码块、表格、LaTeX、Mermaid 等
 
 ![](assets/markdown.avif)
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+   <img src="assets/animations/mermaid.avif" width=48%>
+   <img src="assets/animations/mermaid_save.avif" width=48%>
+</div>
 
 我们重新设计了 UI，优化了字体大小和行间距，提供更优雅、清洁的展示效果。
 所有这些功能也在 Android 和 macOS 上以原生 UI 无缝显示

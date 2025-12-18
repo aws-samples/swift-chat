@@ -16,17 +16,11 @@ across Android, iOS, and macOS platforms.
 ![](assets/promo.avif)
 
 ### What's New 🔥
+- 🚀 Support Web Search for real-time information retrieval (From v2.7.0).
+- 🚀 Support Create App to generate and preview mini web applications (From v2.7.0).
+- 🚀 Support Image Gallery for browsing and managing generated images (From v2.7.0).
 - 🚀 Support streaming rendering of Mermaid charts (From v2.6.0).
-   <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-   <img src="assets/animations/mermaid_en.avif" width=48%>
-   <img src="assets/animations/mermaid_save_en.avif" width=48%>
-   </div>
 - 🚀 Support using Bedrock API Key for Amazon Bedrock models (From v2.5.0).
-- 🚀 Support virtual try-on, automatically recognize clothes, pants, shoes and try them on (From v2.5.0).
-- 🚀 Support shortcuts for macOS (From v2.5.0).
-    - Use `Shift + Enter`, `Control + Enter` or `Option + Enter` to add a line break.
-    - Use `⌘ + V` to add images (Screenshot), videos, or documents from your clipboard.
-    - Use `⌘ + N` to opening multiple Mac windows for parallel operations.
 
 ## 📱 Quick Download
 
@@ -255,9 +249,14 @@ can enable the **Use Proxy** option to forward your requests.
 
 ![](assets/animations/english_teacher.avif)
 
-**Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX and More
+**Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX, Mermaid and More
 
 ![](assets/markdown.avif)
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+   <img src="assets/animations/mermaid_en.avif" width=48%>
+   <img src="assets/animations/mermaid_save_en.avif" width=48%>
+</div>
 
 We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation.
 All of these features are also seamlessly displayed on Android and macOS with native UI
