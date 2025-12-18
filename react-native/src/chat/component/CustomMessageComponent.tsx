@@ -207,9 +207,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         handleImagePress,
         colors,
         isDark,
-        currentMessage?.citations || []
+        currentMessage?.citations || [],
+        onReasoningToggle
       ),
-    [handleImagePress, colors, isDark, currentMessage?.citations]
+    [handleImagePress, colors, isDark, currentMessage?.citations, onReasoningToggle]
   );
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);

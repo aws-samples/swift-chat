@@ -103,11 +103,17 @@ const MemoizedCodeHighlighter = React.memo(
     language,
     colors,
     isDark,
+    onPreviewToggle,
   }: {
     text: string;
     language?: string;
     colors: ColorScheme;
     isDark: boolean;
+    onPreviewToggle?: (
+      expanded: boolean,
+      height: number,
+      animated: boolean
+    ) => void;
   }) => {
     const styles = createCustomStyles(colors);
     // Use useRef to always capture the latest text value
@@ -137,6 +143,7 @@ const MemoizedCodeHighlighter = React.memo(
           colors={colors}
           isDark={isDark}
           onCopy={handleCopy}
+          onPreviewToggle={onPreviewToggle}
         />
       );
     }
@@ -183,7 +190,8 @@ const MemoizedCodeHighlighter = React.memo(
       prevProps.text === nextProps.text &&
       prevProps.language === nextProps.language &&
       prevProps.colors === nextProps.colors &&
-      prevProps.isDark === nextProps.isDark
+      prevProps.isDark === nextProps.isDark &&
+      prevProps.onPreviewToggle === nextProps.onPreviewToggle
     );
   }
 );
@@ -198,18 +206,29 @@ export class CustomMarkdownRenderer
   private styles: ReturnType<typeof createCustomStyles>;
   private isDark: boolean;
   private citations: Citation[];
+  private onPreviewToggle?: (
+    expanded: boolean,
+    height: number,
+    animated: boolean
+  ) => void;
 
   constructor(
     private onImagePress: (pressMode: PressMode, url: string) => void,
     colors: ColorScheme,
     isDark: boolean,
-    citations: Citation[] = []
+    citations: Citation[] = [],
+    onPreviewToggle?: (
+      expanded: boolean,
+      height: number,
+      animated: boolean
+    ) => void
   ) {
     super();
     this.colors = colors;
     this.isDark = isDark;
     this.styles = createCustomStyles(colors);
     this.citations = citations;
+    this.onPreviewToggle = onPreviewToggle;
   }
 
   getTextView(children: string | ReactNode[], styles?: TextStyle): ReactNode {
@@ -388,6 +407,7 @@ export class CustomMarkdownRenderer
           language={language}
           colors={this.colors}
           isDark={this.isDark}
+          onPreviewToggle={this.onPreviewToggle}
         />
       );
     } else {

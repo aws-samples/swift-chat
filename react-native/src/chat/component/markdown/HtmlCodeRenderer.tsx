@@ -23,6 +23,11 @@ interface HtmlCodeRendererProps {
   colors: ColorScheme;
   isDark: boolean;
   onCopy: () => void;
+  onPreviewToggle?: (
+    expanded: boolean,
+    height: number,
+    animated: boolean
+  ) => void;
 }
 
 interface HtmlCodeRendererRef {
@@ -39,7 +44,7 @@ const isHtmlComplete = (html: string): boolean => {
 };
 
 const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
-  ({ text, colors, isDark, onCopy }, ref) => {
+  ({ text, colors, isDark, onCopy, onPreviewToggle }, ref) => {
     // Default to preview mode when HTML is complete
     const [showPreview, setShowPreview] = useState(() => isHtmlComplete(text));
     const [currentText, setCurrentText] = useState(text);
@@ -47,6 +52,10 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       isHtmlComplete(text)
     );
     const htmlRendererRef = useRef<HtmlPreviewRendererRef>(null);
+    const codeContainerRef = useRef<View>(null);
+    const previewContainerRef = useRef<View>(null);
+    const codeHeightRef = useRef<number>(0);
+    const previewHeightRef = useRef<number>(0);
     const styles = createStyles(colors);
     const hljsStyle = isDark ? vs2015 : github;
 
@@ -84,13 +93,97 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       }
     }, [text, hasAutoSwitched, showPreview]);
 
-    const setCodeMode = () => {
-      setShowPreview(false);
-    };
+    const setCodeMode = useCallback(() => {
+      if (!showPreview) {
+        return;
+      }
+      // Switching from preview to code
+      if (previewHeightRef.current === 0) {
+        // Need to measure current preview height first
+        previewContainerRef.current?.measure((_x, _y, _width, height) => {
+          previewHeightRef.current = height;
+          setShowPreview(false);
+          setTimeout(() => {
+            codeContainerRef.current?.measure((_x2, _y2, _width2, codeHeight) => {
+              codeHeightRef.current = codeHeight;
+              // heightDiff > 0 means code is taller (expanding), < 0 means code is shorter (collapsing)
+              const heightDiff = codeHeight - previewHeightRef.current;
+              if (heightDiff !== 0) {
+                onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), true);
+              }
+            });
+          }, 150);
+        });
+      } else {
+        setShowPreview(false);
+        if (codeHeightRef.current === 0) {
+          setTimeout(() => {
+            codeContainerRef.current?.measure((_x, _y, _width, codeHeight) => {
+              codeHeightRef.current = codeHeight;
+              const heightDiff = codeHeight - previewHeightRef.current;
+              if (heightDiff !== 0) {
+                onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), true);
+              }
+            });
+          }, 150);
+        } else {
+          const heightDiff = codeHeightRef.current - previewHeightRef.current;
+          if (heightDiff !== 0) {
+            setTimeout(() => {
+              onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), false);
+            }, 0);
+          }
+        }
+      }
+    }, [showPreview, onPreviewToggle]);
 
-    const setPreviewMode = () => {
-      setShowPreview(true);
-    };
+    const setPreviewMode = useCallback(() => {
+      if (showPreview) {
+        return;
+      }
+      // Switching from code to preview
+      if (codeHeightRef.current === 0) {
+        // Need to measure current code height first
+        codeContainerRef.current?.measure((_x, _y, _width, height) => {
+          codeHeightRef.current = height;
+          setShowPreview(true);
+          setTimeout(() => {
+            previewContainerRef.current?.measure(
+              (_x2, _y2, _width2, previewHeight) => {
+                previewHeightRef.current = previewHeight;
+                // heightDiff > 0 means preview is taller (expanding), < 0 means preview is shorter (collapsing)
+                const heightDiff = previewHeight - codeHeightRef.current;
+                if (heightDiff !== 0) {
+                  onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), true);
+                }
+              }
+            );
+          }, 150);
+        });
+      } else {
+        setShowPreview(true);
+        if (previewHeightRef.current === 0) {
+          setTimeout(() => {
+            previewContainerRef.current?.measure(
+              (_x, _y, _width, previewHeight) => {
+                previewHeightRef.current = previewHeight;
+                const heightDiff = previewHeight - codeHeightRef.current;
+                if (heightDiff !== 0) {
+                  onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), true);
+                }
+              }
+            );
+          }, 150);
+        } else {
+          const heightDiff = previewHeightRef.current - codeHeightRef.current;
+          if (heightDiff !== 0) {
+            setTimeout(() => {
+              onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), false);
+            }, 0);
+          }
+        }
+      }
+    }, [showPreview, onPreviewToggle]);
 
     return (
       <View style={styles.container}>
@@ -122,32 +215,36 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
         </View>
 
         {showPreview ? (
-          <HtmlPreviewRenderer
-            ref={htmlRendererRef}
-            code={currentText}
-            style={styles.htmlRenderer}
-          />
+          <View ref={previewContainerRef}>
+            <HtmlPreviewRenderer
+              ref={htmlRendererRef}
+              code={currentText}
+              style={styles.htmlRenderer}
+            />
+          </View>
         ) : (
-          <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
-            <CustomCodeHighlighter
-              hljsStyle={hljsStyle}
-              scrollViewProps={{
-                contentContainerStyle: {
-                  padding: 12,
-                  minWidth: '100%',
-                  borderBottomLeftRadius: 8,
-                  borderBottomRightRadius: 8,
+          <View ref={codeContainerRef}>
+            <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
+              <CustomCodeHighlighter
+                hljsStyle={hljsStyle}
+                scrollViewProps={{
+                  contentContainerStyle: {
+                    padding: 12,
+                    minWidth: '100%',
+                    borderBottomLeftRadius: 8,
+                    borderBottomRightRadius: 8,
+                    backgroundColor: colors.codeBackground,
+                  },
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error
                   backgroundColor: colors.codeBackground,
-                },
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error
-                backgroundColor: colors.codeBackground,
-              }}
-              textStyle={styles.codeText}
-              language="html">
-              {currentText}
-            </CustomCodeHighlighter>
-          </Suspense>
+                }}
+                textStyle={styles.codeText}
+                language="html">
+                {currentText}
+              </CustomCodeHighlighter>
+            </Suspense>
+          </View>
         )}
       </View>
     );
