@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState, useRef } from 'react';
+import React, { useMemo, useCallback, useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   StatusBar,
   Platform,
   Animated,
+  NativeModules,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -19,6 +20,8 @@ import {
   commonWebViewProps,
 } from '../chat/component/markdown/htmlUtils';
 
+const { NavigationBarModule } = NativeModules;
+
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 type AppViewerRouteProp = RouteProp<RouteParamList, 'AppViewer'>;
 
@@ -30,6 +33,17 @@ function AppViewerScreen(): React.JSX.Element {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const styles = createStyles(colors, isFullScreen);
+
+  // Enable immersive mode only when entering fullscreen
+  useEffect(() => {
+    if (Platform.OS === 'android' && NavigationBarModule) {
+      if (isFullScreen) {
+        NavigationBarModule.setImmersiveMode(true);
+      } else {
+        NavigationBarModule.resetToDefault();
+      }
+    }
+  }, [isFullScreen]);
 
   const handleLoadEnd = useCallback(() => {
     Animated.timing(fadeAnim, {
