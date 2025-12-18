@@ -9,6 +9,56 @@ import { Readability } from '@mozilla/readability';
 import TurndownService from 'turndown';
 
 const NO_CONTENT = 'No content found';
+const MAX_SIZE = 500 * 1024; // 500KB
+const READ_TIMEOUT = 8000; // 8 seconds
+
+async function readBodyWithTimeout(
+  response: Response,
+  timeout: number,
+  maxSize: number,
+  signal?: AbortSignal
+): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    return response.text();
+  }
+
+  const decoder = new TextDecoder();
+  const chunks: string[] = [];
+  let totalSize = 0;
+  const startTime = Date.now();
+
+  try {
+    while (true) {
+      if (signal?.aborted) {
+        reader.cancel();
+        throw new Error('Aborted');
+      }
+      if (Date.now() - startTime > timeout) {
+        reader.cancel();
+        throw new Error('Read timeout');
+      }
+
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      totalSize += value.length;
+      if (totalSize > maxSize) {
+        reader.cancel();
+        throw new Error(`Size limit exceeded: ${totalSize}`);
+      }
+
+      chunks.push(decoder.decode(value, { stream: true }));
+    }
+    chunks.push(decoder.decode());
+    return chunks.join('');
+  } catch (e) {
+    reader.cancel();
+    throw e;
+  }
+}
 
 function isValidUrl(urlString: string): boolean {
   try {
@@ -61,19 +111,22 @@ async function fetchSingleUrl(
       }
 
       const finalUrl = response.url || item.url;
-      const html = await response.text();
+
+      // Skip large responses before reading body
+      const contentLength = response.headers.get('content-length');
+      if (contentLength && parseInt(contentLength, 10) > MAX_SIZE) {
+        throw new Error(`Content too large: ${contentLength}`);
+      }
+
+      const html = await readBodyWithTimeout(
+        response,
+        READ_TIMEOUT,
+        MAX_SIZE,
+        globalAbortController?.signal
+      );
 
       const isCaptchaPage = finalUrl.includes('baidu.com/static/captcha');
       if (isCaptchaPage) {
-        return {
-          title: item.title,
-          url: finalUrl,
-          content: NO_CONTENT,
-        };
-      }
-
-      const MAX_HTML_SIZE = 2 * 1024 * 1024;
-      if (html.length > MAX_HTML_SIZE) {
         return {
           title: item.title,
           url: finalUrl,
@@ -130,7 +183,7 @@ async function fetchSingleUrl(
       );
       throw error;
     }
-  } catch (error: unknown) {
+  } catch {
     return {
       title: item.title,
       url: item.url,

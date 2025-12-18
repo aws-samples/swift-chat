@@ -29,6 +29,7 @@ import { SEARCH_PROVIDER_CONFIGS } from '../../websearch/constants/SearchProvide
 import { SearchEngineOption } from '../../websearch/types';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RouteParamList } from '../../types/RouteTypes';
+import { isAndroid } from '../../utils/PlatformUtils';
 
 interface WebSearchSelectionModalProps {
   visible: boolean;
@@ -37,7 +38,7 @@ interface WebSearchSelectionModalProps {
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const MODAL_HEIGHT = 240;
+const MODAL_HEIGHT = isAndroid ? 244 : 240;
 
 export const WebSearchSelectionModal: React.FC<
   WebSearchSelectionModalProps

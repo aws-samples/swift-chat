@@ -26,6 +26,15 @@ export class GoogleProvider {
     return `
       (function() {
         try {
+          // Check if redirected to Google's CAPTCHA/sorry page
+          if (window.location.href.includes('/sorry/') || window.location.href.includes('google.com/sorry')) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'captcha_required',
+              message: 'Google CAPTCHA verification required'
+            }));
+            return;
+          }
+
           ${
             expectedQuery
               ? `

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, Linking } from 'react-native';
+import { isAndroid } from '../../utils/PlatformUtils';
 import { useTheme, ColorScheme } from '../../theme';
 import { trigger } from '../util/HapticUtils';
 import { HapticFeedbackTypes } from 'react-native-haptic-feedback/src/types';
@@ -47,6 +48,7 @@ const createStyles = (colors: ColorScheme) =>
       backgroundColor: colors.citationBadgeBackground,
       justifyContent: 'center',
       alignItems: 'center',
+      transform: isAndroid ? [{ translateY: 3 }] : [],
     },
     badgeText: {
       fontSize: 10,

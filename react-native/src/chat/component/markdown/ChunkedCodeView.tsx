@@ -89,7 +89,10 @@ const useChunkedCode = (code: string): string[] => {
     const prevLength = processedLengthRef.current;
 
     // Handle reset case (new code block or code got shorter)
-    if (code.length < prevLength || !code.startsWith(code.slice(0, prevLength))) {
+    if (
+      code.length < prevLength ||
+      !code.startsWith(code.slice(0, prevLength))
+    ) {
       // Reset everything
       linesRef.current = [];
       processedLengthRef.current = 0;
@@ -128,7 +131,9 @@ const useChunkedCode = (code: string): string[] => {
       }
 
       // Check if last line is incomplete (code doesn't end with newline)
-      incompleteLineRef.current = code.endsWith('\n') ? '' : newParts[newParts.length - 1];
+      incompleteLineRef.current = code.endsWith('\n')
+        ? ''
+        : newParts[newParts.length - 1];
     }
 
     processedLengthRef.current = code.length;
@@ -139,7 +144,11 @@ const useChunkedCode = (code: string): string[] => {
 
     // Build/update complete chunks
     let chunksChanged = false;
-    for (let i = completedChunksRef.current.length; i < completeChunkCount; i++) {
+    for (
+      let i = completedChunksRef.current.length;
+      i < completeChunkCount;
+      i++
+    ) {
       const start = i * CHUNK_SIZE;
       const end = start + CHUNK_SIZE;
       const chunk = linesRef.current.slice(start, end).join('\n');
@@ -195,7 +204,7 @@ const useChunkedCode = (code: string): string[] => {
   if (throttledLastChunk) {
     return [...completeChunks, throttledLastChunk];
   }
-  return completeChunks.length > 0 ? completeChunks : (code ? [code] : []);
+  return completeChunks.length > 0 ? completeChunks : code ? [code] : [];
 };
 
 /**

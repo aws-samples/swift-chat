@@ -1114,7 +1114,7 @@ const createStyles = (colors: ColorScheme, isNovaSonic: boolean) =>
       borderTopWidth: 0,
       paddingHorizontal: 10,
       paddingTop: 0,
-      paddingBottom: isMac ? 10 : 2,
+      paddingBottom: isMac ? 10 : Platform.OS === 'android' ? 8 : 2,
     },
     inputToolbarPrimary: {
       backgroundColor: isNovaSonic ? 'transparent' : colors.chatInputBackground,

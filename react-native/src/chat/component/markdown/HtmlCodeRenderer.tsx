@@ -104,14 +104,16 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
           previewHeightRef.current = height;
           setShowPreview(false);
           setTimeout(() => {
-            codeContainerRef.current?.measure((_x2, _y2, _width2, codeHeight) => {
-              codeHeightRef.current = codeHeight;
-              // heightDiff > 0 means code is taller (expanding), < 0 means code is shorter (collapsing)
-              const heightDiff = codeHeight - previewHeightRef.current;
-              if (heightDiff !== 0) {
-                onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), true);
+            codeContainerRef.current?.measure(
+              (_x2, _y2, _width2, codeHeight) => {
+                codeHeightRef.current = codeHeight;
+                // heightDiff > 0 means code is taller (expanding), < 0 means code is shorter (collapsing)
+                const heightDiff = codeHeight - previewHeightRef.current;
+                if (heightDiff !== 0) {
+                  onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), true);
+                }
               }
-            });
+            );
           }, 150);
         });
       } else {

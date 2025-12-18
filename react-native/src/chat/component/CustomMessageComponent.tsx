@@ -89,6 +89,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     (currentMessage?.text === '...' || currentMessage?.text === '');
   const [forceShowButtons, setForceShowButtons] = useState(false);
   const isUser = useRef(currentMessage?.user?._id === 1);
+  // Force re-render key for Android citation badge layout fix
+  const [citationRenderKey, setCitationRenderKey] = useState(0);
   const { drawerType } = useAppContext();
   const chatScreenWidth =
     isMac && drawerType === 'permanent' ? screenWidth - 300 : screenWidth;
@@ -210,7 +212,13 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         currentMessage?.citations || [],
         onReasoningToggle
       ),
-    [handleImagePress, colors, isDark, currentMessage?.citations, onReasoningToggle]
+    [
+      handleImagePress,
+      colors,
+      isDark,
+      currentMessage?.citations,
+      onReasoningToggle,
+    ]
   );
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
@@ -380,6 +388,25 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     }
   }, [handleReasoningCopy, reasoningCopied]);
 
+  // Android: Force re-render citation badges after streaming completes
+  // to fix inline layout issues that occur during streaming
+  useEffect(() => {
+    if (
+      isAndroid &&
+      chatStatus !== ChatStatus.Running &&
+      chatStatusRef.current === ChatStatus.Running &&
+      currentMessage?.citations &&
+      currentMessage.citations.length > 0
+    ) {
+      // Delay slightly to ensure the streaming has fully stopped
+      const timer = setTimeout(() => {
+        setCitationRenderKey(prev => prev + 1);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    chatStatusRef.current = chatStatus;
+  }, [chatStatus, currentMessage?.citations]);
+
   const messageContent = useMemo(() => {
     if (!currentMessage) {
       return null;
@@ -388,6 +415,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     if (!isUser.current) {
       return (
         <Markdown
+          key={citationRenderKey}
           value={currentMessage.text}
           styles={customMarkedStyles}
           renderer={customMarkdownRenderer}
@@ -413,6 +441,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     customTokenizer,
     chatScreenWidth,
     styles.questionText,
+    citationRenderKey,
   ]);
 
   const messageActionButtons = useMemo(() => {
