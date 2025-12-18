@@ -367,9 +367,16 @@ function ChatScreen(): React.JSX.Element {
 
   // keyboard show listener for scroll to bottom
   useEffect(() => {
+    const handleKeyboardShow = () => {
+      // Only scroll to bottom if the chat input is focused
+      if (textInputViewRef.current?.isFocused()) {
+        scrollToBottom();
+      }
+    };
+
     const keyboardDidShowListener = Platform.select({
-      ios: Keyboard.addListener('keyboardWillShow', scrollToBottom),
-      android: Keyboard.addListener('keyboardDidShow', scrollToBottom),
+      ios: Keyboard.addListener('keyboardWillShow', handleKeyboardShow),
+      android: Keyboard.addListener('keyboardDidShow', handleKeyboardShow),
     });
 
     return () => {

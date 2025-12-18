@@ -317,6 +317,8 @@ const HtmlPreviewRenderer = forwardRef<
               onChangeText={text => setAppName(text.slice(0, 20))}
               maxLength={20}
               autoFocus={true}
+              returnKeyType="done"
+              onSubmitEditing={handleSaveApp}
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
