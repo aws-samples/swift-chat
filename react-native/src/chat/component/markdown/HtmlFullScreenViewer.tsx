@@ -1,10 +1,4 @@
-import React, {
-  useMemo,
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -15,10 +9,9 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useTheme } from '../../../theme';
 import { isMac } from '../../../App.tsx';
-import { injectErrorScript, commonWebViewProps } from './htmlUtils';
+import AIWebView, { AIWebViewRef } from '../../../app/AIWebView';
 
 interface HtmlFullScreenViewerProps {
   visible: boolean;
@@ -32,7 +25,7 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
   code,
 }) => {
   const { colors, isDark } = useTheme();
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<AIWebViewRef>(null);
   const [hasError, setHasError] = useState(false);
   const [screenData, setScreenData] = useState(Dimensions.get('window'));
   const [isLandscape, setIsLandscape] = useState(
@@ -56,23 +49,24 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
     }
   }, [visible]);
 
-  const handleWebViewMessage = useCallback((event: WebViewMessageEvent) => {
-    try {
-      const message = JSON.parse(event.nativeEvent.data);
+  const handleWebViewMessage = useCallback(
+    (event: { nativeEvent: { data: string } }) => {
+      try {
+        const message = JSON.parse(event.nativeEvent.data);
 
-      if (message.type === 'rendered') {
-        setHasError(!message.success);
+        if (message.type === 'rendered') {
+          setHasError(!message.success);
+        }
+      } catch (error) {
+        console.log('[HtmlFullScreenViewer] Message parse error:', error);
       }
-    } catch (error) {
-      console.log('[HtmlFullScreenViewer] Message parse error:', error);
-    }
-  }, []);
+    },
+    []
+  );
 
   const handleError = useCallback(() => {
     setHasError(true);
   }, []);
-
-  const htmlContent = useMemo(() => injectErrorScript(code), [code]);
 
   const styles = StyleSheet.create({
     modal: {
@@ -154,17 +148,14 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
 
         {/* WebView */}
         <View style={styles.webViewContainer}>
-          <WebView
+          <AIWebView
             ref={webViewRef}
-            source={{ html: htmlContent }}
+            html={code}
             style={styles.webView}
-            {...commonWebViewProps}
             onMessage={handleWebViewMessage}
             onError={handleError}
             scrollEnabled={true}
             bounces={false}
-            automaticallyAdjustsScrollIndicatorInsets={false}
-            contentInsetAdjustmentBehavior="never"
           />
         </View>
 

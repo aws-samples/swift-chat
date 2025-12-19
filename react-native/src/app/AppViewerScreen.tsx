@@ -1,10 +1,4 @@
-import React, {
-  useMemo,
-  useCallback,
-  useState,
-  useRef,
-  useEffect,
-} from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -15,16 +9,12 @@ import {
   Animated,
   NativeModules,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../types/RouteTypes';
 import { HeaderLeftView } from '../prompt/HeaderLeftView';
 import { useTheme, ColorScheme } from '../theme';
-import {
-  injectErrorScript,
-  commonWebViewProps,
-} from '../chat/component/markdown/htmlUtils';
+import AIWebView from './AIWebView';
 
 const { NavigationBarModule } = NativeModules;
 
@@ -83,11 +73,6 @@ function AppViewerScreen(): React.JSX.Element {
     });
   }, [navigation, headerLeft, headerRight, isFullScreen]);
 
-  const htmlContent = useMemo(
-    () => injectErrorScript(app.htmlCode),
-    [app.htmlCode]
-  );
-
   return (
     <View style={styles.container}>
       {isFullScreen && (
@@ -98,17 +83,12 @@ function AppViewerScreen(): React.JSX.Element {
         />
       )}
       <Animated.View style={[styles.webView, { opacity: fadeAnim }]}>
-        <WebView
-          source={{
-            html: htmlContent,
-            baseUrl: `https://app-${app.id}.local/`,
-          }}
+        <AIWebView
+          html={app.htmlCode}
+          baseUrl={`https://app-${app.id}.local/`}
           style={styles.webView}
-          {...commonWebViewProps}
           scrollEnabled={true}
           bounces={false}
-          automaticallyAdjustsScrollIndicatorInsets={false}
-          contentInsetAdjustmentBehavior="never"
           onLoadEnd={handleLoadEnd}
         />
       </Animated.View>

@@ -1,5 +1,9 @@
 import { Model, ModelTag, SystemPrompt } from '../types/Chat.ts';
-import { getDeepSeekApiKey, getOpenAIApiKey } from './StorageUtils.ts';
+import {
+  getDeepSeekApiKey,
+  getOpenAIApiKey,
+  getTavilyApiKey,
+} from './StorageUtils.ts';
 import { isMac } from '../App.tsx';
 
 // AWS credentials - empty by default, to be filled by user
@@ -256,6 +260,57 @@ IMPORTANT: The user is on a mobile device. You MUST:
 - Use flexible units (%, vh, vw) instead of fixed pixels
 - Use env(safe-area-inset-*) for padding to avoid notch and home indicator`;
 
+  const aiApiHint = `
+### AI Chat API
+
+\`AI.chat(options, onChunk?)\` - Call AI from your app
+
+**Parameters:**
+- \`options.messages\`: Array of {role: 'user'|'assistant', content: string} (REQUIRED)
+- \`options.systemPrompt\`: string (optional) - Set AI persona or instructions
+- \`onChunk\`: callback(chunk: string) - For streaming response (optional)
+- Returns: Promise<string>
+
+\`\`\`javascript
+// Simple
+const messages = [{ role: 'user', content: 'Hello' }];
+const reply = await AI.chat({ messages });
+
+// Streaming (chunk is incremental, use += to accumulate)
+let result = '';
+await AI.chat({ messages }, (chunk) => { result += chunk; });
+
+// Multi-turn conversation
+const messages = [
+  { role: 'user', content: 'Hi' },
+  { role: 'assistant', content: 'Hello!' },
+  { role: 'user', content: 'How are you?' }
+];
+const reply = await AI.chat({ messages });
+
+// With system prompt
+const reply = await AI.chat({ messages, systemPrompt: '...' });
+\`\`\`
+`;
+
+  const webSearchHint = getTavilyApiKey()
+    ? `
+### Web Search API
+
+\`AI.webSearch(query, maxResults?)\` - Search the web for information
+
+**Parameters:**
+- \`query\`: string (REQUIRED)
+- \`maxResults\`: number (optional, default: 5)
+- Returns: Promise<Array<{url, title, content}>>
+
+\`\`\`javascript
+const results = await AI.webSearch('your query', 5);
+results.forEach(r => console.log(r.title, r.url, r.content));
+\`\`\`
+`
+    : '';
+
   return `You are an expert HTML/CSS/JavaScript developer. Your task is to create fully functional, interactive single-page web applications based on user requirements.
 
 ## Output Format
@@ -270,6 +325,10 @@ IMPORTANT: The user is on a mobile device. You MUST:
 - Code must be production-ready and error-free
 - Use localStorage if data persistence is needed
 ${deviceHint}
+
+## Available APIs
+${aiApiHint}
+${webSearchHint}
 
 ## Design Guidelines
 - Modern, clean UI with good visual hierarchy
@@ -286,6 +345,7 @@ ${deviceHint}
 - Drawing/painting tools, image editors
 - Music players, sound generators
 - Interactive tutorials, flashcards
+- AI chatbots, writing assistants, Q&A apps
 
 If the user's request is unclear, ask clarifying questions before generating code.`;
 };

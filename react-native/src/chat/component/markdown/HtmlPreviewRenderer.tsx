@@ -1,12 +1,10 @@
 import React, {
-  useMemo,
   useState,
   useCallback,
   forwardRef,
   useImperativeHandle,
   useRef,
 } from 'react';
-import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import {
   ViewStyle,
   TouchableOpacity,
@@ -24,7 +22,7 @@ import HtmlFullScreenViewer from './HtmlFullScreenViewer';
 import RNFS from 'react-native-fs';
 import { saveApp, generateAppId } from '../../../storage/StorageUtils';
 import { SavedApp } from '../../../types/Chat';
-import { injectErrorScript, commonWebViewProps } from './htmlUtils';
+import AIWebView, { AIWebViewRef } from '../../../app/AIWebView';
 
 interface HtmlPreviewRendererProps {
   code: string;
@@ -47,7 +45,7 @@ const HtmlPreviewRenderer = forwardRef<
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [appName, setAppName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<AIWebViewRef>(null);
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -189,8 +187,6 @@ const HtmlPreviewRenderer = forwardRef<
     }
   }, [appName, captureScreenshot]);
 
-  const htmlContent = useMemo(() => injectErrorScript(code), [code]);
-
   const handleSaveWithoutScreenshot = useCallback(async () => {
     try {
       await ensureAppDir();
@@ -219,7 +215,7 @@ const HtmlPreviewRenderer = forwardRef<
   }, [appName, code]);
 
   const handleMessage = useCallback(
-    (event: WebViewMessageEvent) => {
+    (event: { nativeEvent: { data: string } }) => {
       try {
         const message = JSON.parse(event.nativeEvent.data);
 
@@ -266,11 +262,10 @@ const HtmlPreviewRenderer = forwardRef<
           onPress={() => setShowFullScreen(true)}
           activeOpacity={0.8}
           style={styles.webViewContainer}>
-          <WebView
+          <AIWebView
             ref={webViewRef}
-            source={{ html: htmlContent }}
-            style={[styles.webView, style]}
-            {...commonWebViewProps}
+            html={code}
+            style={{ ...styles.webView, ...style }}
             onMessage={handleMessage}
             onError={handleError}
             scrollEnabled={false}

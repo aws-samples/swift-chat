@@ -8,6 +8,7 @@ import { SearchIntentResult } from '../types';
 import { invokeBedrockWithCallBack } from '../../api/bedrock-api';
 import { ChatMode } from '../../types/Chat';
 import { jsonrepair } from 'jsonrepair';
+import { updateTotalUsage } from '../../storage/StorageUtils';
 
 const INTENT_ANALYSIS_PROMPT = `You are an AI question rephraser. Your role is to rephrase follow-up queries from a conversation into a standalone search query that can be used to retrieve information through web search.
 
@@ -170,13 +171,17 @@ export class IntentAnalysisService {
         null,
         () => abortController?.signal.aborted || false,
         controller,
-        (text: string, complete: boolean, needStop: boolean) => {
+        (text: string, complete: boolean, needStop: boolean, usage) => {
           fullResponse = text;
 
           if (complete || needStop) {
             if (needStop) {
               reject(new Error('Request stopped'));
             } else {
+              // Update total usage statistics
+              if (usage) {
+                updateTotalUsage(usage);
+              }
               resolve(fullResponse);
             }
           }
