@@ -66,10 +66,7 @@ export async function getBedrockMessage(
                 content[0] as TextContent
               ).text += `\n\n[File: ${fileName}.${fileFormat}]\n${fileTextContent}`;
             } catch (error) {
-              console.warn(
-                `Error reading text content from ${fileName}:`,
-                error
-              );
+              console.warn('Error reading text content from:', fileName, error);
             }
           } else {
             content.push({
@@ -84,7 +81,7 @@ export async function getBedrockMessage(
           }
         }
       } catch (error) {
-        console.warn(`Error processing file ${file.fileName}:`, error);
+        console.warn('Error processing file:', file.fileName, error);
       }
     }
   }

@@ -199,7 +199,7 @@ function parseChunk(part: string) {
         lastUsage = content.usage;
       }
     } catch (innerError) {
-      console.log('DataChunk parse error:' + innerError, part);
+      console.log('DataChunk parse error:', innerError, part);
       return {
         reasoning: reasoning,
         text: part,

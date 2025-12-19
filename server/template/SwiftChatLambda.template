@@ -184,6 +184,7 @@
         },
         "MemorySize": 512,
         "PackageType": "Image",
+        "ReservedConcurrentExecutions": 50,
         "Role": {
           "Fn::GetAtt": [
             "LambdaExecutionRoleD5C26073",

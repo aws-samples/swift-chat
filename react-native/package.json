@@ -83,7 +83,8 @@
     "@react-native-clipboard/clipboard": {
       "react-native": "~0.74.1",
       "react-native-windows": "~0.74.1"
-    }
+    },
+    "prismjs": "^1.30.0"
   },
   "engines": {
     "node": ">=18"
