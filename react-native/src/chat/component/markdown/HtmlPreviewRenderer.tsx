@@ -20,7 +20,11 @@ import {
 import { ColorScheme, useTheme } from '../../../theme';
 import HtmlFullScreenViewer from './HtmlFullScreenViewer';
 import RNFS from 'react-native-fs';
-import { saveApp, generateAppId } from '../../../storage/StorageUtils';
+import {
+  saveApp,
+  generateAppId,
+  getSessionId,
+} from '../../../storage/StorageUtils';
 import { SavedApp } from '../../../types/Chat';
 import AIWebView, { AIWebViewRef } from '../../../app/AIWebView';
 
@@ -48,6 +52,9 @@ const HtmlPreviewRenderer = forwardRef<
   const webViewRef = useRef<AIWebViewRef>(null);
   const { colors } = useTheme();
   const styles = createStyles(colors);
+
+  // Use current session ID for localStorage sharing between preview and fullscreen
+  const baseUrl = `https://html-session-${getSessionId()}.local/`;
 
   const updateContent = useCallback((_newCode: string) => {
     // Content updates are handled by htmlContent useMemo via code prop
@@ -265,6 +272,7 @@ const HtmlPreviewRenderer = forwardRef<
           <AIWebView
             ref={webViewRef}
             html={code}
+            baseUrl={baseUrl}
             style={{ ...styles.webView, ...style }}
             onMessage={handleMessage}
             onError={handleError}
@@ -344,6 +352,7 @@ const HtmlPreviewRenderer = forwardRef<
         visible={showFullScreen}
         onClose={() => setShowFullScreen(false)}
         code={code}
+        baseUrl={baseUrl}
       />
     </>
   );

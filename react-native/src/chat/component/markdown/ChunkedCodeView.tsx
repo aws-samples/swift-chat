@@ -21,9 +21,6 @@ import {
 // Number of lines per chunk
 const CHUNK_SIZE = 100;
 
-// Throttle interval for the last chunk updates (ms)
-const LAST_CHUNK_THROTTLE_MS = 100;
-
 interface ChunkedCodeViewProps {
   code: string;
   textStyle?: StyleProp<TextStyle>;
@@ -75,14 +72,10 @@ const useChunkedCode = (code: string): string[] => {
   // Cache completed chunks
   const completedChunksRef = useRef<string[]>([]);
 
-  // Throttled last chunk state
-  const [throttledLastChunk, setThrottledLastChunk] = useState<string>('');
-  const lastUpdateTimeRef = useRef<number>(0);
-  const pendingUpdateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestLastChunkRef = useRef<string>('');
-
   // State to track complete chunks for rendering
   const [completeChunks, setCompleteChunks] = useState<string[]>([]);
+  // State for the last (incomplete) chunk
+  const [lastChunk, setLastChunk] = useState<string>('');
 
   // Incrementally process new content
   useEffect(() => {
@@ -99,6 +92,7 @@ const useChunkedCode = (code: string): string[] => {
       incompleteLineRef.current = '';
       completedChunksRef.current = [];
       setCompleteChunks([]);
+      setLastChunk('');
     }
 
     // Get only the new content
@@ -151,58 +145,30 @@ const useChunkedCode = (code: string): string[] => {
     ) {
       const start = i * CHUNK_SIZE;
       const end = start + CHUNK_SIZE;
-      const chunk = linesRef.current.slice(start, end).join('\n');
+      // Add trailing newline since complete chunks always have content following
+      const chunk = linesRef.current.slice(start, end).join('\n') + '\n';
       completedChunksRef.current.push(chunk);
       chunksChanged = true;
     }
 
-    if (chunksChanged) {
-      setCompleteChunks([...completedChunksRef.current]);
-    }
-
     // Calculate last chunk content
     const remainingStart = completeChunkCount * CHUNK_SIZE;
+    const remainingLines = totalLines - remainingStart;
     const rawLastChunk =
-      remainingStart < totalLines
+      remainingLines > 0
         ? linesRef.current.slice(remainingStart).join('\n')
         : '';
 
-    // Throttle last chunk updates
-    latestLastChunkRef.current = rawLastChunk;
-
-    const now = Date.now();
-    const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-
-    // Clear any pending update
-    if (pendingUpdateRef.current) {
-      clearTimeout(pendingUpdateRef.current);
-      pendingUpdateRef.current = null;
+    // Update both states together to ensure consistency
+    if (chunksChanged) {
+      setCompleteChunks([...completedChunksRef.current]);
     }
-
-    if (timeSinceLastUpdate >= LAST_CHUNK_THROTTLE_MS) {
-      // Enough time has passed, update immediately
-      setThrottledLastChunk(rawLastChunk);
-      lastUpdateTimeRef.current = now;
-    } else {
-      // Schedule update for remaining time
-      const remainingTime = LAST_CHUNK_THROTTLE_MS - timeSinceLastUpdate;
-      pendingUpdateRef.current = setTimeout(() => {
-        setThrottledLastChunk(latestLastChunkRef.current);
-        lastUpdateTimeRef.current = Date.now();
-        pendingUpdateRef.current = null;
-      }, remainingTime);
-    }
-
-    return () => {
-      if (pendingUpdateRef.current) {
-        clearTimeout(pendingUpdateRef.current);
-      }
-    };
+    setLastChunk(rawLastChunk);
   }, [code]);
 
-  // Combine complete chunks with throttled last chunk
-  if (throttledLastChunk) {
-    return [...completeChunks, throttledLastChunk];
+  // Combine complete chunks with last chunk
+  if (lastChunk) {
+    return [...completeChunks, lastChunk];
   }
   return completeChunks.length > 0 ? completeChunks : code ? [code] : [];
 };
@@ -217,8 +183,9 @@ const useChunkedCode = (code: string): string[] => {
  * - Unified horizontal scrolling for all chunks
  * - Vertical scrolling passes through to parent
  * - O(1) render cost for completed chunks
- * - Time-based throttling (200ms) for the last chunk to reduce render frequency
+ * - Only last chunk re-renders during streaming, completed chunks are memoized
  * - Incremental line tracking - O(delta) instead of O(n) for split operations
+ * - Guarantees last chunk update when complete chunks change (no race conditions)
  */
 const ChunkedCodeView: FunctionComponent<ChunkedCodeViewProps> = ({
   code,

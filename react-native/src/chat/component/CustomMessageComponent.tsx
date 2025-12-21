@@ -426,20 +426,22 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     }
 
     return (
-      <Text
+      <View
         style={{
-          ...styles.questionText,
-          ...{ maxWidth: (chatScreenWidth * 3) / 4 },
-        }}
-        selectable>
-        {currentMessage.text}
-      </Text>
+          ...styles.questionContainer,
+          maxWidth: (chatScreenWidth * 3) / 4,
+        }}>
+        <Text style={styles.questionText} selectable>
+          {currentMessage.text}
+        </Text>
+      </View>
     );
   }, [
     currentMessage,
     customMarkdownRenderer,
     customTokenizer,
     chatScreenWidth,
+    styles.questionContainer,
     styles.questionText,
     citationRenderKey,
   ]);
@@ -648,16 +650,17 @@ const createStyles = (colors: ColorScheme) =>
       fontWeight: '500',
       color: colors.text,
     },
-    questionText: {
-      flex: 1,
+    questionContainer: {
       alignSelf: 'flex-end',
       backgroundColor: colors.messageBackground,
       borderRadius: 22,
       overflow: 'hidden',
       marginVertical: 8,
       paddingHorizontal: 16,
-      lineHeight: 24,
       paddingVertical: 10,
+    },
+    questionText: {
+      lineHeight: 24,
       fontSize: 16,
       color: colors.text,
     },

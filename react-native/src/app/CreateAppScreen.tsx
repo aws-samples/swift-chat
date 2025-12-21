@@ -17,14 +17,12 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteParamList } from '../types/RouteTypes';
 import { HeaderLeftView } from '../prompt/HeaderLeftView';
 import { useTheme, ColorScheme } from '../theme';
-import { WebView, WebViewMessageEvent } from 'react-native-webview';
+import { WebViewMessageEvent } from 'react-native-webview';
+import AIWebView, { AIWebViewRef } from './AIWebView';
 import RNFS from 'react-native-fs';
 import { saveApp, generateAppId } from '../storage/StorageUtils';
 import { SavedApp } from '../types/Chat';
-import {
-  injectErrorScript,
-  commonWebViewProps,
-} from '../chat/component/markdown/htmlUtils';
+import { injectErrorScript } from '../chat/component/markdown/htmlUtils';
 import { isMac } from '../App';
 import DocumentPicker from 'react-native-document-picker';
 
@@ -53,7 +51,7 @@ function CreateAppScreen(): React.JSX.Element {
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<AIWebViewRef>(null);
   const screenshotRetryCount = useRef(0);
 
   const headerLeft = useCallback(
@@ -386,11 +384,10 @@ function CreateAppScreen(): React.JSX.Element {
                 </TouchableOpacity>
               </View>
               <View style={styles.webViewContainer}>
-                <WebView
+                <AIWebView
                   ref={webViewRef}
-                  source={{ html: htmlContent }}
+                  html={htmlContent}
                   style={styles.webView}
-                  {...commonWebViewProps}
                   onMessage={handleMessage}
                   onError={() => setHasError(true)}
                   scrollEnabled={false}

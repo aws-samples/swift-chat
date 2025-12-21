@@ -17,12 +17,14 @@ interface HtmlFullScreenViewerProps {
   visible: boolean;
   onClose: () => void;
   code: string;
+  baseUrl?: string;
 }
 
 const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
   visible,
   onClose,
   code,
+  baseUrl,
 }) => {
   const { colors, isDark } = useTheme();
   const webViewRef = useRef<AIWebViewRef>(null);
@@ -151,6 +153,7 @@ const HtmlFullScreenViewer: React.FC<HtmlFullScreenViewerProps> = ({
           <AIWebView
             ref={webViewRef}
             html={code}
+            baseUrl={baseUrl}
             style={styles.webView}
             onMessage={handleWebViewMessage}
             onError={handleError}
