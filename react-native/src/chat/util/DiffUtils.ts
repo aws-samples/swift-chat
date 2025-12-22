@@ -1,5 +1,3 @@
-import { applyPatch } from 'diff';
-
 // Placeholder for HTML code block - content is stored in message.htmlCode
 export const HTML_CODE_PLACEHOLDER = '[HTML_OUTPUT_OMITTED]';
 
@@ -38,137 +36,260 @@ export function replaceHtmlWithPlaceholder(
 }
 
 /**
- * Replace diff code block content with placeholder
- * Keeps the ```diff ``` structure but replaces content with placeholder
+ * Represents a single change block within a hunk
+ * A hunk can have multiple change blocks separated by context lines
  */
-export function replaceDiffWithPlaceholder(text: string): string {
-  return text.replace(
-    /```diff\n[\s\S]*?\n```/,
-    '```diff\n' + HTML_CODE_PLACEHOLDER + '\n```'
-  );
+interface ChangeBlock {
+  contextBefore: string[]; // Context lines before this change (for searching)
+  removals: string[]; // Lines to remove
+  additions: string[]; // Lines to add
 }
 
 /**
- * Check if text contains the HTML placeholder
+ * Parse diff content into change blocks
+ * Handles AI-generated diffs with:
+ * 1. Incorrect line numbers in hunk headers
+ * 2. Empty lines without leading space
+ * 3. Multiple change blocks within a single hunk
  */
-export function isHtmlPlaceholder(text: string): boolean {
-  return text.trim() === HTML_CODE_PLACEHOLDER;
-}
-
-/**
- * Extract diff code block from text
- */
-export function extractDiffBlock(text: string): string | null {
-  const match = text.match(/```diff\n([\s\S]*?)\n```/);
-  return match ? match[1] : null;
-}
-
-/**
- * Extract html code block from text
- */
-export function extractHtmlBlock(text: string): string | null {
-  const match = text.match(/```html\n([\s\S]*?)\n```/);
-  return match ? match[1] : null;
-}
-
-/**
- * Check if diff code block is complete
- */
-export function isDiffBlockComplete(text: string): boolean {
-  return /```diff\n[\s\S]*?\n```/.test(text);
-}
-
-/**
- * Check if text contains html code block start
- */
-export function hasHtmlBlockStart(text: string): boolean {
-  return /```html\n/.test(text);
-}
-
-/**
- * Check if HTML content is complete (ends with </html>)
- */
-export function isHtmlComplete(html: string): boolean {
-  return html.trimEnd().toLowerCase().endsWith('</html>');
-}
-
-/**
- * Apply diff patch to original HTML using jsdiff
- */
-/**
- * Fix hunk headers in diff content to match actual line counts
- * AI-generated diffs often have incorrect line counts in hunk headers
- */
-function fixHunkHeaders(diffContent: string): string {
+function parseChangeBlocks(diffContent: string): ChangeBlock[] {
   const lines = diffContent.split('\n');
-  const result: string[] = [];
+  const blocks: ChangeBlock[] = [];
   let i = 0;
 
   while (i < lines.length) {
     const line = lines[i];
-    const hunkMatch = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
 
-    if (hunkMatch) {
-      // Found a hunk header, count actual lines until next hunk or end
-      const oldStart = hunkMatch[1];
-      const newStart = hunkMatch[2];
-      let oldCount = 0;
-      let newCount = 0;
-      let j = i + 1;
+    // Skip non-hunk lines (file headers, etc.)
+    if (!line.startsWith('@@')) {
+      i++;
+      continue;
+    }
 
-      // Count lines in this hunk
-      while (j < lines.length && !lines[j].startsWith('@@')) {
-        const hunkLine = lines[j];
-        if (hunkLine.startsWith('-')) {
-          oldCount++;
-        } else if (hunkLine.startsWith('+')) {
-          newCount++;
-        } else if (hunkLine.startsWith(' ') || hunkLine === '') {
-          // Context line or empty line (treat empty as context)
-          oldCount++;
-          newCount++;
-        }
-        j++;
+    // Found a hunk header, parse the hunk
+    i++; // Skip the @@ line
+
+    let currentContext: string[] = [];
+    let currentRemovals: string[] = [];
+    let currentAdditions: string[] = [];
+    let inChange = false;
+
+    while (i < lines.length && !lines[i].startsWith('@@')) {
+      let hunkLine = lines[i];
+
+      // Fix empty lines: they should be context lines
+      if (hunkLine === '') {
+        hunkLine = ' ';
       }
 
-      // Write corrected hunk header
-      result.push(`@@ -${oldStart},${oldCount} +${newStart},${newCount} @@`);
+      if (hunkLine.startsWith('-')) {
+        inChange = true;
+        currentRemovals.push(hunkLine.substring(1));
+      } else if (hunkLine.startsWith('+')) {
+        inChange = true;
+        currentAdditions.push(hunkLine.substring(1));
+      } else {
+        // Context line: either starts with ' ' or has no prefix (AI-generated diff)
+        const content = hunkLine.startsWith(' ')
+          ? hunkLine.substring(1)
+          : hunkLine;
+
+        if (inChange) {
+          // We hit a context line after changes - save the current block
+          if (currentRemovals.length > 0 || currentAdditions.length > 0) {
+            blocks.push({
+              contextBefore: currentContext,
+              removals: currentRemovals,
+              additions: currentAdditions,
+            });
+          }
+          // Start new context, carrying over this line
+          currentContext = [content];
+          currentRemovals = [];
+          currentAdditions = [];
+          inChange = false;
+        } else {
+          // Still in context before changes
+          currentContext.push(content);
+        }
+      }
+
       i++;
-    } else {
-      result.push(line);
-      i++;
+    }
+
+    // Don't forget the last change block in the hunk
+    if (currentRemovals.length > 0 || currentAdditions.length > 0) {
+      blocks.push({
+        contextBefore: currentContext,
+        removals: currentRemovals,
+        additions: currentAdditions,
+      });
     }
   }
 
-  return result.join('\n');
+  return blocks;
 }
 
+/**
+ * Compare two lines with fuzzy whitespace matching
+ * AI-generated diffs often have incorrect indentation
+ */
+function linesMatch(sourceLine: string, patternLine: string): boolean {
+  // Exact match
+  if (sourceLine === patternLine) {
+    return true;
+  }
+
+  // Fuzzy match: compare trimmed content (ignore leading/trailing whitespace differences)
+  return sourceLine.trim() === patternLine.trim();
+}
+
+/**
+ * Get the leading whitespace from a line
+ */
+function getIndent(line: string): string {
+  const match = line.match(/^(\s*)/);
+  return match ? match[1] : '';
+}
+
+/**
+ * Apply the indentation from a source line to a new line
+ */
+function applyIndent(newLine: string, sourceLine: string): string {
+  const sourceIndent = getIndent(sourceLine);
+  const newContent = newLine.trim();
+
+  // If the new line is empty, keep it empty
+  if (newContent === '') {
+    return '';
+  }
+
+  return sourceIndent + newContent;
+}
+
+/**
+ * Find the position in source lines where the change block context matches
+ * Returns the line index where removals should start, or -1 if not found
+ *
+ * This function allows searching slightly before startFrom to handle cases
+ * where previous blocks may have caused the position to overshoot.
+ */
+function findBlockPosition(
+  sourceLines: string[],
+  block: ChangeBlock,
+  startFrom: number
+): number {
+  const { contextBefore, removals } = block;
+
+  // Build the pattern to search for: context + removals
+  const searchPattern = [...contextBefore, ...removals];
+
+  if (searchPattern.length === 0) {
+    return startFrom; // No context, apply at current position
+  }
+
+  // Allow searching a bit before startFrom to handle overlapping contexts
+  // This helps when AI-generated diffs have context that overlaps with previous blocks
+  const searchStart = Math.max(0, startFrom - contextBefore.length);
+
+  // Search for the pattern in source
+  for (
+    let i = searchStart;
+    i <= sourceLines.length - searchPattern.length;
+    i++
+  ) {
+    let matches = true;
+
+    for (let j = 0; j < searchPattern.length; j++) {
+      if (!linesMatch(sourceLines[i + j], searchPattern[j])) {
+        matches = false;
+        break;
+      }
+    }
+
+    if (matches) {
+      // Return the position where removals start (after contextBefore)
+      return i + contextBefore.length;
+    }
+  }
+
+  return -1; // Not found
+}
+
+/**
+ * Apply diff to original HTML using context-based matching
+ * This handles AI-generated diffs with incorrect line numbers
+ */
 export function applyDiff(
   originalHtml: string,
   diffContent: string
 ): { success: boolean; result: string; error?: string } {
   try {
-    // Fix hunk headers that may have incorrect line counts
-    let normalizedDiff = fixHunkHeaders(diffContent);
+    const blocks = parseChangeBlocks(diffContent);
 
-    // Add unified diff header if missing (jsdiff requires it)
-    if (!normalizedDiff.startsWith('---')) {
-      normalizedDiff = `--- a/file\n+++ b/file\n${normalizedDiff}`;
-    }
-
-    const patched = applyPatch(originalHtml, normalizedDiff, {
-      fuzzFactor: 2,
-    });
-
-    if (patched === false) {
+    if (blocks.length === 0) {
       return {
         success: false,
         result: originalHtml,
-        error: 'Patch could not be applied',
+        error: 'No valid change blocks found in diff',
       };
     }
 
-    return { success: true, result: patched };
+    const sourceLines = originalHtml.split('\n');
+    const resultLines: string[] = [];
+    let sourceIdx = 0;
+
+    for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
+      const block = blocks[blockIdx];
+
+      // Find where this block should be applied
+      const blockPos = findBlockPosition(sourceLines, block, sourceIdx);
+
+      if (blockPos === -1) {
+        // Could not find matching context
+        return {
+          success: false,
+          result: originalHtml,
+          error: `Could not find matching context for change block ${blockIdx + 1}`,
+        };
+      }
+
+      // Copy lines before the block
+      while (sourceIdx < blockPos) {
+        resultLines.push(sourceLines[sourceIdx]);
+        sourceIdx++;
+      }
+
+      // Determine the correct indentation from the source
+      // Use the first removal line's indentation, or the last context line if no removals
+      let referenceIndentLine = '';
+      if (block.removals.length > 0 && sourceIdx < sourceLines.length) {
+        referenceIndentLine = sourceLines[sourceIdx];
+      } else if (block.contextBefore.length > 0 && sourceIdx > 0) {
+        referenceIndentLine = sourceLines[sourceIdx - 1];
+      }
+
+      // Add the new lines (additions) with corrected indentation
+      for (const addition of block.additions) {
+        if (referenceIndentLine && addition.trim() !== '') {
+          resultLines.push(applyIndent(addition, referenceIndentLine));
+        } else {
+          resultLines.push(addition);
+        }
+      }
+
+      // Skip the removed lines in source
+      // For pure additions (removals.length === 0), this won't advance sourceIdx
+      sourceIdx += block.removals.length;
+    }
+
+    // Copy remaining lines
+    while (sourceIdx < sourceLines.length) {
+      resultLines.push(sourceLines[sourceIdx]);
+      sourceIdx++;
+    }
+
+    return { success: true, result: resultLines.join('\n') };
   } catch (error) {
     return {
       success: false,
@@ -176,36 +297,4 @@ export function applyDiff(
       error: String(error),
     };
   }
-}
-
-/**
- * Process AI response and extract/apply HTML code
- * Returns the final HTML code if successful
- */
-export function processAppResponse(
-  response: string,
-  existingHtmlCode?: string
-): { htmlCode: string | null; isDiff: boolean; error?: string } {
-  // Check if response contains diff block
-  if (existingHtmlCode && isDiffBlockComplete(response)) {
-    const diffContent = extractDiffBlock(response);
-    if (diffContent) {
-      const { success, result, error } = applyDiff(
-        existingHtmlCode,
-        diffContent
-      );
-      if (success) {
-        return { htmlCode: result, isDiff: true };
-      }
-      return { htmlCode: null, isDiff: true, error };
-    }
-  }
-
-  // Check if response contains complete html block
-  const htmlBlock = extractHtmlBlock(response);
-  if (htmlBlock && isHtmlComplete(htmlBlock)) {
-    return { htmlCode: htmlBlock, isDiff: false };
-  }
-
-  return { htmlCode: null, isDiff: false };
 }
