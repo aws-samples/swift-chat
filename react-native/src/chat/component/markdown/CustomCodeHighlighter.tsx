@@ -6,8 +6,6 @@ import React, {
   useCallback,
   memo,
   useRef,
-  useState,
-  useEffect,
 } from 'react';
 import {
   Platform,
@@ -29,10 +27,6 @@ import { isMac } from '../../../App.tsx';
 import { trimNewlines } from 'trim-newlines';
 import ChunkedCodeView from './ChunkedCodeView';
 
-// Streaming optimization constants
-// Time (ms) to wait after last content change before applying syntax highlighting
-const STREAMING_IDLE_THRESHOLD_MS = 400;
-
 type ReactStyle = Record<string, CSSProperties>;
 type HighlighterStyleSheet = { [key: string]: TextStyle };
 
@@ -44,6 +38,8 @@ export interface CodeHighlighterProps extends SyntaxHighlighterProps {
    * @deprecated Use scrollViewProps.contentContainerStyle instead
    */
   containerStyle?: StyleProp<ViewStyle>;
+  /** Whether the content streaming is completed */
+  isCompleted?: boolean;
 }
 
 const getRNStylesFromHljsStyle = (
@@ -89,6 +85,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   hljsStyle,
   scrollViewProps,
   containerStyle,
+  isCompleted,
   ...rest
 }) => {
   const stylesheet: HighlighterStyleSheet = useMemo(
@@ -96,44 +93,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
     [hljsStyle]
   );
 
-  // Streaming detection state
   const childrenString = String(children);
-  // Small code blocks always show highlighted, large ones start with plain text
-  const [showHighlighted, setShowHighlighted] = useState(false);
-  const streamingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevLengthRef = useRef(childrenString.length);
-
-  useEffect(() => {
-    const wasGrowing = childrenString.length > prevLengthRef.current;
-    prevLengthRef.current = childrenString.length;
-
-    // Clear existing timer
-    if (streamingTimerRef.current) {
-      clearTimeout(streamingTimerRef.current);
-      streamingTimerRef.current = null;
-    }
-
-    // For large code blocks: disable highlighting during streaming, re-enable after idle
-    if (wasGrowing) {
-      setShowHighlighted(false);
-    }
-    // Always set timer to enable highlighting after content stabilizes
-    if (!showHighlighted) {
-      streamingTimerRef.current = setTimeout(() => {
-        setShowHighlighted(true);
-        streamingTimerRef.current = null;
-      }, STREAMING_IDLE_THRESHOLD_MS);
-    }
-  }, [childrenString.length, showHighlighted]);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (streamingTimerRef.current) {
-        clearTimeout(streamingTimerRef.current);
-      }
-    };
-  }, []);
 
   const getStylesForNode = useCallback(
     (node: rendererNode): TextStyle[] => {
@@ -208,7 +168,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
       const scale =
         rest.language === 'mermaid'
           ? 1.75
-          : rest.language === 'html'
+          : rest.language === 'html' || rest.language === 'diff'
           ? isMac
             ? 2
             : 1.85
@@ -307,9 +267,9 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   );
 
   // Determine if we should show highlighting
-  // HTML never gets highlighted; for others, use internal showHighlighted state
+  // HTML never gets highlighted; for others, use isCompleted prop
   const isHtml = rest.language === 'html';
-  const shouldHighlight = isHtml ? false : showHighlighted;
+  const shouldHighlight = isHtml ? false : isCompleted;
 
   // During streaming, render chunked plain text for performance
   if (!shouldHighlight) {
@@ -320,6 +280,7 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
         backgroundColor={stylesheet.hljs?.backgroundColor as string}
         scrollViewProps={scrollViewProps}
         containerStyle={containerStyle}
+        isCompleted={isCompleted}
       />
     );
   }

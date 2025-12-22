@@ -30,6 +30,9 @@ export interface EventData {
   data?: string;
   error?: string;
   code?: number;
+  // App mode events
+  htmlCode?: string;
+  diffContent?: string;
 }
 
 export type Model = {
@@ -136,7 +139,8 @@ export interface SwiftChatMessage extends IMessage {
   reasoning?: string;
   user: SwiftChatUser;
   metrics?: Metrics;
-  citations?: Citation[]; // Web search 引用列表
+  citations?: Citation[];
+  htmlCode?: string;
 }
 
 interface SwiftChatUser extends User {

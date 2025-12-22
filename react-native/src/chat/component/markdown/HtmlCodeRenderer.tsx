@@ -10,9 +10,15 @@ import React, {
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ColorScheme } from '../../../theme';
 import HtmlPreviewRenderer from './HtmlPreviewRenderer';
-import { CopyButton } from './CustomMarkdownRenderer';
 import { vs2015, github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Platform } from 'react-native';
+import { useAppContext } from '../../../history/AppProvider';
+import {
+  applyDiff,
+  getLatestHtmlCode,
+  setLatestHtmlCode,
+} from '../../util/DiffUtils';
+import CopyButton from './CopyButton';
 
 const CustomCodeHighlighter = React.lazy(
   () => import('./CustomCodeHighlighter')
@@ -20,14 +26,16 @@ const CustomCodeHighlighter = React.lazy(
 
 interface HtmlCodeRendererProps {
   text: string;
+  language?: string;
   colors: ColorScheme;
   isDark: boolean;
-  onCopy: () => void;
   onPreviewToggle?: (
     expanded: boolean,
     height: number,
     animated: boolean
   ) => void;
+  isCompleted?: boolean;
+  messageHtmlCode?: string;
 }
 
 interface HtmlCodeRendererRef {
@@ -38,18 +46,39 @@ interface HtmlPreviewRendererRef {
   updateContent: (newCode: string) => void;
 }
 
-// Check if HTML content is complete (ends with </html>)
-const isHtmlComplete = (html: string): boolean => {
-  return html.trimEnd().toLowerCase().endsWith('</html>');
+// Check if diff has at least one complete hunk
+const hasDiffHunk = (text: string): boolean => {
+  return /@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@/.test(text);
 };
 
 const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
-  ({ text, colors, isDark, onCopy, onPreviewToggle }, ref) => {
-    // Default to preview mode when HTML is complete
-    const [showPreview, setShowPreview] = useState(() => isHtmlComplete(text));
+  (
+    {
+      text,
+      language,
+      colors,
+      isDark,
+      onPreviewToggle,
+      isCompleted,
+      messageHtmlCode,
+    },
+    ref
+  ) => {
+    const { sendEvent } = useAppContext();
+    const isDiffModeRef = useRef(language === 'diff');
+    const hasProcessedRef = useRef(
+      Boolean(messageHtmlCode) || isCompleted === true
+    );
+    const hadMessageHtmlCodeRef = useRef(Boolean(messageHtmlCode));
+
+    const [showPreview, setShowPreview] = useState(
+      () =>
+        Boolean(messageHtmlCode) ||
+        (!isDiffModeRef.current && isCompleted === true)
+    );
     const [currentText, setCurrentText] = useState(text);
-    const [hasAutoSwitched, setHasAutoSwitched] = useState(() =>
-      isHtmlComplete(text)
+    const [appliedHtmlCode, setAppliedHtmlCode] = useState<string | undefined>(
+      undefined
     );
     const htmlRendererRef = useRef<HtmlPreviewRendererRef>(null);
     const codeContainerRef = useRef<View>(null);
@@ -58,15 +87,16 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
     const previewHeightRef = useRef<number>(0);
     const styles = createStyles(colors);
     const hljsStyle = isDark ? vs2015 : github;
+    const previewHtmlCode = appliedHtmlCode || messageHtmlCode || currentText;
 
     const updateContent = useCallback(
       (newText: string) => {
         setCurrentText(newText);
         if (showPreview && htmlRendererRef.current) {
-          htmlRendererRef.current.updateContent(newText);
+          htmlRendererRef.current.updateContent(messageHtmlCode || newText);
         }
       },
-      [showPreview]
+      [showPreview, messageHtmlCode]
     );
 
     useImperativeHandle(
@@ -81,25 +111,49 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       setCurrentText(text);
     }, [text]);
 
-    // Auto-switch to preview when HTML is complete (ends with </html>)
     useEffect(() => {
-      if (hasAutoSwitched || showPreview) {
+      if (hasProcessedRef.current || !isCompleted) {
         return;
       }
 
-      if (isHtmlComplete(text)) {
+      if (isDiffModeRef.current) {
+        if (hasDiffHunk(text)) {
+          const currentHtmlCode = getLatestHtmlCode();
+          if (currentHtmlCode) {
+            const { success, result } = applyDiff(currentHtmlCode, text);
+            if (success) {
+              setLatestHtmlCode(result);
+              setAppliedHtmlCode(result);
+              setShowPreview(true);
+              sendEvent('diffApplied', { htmlCode: result });
+            }
+          }
+        }
+      } else {
+        setLatestHtmlCode(text);
+        sendEvent('htmlCodeGenerated', { htmlCode: text });
         setShowPreview(true);
-        setHasAutoSwitched(true);
       }
-    }, [text, hasAutoSwitched, showPreview]);
+      hasProcessedRef.current = true;
+    }, [isCompleted, text, sendEvent]);
+
+    const prevMessageHtmlCodeRef = useRef(messageHtmlCode);
+    useEffect(() => {
+      if (
+        messageHtmlCode &&
+        messageHtmlCode !== prevMessageHtmlCodeRef.current
+      ) {
+        hadMessageHtmlCodeRef.current = true;
+        setShowPreview(true);
+      }
+      prevMessageHtmlCodeRef.current = messageHtmlCode;
+    }, [messageHtmlCode]);
 
     const setCodeMode = useCallback(() => {
       if (!showPreview) {
         return;
       }
-      // Switching from preview to code
       if (previewHeightRef.current === 0) {
-        // Need to measure current preview height first
         previewContainerRef.current?.measure((_x, _y, _width, height) => {
           previewHeightRef.current = height;
           setShowPreview(false);
@@ -107,7 +161,6 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
             codeContainerRef.current?.measure(
               (_x2, _y2, _width2, codeHeight) => {
                 codeHeightRef.current = codeHeight;
-                // heightDiff > 0 means code is taller (expanding), < 0 means code is shorter (collapsing)
                 const heightDiff = codeHeight - previewHeightRef.current;
                 if (heightDiff !== 0) {
                   onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), true);
@@ -143,9 +196,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       if (showPreview) {
         return;
       }
-      // Switching from code to preview
       if (codeHeightRef.current === 0) {
-        // Need to measure current code height first
         codeContainerRef.current?.measure((_x, _y, _width, height) => {
           codeHeightRef.current = height;
           setShowPreview(true);
@@ -153,7 +204,6 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
             previewContainerRef.current?.measure(
               (_x2, _y2, _width2, previewHeight) => {
                 previewHeightRef.current = previewHeight;
-                // heightDiff > 0 means preview is taller (expanding), < 0 means preview is shorter (collapsing)
                 const heightDiff = previewHeight - codeHeightRef.current;
                 if (heightDiff !== 0) {
                   onPreviewToggle?.(heightDiff > 0, Math.abs(heightDiff), true);
@@ -200,7 +250,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
                     styles.tabText,
                     !showPreview && styles.activeTabText,
                   ]}>
-                  code
+                  {isDiffModeRef.current ? 'diff' : 'code'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -213,39 +263,52 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
               </TouchableOpacity>
             </View>
           </View>
-          <CopyButton onCopy={onCopy} colors={colors} isDark={isDark} />
+          <CopyButton
+            content={() =>
+              showPreview || !isDiffModeRef.current
+                ? previewHtmlCode
+                : currentText
+            }
+          />
         </View>
 
-        {showPreview ? (
-          <View ref={previewContainerRef}>
+        <View
+          ref={codeContainerRef}
+          style={showPreview && isCompleted ? styles.hidden : undefined}>
+          <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
+            <CustomCodeHighlighter
+              hljsStyle={hljsStyle}
+              scrollViewProps={{
+                contentContainerStyle: {
+                  padding: 12,
+                  minWidth: '100%',
+                  borderBottomLeftRadius: 8,
+                  borderBottomRightRadius: 8,
+                  backgroundColor: colors.codeBackground,
+                },
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error
+                backgroundColor: colors.codeBackground,
+              }}
+              textStyle={styles.codeText}
+              language={isDiffModeRef.current ? 'diff' : 'html'}
+              isCompleted={isCompleted}>
+              {!isDiffModeRef.current && messageHtmlCode
+                ? messageHtmlCode
+                : currentText}
+            </CustomCodeHighlighter>
+          </Suspense>
+        </View>
+
+        {isCompleted && (
+          <View
+            ref={previewContainerRef}
+            style={!showPreview ? styles.hidden : undefined}>
             <HtmlPreviewRenderer
               ref={htmlRendererRef}
-              code={currentText}
+              code={previewHtmlCode}
               style={styles.htmlRenderer}
             />
-          </View>
-        ) : (
-          <View ref={codeContainerRef}>
-            <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
-              <CustomCodeHighlighter
-                hljsStyle={hljsStyle}
-                scrollViewProps={{
-                  contentContainerStyle: {
-                    padding: 12,
-                    minWidth: '100%',
-                    borderBottomLeftRadius: 8,
-                    borderBottomRightRadius: 8,
-                    backgroundColor: colors.codeBackground,
-                  },
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                  // @ts-expect-error
-                  backgroundColor: colors.codeBackground,
-                }}
-                textStyle={styles.codeText}
-                language="html">
-                {currentText}
-              </CustomCodeHighlighter>
-            </Suspense>
           </View>
         )}
       </View>
@@ -313,6 +376,11 @@ const createStyles = (colors: ColorScheme) =>
     htmlRenderer: {
       marginVertical: 0,
       minHeight: 100,
+    },
+    hidden: {
+      position: 'absolute',
+      opacity: 0,
+      pointerEvents: 'none',
     },
   });
 

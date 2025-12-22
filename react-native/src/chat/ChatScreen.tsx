@@ -22,10 +22,7 @@ import AudioWaveformComponent, {
   AudioWaveformRef,
 } from './component/AudioWaveformComponent';
 import { ColorScheme, useTheme } from '../theme';
-import {
-  invokeBedrockWithCallBack as invokeBedrockWithCallBack,
-  requestToken,
-} from '../api/bedrock-api';
+import { invokeBedrockWithCallBack, requestToken } from '../api/bedrock-api';
 import CustomMessageComponent from './component/CustomMessageComponent.tsx';
 import { CustomScrollToBottomComponent } from './component/CustomScrollToBottomComponent.tsx';
 import { EmptyChatComponent } from './component/EmptyChatComponent.tsx';
@@ -80,8 +77,29 @@ import { showInfo } from './util/ToastUtils.ts';
 import { HeaderOptions } from '@react-navigation/elements';
 import { webSearchOrchestrator } from '../websearch/services/WebSearchOrchestrator.ts';
 import { Citation } from '../types/Chat.ts';
+import {
+  setLatestHtmlCode,
+  clearLatestHtmlCode,
+  getLatestHtmlCode,
+  replaceHtmlWithPlaceholder,
+} from './util/DiffUtils.ts';
 
 const BOT_ID = 2;
+const APP_PROMPT_NAME = 'App';
+
+/**
+ * Find the latest htmlCode from AI messages
+ * Traverse all AI messages to find the first one with htmlCode
+ */
+const findLatestHtmlCode = (messages: SwiftChatMessage[]): string => {
+  const aiMessages = messages.filter(m => m.user._id === BOT_ID);
+  for (const msg of aiMessages) {
+    if (msg.htmlCode) {
+      return msg.htmlCode;
+    }
+  }
+  return '';
+};
 
 const createBotMessage = (mode: string) => {
   return {
@@ -150,6 +168,8 @@ function ChatScreen(): React.JSX.Element {
   const audioWaveformRef = useRef<AudioWaveformRef>(null);
   const [searchPhase, setSearchPhase] = useState<string>('');
 
+  // App mode state
+  const isAppModeRef = useRef(false);
   const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
   const currentScrollOffsetRef = useRef(0);
   const isNewChatRef = useRef(!initialSessionId);
@@ -236,6 +256,7 @@ function ChatScreen(): React.JSX.Element {
 
       setMessages([]);
       bedrockMessages.current = [];
+      clearLatestHtmlCode();
       showKeyboard();
     }, [])
   );
@@ -325,12 +346,22 @@ function ChatScreen(): React.JSX.Element {
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
       setUsage((msg[0] as SwiftChatMessage).usage);
-      setSystemPrompt(null);
-      saveCurrentSystemPrompt(null);
-      saveCurrentVoiceSystemPrompt(null);
-      saveCurrentImageSystemPrompt(null);
-      //notify to unselect prompt
-      sendEventRef.current?.('unSelectSystemPrompt');
+      // restore htmlCode from history
+      const restoredHtmlCode = findLatestHtmlCode(msg as SwiftChatMessage[]);
+      setLatestHtmlCode(restoredHtmlCode);
+
+      // If session has htmlCode, auto-select App prompt
+      if (restoredHtmlCode) {
+        isAppModeRef.current = true;
+        sendEventRef.current?.('selectAppPrompt');
+      } else {
+        setSystemPrompt(null);
+        saveCurrentSystemPrompt(null);
+        saveCurrentVoiceSystemPrompt(null);
+        saveCurrentImageSystemPrompt(null);
+        //notify to unselect prompt
+        sendEventRef.current?.('unSelectSystemPrompt');
+      }
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
@@ -362,6 +393,40 @@ function ChatScreen(): React.JSX.Element {
         bedrockMessages.current = [];
         setMessages([]);
       }
+    }
+  }, [event]);
+
+  // htmlCodeGenerated listener for App mode - update message.htmlCode for persistence
+  useEffect(() => {
+    if (event?.event === 'htmlCodeGenerated' && event.params?.htmlCode) {
+      const { htmlCode } = event.params;
+      setMessages(prevMessages => {
+        const newMessages = [...prevMessages];
+        if (newMessages[0]) {
+          newMessages[0] = {
+            ...newMessages[0],
+            htmlCode: htmlCode,
+          };
+        }
+        return newMessages;
+      });
+    }
+  }, [event]);
+
+  // diffApplied listener for App mode - update message.htmlCode for persistence
+  useEffect(() => {
+    if (event?.event === 'diffApplied' && event.params?.htmlCode) {
+      const { htmlCode } = event.params;
+      setMessages(prevMessages => {
+        const newMessages = [...prevMessages];
+        if (newMessages[0]) {
+          newMessages[0] = {
+            ...newMessages[0],
+            htmlCode: htmlCode,
+          };
+        }
+        return newMessages;
+      });
     }
   }, [event]);
 
@@ -416,6 +481,11 @@ function ChatScreen(): React.JSX.Element {
     if (chatStatus === ChatStatus.Complete) {
       if (messagesRef.current.length <= 1) {
         return;
+      }
+      // In App mode, replace HTML with placeholder to save context tokens
+      const msg = messagesRef.current[0];
+      if (isAppModeRef.current && msg.htmlCode) {
+        msg.text = replaceHtmlWithPlaceholder(msg.text, msg.htmlCode);
       }
       saveCurrentMessages();
       getBedrockMessage(messagesRef.current[0]).then(currentMsg => {
@@ -614,7 +684,6 @@ function ChatScreen(): React.JSX.Element {
 
         // Check if aborted after web search completes
         if (isCanceled.current) {
-          console.log('⚠️  Operation aborted, stopping');
           setChatStatus(ChatStatus.Init);
           setSearchPhase('');
           return;
@@ -629,6 +698,16 @@ function ChatScreen(): React.JSX.Element {
         // Prioritize web search system prompt, otherwise use user-selected system prompt
         const effectiveSystemPrompt =
           webSearchSystemPrompt || systemPromptRef.current;
+
+        // In App mode, temporarily prepend htmlCode to last user message
+        const currentHtmlCode = getLatestHtmlCode();
+        const lastMsgContent = bedrockMessages.current[
+          bedrockMessages.current.length - 1
+        ]?.content[0] as { text?: string };
+        const originalText = lastMsgContent?.text;
+        if (isAppModeRef.current && currentHtmlCode && originalText) {
+          lastMsgContent.text = `Current app code:\n\`\`\`html\n${currentHtmlCode}\n\`\`\`\n\nUser request: ${originalText}`;
+        }
 
         invokeBedrockWithCallBack(
           bedrockMessages.current,
@@ -721,6 +800,11 @@ function ChatScreen(): React.JSX.Element {
             }
           }
         ).then();
+
+        // Restore original text after sending
+        if (originalText && lastMsgContent) {
+          lastMsgContent.text = originalText;
+        }
       })(); // Close async IIFE
     }
   }, [messages]);
@@ -760,12 +844,14 @@ function ChatScreen(): React.JSX.Element {
             systemPromptRef.current?.prompt + '\n' + message[0].text;
         }
       }
+
       if (selectedFilesRef.current.length > 0) {
         message[0].image = JSON.stringify(selectedFilesRef.current);
         setSelectedFiles([]);
       }
       trigger(HapticFeedbackTypes.impactMedium);
       scrollToBottom();
+
       getBedrockMessage(message[0]).then(currentMsg => {
         bedrockMessages.current.push(currentMsg);
         setChatStatus(ChatStatus.Running);
@@ -925,6 +1011,20 @@ function ChatScreen(): React.JSX.Element {
             onSystemPromptUpdated={prompt => {
               const lastPromptIsVirtualTryOn = systemPrompt?.id === -7;
               setSystemPrompt(prompt);
+
+              // Update App mode state
+              const isAppMode = prompt?.name === APP_PROMPT_NAME;
+              isAppModeRef.current = isAppMode;
+              if (isAppMode) {
+                // Restore htmlCode from latest AI message when switching to App mode
+                // Only update if not already set (e.g., from history load)
+                if (!getLatestHtmlCode()) {
+                  setLatestHtmlCode(findLatestHtmlCode(messages));
+                }
+              } else {
+                clearLatestHtmlCode();
+              }
+
               if (modeRef.current === ChatMode.Image) {
                 saveCurrentImageSystemPrompt(prompt);
                 if (prompt?.id === -7) {
@@ -933,7 +1033,6 @@ function ChatScreen(): React.JSX.Element {
                     setSelectedFiles([lastVirtualTryOnImgFile]);
                   }
                 } else {
-                  //clear virtual try on image when prompt changes
                   if (selectedFiles.length > 0 && lastPromptIsVirtualTryOn) {
                     setSelectedFiles([]);
                   }
@@ -980,19 +1079,29 @@ function ChatScreen(): React.JSX.Element {
                 trigger(HapticFeedbackTypes.impactMedium);
                 const userMessageIndex = messageIndex + 1;
                 if (userMessageIndex < messages.length) {
-                  // Reset bedrockMessages to only include the user's message
-                  getBedrockMessage(messages[userMessageIndex]).then(
-                    userMsg => {
-                      bedrockMessages.current = [userMsg];
+                  // Get all history messages from userMessageIndex onwards
+                  const historyMessages = messages.slice(userMessageIndex);
+
+                  // Update latestHtmlCode to the htmlCode before this AI message
+                  // Find the previous AI message's htmlCode for diff to work correctly
+                  if (isAppModeRef.current) {
+                    setLatestHtmlCode(findLatestHtmlCode(historyMessages));
+                  }
+
+                  getBedrockMessagesFromChatMessages(historyMessages).then(
+                    historyBedrockMessages => {
+                      bedrockMessages.current = historyBedrockMessages;
                       setChatStatus(ChatStatus.Running);
                       setMessages(previousMessages => [
                         createBotMessage(modeRef.current),
                         ...previousMessages.slice(userMessageIndex),
                       ]);
+                      scrollToBottom();
                     }
                   );
                 }
               }}
+              isAppMode={isAppModeRef.current}
             />
           );
         }}

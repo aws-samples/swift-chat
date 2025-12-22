@@ -55,6 +55,7 @@ interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
     height: number,
     animated: boolean
   ) => void;
+  isAppMode?: boolean;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -66,6 +67,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   searchPhase,
   onRegenerate,
   onReasoningToggle,
+  isAppMode,
 }) => {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -210,7 +212,9 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         colors,
         isDark,
         currentMessage?.citations || [],
-        onReasoningToggle
+        onReasoningToggle,
+        currentMessage?.htmlCode,
+        isAppMode
       ),
     [
       handleImagePress,
@@ -218,6 +222,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       isDark,
       currentMessage?.citations,
       onReasoningToggle,
+      currentMessage?.htmlCode,
+      isAppMode,
     ]
   );
 
@@ -764,6 +770,7 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
     prevProps.currentMessage?.image === nextProps.currentMessage?.image &&
     prevProps.currentMessage?.reasoning ===
       nextProps.currentMessage?.reasoning &&
+    prevProps.currentMessage?.htmlCode === nextProps.currentMessage?.htmlCode &&
     prevProps.chatStatus === nextProps.chatStatus &&
     prevProps.isLastAIMessage === nextProps.isLastAIMessage &&
     prevProps.searchPhase === nextProps.searchPhase &&

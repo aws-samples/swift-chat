@@ -1,16 +1,6 @@
-import React, {
-  lazy,
-  ReactElement,
-  ReactNode,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { lazy, ReactElement, ReactNode, Suspense } from 'react';
 import {
   Dimensions,
-  Image,
   ImageStyle,
   Platform,
   ScrollView,
@@ -31,7 +21,6 @@ import MDSvg from 'react-native-marked/src/components/MDSvg.tsx';
 import MDImage from 'react-native-marked/src/components/MDImage.tsx';
 import ImageProgressBar from '../ImageProgressBar.tsx';
 import { Citation, PressMode } from '../../../types/Chat.ts';
-import Clipboard from '@react-native-clipboard/clipboard';
 import MarkedList from '@jsamr/react-native-li';
 import Decimal from '@jsamr/counter-style/lib/es/presets/decimal';
 import Disc from '@jsamr/counter-style/lib/es/presets/disc';
@@ -43,6 +32,7 @@ import { ColorScheme } from '../../../theme';
 import MermaidCodeRenderer from './MermaidCodeRenderer';
 import HtmlCodeRenderer from './HtmlCodeRenderer';
 import CitationBadge from '../CitationBadge';
+import CopyButton from './CopyButton';
 
 const CustomCodeHighlighter = lazy(() => import('./CustomCodeHighlighter'));
 let mathViewIndex = 0;
@@ -52,51 +42,6 @@ function getMathKey() {
   return 'math-' + mathViewIndex;
 }
 
-interface CopyButtonProps {
-  onCopy: () => void;
-  colors: ColorScheme;
-  isDark: boolean;
-}
-
-export const CopyButton: React.FC<CopyButtonProps> = React.memo(
-  ({ onCopy, colors, isDark }) => {
-    const [copied, setCopied] = useState(false);
-    const styles = createCustomStyles(colors);
-
-    const handleCopy = useCallback(() => {
-      onCopy();
-      setCopied(true);
-    }, [onCopy]);
-
-    // UseMemo to memoize the image source to prevent flickering
-    const imageSource = useMemo(() => {
-      return copied
-        ? isDark
-          ? require('../../../assets/done_dark.png')
-          : require('../../../assets/done.png')
-        : isDark
-        ? require('../../../assets/copy_grey.png')
-        : require('../../../assets/copy.png');
-    }, [copied, isDark]);
-
-    useEffect(() => {
-      if (copied) {
-        const timer = setTimeout(() => {
-          setCopied(false);
-        }, 2000);
-
-        return () => clearTimeout(timer);
-      }
-    }, [copied]);
-    return (
-      <TouchableOpacity style={styles.copyButtonLayout} onPress={handleCopy}>
-        <Image source={imageSource} style={styles.copyButton} />
-      </TouchableOpacity>
-    );
-  },
-  () => true
-);
-
 const MemoizedCodeHighlighter = React.memo(
   ({
     text,
@@ -104,6 +49,9 @@ const MemoizedCodeHighlighter = React.memo(
     colors,
     isDark,
     onPreviewToggle,
+    isCompleted,
+    messageHtmlCode,
+    isAppMode,
   }: {
     text: string;
     language?: string;
@@ -114,36 +62,35 @@ const MemoizedCodeHighlighter = React.memo(
       height: number,
       animated: boolean
     ) => void;
+    isCompleted?: boolean;
+    messageHtmlCode?: string;
+    isAppMode?: boolean;
   }) => {
     const styles = createCustomStyles(colors);
     // Use useRef to always capture the latest text value
     const textRef = React.useRef(text);
     textRef.current = text;
 
-    const handleCopy = useCallback(() => {
-      Clipboard.setString(textRef.current);
-    }, []);
-
     const hljsStyle = isDark ? vs2015 : github;
     if (language === 'mermaid') {
       return (
-        <MermaidCodeRenderer
-          text={text}
-          colors={colors}
-          isDark={isDark}
-          onCopy={handleCopy}
-        />
+        <MermaidCodeRenderer text={text} colors={colors} isDark={isDark} />
       );
     }
 
-    if (language === 'html') {
+    // Show HtmlCodeRenderer for App mode:
+    // 1. html code blocks in App mode
+    // 2. diff code blocks in App mode
+    if (isAppMode && (language === 'html' || language === 'diff')) {
       return (
         <HtmlCodeRenderer
           text={text}
+          language={language}
           colors={colors}
           isDark={isDark}
-          onCopy={handleCopy}
           onPreviewToggle={onPreviewToggle}
+          isCompleted={isCompleted}
+          messageHtmlCode={messageHtmlCode}
         />
       );
     }
@@ -154,7 +101,7 @@ const MemoizedCodeHighlighter = React.memo(
           <Text style={styles.headerText}>
             {language === '' ? 'code' : language}
           </Text>
-          <CopyButton onCopy={handleCopy} colors={colors} isDark={isDark} />
+          <CopyButton content={() => textRef.current} />
         </View>
         <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
           <CustomCodeHighlighter
@@ -180,19 +127,32 @@ const MemoizedCodeHighlighter = React.memo(
     );
   },
   (prevProps, nextProps) => {
+    // Mermaid diagrams need special handling - always re-render
     if (prevProps.language === 'mermaid' || nextProps.language === 'mermaid') {
       return false;
     }
-    if (prevProps.language === 'html' || nextProps.language === 'html') {
+    // Update when text/language/theme changes
+    if (
+      prevProps.text !== nextProps.text ||
+      prevProps.language !== nextProps.language ||
+      prevProps.colors !== nextProps.colors ||
+      prevProps.isDark !== nextProps.isDark
+    ) {
       return false;
     }
-    return (
-      prevProps.text === nextProps.text &&
-      prevProps.language === nextProps.language &&
-      prevProps.colors === nextProps.colors &&
-      prevProps.isDark === nextProps.isDark &&
-      prevProps.onPreviewToggle === nextProps.onPreviewToggle
-    );
+    // Update once when isCompleted becomes true
+    if (!prevProps.isCompleted && nextProps.isCompleted) {
+      return false;
+    }
+    // Update when messageHtmlCode changes (for preview switch)
+    if (prevProps.messageHtmlCode !== nextProps.messageHtmlCode) {
+      return false;
+    }
+    // Update when isAppMode changes
+    if (prevProps.isAppMode !== nextProps.isAppMode) {
+      return false;
+    }
+    return true;
   }
 );
 
@@ -211,6 +171,8 @@ export class CustomMarkdownRenderer
     height: number,
     animated: boolean
   ) => void;
+  private messageHtmlCode?: string;
+  private isAppMode?: boolean;
 
   constructor(
     private onImagePress: (pressMode: PressMode, url: string) => void,
@@ -221,7 +183,9 @@ export class CustomMarkdownRenderer
       expanded: boolean,
       height: number,
       animated: boolean
-    ) => void
+    ) => void,
+    messageHtmlCode?: string,
+    isAppMode?: boolean
   ) {
     super();
     this.colors = colors;
@@ -229,6 +193,8 @@ export class CustomMarkdownRenderer
     this.styles = createCustomStyles(colors);
     this.citations = citations;
     this.onPreviewToggle = onPreviewToggle;
+    this.messageHtmlCode = messageHtmlCode;
+    this.isAppMode = isAppMode;
   }
 
   getTextView(children: string | ReactNode[], styles?: TextStyle): ReactNode {
@@ -391,13 +357,17 @@ export class CustomMarkdownRenderer
     text: string,
     language?: string,
     _containerStyle?: ViewStyle,
-    _textStyle?: TextStyle
+    _textStyle?: TextStyle,
+    isCompleted?: boolean
   ): ReactNode {
     if (text && text !== '') {
       let componentKey = this.getKey();
       if (language === 'mermaid') {
         componentKey = 'mermaid-code-block';
-      } else if (language === 'html') {
+      } else if (
+        this.isAppMode &&
+        (language === 'html' || language === 'diff')
+      ) {
         componentKey = 'html-code-block';
       }
       return (
@@ -408,6 +378,9 @@ export class CustomMarkdownRenderer
           colors={this.colors}
           isDark={this.isDark}
           onPreviewToggle={this.onPreviewToggle}
+          isCompleted={isCompleted}
+          messageHtmlCode={this.messageHtmlCode}
+          isAppMode={this.isAppMode}
         />
       );
     } else {

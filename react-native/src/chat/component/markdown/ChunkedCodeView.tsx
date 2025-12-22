@@ -18,7 +18,6 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-// Number of lines per chunk
 const CHUNK_SIZE = 100;
 
 interface ChunkedCodeViewProps {
@@ -27,6 +26,7 @@ interface ChunkedCodeViewProps {
   backgroundColor?: string;
   scrollViewProps?: ScrollViewProps;
   containerStyle?: StyleProp<ViewStyle>;
+  isCompleted?: boolean;
 }
 
 interface ChunkTextProps {
@@ -35,7 +35,7 @@ interface ChunkTextProps {
   isComplete: boolean;
 }
 
-// Memoized chunk component - won't re-render if content is complete
+// Memoized chunk - complete chunks never re-render
 const ChunkText: FunctionComponent<ChunkTextProps> = memo(
   ({ content, textStyle }) => {
     if (Platform.OS === 'ios') {
@@ -52,41 +52,36 @@ const ChunkText: FunctionComponent<ChunkTextProps> = memo(
     return <Text style={textStyle}>{content}</Text>;
   },
   (prevProps, nextProps) => {
-    // If the chunk was already complete, never re-render
     if (prevProps.isComplete) {
       return true;
     }
-    // Otherwise, only re-render if content changed
     return prevProps.content === nextProps.content;
   }
 );
 
-// Incremental line tracking - only process new content, O(delta) instead of O(n)
-const useChunkedCode = (code: string): string[] => {
-  // Track all lines incrementally
+// Incremental line tracking - O(delta) instead of O(n)
+const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
   const linesRef = useRef<string[]>([]);
-  // Track the position we've processed up to
   const processedLengthRef = useRef<number>(0);
-  // Track if last line was incomplete (no trailing newline)
   const incompleteLineRef = useRef<string>('');
-  // Cache completed chunks
   const completedChunksRef = useRef<string[]>([]);
+  const updateCountRef = useRef(0);
 
-  // State to track complete chunks for rendering
   const [completeChunks, setCompleteChunks] = useState<string[]>([]);
-  // State for the last (incomplete) chunk
   const [lastChunk, setLastChunk] = useState<string>('');
 
-  // Incrementally process new content
   useEffect(() => {
     const prevLength = processedLengthRef.current;
+    const isReset =
+      code.length < prevLength || !code.startsWith(code.slice(0, prevLength));
 
-    // Handle reset case (new code block or code got shorter)
-    if (
-      code.length < prevLength ||
-      !code.startsWith(code.slice(0, prevLength))
-    ) {
-      // Reset everything
+    // Throttle: skip odd updates during streaming
+    updateCountRef.current++;
+    if (!isReset && !isCompleted && updateCountRef.current % 2 !== 0) {
+      return;
+    }
+
+    if (isReset) {
       linesRef.current = [];
       processedLengthRef.current = 0;
       incompleteLineRef.current = '';
@@ -95,19 +90,15 @@ const useChunkedCode = (code: string): string[] => {
       setLastChunk('');
     }
 
-    // Get only the new content
     const newContent = code.slice(processedLengthRef.current);
     if (!newContent) {
       return;
     }
 
-    // Process new content
     const newParts = newContent.split('\n');
 
     if (newParts.length > 0) {
-      // First part completes the previous incomplete line
       if (incompleteLineRef.current) {
-        // Complete the last line
         const lastLineIndex = linesRef.current.length - 1;
         if (lastLineIndex >= 0) {
           linesRef.current[lastLineIndex] += newParts[0];
@@ -115,16 +106,13 @@ const useChunkedCode = (code: string): string[] => {
           linesRef.current.push(newParts[0]);
         }
       } else {
-        // No incomplete line, first part is a new line
         linesRef.current.push(newParts[0]);
       }
 
-      // Add remaining complete lines
       for (let i = 1; i < newParts.length; i++) {
         linesRef.current.push(newParts[i]);
       }
 
-      // Check if last line is incomplete (code doesn't end with newline)
       incompleteLineRef.current = code.endsWith('\n')
         ? ''
         : newParts[newParts.length - 1];
@@ -132,11 +120,9 @@ const useChunkedCode = (code: string): string[] => {
 
     processedLengthRef.current = code.length;
 
-    // Now calculate chunks from lines
     const totalLines = linesRef.current.length;
     const completeChunkCount = Math.floor(totalLines / CHUNK_SIZE);
 
-    // Build/update complete chunks
     let chunksChanged = false;
     for (
       let i = completedChunksRef.current.length;
@@ -145,13 +131,11 @@ const useChunkedCode = (code: string): string[] => {
     ) {
       const start = i * CHUNK_SIZE;
       const end = start + CHUNK_SIZE;
-      // Add trailing newline since complete chunks always have content following
       const chunk = linesRef.current.slice(start, end).join('\n') + '\n';
       completedChunksRef.current.push(chunk);
       chunksChanged = true;
     }
 
-    // Calculate last chunk content
     const remainingStart = completeChunkCount * CHUNK_SIZE;
     const remainingLines = totalLines - remainingStart;
     const rawLastChunk =
@@ -159,14 +143,12 @@ const useChunkedCode = (code: string): string[] => {
         ? linesRef.current.slice(remainingStart).join('\n')
         : '';
 
-    // Update both states together to ensure consistency
     if (chunksChanged) {
       setCompleteChunks([...completedChunksRef.current]);
     }
     setLastChunk(rawLastChunk);
-  }, [code]);
+  }, [code, isCompleted]);
 
-  // Combine complete chunks with last chunk
   if (lastChunk) {
     return [...completeChunks, lastChunk];
   }
@@ -174,18 +156,8 @@ const useChunkedCode = (code: string): string[] => {
 };
 
 /**
- * ChunkedCodeView - Optimized code renderer using chunked rendering
- *
- * Splits code into chunks of CHUNK_SIZE lines. Completed chunks are memoized
- * and won't re-render, only the last active chunk updates during streaming.
- *
- * Features:
- * - Unified horizontal scrolling for all chunks
- * - Vertical scrolling passes through to parent
- * - O(1) render cost for completed chunks
- * - Only last chunk re-renders during streaming, completed chunks are memoized
- * - Incremental line tracking - O(delta) instead of O(n) for split operations
- * - Guarantees last chunk update when complete chunks change (no race conditions)
+ * Chunked code renderer - splits into CHUNK_SIZE line chunks.
+ * Complete chunks are memoized, only last chunk updates during streaming.
  */
 const ChunkedCodeView: FunctionComponent<ChunkedCodeViewProps> = ({
   code,
@@ -193,8 +165,9 @@ const ChunkedCodeView: FunctionComponent<ChunkedCodeViewProps> = ({
   backgroundColor,
   scrollViewProps,
   containerStyle,
+  isCompleted,
 }) => {
-  const chunks = useChunkedCode(code);
+  const chunks = useChunkedCode(code, isCompleted);
 
   return (
     <ScrollView
@@ -224,9 +197,7 @@ const styles = StyleSheet.create({
   chunksContainer: {
     flexDirection: 'column',
   },
-  chunkText: {
-    // No additional styling needed, inherits from textStyle
-  },
+  chunkText: {},
 });
 
 export default ChunkedCodeView;

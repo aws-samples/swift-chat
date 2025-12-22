@@ -118,6 +118,13 @@ export const PromptListComponent: React.FC<PromptListProps> = ({
     if (event.event === 'unSelectSystemPrompt') {
       setSelectedPrompt(null);
       onSelectPromptRef.current(null);
+    } else if (event.event === 'selectAppPrompt') {
+      // Auto-select App prompt when loading a session with htmlCode
+      const appPrompt = promptsRef.current.find(p => p.name === 'App');
+      if (appPrompt) {
+        setSelectedPrompt(appPrompt);
+        onSelectPromptRef.current(appPrompt);
+      }
     } else if (event.event === 'modelChanged') {
       const newIsNovaSonic = getTextModel().modelId.includes('sonic');
       if (isNovaSonicRef.current && !newIsNovaSonic) {
