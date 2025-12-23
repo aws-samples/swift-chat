@@ -75,17 +75,12 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
     const isReset =
       code.length < prevLength || !code.startsWith(code.slice(0, prevLength));
 
-    // Throttle: skip odd updates during streaming
-    updateCountRef.current++;
-    if (!isReset && !isCompleted && updateCountRef.current % 2 !== 0) {
-      return;
-    }
-
     if (isReset) {
       linesRef.current = [];
       processedLengthRef.current = 0;
       incompleteLineRef.current = '';
       completedChunksRef.current = [];
+      updateCountRef.current = 0;
       setCompleteChunks([]);
       setLastChunk('');
     }
@@ -95,6 +90,7 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
       return;
     }
 
+    // Always update refs to keep line tracking accurate
     const newParts = newContent.split('\n');
 
     if (newParts.length > 0) {
@@ -123,6 +119,7 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
     const totalLines = linesRef.current.length;
     const completeChunkCount = Math.floor(totalLines / CHUNK_SIZE);
 
+    // Always update completed chunks ref to avoid data loss
     let chunksChanged = false;
     for (
       let i = completedChunksRef.current.length;
@@ -131,7 +128,7 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
     ) {
       const start = i * CHUNK_SIZE;
       const end = start + CHUNK_SIZE;
-      const chunk = linesRef.current.slice(start, end).join('\n') + '\n';
+      const chunk = linesRef.current.slice(start, end).join('\n');
       completedChunksRef.current.push(chunk);
       chunksChanged = true;
     }
@@ -142,6 +139,12 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
       remainingLines > 0
         ? linesRef.current.slice(remainingStart).join('\n')
         : '';
+
+    // Throttle: skip odd state updates during streaming (but refs are already updated)
+    updateCountRef.current++;
+    if (!isReset && !isCompleted && updateCountRef.current % 2 !== 0) {
+      return;
+    }
 
     if (chunksChanged) {
       setCompleteChunks([...completedChunksRef.current]);

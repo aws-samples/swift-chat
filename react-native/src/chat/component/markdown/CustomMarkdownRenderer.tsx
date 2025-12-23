@@ -78,10 +78,8 @@ const MemoizedCodeHighlighter = React.memo(
       );
     }
 
-    // Show HtmlCodeRenderer for App mode:
-    // 1. html code blocks in App mode
-    // 2. diff code blocks in App mode
-    if (isAppMode && (language === 'html' || language === 'diff')) {
+    // Show HtmlCodeRenderer for html and code diff
+    if (language === 'html' || (isAppMode && language === 'diff')) {
       return (
         <HtmlCodeRenderer
           text={text}
