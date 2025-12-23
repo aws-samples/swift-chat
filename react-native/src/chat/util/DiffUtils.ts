@@ -1,6 +1,9 @@
 // Placeholder for HTML code block - content is stored in message.htmlCode
 export const HTML_CODE_PLACEHOLDER = '[HTML_OUTPUT_OMITTED]';
 
+// Placeholder for diff code block - diff has been applied, no need to send again
+export const DIFF_CODE_PLACEHOLDER = '[DIFF_CHANGES_OMITTED]';
+
 // Global storage for latest HTML code in App mode
 let latestHtmlCode: string = '';
 
@@ -33,6 +36,16 @@ export function replaceHtmlWithPlaceholder(
   htmlCode: string
 ): string {
   return text.replace(htmlCode, HTML_CODE_PLACEHOLDER);
+}
+
+/**
+ * Replace diff code in text with placeholder
+ */
+export function replaceDiffWithPlaceholder(
+  text: string,
+  diffCode: string
+): string {
+  return text.replace(diffCode, DIFF_CODE_PLACEHOLDER);
 }
 
 /**
@@ -212,6 +225,45 @@ function findBlockPosition(
     if (matches) {
       // Return the position where removals start (after contextBefore)
       return i + contextBefore.length;
+    }
+  }
+
+  // Fallback: if full pattern match failed and we have removals,
+  // try matching with reduced context (AI-generated diffs may have inaccurate context)
+  // This handles cases where AI provides incorrect leading context lines
+  if (removals.length > 0 && contextBefore.length > 0) {
+    // Try progressively fewer context lines, but always keep at least 1 for safety
+    const contextSizes = [
+      Math.min(2, contextBefore.length), // Try last 2 lines
+      1, // Try last 1 line
+    ];
+
+    for (const size of contextSizes) {
+      if (size > contextBefore.length) {
+        continue;
+      }
+
+      const reducedContext = contextBefore.slice(-size);
+      const reducedPattern = [...reducedContext, ...removals];
+
+      for (
+        let i = searchStart;
+        i <= sourceLines.length - reducedPattern.length;
+        i++
+      ) {
+        let matches = true;
+
+        for (let j = 0; j < reducedPattern.length; j++) {
+          if (!linesMatch(sourceLines[i + j], reducedPattern[j])) {
+            matches = false;
+            break;
+          }
+        }
+
+        if (matches) {
+          return i + reducedContext.length;
+        }
+      }
     }
   }
 

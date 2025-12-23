@@ -36,6 +36,7 @@ interface HtmlCodeRendererProps {
   ) => void;
   isCompleted?: boolean;
   messageHtmlCode?: string;
+  messageDiffCode?: string;
 }
 
 interface HtmlCodeRendererRef {
@@ -61,6 +62,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       onPreviewToggle,
       isCompleted,
       messageHtmlCode,
+      messageDiffCode,
     },
     ref
   ) => {
@@ -125,7 +127,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
               setLatestHtmlCode(result);
               setAppliedHtmlCode(result);
               setShowPreview(true);
-              sendEvent('diffApplied', { htmlCode: result });
+              sendEvent('diffApplied', { htmlCode: result, diffCode: text });
             }
           }
         }
@@ -293,9 +295,9 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
               textStyle={styles.codeText}
               language={isDiffModeRef.current ? 'diff' : 'html'}
               isCompleted={isCompleted}>
-              {!isDiffModeRef.current && messageHtmlCode
-                ? messageHtmlCode
-                : currentText}
+              {isDiffModeRef.current
+                ? messageDiffCode || currentText
+                : messageHtmlCode || currentText}
             </CustomCodeHighlighter>
           </Suspense>
         </View>

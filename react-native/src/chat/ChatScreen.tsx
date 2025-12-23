@@ -82,6 +82,7 @@ import {
   clearLatestHtmlCode,
   getLatestHtmlCode,
   replaceHtmlWithPlaceholder,
+  replaceDiffWithPlaceholder,
 } from './util/DiffUtils.ts';
 
 const BOT_ID = 2;
@@ -413,16 +414,18 @@ function ChatScreen(): React.JSX.Element {
     }
   }, [event]);
 
-  // diffApplied listener for App mode - update message.htmlCode for persistence
+  // diffApplied listener for App mode - update message.htmlCode and save diffCode
+  // Note: placeholder replacement is done in ChatStatus.Complete handler
   useEffect(() => {
     if (event?.event === 'diffApplied' && event.params?.htmlCode) {
-      const { htmlCode } = event.params;
+      const { htmlCode, diffCode } = event.params;
       setMessages(prevMessages => {
         const newMessages = [...prevMessages];
         if (newMessages[0]) {
           newMessages[0] = {
             ...newMessages[0],
             htmlCode: htmlCode,
+            diffCode: diffCode,
           };
         }
         return newMessages;
@@ -482,10 +485,13 @@ function ChatScreen(): React.JSX.Element {
       if (messagesRef.current.length <= 1) {
         return;
       }
-      // In App mode, replace HTML with placeholder to save context tokens
+      // In App mode, replace HTML/diff with placeholder to save context tokens
       const msg = messagesRef.current[0];
       if (isAppModeRef.current && msg.htmlCode) {
         msg.text = replaceHtmlWithPlaceholder(msg.text, msg.htmlCode);
+      }
+      if (isAppModeRef.current && msg.diffCode) {
+        msg.text = replaceDiffWithPlaceholder(msg.text, msg.diffCode);
       }
       saveCurrentMessages();
       getBedrockMessage(messagesRef.current[0]).then(currentMsg => {

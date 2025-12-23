@@ -251,6 +251,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         currentMessage?.citations || [],
         onReasoningToggle,
         currentMessage?.htmlCode,
+        currentMessage?.diffCode,
         isAppMode
       ),
     [
@@ -260,6 +261,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       currentMessage?.citations,
       onReasoningToggle,
       currentMessage?.htmlCode,
+      currentMessage?.diffCode,
       isAppMode,
     ]
   );

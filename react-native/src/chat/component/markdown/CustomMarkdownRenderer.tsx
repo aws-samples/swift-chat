@@ -51,6 +51,7 @@ const MemoizedCodeHighlighter = React.memo(
     onPreviewToggle,
     isCompleted,
     messageHtmlCode,
+    messageDiffCode,
     isAppMode,
   }: {
     text: string;
@@ -64,6 +65,7 @@ const MemoizedCodeHighlighter = React.memo(
     ) => void;
     isCompleted?: boolean;
     messageHtmlCode?: string;
+    messageDiffCode?: string;
     isAppMode?: boolean;
   }) => {
     const styles = createCustomStyles(colors);
@@ -89,6 +91,7 @@ const MemoizedCodeHighlighter = React.memo(
           onPreviewToggle={onPreviewToggle}
           isCompleted={isCompleted}
           messageHtmlCode={messageHtmlCode}
+          messageDiffCode={messageDiffCode}
         />
       );
     }
@@ -146,6 +149,10 @@ const MemoizedCodeHighlighter = React.memo(
     if (prevProps.messageHtmlCode !== nextProps.messageHtmlCode) {
       return false;
     }
+    // Update when messageDiffCode changes (for diff history display)
+    if (prevProps.messageDiffCode !== nextProps.messageDiffCode) {
+      return false;
+    }
     // Update when isAppMode changes
     if (prevProps.isAppMode !== nextProps.isAppMode) {
       return false;
@@ -170,6 +177,7 @@ export class CustomMarkdownRenderer
     animated: boolean
   ) => void;
   private messageHtmlCode?: string;
+  private messageDiffCode?: string;
   private isAppMode?: boolean;
 
   constructor(
@@ -183,6 +191,7 @@ export class CustomMarkdownRenderer
       animated: boolean
     ) => void,
     messageHtmlCode?: string,
+    messageDiffCode?: string,
     isAppMode?: boolean
   ) {
     super();
@@ -192,6 +201,7 @@ export class CustomMarkdownRenderer
     this.citations = citations;
     this.onPreviewToggle = onPreviewToggle;
     this.messageHtmlCode = messageHtmlCode;
+    this.messageDiffCode = messageDiffCode;
     this.isAppMode = isAppMode;
   }
 
@@ -378,6 +388,7 @@ export class CustomMarkdownRenderer
           onPreviewToggle={this.onPreviewToggle}
           isCompleted={isCompleted}
           messageHtmlCode={this.messageHtmlCode}
+          messageDiffCode={this.messageDiffCode}
           isAppMode={this.isAppMode}
         />
       );
