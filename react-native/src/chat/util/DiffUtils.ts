@@ -171,13 +171,13 @@ function applyIndent(newLine: string, sourceLine: string): string {
  * Find the position in source lines where the change block context matches
  * Returns the line index where removals should start, or -1 if not found
  *
- * This function allows searching slightly before startFrom to handle cases
- * where previous blocks may have caused the position to overshoot.
+ * @param searchFromStart - if true, always search from the beginning of the file
  */
 function findBlockPosition(
   sourceLines: string[],
   block: ChangeBlock,
-  startFrom: number
+  startFrom: number,
+  searchFromStart: boolean = false
 ): number {
   const { contextBefore, removals } = block;
 
@@ -188,9 +188,11 @@ function findBlockPosition(
     return startFrom; // No context, apply at current position
   }
 
-  // Allow searching a bit before startFrom to handle overlapping contexts
-  // This helps when AI-generated diffs have context that overlaps with previous blocks
-  const searchStart = Math.max(0, startFrom - contextBefore.length);
+  // If searchFromStart is true, always start from beginning
+  // Otherwise, allow searching a bit before startFrom to handle overlapping contexts
+  const searchStart = searchFromStart
+    ? 0
+    : Math.max(0, startFrom - contextBefore.length);
 
   // Search for the pattern in source
   for (
@@ -217,8 +219,20 @@ function findBlockPosition(
 }
 
 /**
+ * Represents a change block with its position in the source file
+ */
+interface PositionedBlock {
+  block: ChangeBlock;
+  position: number; // Position where removals start in source
+  originalIndex: number; // Original index in parsed blocks array
+}
+
+/**
  * Apply diff to original HTML using context-based matching
- * This handles AI-generated diffs with incorrect line numbers
+ * This handles AI-generated diffs with:
+ * 1. Incorrect line numbers in hunk headers
+ * 2. Hunks in wrong order (not sorted by position in source file)
+ * 3. Empty lines without leading space
  */
 export function applyDiff(
   originalHtml: string,
@@ -236,21 +250,63 @@ export function applyDiff(
     }
 
     const sourceLines = originalHtml.split('\n');
-    const resultLines: string[] = [];
-    let sourceIdx = 0;
 
-    for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
-      const block = blocks[blockIdx];
+    // First pass: find positions for all blocks (searching from start each time)
+    // This handles AI-generated diffs where hunks may be in wrong order
+    const positionedBlocks: PositionedBlock[] = [];
 
-      // Find where this block should be applied
-      const blockPos = findBlockPosition(sourceLines, block, sourceIdx);
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      // Search from start to find the actual position in source
+      const position = findBlockPosition(sourceLines, block, 0, true);
 
-      if (blockPos === -1) {
-        // Could not find matching context
+      if (position === -1) {
         return {
           success: false,
           result: originalHtml,
-          error: `Could not find matching context for change block ${blockIdx + 1}`,
+          error: `Could not find matching context for change block ${i + 1}`,
+        };
+      }
+
+      positionedBlocks.push({
+        block,
+        position,
+        originalIndex: i,
+      });
+    }
+
+    // Sort blocks by their position in the source file
+    positionedBlocks.sort((a, b) => a.position - b.position);
+
+    // Check for overlapping blocks
+    for (let i = 1; i < positionedBlocks.length; i++) {
+      const prev = positionedBlocks[i - 1];
+      const curr = positionedBlocks[i];
+      const prevEnd = prev.position + prev.block.removals.length;
+
+      if (curr.position < prevEnd) {
+        return {
+          success: false,
+          result: originalHtml,
+          error: `Overlapping change blocks detected: block ${prev.originalIndex + 1} and block ${curr.originalIndex + 1}`,
+        };
+      }
+    }
+
+    // Apply blocks in sorted order
+    const resultLines: string[] = [];
+    let sourceIdx = 0;
+
+    for (const { block } of positionedBlocks) {
+      // Find position again (should match, but ensures consistency)
+      const blockPos = findBlockPosition(sourceLines, block, sourceIdx);
+
+      if (blockPos === -1 || blockPos < sourceIdx) {
+        // This shouldn't happen after sorting, but handle gracefully
+        return {
+          success: false,
+          result: originalHtml,
+          error: 'Internal error: block position mismatch after sorting',
         };
       }
 

@@ -542,7 +542,7 @@ function AppGalleryScreen(): React.JSX.Element {
           colors={colors}
         />
         <MenuItem
-          label="Save to File"
+          label="Share or Save"
           icon={require('../assets/download.png')}
           onPress={handleSaveToFile}
           colors={colors}
