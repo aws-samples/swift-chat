@@ -50,6 +50,7 @@ interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   isLastAIMessage?: boolean;
   searchPhase?: string;
   onRegenerate?: () => void;
+  onEditSubmit?: (newText: string) => void;
   onReasoningToggle?: (
     expanded: boolean,
     height: number,
@@ -66,6 +67,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   isLastAIMessage,
   searchPhase,
   onRegenerate,
+  onEditSubmit,
   onReasoningToggle,
   isAppMode,
 }) => {
@@ -79,6 +81,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const reasoningContainerRef = useRef<View>(null);
   const reasoningContainerHeightRef = useRef<number>(0);
   const [isEdit, setIsEdit] = useState(false);
+  const [editText, setEditText] = useState(currentMessage?.text || '');
 
   const [inputHeight, setInputHeight] = useState(0);
   const chatStatusRef = useRef(chatStatus);
@@ -101,17 +104,51 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     (value: boolean) => {
       if (chatStatus !== ChatStatus.Running) {
         setIsEdit(value);
-        if (!value) {
+        if (value) {
+          // Reset editText when entering edit mode
+          setEditText(currentMessage?.text || '');
+        } else {
           setInputTextSelection(undefined);
         }
       }
     },
-    [chatStatus]
+    [chatStatus, currentMessage?.text]
   );
 
-  // Use useEffect with setTimeout to ensure selection happens after TextInput is fully rendered
+  const handleLongPressEdit = useCallback(() => {
+    if (isUser.current && chatStatus !== ChatStatus.Running) {
+      trigger(HapticFeedbackTypes.impactMedium);
+      setIsEditValue(true);
+    }
+  }, [chatStatus, setIsEditValue]);
+
+  const handleEditSubmit = useCallback(() => {
+    if (editText.trim() && editText.trim() !== currentMessage?.text?.trim()) {
+      onEditSubmit?.(editText.trim());
+      setIsEdit(false);
+      setInputTextSelection(undefined);
+    } else {
+      // If text unchanged, just exit edit mode
+      setIsEdit(false);
+      setInputTextSelection(undefined);
+    }
+  }, [editText, currentMessage?.text, onEditSubmit]);
+
+  const handleEditCancel = useCallback(() => {
+    setIsEdit(false);
+    setEditText(currentMessage?.text || '');
+    setInputTextSelection(undefined);
+  }, [currentMessage?.text]);
+
+  // Focus TextInput and move cursor to end when entering edit mode
   useEffect(() => {
-    if (!isAndroid && isEdit && currentMessage?.text) {
+    if (isEdit && isUser.current) {
+      const timer = setTimeout(() => {
+        textInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    } else if (!isAndroid && isEdit && currentMessage?.text) {
+      // For non-user messages on iOS/Mac, select all text
       const timer = setTimeout(() => {
         textInputRef.current?.focus();
         setInputTextSelection({
@@ -432,7 +469,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     }
 
     return (
-      <View
+      <TouchableOpacity
+        activeOpacity={0.8}
+        delayLongPress={300}
+        onLongPress={handleLongPressEdit}
         style={{
           ...styles.questionContainer,
           maxWidth: (chatScreenWidth * 3) / 4,
@@ -440,7 +480,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         <Text style={styles.questionText} selectable>
           {currentMessage.text}
         </Text>
-      </View>
+      </TouchableOpacity>
     );
   }, [
     currentMessage,
@@ -450,6 +490,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     styles.questionContainer,
     styles.questionText,
     citationRenderKey,
+    handleLongPressEdit,
   ]);
 
   const messageActionButtons = useMemo(() => {
@@ -569,36 +610,68 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           </TapGestureHandler>
         )}
         {isEdit && (
-          <TextInput
-            ref={textInputRef}
-            selection={inputTextSelection}
-            onSelectionChange={handleSelectionChange}
-            editable={Platform.OS === 'android'}
-            multiline
-            showSoftInputOnFocus={false}
-            onContentSizeChange={event => {
-              const { height } = event.nativeEvent.contentSize;
-              setInputHeight(height);
-            }}
-            style={{
-              ...styles.inputText,
-              ...{
-                fontWeight: isMac ? '300' : 'normal',
-                lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
-                paddingTop: Platform.OS === 'android' ? 7 : 3,
-                marginBottom:
-                  -inputHeight * (isAndroid ? 0 : isMac ? 0.115 : 0.138) +
-                  (isMac ? 10 : 8),
-              },
-              ...(isUser.current && {
-                flex: 1,
-                alignSelf: 'flex-end',
-                maxWidth: (chatScreenWidth * 3) / 4,
-              }),
-            }}
-            textAlignVertical="top">
-            {currentMessage.text}
-          </TextInput>
+          <View
+            style={
+              isUser.current
+                ? {
+                    alignSelf: 'flex-end',
+                    maxWidth: (chatScreenWidth * 3) / 4,
+                  }
+                : undefined
+            }>
+            <TextInput
+              ref={textInputRef}
+              selection={inputTextSelection}
+              onSelectionChange={handleSelectionChange}
+              editable={isUser.current ? true : Platform.OS === 'android'}
+              multiline
+              showSoftInputOnFocus={isUser.current ? true : false}
+              value={isUser.current ? editText : undefined}
+              onChangeText={isUser.current ? setEditText : undefined}
+              onContentSizeChange={event => {
+                const { height } = event.nativeEvent.contentSize;
+                setInputHeight(height);
+              }}
+              style={{
+                ...styles.inputText,
+                ...{
+                  fontWeight: isMac ? '300' : 'normal',
+                  lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
+                  paddingTop: Platform.OS === 'android' ? 7 : 3,
+                  marginBottom: isUser.current
+                    ? 0
+                    : -inputHeight * (isAndroid ? 0 : isMac ? 0.115 : 0.138) +
+                      (isMac ? 10 : 8),
+                },
+                ...(isUser.current && {
+                  backgroundColor: colors.messageBackground,
+                  borderRadius: 22,
+                  paddingHorizontal: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }),
+              }}
+              textAlignVertical="top">
+              {isUser.current ? undefined : currentMessage.text}
+            </TextInput>
+            {isUser.current && (
+              <View style={styles.editButtonsContainer}>
+                <TouchableOpacity
+                  onPress={handleEditCancel}
+                  style={styles.editCancelButton}>
+                  <Text style={styles.editCancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleEditSubmit}
+                  style={[
+                    styles.editSubmitButton,
+                    !editText.trim() && styles.editSubmitButtonDisabled,
+                  ]}>
+                  <Text style={styles.editSubmitButtonText}>Send</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         )}
         {!isUser.current &&
           chatStatus !== ChatStatus.Running &&
@@ -750,6 +823,36 @@ const createStyles = (colors: ColorScheme) =>
       padding: 4,
       width: 16,
       height: 16,
+    },
+    editButtonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      marginTop: 8,
+      gap: 8,
+    },
+    editCancelButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 16,
+      backgroundColor: colors.borderLight,
+    },
+    editCancelButtonText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    editSubmitButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 16,
+      backgroundColor: colors.primary,
+    },
+    editSubmitButtonDisabled: {
+      opacity: 0.5,
+    },
+    editSubmitButtonText: {
+      fontSize: 14,
+      color: '#FFFFFF',
+      fontWeight: '500',
     },
   });
 

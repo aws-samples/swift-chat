@@ -809,6 +809,41 @@ function ChatScreen(): React.JSX.Element {
     }
   }, [messages]);
 
+  // Shared function for regenerate and edit-submit
+  const regenerateFromUserMessage = useCallback(
+    (userMessageIndex: number, newText?: string) => {
+      setUserScrolled(false);
+      trigger(HapticFeedbackTypes.impactMedium);
+
+      // Get all history messages after the user message
+      const historyMessages = messagesRef.current.slice(userMessageIndex + 1);
+
+      // Update latestHtmlCode for app mode
+      if (isAppModeRef.current) {
+        setLatestHtmlCode(findLatestHtmlCode(historyMessages));
+      }
+
+      // Create the user message (updated if newText provided)
+      const userMessage: SwiftChatMessage = newText
+        ? { ...messagesRef.current[userMessageIndex], text: newText }
+        : messagesRef.current[userMessageIndex];
+
+      getBedrockMessagesFromChatMessages([userMessage, ...historyMessages]).then(
+        historyBedrockMessages => {
+          bedrockMessages.current = historyBedrockMessages;
+          setChatStatus(ChatStatus.Running);
+          setMessages(_previousMessages => [
+            createBotMessage(modeRef.current),
+            userMessage,
+            ...historyMessages,
+          ]);
+          scrollToBottom();
+        }
+      );
+    },
+    []
+  );
+
   // handle onSend
   const onSend = useCallback(async (message: SwiftChatMessage[] = []) => {
     // Reset user scroll state when sending a new message
@@ -1075,31 +1110,15 @@ function ChatScreen(): React.JSX.Element {
                 scrollUpByHeight(expanded, height, animated);
               }}
               onRegenerate={() => {
-                setUserScrolled(false);
-                trigger(HapticFeedbackTypes.impactMedium);
+                // For AI message: userMessageIndex = messageIndex + 1
                 const userMessageIndex = messageIndex + 1;
                 if (userMessageIndex < messages.length) {
-                  // Get all history messages from userMessageIndex onwards
-                  const historyMessages = messages.slice(userMessageIndex);
-
-                  // Update latestHtmlCode to the htmlCode before this AI message
-                  // Find the previous AI message's htmlCode for diff to work correctly
-                  if (isAppModeRef.current) {
-                    setLatestHtmlCode(findLatestHtmlCode(historyMessages));
-                  }
-
-                  getBedrockMessagesFromChatMessages(historyMessages).then(
-                    historyBedrockMessages => {
-                      bedrockMessages.current = historyBedrockMessages;
-                      setChatStatus(ChatStatus.Running);
-                      setMessages(previousMessages => [
-                        createBotMessage(modeRef.current),
-                        ...previousMessages.slice(userMessageIndex),
-                      ]);
-                      scrollToBottom();
-                    }
-                  );
+                  regenerateFromUserMessage(userMessageIndex);
                 }
+              }}
+              onEditSubmit={(newText: string) => {
+                // For user message: messageIndex is the user message position
+                regenerateFromUserMessage(messageIndex, newText);
               }}
               isAppMode={isAppModeRef.current}
             />

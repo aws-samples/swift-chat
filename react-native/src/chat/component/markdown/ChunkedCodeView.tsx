@@ -67,8 +67,8 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
   const completedChunksRef = useRef<string[]>([]);
   const updateCountRef = useRef(0);
 
-  const [completeChunks, setCompleteChunks] = useState<string[]>([]);
-  const [lastChunk, setLastChunk] = useState<string>('');
+  const [, setUpdateTrigger] = useState(0);
+  const lastChunkRef = useRef<string>('');
 
   useEffect(() => {
     const prevLength = processedLengthRef.current;
@@ -81,8 +81,8 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
       incompleteLineRef.current = '';
       completedChunksRef.current = [];
       updateCountRef.current = 0;
-      setCompleteChunks([]);
-      setLastChunk('');
+      lastChunkRef.current = '';
+      setUpdateTrigger(prev => prev + 1);
     }
 
     const newContent = code.slice(processedLengthRef.current);
@@ -120,7 +120,6 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
     const completeChunkCount = Math.floor(totalLines / CHUNK_SIZE);
 
     // Always update completed chunks ref to avoid data loss
-    let chunksChanged = false;
     for (
       let i = completedChunksRef.current.length;
       i < completeChunkCount;
@@ -130,7 +129,6 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
       const end = start + CHUNK_SIZE;
       const chunk = linesRef.current.slice(start, end).join('\n');
       completedChunksRef.current.push(chunk);
-      chunksChanged = true;
     }
 
     const remainingStart = completeChunkCount * CHUNK_SIZE;
@@ -146,16 +144,18 @@ const useChunkedCode = (code: string, isCompleted?: boolean): string[] => {
       return;
     }
 
-    if (chunksChanged) {
-      setCompleteChunks([...completedChunksRef.current]);
-    }
-    setLastChunk(rawLastChunk);
+    lastChunkRef.current = rawLastChunk;
+    setUpdateTrigger(prev => prev + 1);
   }, [code, isCompleted]);
 
-  if (lastChunk) {
-    return [...completeChunks, lastChunk];
+  if (lastChunkRef.current) {
+    return [...completedChunksRef.current, lastChunkRef.current];
   }
-  return completeChunks.length > 0 ? completeChunks : code ? [code] : [];
+  return completedChunksRef.current.length > 0
+    ? [...completedChunksRef.current]
+    : code
+    ? [code]
+    : [];
 };
 
 /**
