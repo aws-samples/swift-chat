@@ -18,6 +18,7 @@ export type RouteParamList = {
     sessionId?: number;
     tapIndex?: number;
     mode?: ChatMode;
+    editAppCode?: string;
   };
   Settings: NonNullable<unknown>;
   TokenUsage: NonNullable<unknown>;

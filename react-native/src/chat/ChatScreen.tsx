@@ -129,6 +129,7 @@ function ChatScreen(): React.JSX.Element {
   const initialSessionId = route.params?.sessionId;
   const tapIndex = route.params?.tapIndex;
   const mode = route.params?.mode ?? currentMode;
+  const editAppCode = route.params?.editAppCode;
   const modeRef = useRef(mode);
   const isNovaSonic =
     getTextModel().modelId.includes('sonic') &&
@@ -380,6 +381,18 @@ function ChatScreen(): React.JSX.Element {
       }
     }
   }, [initialSessionId, mode, tapIndex]);
+
+  // editAppCode handler - for editing saved apps from AppGallery
+  useEffect(() => {
+    if (editAppCode) {
+      startNewChat.current();
+      setLatestHtmlCode(editAppCode);
+      isAppModeRef.current = true;
+      setTimeout(() => {
+        sendEventRef.current?.('selectAppPrompt');
+      }, 100);
+    }
+  }, [editAppCode, navigation]);
 
   // deleteChat listener
   useEffect(() => {

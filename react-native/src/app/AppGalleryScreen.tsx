@@ -39,7 +39,7 @@ import Share from 'react-native-share';
 type NavigationProp = DrawerNavigationProp<RouteParamList>;
 
 const getNumColumns = (width: number) => (width > 434 ? 4 : 2);
-const MENU_HEIGHT = 280; // 5 items * 56px each
+const MENU_HEIGHT = 336; // 6 items * 56px each
 
 // Context menu item
 interface MenuItemProps {
@@ -355,6 +355,16 @@ function AppGalleryScreen(): React.JSX.Element {
     closeMenu();
   }, [selectedApp, closeMenu]);
 
+  const handleEdit = useCallback(() => {
+    if (selectedApp) {
+      const app = getAppById(selectedApp.id);
+      if (app) {
+        closeMenu();
+        navigation.navigate('Bedrock', { editAppCode: app.htmlCode });
+      }
+    }
+  }, [selectedApp, closeMenu, navigation]);
+
   const handleSaveToFile = useCallback(async () => {
     if (selectedApp) {
       const app = getAppById(selectedApp.id);
@@ -523,8 +533,14 @@ function AppGalleryScreen(): React.JSX.Element {
         onClose={closeMenu}
         colors={colors}>
         <MenuItem
-          label="Rename"
+          label="Edit"
           icon={require('../assets/edit.png')}
+          onPress={handleEdit}
+          colors={colors}
+        />
+        <MenuItem
+          label="Rename"
+          icon={require('../assets/rename.png')}
           onPress={handleRename}
           colors={colors}
         />
