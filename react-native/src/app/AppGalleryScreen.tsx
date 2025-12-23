@@ -391,7 +391,7 @@ function AppGalleryScreen(): React.JSX.Element {
             await Share.open(shareOptions);
           }
         } catch (error) {
-          console.error('Error saving file:', error);
+          console.log('Error saving file:', error);
           // User cancelled share is not an error
           if ((error as Error).message !== 'User did not share') {
             Alert.alert('Error', 'Failed to save file');
@@ -543,7 +543,7 @@ function AppGalleryScreen(): React.JSX.Element {
         />
         <MenuItem
           label="Share or Save"
-          icon={require('../assets/download.png')}
+          icon={require('../assets/share.png')}
           onPress={handleSaveToFile}
           colors={colors}
         />

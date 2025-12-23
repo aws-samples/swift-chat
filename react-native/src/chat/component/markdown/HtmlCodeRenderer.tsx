@@ -272,7 +272,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
             content={() =>
               showPreview || !isDiffModeRef.current
                 ? previewHtmlCode
-                : currentText
+                : messageDiffCode || previewHtmlCode
             }
           />
         </View>
