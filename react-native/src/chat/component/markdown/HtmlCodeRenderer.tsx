@@ -18,6 +18,7 @@ import {
   getLatestHtmlCode,
   setLatestHtmlCode,
 } from '../../util/DiffUtils';
+import { showInfo } from '../../util/ToastUtils';
 import CopyButton from './CopyButton';
 
 const CustomCodeHighlighter = React.lazy(
@@ -128,6 +129,8 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
               setAppliedHtmlCode(result);
               setShowPreview(true);
               sendEvent('diffApplied', { htmlCode: result, diffCode: text });
+            } else {
+              showInfo('Diff apply failed, please regenerate');
             }
           }
         }
