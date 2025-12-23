@@ -828,18 +828,19 @@ function ChatScreen(): React.JSX.Element {
         ? { ...messagesRef.current[userMessageIndex], text: newText }
         : messagesRef.current[userMessageIndex];
 
-      getBedrockMessagesFromChatMessages([userMessage, ...historyMessages]).then(
-        historyBedrockMessages => {
-          bedrockMessages.current = historyBedrockMessages;
-          setChatStatus(ChatStatus.Running);
-          setMessages(_previousMessages => [
-            createBotMessage(modeRef.current),
-            userMessage,
-            ...historyMessages,
-          ]);
-          scrollToBottom();
-        }
-      );
+      getBedrockMessagesFromChatMessages([
+        userMessage,
+        ...historyMessages,
+      ]).then(historyBedrockMessages => {
+        bedrockMessages.current = historyBedrockMessages;
+        setChatStatus(ChatStatus.Running);
+        setMessages(_previousMessages => [
+          createBotMessage(modeRef.current),
+          userMessage,
+          ...historyMessages,
+        ]);
+        scrollToBottom();
+      });
     },
     []
   );

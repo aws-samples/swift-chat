@@ -611,14 +611,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         )}
         {isEdit && (
           <View
-            style={
-              isUser.current
-                ? {
-                    alignSelf: 'flex-end',
-                    maxWidth: (chatScreenWidth * 3) / 4,
-                  }
-                : undefined
-            }>
+            style={[
+              isUser.current && styles.editContainer,
+              isUser.current && { maxWidth: (chatScreenWidth * 3) / 4 },
+            ]}>
             <TextInput
               ref={textInputRef}
               selection={inputTextSelection}
@@ -737,6 +733,9 @@ const createStyles = (colors: ColorScheme) =>
       marginVertical: 8,
       paddingHorizontal: 16,
       paddingVertical: 10,
+    },
+    editContainer: {
+      alignSelf: 'flex-end',
     },
     questionText: {
       lineHeight: 24,

@@ -288,7 +288,9 @@ export function applyDiff(
         return {
           success: false,
           result: originalHtml,
-          error: `Overlapping change blocks detected: block ${prev.originalIndex + 1} and block ${curr.originalIndex + 1}`,
+          error: `Overlapping change blocks detected: block ${
+            prev.originalIndex + 1
+          } and block ${curr.originalIndex + 1}`,
         };
       }
     }
