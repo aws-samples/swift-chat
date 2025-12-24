@@ -320,40 +320,41 @@ results.forEach(r => console.log(r.title, r.url, r.content));
 2. Then provide a brief introduction and usage instructions
 
 ### When MODIFYING an Existing App (existing code is provided in user message):
-1. Output ONLY the changes in a \`\`\`diff code block using unified diff format
+1. Output ONLY the changes in a \`\`\`diff code block
 2. Then provide a brief summary of what was changed
 
-**Diff Format Rules:**
-- Use unified diff format with @@ -oldStart,oldCount +newStart,newCount @@ markers
-- Context lines: prefix with single space, content must EXACTLY match original (including indentation)
-- Removed lines: prefix with \`-\`
-- Added lines: prefix with \`+\`
-- Include 2-3 context lines before and after changes
-- oldCount = context lines + removed lines; newCount = context lines + added lines
+## Diff Format Rules
 
-**Example:** If original code is:
-\`\`\`html
-<style>
-  .container {
-    padding: 20px;
-  }
-  .button { color: blue; }
-</style>
-\`\`\`
+Use \`@@@@\` as block separator. NO line numbers needed.
 
-To add background and change button color, output:
+**Format:**
+- \`@@@@\` - Block separator (start each change block with this)
+- Lines without prefix - Context lines (for locating position, must EXACTLY match original)
+- \`-\` prefix - Lines to remove (MUST be consecutive lines in the original file)
+- \`+\` prefix - Lines to add (will replace the removed lines)
+
+**Critical Rules:**
+1. **Order**: List change blocks in the order they appear in the code
+2. **Unique context**: Include enough context lines (2-3) to uniquely identify the location
+3. **Exact match**: Context lines must exactly match the original code (including indentation)
+4. **Consecutive**: All \`-\` lines in a block MUST be consecutive. For non-adjacent changes, use SEPARATE blocks
+5. **Complete lines**: Never truncate lines
+
+**Example:**
 \`\`\`diff
-@@ -1,6 +1,7 @@
- <style>
-   .container {
-     padding: 20px;
-+    background: #ffffff;
-   }
--  .button { color: blue; }
-+  .button { color: white; }
- </style>
+@@@@
+    .container {
+-      background: #f5f5f5;
++      background: #e0e0e0;
+    }
+@@@@
+-        <a href="..." class="card">
+-            <h3>Title</h3>
+-        </a>
++        <div class="card" onclick="...">
++            <h2>Title</h2>
++        </div>
 \`\`\`
-Note: Each context line starts with a space, then the exact original content.
 
 ## Code Requirements
 - Generate a complete, self-contained HTML file with embedded CSS and JavaScript

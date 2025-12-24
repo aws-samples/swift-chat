@@ -13,11 +13,8 @@ import HtmlPreviewRenderer from './HtmlPreviewRenderer';
 import { vs2015, github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Platform } from 'react-native';
 import { useAppContext } from '../../../history/AppProvider';
-import {
-  applyDiff,
-  getLatestHtmlCode,
-  setLatestHtmlCode,
-} from '../../util/DiffUtils';
+import { getLatestHtmlCode, setLatestHtmlCode } from '../../util/DiffUtils';
+import { applyDiff } from '../../util/ApplyDiff';
 import { showInfo } from '../../util/ToastUtils';
 import CopyButton from './CopyButton';
 
@@ -48,9 +45,10 @@ interface HtmlPreviewRendererRef {
   updateContent: (newCode: string) => void;
 }
 
-// Check if diff has at least one complete hunk
-const hasDiffHunk = (text: string): boolean => {
-  return /@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@/.test(text);
+// Check if diff has at least one complete block (new @@@@ format)
+const hasDiffBlock = (text: string): boolean => {
+  // New format: @@@@ separator with - or + lines
+  return text.includes('@@@@') && (/^[-+]/m.test(text) || /\n[-+]/m.test(text));
 };
 
 const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
@@ -123,7 +121,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       }
 
       if (isDiffModeRef.current) {
-        if (hasDiffHunk(text)) {
+        if (hasDiffBlock(text)) {
           const currentHtmlCode = getLatestHtmlCode();
           if (currentHtmlCode) {
             const { success, result } = applyDiff(currentHtmlCode, text);
