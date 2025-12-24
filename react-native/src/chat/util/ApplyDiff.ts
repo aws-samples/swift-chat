@@ -364,7 +364,8 @@ export function applyDiff(
       return {
         success: false,
         result: originalContent,
-        error: 'No valid diff blocks found (blocks should be separated by @@@@)',
+        error:
+          'No valid diff blocks found (blocks should be separated by @@@@)',
       };
     }
 
@@ -383,7 +384,9 @@ export function applyDiff(
         return {
           success: false,
           result: originalContent,
-          error: `Block ${i + 1}: Cannot find matching position.\nContext: ${context}\nRemovals: ${removal}`,
+          error: `Block ${
+            i + 1
+          }: Cannot find matching position.\nContext: ${context}\nRemovals: ${removal}`,
         };
       }
 
@@ -407,7 +410,11 @@ export function applyDiff(
         return {
           success: false,
           result: originalContent,
-          error: `Overlapping blocks: Block ${prev.originalIndex + 1} (ends at line ${prevEnd}) overlaps with Block ${curr.originalIndex + 1} (starts at line ${curr.position})`,
+          error: `Overlapping blocks: Block ${
+            prev.originalIndex + 1
+          } (ends at line ${prevEnd}) overlaps with Block ${
+            curr.originalIndex + 1
+          } (starts at line ${curr.position})`,
         };
       }
     }
