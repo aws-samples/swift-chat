@@ -51,6 +51,7 @@ interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   searchPhase?: string;
   onRegenerate?: () => void;
   onEditSubmit?: (newText: string) => void;
+  onEditStart?: () => void;
   onReasoningToggle?: (
     expanded: boolean,
     height: number,
@@ -68,6 +69,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   searchPhase,
   onRegenerate,
   onEditSubmit,
+  onEditStart,
   onReasoningToggle,
   isAppMode,
 }) => {
@@ -107,12 +109,13 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         if (value) {
           // Reset editText when entering edit mode
           setEditText(currentMessage?.text || '');
+          onEditStart?.();
         } else {
           setInputTextSelection(undefined);
         }
       }
     },
-    [chatStatus, currentMessage?.text]
+    [chatStatus, currentMessage?.text, onEditStart]
   );
 
   const handleLongPressEdit = useCallback(() => {

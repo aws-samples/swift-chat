@@ -130,6 +130,7 @@ function ChatScreen(): React.JSX.Element {
   const tapIndex = route.params?.tapIndex;
   const mode = route.params?.mode ?? currentMode;
   const editAppCode = route.params?.editAppCode;
+  const editAppName = route.params?.editAppName;
   const modeRef = useRef(mode);
   const isNovaSonic =
     getTextModel().modelId.includes('sonic') &&
@@ -390,9 +391,16 @@ function ChatScreen(): React.JSX.Element {
       isAppModeRef.current = true;
       setTimeout(() => {
         sendEventRef.current?.('selectAppPrompt');
+        // Pre-fill the input with app name hint
+        if (editAppName && textInputViewRef.current) {
+          const hintText = `Edit [${editAppName}]: `;
+          textInputViewRef.current.setNativeProps({ text: hintText });
+          inputTextRef.current = hintText;
+          setHasInputText(true);
+        }
       }, 100);
     }
-  }, [editAppCode, navigation]);
+  }, [editAppCode, editAppName, navigation]);
 
   // deleteChat listener
   useEffect(() => {
@@ -1139,6 +1147,18 @@ function ChatScreen(): React.JSX.Element {
               onEditSubmit={(newText: string) => {
                 // For user message: messageIndex is the user message position
                 regenerateFromUserMessage(messageIndex, newText);
+              }}
+              onEditStart={() => {
+                // Scroll to make the editing message visible above keyboard
+                if (flatListRef.current && messageIndex >= 0) {
+                  setTimeout(() => {
+                    flatListRef.current?.scrollToIndex({
+                      index: messageIndex,
+                      animated: true,
+                      viewPosition: 0,
+                    });
+                  }, 500);
+                }
               }}
               isAppMode={isAppModeRef.current}
             />

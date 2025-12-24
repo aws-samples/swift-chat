@@ -83,6 +83,9 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
     const [appliedHtmlCode, setAppliedHtmlCode] = useState<string | undefined>(
       undefined
     );
+    const [hasLoadedCode, setHasLoadedCode] = useState(
+      () => !messageHtmlCode && !isCompleted
+    );
     const htmlRendererRef = useRef<HtmlPreviewRendererRef>(null);
     const codeContainerRef = useRef<View>(null);
     const previewContainerRef = useRef<View>(null);
@@ -158,6 +161,9 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       if (!showPreview) {
         return;
       }
+      if (!hasLoadedCode) {
+        setHasLoadedCode(true);
+      }
       if (previewHeightRef.current === 0) {
         previewContainerRef.current?.measure((_x, _y, _width, height) => {
           previewHeightRef.current = height;
@@ -195,7 +201,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
           }
         }
       }
-    }, [showPreview, onPreviewToggle]);
+    }, [showPreview, hasLoadedCode, onPreviewToggle]);
 
     const setPreviewMode = useCallback(() => {
       if (showPreview) {
@@ -277,34 +283,37 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
           />
         </View>
 
-        <View
-          ref={codeContainerRef}
-          style={showPreview && isCompleted ? styles.hidden : undefined}>
-          <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
-            <CustomCodeHighlighter
-              hljsStyle={hljsStyle}
-              scrollViewProps={{
-                contentContainerStyle: {
-                  padding: 12,
-                  minWidth: '100%',
-                  borderBottomLeftRadius: 8,
-                  borderBottomRightRadius: 8,
+        {(!isCompleted || hasLoadedCode) && (
+          <View
+            ref={codeContainerRef}
+            style={showPreview && isCompleted ? styles.hidden : undefined}>
+            <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
+              <CustomCodeHighlighter
+                hljsStyle={hljsStyle}
+                scrollViewProps={{
+                  contentContainerStyle: {
+                    padding: 12,
+                    minWidth: '100%',
+                    borderBottomLeftRadius: 8,
+                    borderBottomRightRadius: 8,
+                    backgroundColor: colors.codeBackground,
+                  },
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error
                   backgroundColor: colors.codeBackground,
-                },
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error
-                backgroundColor: colors.codeBackground,
-              }}
-              textStyle={styles.codeText}
-              language={isDiffModeRef.current ? 'diff' : 'html'}
-              isCompleted={isCompleted}>
-              {isDiffModeRef.current
-                ? messageDiffCode || currentText
-                : messageHtmlCode || currentText}
-            </CustomCodeHighlighter>
-          </Suspense>
-        </View>
+                }}
+                textStyle={styles.codeText}
+                language={isDiffModeRef.current ? 'diff' : 'html'}
+                isCompleted={isCompleted}>
+                {isDiffModeRef.current
+                  ? messageDiffCode || currentText
+                  : messageHtmlCode || currentText}
+              </CustomCodeHighlighter>
+            </Suspense>
+          </View>
+        )}
 
+        {/* Preview view: only render after completed */}
         {isCompleted && (
           <View
             ref={previewContainerRef}

@@ -85,10 +85,9 @@ const HtmlPreviewRenderer = forwardRef<
           var script = document.createElement('script');
           script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
           script.onload = function() {
-            captureNow();
+            waitAndCapture();
           };
           script.onerror = function() {
-            // Fallback if CDN fails
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'screenshot_error',
               message: 'Failed to load html2canvas'
@@ -96,19 +95,48 @@ const HtmlPreviewRenderer = forwardRef<
           };
           document.head.appendChild(script);
         } else {
-          captureNow();
+          waitAndCapture();
+        }
+
+        // Wait for all images to load before capturing
+        function waitAndCapture() {
+          var images = document.querySelectorAll('img');
+          var promises = [];
+
+          images.forEach(function(img) {
+            if (!img.complete) {
+              promises.push(new Promise(function(resolve) {
+                img.onload = resolve;
+                img.onerror = resolve;
+                // Timeout after 3 seconds
+                setTimeout(resolve, 3000);
+              }));
+            }
+          });
+
+          // Also wait for fonts
+          if (document.fonts && document.fonts.ready) {
+            promises.push(document.fonts.ready);
+          }
+
+          Promise.all(promises).then(function() {
+            // Small delay to ensure rendering is complete
+            setTimeout(captureNow, 100);
+          }).catch(function() {
+            captureNow();
+          });
         }
 
         function captureNow() {
-          var pixelRatio = window.devicePixelRatio || 1;
-          var captureWidth = Math.min(document.body.scrollWidth || window.innerWidth, 800);
-          var captureHeight = Math.min(document.body.scrollHeight || window.innerHeight, 800);
+          // Use the actual viewport dimensions
+          var captureWidth = window.innerWidth;
+          var captureHeight = Math.min(document.body.scrollHeight, window.innerHeight, 800);
 
           html2canvas(document.body, {
-            backgroundColor: null,
+            backgroundColor: '#ffffff',
             useCORS: true,
             allowTaint: true,
-            scale: Math.min(pixelRatio, 1),
+            scale: 1,
             width: captureWidth,
             height: captureHeight,
             windowWidth: captureWidth,
@@ -116,7 +144,11 @@ const HtmlPreviewRenderer = forwardRef<
             x: 0,
             y: 0,
             scrollX: 0,
-            scrollY: 0
+            scrollY: 0,
+            logging: false,
+            imageTimeout: 5000,
+            removeContainer: true,
+            foreignObjectRendering: false
           }).then(function(canvas) {
             var dataURL = canvas.toDataURL('image/jpeg', 0.9);
             window.ReactNativeWebView.postMessage(JSON.stringify({

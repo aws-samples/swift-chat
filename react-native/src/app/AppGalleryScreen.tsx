@@ -360,7 +360,10 @@ function AppGalleryScreen(): React.JSX.Element {
       const app = getAppById(selectedApp.id);
       if (app) {
         closeMenu();
-        navigation.navigate('Bedrock', { editAppCode: app.htmlCode });
+        navigation.navigate('Bedrock', {
+          editAppCode: app.htmlCode,
+          editAppName: app.name,
+        });
       }
     }
   }, [selectedApp, closeMenu, navigation]);

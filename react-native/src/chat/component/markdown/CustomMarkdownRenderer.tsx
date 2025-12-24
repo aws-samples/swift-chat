@@ -120,7 +120,8 @@ const MemoizedCodeHighlighter = React.memo(
               backgroundColor: colors.codeBackground,
             }}
             textStyle={styles.text}
-            language={language ?? 'code'}>
+            language={language ?? 'code'}
+            isCompleted={isCompleted}>
             {text}
           </CustomCodeHighlighter>
         </Suspense>
