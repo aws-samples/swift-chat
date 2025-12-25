@@ -42,7 +42,10 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
 
   const handleSend = useCallback(() => {
     if (onSend) {
-      onSend({ text: text ? text.trim() : '' } as Partial<SwiftChatMessage>, true);
+      onSend(
+        { text: text ? text.trim() : '' } as Partial<SwiftChatMessage>,
+        true
+      );
     }
   }, [onSend, text]);
 

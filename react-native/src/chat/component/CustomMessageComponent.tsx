@@ -115,7 +115,11 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           // Reset editText when entering edit mode
           setEditText(currentMessage?.text || '');
           // Scroll to make the editing message visible above keyboard
-          if (flatListRef?.current && messageIndex !== undefined && messageIndex >= 0) {
+          if (
+            flatListRef?.current &&
+            messageIndex !== undefined &&
+            messageIndex >= 0
+          ) {
             setTimeout(() => {
               flatListRef.current?.scrollToIndex({
                 index: messageIndex,
