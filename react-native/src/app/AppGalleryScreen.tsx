@@ -561,8 +561,12 @@ function AppGalleryScreen(): React.JSX.Element {
           colors={colors}
         />
         <MenuItem
-          label="Share or Save"
-          icon={require('../assets/share.png')}
+          label={isMac ? 'Download' : 'Share'}
+          icon={
+            isMac
+              ? require('../assets/download.png')
+              : require('../assets/share.png')
+          }
           onPress={handleSaveToFile}
           colors={colors}
         />

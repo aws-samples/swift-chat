@@ -514,6 +514,10 @@ export function getSystemPrompts(type?: string): SystemPrompt[] {
       );
       saveAllSystemPrompts(currentSystemPrompts);
     }
+    if (currentSystemPrompts.some(p => p.id === -3)) {
+      currentSystemPrompts = currentSystemPrompts.filter(p => p.id !== -3);
+      saveAllSystemPrompts(currentSystemPrompts);
+    }
     // Migration: Add or update App prompt to ensure it's always up-to-date
     const defaultAppPrompt = getDefaultSystemPrompts().find(
       p => p.name === 'App'

@@ -320,7 +320,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
             ref={previewContainerRef}
             style={!showPreview ? styles.hidden : undefined}>
             {/* Show WebView for last html message or if user clicked to load */}
-            {isLastHtml || webViewLoaded ? (
+            {isLastHtml || webViewLoaded || !hadMessageHtmlCodeRef.current ? (
               <HtmlPreviewRenderer
                 ref={htmlRendererRef}
                 code={previewHtmlCode}
