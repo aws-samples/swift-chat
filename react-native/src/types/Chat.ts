@@ -142,6 +142,7 @@ export interface SwiftChatMessage extends IMessage {
   citations?: Citation[];
   htmlCode?: string;
   diffCode?: string;
+  isLastHtml?: boolean;
 }
 
 interface SwiftChatUser extends User {

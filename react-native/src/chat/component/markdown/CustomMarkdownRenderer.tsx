@@ -53,6 +53,7 @@ const MemoizedCodeHighlighter = React.memo(
     messageHtmlCode,
     messageDiffCode,
     isAppMode,
+    isLastHtml,
   }: {
     text: string;
     language?: string;
@@ -67,6 +68,7 @@ const MemoizedCodeHighlighter = React.memo(
     messageHtmlCode?: string;
     messageDiffCode?: string;
     isAppMode?: boolean;
+    isLastHtml?: boolean;
   }) => {
     const styles = createCustomStyles(colors);
     // Use useRef to always capture the latest text value
@@ -92,6 +94,7 @@ const MemoizedCodeHighlighter = React.memo(
           isCompleted={isCompleted}
           messageHtmlCode={messageHtmlCode}
           messageDiffCode={messageDiffCode}
+          isLastHtml={isLastHtml}
         />
       );
     }
@@ -158,6 +161,10 @@ const MemoizedCodeHighlighter = React.memo(
     if (prevProps.isAppMode !== nextProps.isAppMode) {
       return false;
     }
+    // Update when isLastHtml changes
+    if (prevProps.isLastHtml !== nextProps.isLastHtml) {
+      return false;
+    }
     return true;
   }
 );
@@ -180,6 +187,7 @@ export class CustomMarkdownRenderer
   private messageHtmlCode?: string;
   private messageDiffCode?: string;
   private isAppMode?: boolean;
+  private isLastHtml?: boolean;
 
   constructor(
     private onImagePress: (pressMode: PressMode, url: string) => void,
@@ -193,7 +201,8 @@ export class CustomMarkdownRenderer
     ) => void,
     messageHtmlCode?: string,
     messageDiffCode?: string,
-    isAppMode?: boolean
+    isAppMode?: boolean,
+    isLastHtml?: boolean
   ) {
     super();
     this.colors = colors;
@@ -204,6 +213,7 @@ export class CustomMarkdownRenderer
     this.messageHtmlCode = messageHtmlCode;
     this.messageDiffCode = messageDiffCode;
     this.isAppMode = isAppMode;
+    this.isLastHtml = isLastHtml;
   }
 
   getTextView(children: string | ReactNode[], styles?: TextStyle): ReactNode {
@@ -391,6 +401,7 @@ export class CustomMarkdownRenderer
           messageHtmlCode={this.messageHtmlCode}
           messageDiffCode={this.messageDiffCode}
           isAppMode={this.isAppMode}
+          isLastHtml={this.isLastHtml}
         />
       );
     } else {

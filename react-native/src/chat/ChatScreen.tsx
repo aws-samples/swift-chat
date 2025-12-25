@@ -102,7 +102,7 @@ const findLatestHtmlCode = (messages: SwiftChatMessage[]): string => {
   return '';
 };
 
-const createBotMessage = (mode: string) => {
+const createBotMessage = (mode: string, isAppMode: boolean = false) => {
   return {
     _id: uuid.v4(),
     text: mode === ChatMode.Text ? textPlaceholder : imagePlaceholder,
@@ -115,6 +115,7 @@ const createBotMessage = (mode: string) => {
           : getImageModel().modelName,
       modelTag: mode === ChatMode.Text ? getTextModel().modelTag : undefined,
     },
+    isLastHtml: isAppMode ? true : undefined,
   };
 };
 const imagePlaceholder = '![](bedrock://imgProgress)';
@@ -423,13 +424,15 @@ function ChatScreen(): React.JSX.Element {
     if (event?.event === 'htmlCodeGenerated' && event.params?.htmlCode) {
       const { htmlCode } = event.params;
       setMessages(prevMessages => {
-        const newMessages = [...prevMessages];
-        if (newMessages[0]) {
-          newMessages[0] = {
-            ...newMessages[0],
-            htmlCode: htmlCode,
-          };
-        }
+        // update isLastHtml for all messages
+        const newMessages = prevMessages.map((msg, index) => {
+          if (index === 0) {
+            return { ...msg, htmlCode: htmlCode, isLastHtml: true };
+          } else if (msg.isLastHtml) {
+            return { ...msg, isLastHtml: false };
+          }
+          return msg;
+        });
         return newMessages;
       });
     }
@@ -441,14 +444,20 @@ function ChatScreen(): React.JSX.Element {
     if (event?.event === 'diffApplied' && event.params?.htmlCode) {
       const { htmlCode, diffCode } = event.params;
       setMessages(prevMessages => {
-        const newMessages = [...prevMessages];
-        if (newMessages[0]) {
-          newMessages[0] = {
-            ...newMessages[0],
-            htmlCode: htmlCode,
-            diffCode: diffCode,
-          };
-        }
+        // update isLastHtml for all messages
+        const newMessages = prevMessages.map((msg, index) => {
+          if (index === 0) {
+            return {
+              ...msg,
+              htmlCode: htmlCode,
+              diffCode: diffCode,
+              isLastHtml: true,
+            };
+          } else if (msg.isLastHtml) {
+            return { ...msg, isLastHtml: false };
+          }
+          return msg;
+        });
         return newMessages;
       });
     }
@@ -659,6 +668,14 @@ function ChatScreen(): React.JSX.Element {
     }
   };
 
+  // Stable callback for reasoning toggle - avoids re-render of CustomMessageComponent
+  const handleReasoningToggle = useCallback(
+    (expanded: boolean, height: number, animated: boolean) => {
+      scrollUpByHeight(expanded, height, animated);
+    },
+    []
+  );
+
   // invoke bedrock api
   useEffect(() => {
     const lastMessage = messages[0];
@@ -845,9 +862,12 @@ function ChatScreen(): React.JSX.Element {
       // Get all history messages after the user message
       const historyMessages = messagesRef.current.slice(userMessageIndex + 1);
 
-      // Update latestHtmlCode for app mode
+      // Update latestHtmlCode for app mode (only if found in history)
       if (isAppModeRef.current) {
-        setLatestHtmlCode(findLatestHtmlCode(historyMessages));
+        const foundHtmlCode = findLatestHtmlCode(historyMessages);
+        if (foundHtmlCode) {
+          setLatestHtmlCode(foundHtmlCode);
+        }
       }
 
       // Create the user message (updated if newText provided)
@@ -1134,32 +1154,10 @@ function ChatScreen(): React.JSX.Element {
               chatStatus={chatStatus}
               isLastAIMessage={isLastAIMessage}
               searchPhase={isLastAIMessage ? searchPhase : ''}
-              onReasoningToggle={(expanded, height, animated) => {
-                scrollUpByHeight(expanded, height, animated);
-              }}
-              onRegenerate={() => {
-                // For AI message: userMessageIndex = messageIndex + 1
-                const userMessageIndex = messageIndex + 1;
-                if (userMessageIndex < messages.length) {
-                  regenerateFromUserMessage(userMessageIndex);
-                }
-              }}
-              onEditSubmit={(newText: string) => {
-                // For user message: messageIndex is the user message position
-                regenerateFromUserMessage(messageIndex, newText);
-              }}
-              onEditStart={() => {
-                // Scroll to make the editing message visible above keyboard
-                if (flatListRef.current && messageIndex >= 0) {
-                  setTimeout(() => {
-                    flatListRef.current?.scrollToIndex({
-                      index: messageIndex,
-                      animated: true,
-                      viewPosition: 0,
-                    });
-                  }, 500);
-                }
-              }}
+              onReasoningToggle={handleReasoningToggle}
+              messageIndex={messageIndex}
+              regenerateFromUserMessage={regenerateFromUserMessage}
+              flatListRef={flatListRef}
               isAppMode={isAppModeRef.current}
             />
           );

@@ -4,9 +4,11 @@ import React, {
   useMemo,
   useRef,
   useState,
+  RefObject,
 } from 'react';
 import {
   Dimensions,
+  FlatList,
   Image,
   NativeSyntheticEvent,
   Platform,
@@ -49,14 +51,17 @@ interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
   isLastAIMessage?: boolean;
   searchPhase?: string;
-  onRegenerate?: () => void;
-  onEditSubmit?: (newText: string) => void;
-  onEditStart?: () => void;
   onReasoningToggle?: (
     expanded: boolean,
     height: number,
     animated: boolean
   ) => void;
+  messageIndex?: number;
+  regenerateFromUserMessage?: (
+    userMessageIndex: number,
+    newText?: string
+  ) => void;
+  flatListRef?: RefObject<FlatList<SwiftChatMessage>>;
   isAppMode?: boolean;
 }
 
@@ -67,10 +72,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   chatStatus,
   isLastAIMessage,
   searchPhase,
-  onRegenerate,
-  onEditSubmit,
-  onEditStart,
   onReasoningToggle,
+  messageIndex,
+  regenerateFromUserMessage,
+  flatListRef,
   isAppMode,
 }) => {
   const { colors, isDark } = useTheme();
@@ -109,13 +114,22 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         if (value) {
           // Reset editText when entering edit mode
           setEditText(currentMessage?.text || '');
-          onEditStart?.();
+          // Scroll to make the editing message visible above keyboard
+          if (flatListRef?.current && messageIndex !== undefined && messageIndex >= 0) {
+            setTimeout(() => {
+              flatListRef.current?.scrollToIndex({
+                index: messageIndex,
+                animated: true,
+                viewPosition: 0,
+              });
+            }, 500);
+          }
         } else {
           setInputTextSelection(undefined);
         }
       }
     },
-    [chatStatus, currentMessage?.text, onEditStart]
+    [chatStatus, currentMessage?.text, flatListRef, messageIndex]
   );
 
   const handleLongPressEdit = useCallback(() => {
@@ -127,7 +141,10 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
   const handleEditSubmit = useCallback(() => {
     if (editText.trim() && editText.trim() !== currentMessage?.text?.trim()) {
-      onEditSubmit?.(editText.trim());
+      // For user message: messageIndex is the user message position
+      if (messageIndex !== undefined) {
+        regenerateFromUserMessage?.(messageIndex, editText.trim());
+      }
       setIsEdit(false);
       setInputTextSelection(undefined);
     } else {
@@ -135,13 +152,21 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       setIsEdit(false);
       setInputTextSelection(undefined);
     }
-  }, [editText, currentMessage?.text, onEditSubmit]);
+  }, [editText, currentMessage?.text, messageIndex, regenerateFromUserMessage]);
 
   const handleEditCancel = useCallback(() => {
     setIsEdit(false);
     setEditText(currentMessage?.text || '');
     setInputTextSelection(undefined);
   }, [currentMessage?.text]);
+
+  const handleRegenerate = useCallback(() => {
+    // For AI message: userMessageIndex = messageIndex + 1
+    if (messageIndex !== undefined) {
+      const userMessageIndex = messageIndex + 1;
+      regenerateFromUserMessage?.(userMessageIndex);
+    }
+  }, [messageIndex, regenerateFromUserMessage]);
 
   // Focus TextInput and move cursor to end when entering edit mode
   useEffect(() => {
@@ -255,7 +280,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
         onReasoningToggle,
         currentMessage?.htmlCode,
         currentMessage?.diffCode,
-        isAppMode
+        isAppMode,
+        currentMessage?.isLastHtml
       ),
     [
       handleImagePress,
@@ -266,6 +292,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       currentMessage?.htmlCode,
       currentMessage?.diffCode,
       isAppMode,
+      currentMessage?.isLastHtml,
     ]
   );
 
@@ -544,7 +571,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
           {showRefresh && (
             <TouchableOpacity
-              onPress={onRegenerate}
+              onPress={handleRegenerate}
               style={styles.actionButton}>
               <Image
                 source={require('../../assets/refresh.png')}
@@ -563,7 +590,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     handleCopy,
     copied,
     isEdit,
-    onRegenerate,
+    handleRegenerate,
     setIsEditValue,
     showRefresh,
     currentMessage?.metrics,
@@ -878,10 +905,11 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
     prevProps.currentMessage?.reasoning ===
       nextProps.currentMessage?.reasoning &&
     prevProps.currentMessage?.htmlCode === nextProps.currentMessage?.htmlCode &&
+    prevProps.currentMessage?.isLastHtml ===
+      nextProps.currentMessage?.isLastHtml &&
     prevProps.chatStatus === nextProps.chatStatus &&
     prevProps.isLastAIMessage === nextProps.isLastAIMessage &&
     prevProps.searchPhase === nextProps.searchPhase &&
-    prevProps.onRegenerate === nextProps.onRegenerate &&
-    prevProps.onReasoningToggle === nextProps.onReasoningToggle
+    prevProps.messageIndex === nextProps.messageIndex
   );
 });

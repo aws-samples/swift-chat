@@ -1,5 +1,5 @@
 import { Send, SendProps } from 'react-native-gifted-chat';
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import ImageSpinner from './ImageSpinner';
 import {
@@ -35,10 +35,23 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
   systemPrompt,
   ...props
 }) => {
-  const { text } = props;
+  const { text, onSend } = props;
   const { colors, isDark } = useTheme();
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isNovaSonic = getTextModel().modelId.includes('sonic');
+
+  const handleSend = useCallback(() => {
+    if (onSend) {
+      onSend({ text: text ? text.trim() : '' } as Partial<SwiftChatMessage>, true);
+    }
+  }, [onSend, text]);
+
+  const handleFileSelected = useCallback(
+    (files: FileInfo[]) => {
+      onFileSelected(files);
+    },
+    [onFileSelected]
+  );
   const isVirtualTryOn = systemPrompt?.id === -7;
   let isShowSending = false;
   if (chatMode === ChatMode.Image) {
@@ -62,15 +75,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
         {...props}
         containerStyle={styles.sendContainer}
         sendButtonProps={{
-          onPress: () => {
-            const { onSend } = props;
-            if (onSend) {
-              onSend(
-                { text: text ? text.trim() : '' } as Partial<SwiftChatMessage>,
-                true
-              );
-            }
-          },
+          onPress: handleSend,
         }}>
         <>
           {chatStatus === ChatStatus.Running && (
@@ -139,9 +144,7 @@ const CustomSendComponent: React.FC<CustomSendComponentProps> = ({
       return (
         <CustomAddFileComponent
           {...props}
-          onFileSelected={files => {
-            onFileSelected(files);
-          }}
+          onFileSelected={handleFileSelected}
           chatMode={chatMode}
         />
       );

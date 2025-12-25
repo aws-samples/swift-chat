@@ -35,6 +35,7 @@ interface HtmlCodeRendererProps {
   isCompleted?: boolean;
   messageHtmlCode?: string;
   messageDiffCode?: string;
+  isLastHtml?: boolean;
 }
 
 interface HtmlCodeRendererRef {
@@ -62,6 +63,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       isCompleted,
       messageHtmlCode,
       messageDiffCode,
+      isLastHtml,
     },
     ref
   ) => {
@@ -84,6 +86,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
     const [hasLoadedCode, setHasLoadedCode] = useState(
       () => !messageHtmlCode && !isCompleted
     );
+    const [webViewLoaded, setWebViewLoaded] = useState(false);
     const htmlRendererRef = useRef<HtmlPreviewRendererRef>(null);
     const codeContainerRef = useRef<View>(null);
     const previewContainerRef = useRef<View>(null);
@@ -316,11 +319,22 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
           <View
             ref={previewContainerRef}
             style={!showPreview ? styles.hidden : undefined}>
-            <HtmlPreviewRenderer
-              ref={htmlRendererRef}
-              code={previewHtmlCode}
-              style={styles.htmlRenderer}
-            />
+            {/* Show WebView for last html message or if user clicked to load */}
+            {isLastHtml || webViewLoaded ? (
+              <HtmlPreviewRenderer
+                ref={htmlRendererRef}
+                code={previewHtmlCode}
+                style={styles.htmlRenderer}
+              />
+            ) : (
+              <View style={styles.loadPreviewContainer}>
+                <TouchableOpacity
+                  style={styles.loadPreviewButton}
+                  onPress={() => setWebViewLoaded(true)}>
+                  <Text style={styles.loadPreviewText}>Show Preview</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -393,6 +407,24 @@ const createStyles = (colors: ColorScheme) =>
       position: 'absolute',
       opacity: 0,
       pointerEvents: 'none',
+    },
+    loadPreviewContainer: {
+      height: 480,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.codeBackground,
+      borderBottomLeftRadius: 8,
+      borderBottomRightRadius: 8,
+    },
+    loadPreviewButton: {
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 20,
+      backgroundColor: colors.border,
+    },
+    loadPreviewText: {
+      fontSize: 15,
+      color: colors.text,
     },
   });
 
