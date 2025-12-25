@@ -291,6 +291,23 @@ const reply = await AI.chat({ messages });
 // With system prompt
 const reply = await AI.chat({ messages, systemPrompt: '...' });
 \`\`\`
+
+### JSON Repair API
+
+\`AI.repairJSON(jsonString)\` - Repair malformed JSON
+
+- Returns: Promise<string> (empty if failed)
+
+When asking AI to return JSON, always repair before parsing:
+\`\`\`javascript
+const response = await AI.chat({
+  messages: [{ role: 'user', content: 'Return JSON: {name, age}' }]
+});
+const fixed = await AI.repairJSON(response);
+if (fixed) {
+  const data = JSON.parse(fixed);
+}
+\`\`\`
 `;
 
   const webSearchHint = getTavilyApiKey()

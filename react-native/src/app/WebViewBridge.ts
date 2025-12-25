@@ -1,6 +1,6 @@
 /**
  * JS Bridge script for WebView AI capabilities
- * Provides AI.chat() and AI.webSearch() API for HTML apps
+ * Provides AI.chat(), AI.webSearch() and AI.repairJSON() API for HTML apps
  */
 
 export const generateAIBridgeScript = (): string => `
@@ -25,6 +25,14 @@ export const generateAIBridgeScript = (): string => `
         var payload = { type: 'webSearch', requestId: requestId, query: query, maxResults: maxResults || 5 };
         window.ReactNativeWebView.postMessage(JSON.stringify(payload));
       });
+    },
+    repairJSON: function(jsonString) {
+      return new Promise(function(resolve) {
+        var requestId = 'r' + (++reqId);
+        pendingRequests[requestId] = { resolve: resolve };
+        var payload = { type: 'repairJSON', requestId: requestId, jsonString: jsonString };
+        window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+      });
     }
   };
   window._onAIMessage = function(msg) {
@@ -36,6 +44,9 @@ export const generateAIBridgeScript = (): string => `
       delete pendingRequests[msg.id];
     } else if (msg.type === 'searchResults') {
       req.resolve(msg.results);
+      delete pendingRequests[msg.id];
+    } else if (msg.type === 'repairResult') {
+      req.resolve(msg.result);
       delete pendingRequests[msg.id];
     } else if (msg.type === 'error') {
       req.reject(new Error(msg.error));

@@ -21,6 +21,7 @@ import { ChatMode } from '../types/Chat';
 import { BedrockMessage } from '../chat/util/BedrockMessageConvertor';
 import { updateTotalUsage } from '../storage/StorageUtils';
 import { tavilyProvider } from '../websearch/providers/TavilyProvider';
+import { jsonrepair } from 'jsonrepair';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -155,6 +156,19 @@ const AIWebView = forwardRef<AIWebViewRef, AIWebViewProps>(
       [sendToWebView]
     );
 
+    // Handle JSON repair request
+    const handleRepairJSON = useCallback(
+      (requestId: string, jsonString: string) => {
+        try {
+          const result = jsonrepair(jsonString);
+          sendToWebView({ type: 'repairResult', id: requestId, result });
+        } catch {
+          sendToWebView({ type: 'repairResult', id: requestId, result: '' });
+        }
+      },
+      [sendToWebView]
+    );
+
     // Handle WebView messages
     const handleMessage = useCallback(
       (event: WebViewMessageEvent) => {
@@ -171,13 +185,18 @@ const AIWebView = forwardRef<AIWebViewRef, AIWebViewProps>(
             return;
           }
 
+          if (data.type === 'repairJSON') {
+            handleRepairJSON(data.requestId, data.jsonString);
+            return;
+          }
+
           // Pass other messages to external handler
           onMessage?.(event);
         } catch {
           onMessage?.(event);
         }
       },
-      [handleChat, handleWebSearch, onMessage]
+      [handleChat, handleWebSearch, handleRepairJSON, onMessage]
     );
 
     // Inject Bridge script into HTML
