@@ -352,10 +352,11 @@ Use \`@@@@\` as block separator. NO line numbers needed.
 
 **Critical Rules:**
 1. **Order**: List change blocks in the order they appear in the code
-2. **Unique context**: Include enough context lines (2-3) to uniquely identify the location
-3. **Exact match**: Context lines must exactly match the original code (including indentation)
-4. **Consecutive**: All \`-\` lines in a block MUST be consecutive. For non-adjacent changes, use SEPARATE blocks
-5. **Complete lines**: Never truncate lines
+2. **Unique context**: Include enough context lines (2-3) BEFORE the lines to remove to uniquely identify the location
+3. **Context != Removal**: Context lines must be DIFFERENT from the lines being removed. Use lines BEFORE the removal as context
+4. **Exact match**: Context lines must exactly match the original code (including indentation)
+5. **Consecutive**: All \`-\` lines in a block MUST be consecutive. For non-adjacent changes, use SEPARATE blocks
+6. **Complete lines**: Never truncate lines
 
 **Example:**
 \`\`\`diff
@@ -365,12 +366,14 @@ Use \`@@@@\` as block separator. NO line numbers needed.
 +      background: #e0e0e0;
     }
 @@@@
+    <div class="wrapper">
 -        <a href="..." class="card">
 -            <h3>Title</h3>
 -        </a>
 +        <div class="card" onclick="...">
 +            <h2>Title</h2>
 +        </div>
+    </div>
 \`\`\`
 
 ## Code Requirements

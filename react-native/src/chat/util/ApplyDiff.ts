@@ -201,6 +201,35 @@ function trimTrailingEmptyLines(lines: string[]): string[] {
   return lines.slice(0, end);
 }
 
+/** Try matching with overlapping context fix (AI mistakenly included removal lines in context) */
+function tryMatchWithOverlapFix(
+  sourceLines: string[],
+  context: string[],
+  removals: string[],
+  startFrom: number
+): number {
+  if (context.length === 0 || removals.length === 0) return -1;
+
+  const maxOverlap = Math.min(context.length, removals.length);
+  for (let overlap = maxOverlap; overlap >= 1; overlap--) {
+    const contextTail = context.slice(-overlap);
+    const removalHead = removals.slice(0, overlap);
+    // Check if context tail matches removal head
+    if (contextTail.every((line, idx) => line.trim() === removalHead[idx].trim())) {
+      const fixedContext = context.slice(0, -overlap);
+      const fixedPattern = [...fixedContext, ...removals];
+      let pos = trimmedMatch(sourceLines, fixedPattern, startFrom);
+      if (pos !== -1) return pos + fixedContext.length;
+      // Also try with removals only if context becomes empty
+      if (fixedContext.length === 0) {
+        pos = trimmedMatch(sourceLines, removals, startFrom);
+        if (pos !== -1) return pos;
+      }
+    }
+  }
+  return -1;
+}
+
 /** Find all positions where pattern matches */
 function findAllMatches(
   sourceLines: string[],
@@ -332,6 +361,10 @@ function findBlockPosition(
     if (pos !== -1) return pos + 1;
   }
 
+  // Fallback: fix overlapping context (AI mistakenly included removal lines in context)
+  pos = tryMatchWithOverlapFix(sourceLines, effectiveContext, removals, startFrom);
+  if (pos !== -1) return pos;
+
   return -1;
 }
 
@@ -400,6 +433,10 @@ function findSegmentPosition(
       }
     }
   }
+
+  // Fallback: fix overlapping context
+  pos = tryMatchWithOverlapFix(sourceLines, effectiveContext, removals, startFrom);
+  if (pos !== -1) return pos;
 
   return -1;
 }
