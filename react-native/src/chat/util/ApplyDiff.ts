@@ -46,7 +46,13 @@ export interface ApplyDiffResult {
 function isBlockSeparator(line: string): boolean {
   const trimmed = line.trim();
   const len = trimmed.length;
-  return len >= 4 && trimmed[0] === '@' && trimmed[1] === '@' && trimmed[len - 1] === '@' && trimmed[len - 2] === '@';
+  return (
+    len >= 4 &&
+    trimmed[0] === '@' &&
+    trimmed[1] === '@' &&
+    trimmed[len - 1] === '@' &&
+    trimmed[len - 2] === '@'
+  );
 }
 
 /**
@@ -134,7 +140,9 @@ function exactMatch(
   pattern: string[],
   startFrom: number = 0
 ): number {
-  if (pattern.length === 0) return -1;
+  if (pattern.length === 0) {
+    return -1;
+  }
 
   for (let i = startFrom; i <= sourceLines.length - pattern.length; i++) {
     let matches = true;
@@ -144,7 +152,9 @@ function exactMatch(
         break;
       }
     }
-    if (matches) return i;
+    if (matches) {
+      return i;
+    }
   }
   return -1;
 }
@@ -155,7 +165,9 @@ function trimmedMatch(
   pattern: string[],
   startFrom: number = 0
 ): number {
-  if (pattern.length === 0) return -1;
+  if (pattern.length === 0) {
+    return -1;
+  }
 
   for (let i = startFrom; i <= sourceLines.length - pattern.length; i++) {
     let matches = true;
@@ -165,7 +177,9 @@ function trimmedMatch(
         break;
       }
     }
-    if (matches) return i;
+    if (matches) {
+      return i;
+    }
   }
   return -1;
 }
@@ -176,7 +190,9 @@ function anchorMatch(
   pattern: string[],
   startFrom: number = 0
 ): number {
-  if (pattern.length < 3) return -1;
+  if (pattern.length < 3) {
+    return -1;
+  }
 
   const firstLine = pattern[0];
   const lastLine = pattern[pattern.length - 1];
@@ -208,26 +224,36 @@ function tryMatchWithOverlapFix(
   removals: string[],
   startFrom: number
 ): number {
-  if (context.length === 0 || removals.length === 0) return -1;
+  if (context.length === 0 || removals.length === 0) {
+    return -1;
+  }
 
   const maxOverlap = Math.min(context.length, removals.length);
   for (let overlap = maxOverlap; overlap >= 1; overlap--) {
     const contextTail = context.slice(-overlap);
     const removalHead = removals.slice(0, overlap);
     // Check if context tail matches removal head
-    if (contextTail.every((line, idx) => line.trim() === removalHead[idx].trim())) {
+    if (
+      contextTail.every((line, idx) => line.trim() === removalHead[idx].trim())
+    ) {
       const fixedContext = context.slice(0, -overlap);
       const fixedPattern = [...fixedContext, ...removals];
       let pos = trimmedMatch(sourceLines, fixedPattern, startFrom);
-      if (pos !== -1) return pos + fixedContext.length;
+      if (pos !== -1) {
+        return pos + fixedContext.length;
+      }
       // Also try with removals only if context becomes empty
       if (fixedContext.length === 0) {
         pos = trimmedMatch(sourceLines, removals, startFrom);
-        if (pos !== -1) return pos;
+        if (pos !== -1) {
+          return pos;
+        }
         // Try from beginning if not found after startFrom (blocks may be out of order)
         if (startFrom > 0) {
           pos = trimmedMatch(sourceLines, removals, 0);
-          if (pos !== -1) return pos;
+          if (pos !== -1) {
+            return pos;
+          }
         }
       }
     }
@@ -241,7 +267,9 @@ function findAllMatches(
   pattern: string[],
   startFrom: number = 0
 ): number[] {
-  if (pattern.length === 0) return [];
+  if (pattern.length === 0) {
+    return [];
+  }
 
   const positions: number[] = [];
   for (let i = startFrom; i <= sourceLines.length - pattern.length; i++) {
@@ -261,7 +289,9 @@ function findAllMatches(
 
 /** Get the longest line from an array (most likely to be unique) */
 function getLongestLine(lines: string[]): string | null {
-  if (lines.length === 0) return null;
+  if (lines.length === 0) {
+    return null;
+  }
 
   let longest = lines[0];
   for (const line of lines) {
@@ -305,20 +335,28 @@ function findBlockPosition(
       : contextBefore;
 
   const fullPattern = [...effectiveContext, ...removals];
-  if (fullPattern.length === 0) return -1;
+  if (fullPattern.length === 0) {
+    return -1;
+  }
 
   // Layer 1: Exact match
   let pos = exactMatch(sourceLines, fullPattern, startFrom);
-  if (pos !== -1) return pos + effectiveContext.length;
+  if (pos !== -1) {
+    return pos + effectiveContext.length;
+  }
 
   // Layer 2: Trimmed match
   pos = trimmedMatch(sourceLines, fullPattern, startFrom);
-  if (pos !== -1) return pos + effectiveContext.length;
+  if (pos !== -1) {
+    return pos + effectiveContext.length;
+  }
 
   // Layer 3: Anchor match
   if (fullPattern.length >= 3) {
     pos = anchorMatch(sourceLines, fullPattern, startFrom);
-    if (pos !== -1) return pos + effectiveContext.length;
+    if (pos !== -1) {
+      return pos + effectiveContext.length;
+    }
   }
 
   // For pure additions, try progressively smaller context
@@ -327,7 +365,9 @@ function findBlockPosition(
       if (effectiveContext.length >= size) {
         const lastN = effectiveContext.slice(-size);
         pos = trimmedMatch(sourceLines, lastN, startFrom);
-        if (pos !== -1) return pos + size;
+        if (pos !== -1) {
+          return pos + size;
+        }
       }
     }
   }
@@ -335,40 +375,62 @@ function findBlockPosition(
   // Fallback: reduced context + removals
   if (effectiveContext.length > 0 && removals.length > 0) {
     for (const contextSize of [2, 1]) {
-      if (contextSize > effectiveContext.length) continue;
+      if (contextSize > effectiveContext.length) {
+        continue;
+      }
       const reducedContext = effectiveContext.slice(-contextSize);
       const reducedPattern = [...reducedContext, ...removals];
       pos = trimmedMatch(sourceLines, reducedPattern, startFrom);
-      if (pos !== -1) return pos + reducedContext.length;
+      if (pos !== -1) {
+        return pos + reducedContext.length;
+      }
     }
   }
 
   // Last resort: removals only
   if (removals.length >= 2) {
     pos = trimmedMatch(sourceLines, removals, startFrom);
-    if (pos !== -1) return pos;
+    if (pos !== -1) {
+      return pos;
+    }
   }
 
   // Extra fallback: context + first removal
   if (effectiveContext.length > 0 && removals.length > 0) {
     const contextPlusFirst = [...effectiveContext, removals[0]];
     pos = trimmedMatch(sourceLines, contextPlusFirst, startFrom);
-    if (pos !== -1) return pos + effectiveContext.length;
+    if (pos !== -1) {
+      return pos + effectiveContext.length;
+    }
 
     if (effectiveContext.length >= 2) {
       const reducedPattern = [...effectiveContext.slice(-2), removals[0]];
       pos = trimmedMatch(sourceLines, reducedPattern, startFrom);
-      if (pos !== -1) return pos + 2;
+      if (pos !== -1) {
+        return pos + 2;
+      }
     }
 
-    const minPattern = [effectiveContext[effectiveContext.length - 1], removals[0]];
+    const minPattern = [
+      effectiveContext[effectiveContext.length - 1],
+      removals[0],
+    ];
     pos = trimmedMatch(sourceLines, minPattern, startFrom);
-    if (pos !== -1) return pos + 1;
+    if (pos !== -1) {
+      return pos + 1;
+    }
   }
 
   // Fallback: fix overlapping context (AI mistakenly included removal lines in context)
-  pos = tryMatchWithOverlapFix(sourceLines, effectiveContext, removals, startFrom);
-  if (pos !== -1) return pos;
+  pos = tryMatchWithOverlapFix(
+    sourceLines,
+    effectiveContext,
+    removals,
+    startFrom
+  );
+  if (pos !== -1) {
+    return pos;
+  }
 
   return -1;
 }
@@ -385,13 +447,18 @@ function applyIndent(
   baseIndent: string = ''
 ): string {
   const trimmed = newLine.trim();
-  if (trimmed === '') return '';
+  if (trimmed === '') {
+    return '';
+  }
 
   const refIndent = getIndent(referenceLine);
   const newLineIndent = getIndent(newLine);
 
   if (baseIndent) {
-    const relativeIndent = Math.max(0, newLineIndent.length - baseIndent.length);
+    const relativeIndent = Math.max(
+      0,
+      newLineIndent.length - baseIndent.length
+    );
     return refIndent + ' '.repeat(relativeIndent) + trimmed;
   }
   return refIndent + trimmed;
@@ -418,14 +485,20 @@ function findSegmentPosition(
   }
 
   let pos = exactMatch(sourceLines, fullPattern, startFrom);
-  if (pos !== -1) return pos + effectiveContext.length;
+  if (pos !== -1) {
+    return pos + effectiveContext.length;
+  }
 
   pos = trimmedMatch(sourceLines, fullPattern, startFrom);
-  if (pos !== -1) return pos + effectiveContext.length;
+  if (pos !== -1) {
+    return pos + effectiveContext.length;
+  }
 
   if (fullPattern.length >= 3) {
     pos = anchorMatch(sourceLines, fullPattern, startFrom);
-    if (pos !== -1) return pos + effectiveContext.length;
+    if (pos !== -1) {
+      return pos + effectiveContext.length;
+    }
   }
 
   // For pure additions, try smaller context chunks
@@ -434,14 +507,23 @@ function findSegmentPosition(
       if (effectiveContext.length >= size) {
         const lastN = effectiveContext.slice(-size);
         pos = trimmedMatch(sourceLines, lastN, startFrom);
-        if (pos !== -1) return pos + size;
+        if (pos !== -1) {
+          return pos + size;
+        }
       }
     }
   }
 
   // Fallback: fix overlapping context
-  pos = tryMatchWithOverlapFix(sourceLines, effectiveContext, removals, startFrom);
-  if (pos !== -1) return pos;
+  pos = tryMatchWithOverlapFix(
+    sourceLines,
+    effectiveContext,
+    removals,
+    startFrom
+  );
+  if (pos !== -1) {
+    return pos;
+  }
 
   return -1;
 }
@@ -460,7 +542,8 @@ export function applyDiff(
       return {
         success: false,
         result: originalContent,
-        error: 'No valid diff blocks found (blocks should be separated by @@@@)',
+        error:
+          'No valid diff blocks found (blocks should be separated by @@@@)',
       };
     }
 
@@ -506,8 +589,10 @@ export function applyDiff(
               // For each candidate position, check if middle line appears after it
               // Sort candidates to prefer those after lastBlockEnd
               const sortedCandidates = [...allPositions].sort((a, b) => {
-                const aAfter = a + effectiveContext.length >= lastBlockEnd ? 0 : 1;
-                const bAfter = b + effectiveContext.length >= lastBlockEnd ? 0 : 1;
+                const aAfter =
+                  a + effectiveContext.length >= lastBlockEnd ? 0 : 1;
+                const bAfter =
+                  b + effectiveContext.length >= lastBlockEnd ? 0 : 1;
                 return aAfter - bAfter || a - b;
               });
 
@@ -517,13 +602,18 @@ export function applyDiff(
 
                 // Check if any middle line position is reasonably close after this candidate
                 for (const middlePos of middleLinePositions) {
-                  if (middlePos >= searchAfter && middlePos < searchAfter + 100) {
+                  if (
+                    middlePos >= searchAfter &&
+                    middlePos < searchAfter + 100
+                  ) {
                     // Found: this candidate has the middle context after it
                     position = changePos;
                     break;
                   }
                 }
-                if (position !== -1) break;
+                if (position !== -1) {
+                  break;
+                }
               }
             }
           }
@@ -557,7 +647,9 @@ export function applyDiff(
         return {
           success: false,
           result: originalContent,
-          error: `Block ${i + 1}: Cannot find matching position.\nContext: ${context}\nRemovals: ${removal}`,
+          error: `Block ${
+            i + 1
+          }: Cannot find matching position.\nContext: ${context}\nRemovals: ${removal}`,
         };
       }
 
@@ -588,7 +680,9 @@ export function applyDiff(
         return {
           success: false,
           result: originalContent,
-          error: `Overlapping blocks: Block ${prev.originalIndex + 1} overlaps with Block ${curr.originalIndex + 1}`,
+          error: `Overlapping blocks: Block ${
+            prev.originalIndex + 1
+          } overlaps with Block ${curr.originalIndex + 1}`,
         };
       }
     }
@@ -612,7 +706,11 @@ export function applyDiff(
         if (segIdx === 0) {
           segmentPos = position;
         } else {
-          segmentPos = findSegmentPosition(sourceLines, segment, segmentSearchStart);
+          segmentPos = findSegmentPosition(
+            sourceLines,
+            segment,
+            segmentSearchStart
+          );
           if (segmentPos === -1) {
             segmentPos = findSegmentPosition(sourceLines, segment, sourceIdx);
           }
@@ -622,7 +720,9 @@ export function applyDiff(
           return {
             success: false,
             result: originalContent,
-            error: `Block segment: Cannot find position for segment ${segIdx + 1}`,
+            error: `Block segment: Cannot find position for segment ${
+              segIdx + 1
+            }`,
           };
         }
 
@@ -639,7 +739,8 @@ export function applyDiff(
             resultLines.push(addition);
           }
         } else {
-          const refLine = sourceIdx < sourceLines.length ? sourceLines[sourceIdx] : '';
+          const refLine =
+            sourceIdx < sourceLines.length ? sourceLines[sourceIdx] : '';
           let baseIndent = '';
           for (const add of segment.additions) {
             if (add.trim() !== '') {
@@ -689,7 +790,11 @@ export function validateDiff(diffContent: string): {
     const blocks = parseDiffBlocks(diffContent);
 
     if (blocks.length === 0) {
-      return { valid: false, blockCount: 0, error: 'No valid diff blocks found' };
+      return {
+        valid: false,
+        blockCount: 0,
+        error: 'No valid diff blocks found',
+      };
     }
 
     for (let i = 0; i < blocks.length; i++) {
@@ -698,7 +803,11 @@ export function validateDiff(diffContent: string): {
         seg => seg.removals.length > 0 || seg.additions.length > 0
       );
       if (!hasChanges) {
-        return { valid: false, blockCount: blocks.length, error: `Block ${i + 1} has no changes` };
+        return {
+          valid: false,
+          blockCount: blocks.length,
+          error: `Block ${i + 1} has no changes`,
+        };
       }
 
       if (block.contextBefore.length === 0 && block.removals.length === 0) {
