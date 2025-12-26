@@ -224,6 +224,11 @@ function tryMatchWithOverlapFix(
       if (fixedContext.length === 0) {
         pos = trimmedMatch(sourceLines, removals, startFrom);
         if (pos !== -1) return pos;
+        // Try from beginning if not found after startFrom (blocks may be out of order)
+        if (startFrom > 0) {
+          pos = trimmedMatch(sourceLines, removals, 0);
+          if (pos !== -1) return pos;
+        }
       }
     }
   }
