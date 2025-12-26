@@ -1,54 +1,56 @@
 /**
  * ApplyDiff - A robust diff application utility
  *
- * Diff Format (no line numbers, content-based matching):
+ * Diff Format:
  * @@@@
- * [context lines - no prefix, for locating position]
+ * [context lines - no prefix]
  * -[lines to remove]
  * +[lines to add]
  * [context lines - no prefix]
  *
  * Features:
- * - No line numbers dependency (AI often gets them wrong)
- * - Three-layer fallback matching strategy
+ * - Three-layer fallback matching (exact -> trimmed -> anchor)
  * - Handles out-of-order blocks by sorting
- * - Whitespace tolerance for AI-generated diffs
+ * - Supports multiple change segments within a single @@@@ block
  */
 
-/**
- * Represents a single diff block
- */
-interface DiffBlock {
-  contextBefore: string[]; // Context lines before changes (for locating)
-  removals: string[]; // Lines to remove (- prefix)
-  additions: string[]; // Lines to add (+ prefix)
-  contextAfter: string[]; // Context lines after changes
+/** A single change segment within a diff block */
+interface ChangeSegment {
+  contextBefore: string[];
+  removals: string[];
+  additions: string[];
 }
 
-/**
- * Positioned block with its location in source file
- */
+/** A complete diff block (one @@@@ section) with potentially multiple segments */
+interface DiffBlock {
+  segments: ChangeSegment[];
+  contextBefore: string[]; // First segment's context (for positioning)
+  removals: string[]; // First segment's removals (for positioning)
+  firstMiddleContext: string[]; // First middle context block (after first change, for unique matching)
+}
+
+/** Positioned block with its location in source file */
 interface PositionedBlock {
   block: DiffBlock;
-  position: number; // Line index where removals start
-  originalIndex: number; // Original index in parsed blocks
+  position: number;
+  originalIndex: number;
 }
 
-/**
- * Result of applying diff
- */
 export interface ApplyDiffResult {
   success: boolean;
   result: string;
   error?: string;
 }
 
-const BLOCK_SEPARATOR = '@@@@';
+/** Check if a line is a block separator (starts with @@ and ends with @@) */
+function isBlockSeparator(line: string): boolean {
+  const trimmed = line.trim();
+  const len = trimmed.length;
+  return len >= 4 && trimmed[0] === '@' && trimmed[1] === '@' && trimmed[len - 1] === '@' && trimmed[len - 2] === '@';
+}
 
 /**
- * Parse diff content into blocks
- * When a context line appears after changes, it starts a new block.
- * This simplifies handling of wrap replacements like <a>...</a> -> <div>...</div>
+ * Parse diff content into blocks with multiple segments
  */
 function parseDiffBlocks(diffContent: string): DiffBlock[] {
   const lines = diffContent.split('\n');
@@ -56,16 +58,16 @@ function parseDiffBlocks(diffContent: string): DiffBlock[] {
 
   let i = 0;
   while (i < lines.length) {
-    // Find block start
-    if (lines[i].trim() === BLOCK_SEPARATOR) {
+    if (isBlockSeparator(lines[i])) {
       i++;
 
+      const segments: ChangeSegment[] = [];
       let currentContext: string[] = [];
       let currentRemovals: string[] = [];
       let currentAdditions: string[] = [];
       let inChange = false;
 
-      while (i < lines.length && lines[i].trim() !== BLOCK_SEPARATOR) {
+      while (i < lines.length && !isBlockSeparator(lines[i])) {
         const line = lines[i];
 
         if (line.startsWith('-')) {
@@ -75,40 +77,47 @@ function parseDiffBlocks(diffContent: string): DiffBlock[] {
           inChange = true;
           currentAdditions.push(line.substring(1));
         } else {
-          // Context line
           const content = line.startsWith(' ') ? line.substring(1) : line;
 
           if (inChange) {
-            // Hit a context line after changes - save current block and start new one
+            // Save current segment when hitting context after changes
             if (currentRemovals.length > 0 || currentAdditions.length > 0) {
-              blocks.push({
+              segments.push({
                 contextBefore: currentContext,
                 removals: currentRemovals,
                 additions: currentAdditions,
-                contextAfter: [], // No contextAfter in this simplified model
               });
             }
-            // Start new block with this context line
             currentContext = [content];
             currentRemovals = [];
             currentAdditions = [];
             inChange = false;
           } else {
-            // Still collecting context before changes
             currentContext.push(content);
           }
         }
-
         i++;
       }
 
-      // Don't forget the last block
+      // Save last segment
       if (currentRemovals.length > 0 || currentAdditions.length > 0) {
-        blocks.push({
+        segments.push({
           contextBefore: currentContext,
           removals: currentRemovals,
           additions: currentAdditions,
-          contextAfter: [],
+        });
+      }
+
+      if (segments.length > 0) {
+        // Extract first middle context (context of second segment, if exists)
+        const firstMiddleContext =
+          segments.length > 1 ? segments[1].contextBefore : [];
+
+        blocks.push({
+          segments,
+          contextBefore: segments[0].contextBefore,
+          removals: segments[0].removals,
+          firstMiddleContext,
         });
       }
     } else {
@@ -119,107 +128,134 @@ function parseDiffBlocks(diffContent: string): DiffBlock[] {
   return blocks;
 }
 
-/**
- * Compare two lines with exact match
- */
-function exactLineMatch(sourceLine: string, patternLine: string): boolean {
-  return sourceLine === patternLine;
-}
-
-/**
- * Compare two lines with trimmed match (whitespace tolerant)
- */
-function trimmedLineMatch(sourceLine: string, patternLine: string): boolean {
-  return sourceLine.trim() === patternLine.trim();
-}
-
-/**
- * Layer 1: Exact match - find pattern in source lines
- */
+/** Layer 1: Exact match */
 function exactMatch(
   sourceLines: string[],
   pattern: string[],
   startFrom: number = 0
 ): number {
-  if (pattern.length === 0) {
-    return -1;
-  }
+  if (pattern.length === 0) return -1;
 
   for (let i = startFrom; i <= sourceLines.length - pattern.length; i++) {
     let matches = true;
     for (let j = 0; j < pattern.length; j++) {
-      if (!exactLineMatch(sourceLines[i + j], pattern[j])) {
+      if (sourceLines[i + j] !== pattern[j]) {
         matches = false;
         break;
       }
     }
-    if (matches) {
-      return i;
-    }
+    if (matches) return i;
   }
-
   return -1;
 }
 
-/**
- * Layer 2: Trimmed match - ignore leading/trailing whitespace per line
- */
+/** Layer 2: Trimmed match (whitespace tolerant) */
 function trimmedMatch(
   sourceLines: string[],
   pattern: string[],
   startFrom: number = 0
 ): number {
-  if (pattern.length === 0) {
-    return -1;
-  }
+  if (pattern.length === 0) return -1;
 
   for (let i = startFrom; i <= sourceLines.length - pattern.length; i++) {
     let matches = true;
     for (let j = 0; j < pattern.length; j++) {
-      if (!trimmedLineMatch(sourceLines[i + j], pattern[j])) {
+      if (sourceLines[i + j].trim() !== pattern[j].trim()) {
         matches = false;
         break;
       }
     }
-    if (matches) {
-      return i;
-    }
+    if (matches) return i;
   }
-
   return -1;
 }
 
-/**
- * Layer 3: Anchor match - use first and last lines as anchors
- * Only for patterns with 3+ lines
- */
+/** Layer 3: Anchor match (first + last line only) */
 function anchorMatch(
   sourceLines: string[],
   pattern: string[],
   startFrom: number = 0
 ): number {
-  if (pattern.length < 3) {
-    return -1;
-  }
+  if (pattern.length < 3) return -1;
 
   const firstLine = pattern[0];
   const lastLine = pattern[pattern.length - 1];
 
   for (let i = startFrom; i <= sourceLines.length - pattern.length; i++) {
     if (
-      trimmedLineMatch(sourceLines[i], firstLine) &&
-      trimmedLineMatch(sourceLines[i + pattern.length - 1], lastLine)
+      sourceLines[i].trim() === firstLine.trim() &&
+      sourceLines[i + pattern.length - 1].trim() === lastLine.trim()
     ) {
       return i;
     }
   }
-
   return -1;
+}
+
+/** Remove trailing empty lines (AI often adds extra) */
+function trimTrailingEmptyLines(lines: string[]): string[] {
+  let end = lines.length;
+  while (end > 0 && lines[end - 1].trim() === '') {
+    end--;
+  }
+  return lines.slice(0, end);
+}
+
+/** Find all positions where pattern matches */
+function findAllMatches(
+  sourceLines: string[],
+  pattern: string[],
+  startFrom: number = 0
+): number[] {
+  if (pattern.length === 0) return [];
+
+  const positions: number[] = [];
+  for (let i = startFrom; i <= sourceLines.length - pattern.length; i++) {
+    let matches = true;
+    for (let j = 0; j < pattern.length; j++) {
+      if (sourceLines[i + j].trim() !== pattern[j].trim()) {
+        matches = false;
+        break;
+      }
+    }
+    if (matches) {
+      positions.push(i);
+    }
+  }
+  return positions;
+}
+
+/** Get the longest line from an array (most likely to be unique) */
+function getLongestLine(lines: string[]): string | null {
+  if (lines.length === 0) return null;
+
+  let longest = lines[0];
+  for (const line of lines) {
+    if (line.trim().length > longest.trim().length) {
+      longest = line;
+    }
+  }
+  return longest.trim().length > 0 ? longest : null;
+}
+
+/** Find line position in source */
+function findLinePosition(
+  sourceLines: string[],
+  line: string,
+  startFrom: number = 0
+): number[] {
+  const positions: number[] = [];
+  const trimmedLine = line.trim();
+  for (let i = startFrom; i < sourceLines.length; i++) {
+    if (sourceLines[i].trim() === trimmedLine) {
+      positions.push(i);
+    }
+  }
+  return positions;
 }
 
 /**
  * Find block position using three-layer fallback strategy
- * Returns the line index where removals should start
  */
 function findBlockPosition(
   sourceLines: string[],
@@ -228,82 +264,140 @@ function findBlockPosition(
 ): number {
   const { contextBefore, removals } = block;
 
-  // Build search pattern: context + removals
-  const fullPattern = [...contextBefore, ...removals];
+  // For pure additions, trim trailing empty lines from context
+  const effectiveContext =
+    removals.length === 0
+      ? trimTrailingEmptyLines(contextBefore)
+      : contextBefore;
 
-  if (fullPattern.length === 0) {
-    // Pure addition with no context - cannot locate
-    return -1;
-  }
+  const fullPattern = [...effectiveContext, ...removals];
+  if (fullPattern.length === 0) return -1;
 
   // Layer 1: Exact match
   let pos = exactMatch(sourceLines, fullPattern, startFrom);
-  if (pos !== -1) {
-    return pos + contextBefore.length;
-  }
+  if (pos !== -1) return pos + effectiveContext.length;
 
-  // Layer 2: Trimmed match (whitespace tolerant)
+  // Layer 2: Trimmed match
   pos = trimmedMatch(sourceLines, fullPattern, startFrom);
-  if (pos !== -1) {
-    return pos + contextBefore.length;
-  }
+  if (pos !== -1) return pos + effectiveContext.length;
 
-  // Layer 3: Anchor match (first + last line)
+  // Layer 3: Anchor match
   if (fullPattern.length >= 3) {
     pos = anchorMatch(sourceLines, fullPattern, startFrom);
-    if (pos !== -1) {
-      return pos + contextBefore.length;
+    if (pos !== -1) return pos + effectiveContext.length;
+  }
+
+  // For pure additions, try progressively smaller context
+  if (removals.length === 0 && effectiveContext.length > 0) {
+    for (const size of [10, 8, 6, 5, 4, 3]) {
+      if (effectiveContext.length >= size) {
+        const lastN = effectiveContext.slice(-size);
+        pos = trimmedMatch(sourceLines, lastN, startFrom);
+        if (pos !== -1) return pos + size;
+      }
     }
   }
 
-  // Fallback: Try with reduced context (last 1-2 lines only)
-  if (contextBefore.length > 0 && removals.length > 0) {
+  // Fallback: reduced context + removals
+  if (effectiveContext.length > 0 && removals.length > 0) {
     for (const contextSize of [2, 1]) {
-      if (contextSize > contextBefore.length) {
-        continue;
-      }
-
-      const reducedContext = contextBefore.slice(-contextSize);
+      if (contextSize > effectiveContext.length) continue;
+      const reducedContext = effectiveContext.slice(-contextSize);
       const reducedPattern = [...reducedContext, ...removals];
-
       pos = trimmedMatch(sourceLines, reducedPattern, startFrom);
-      if (pos !== -1) {
-        return pos + reducedContext.length;
-      }
+      if (pos !== -1) return pos + reducedContext.length;
     }
   }
 
-  // Last resort: Try matching only removals (if unique enough)
+  // Last resort: removals only
   if (removals.length >= 2) {
     pos = trimmedMatch(sourceLines, removals, startFrom);
-    if (pos !== -1) {
-      return pos;
-    }
+    if (pos !== -1) return pos;
   }
 
-  // Extra fallback: Try context + first removal only
-  // This handles cases where AI includes non-consecutive removals
-  if (contextBefore.length > 0 && removals.length > 0) {
-    const contextPlusFirst = [...contextBefore, removals[0]];
+  // Extra fallback: context + first removal
+  if (effectiveContext.length > 0 && removals.length > 0) {
+    const contextPlusFirst = [...effectiveContext, removals[0]];
     pos = trimmedMatch(sourceLines, contextPlusFirst, startFrom);
-    if (pos !== -1) {
-      return pos + contextBefore.length;
-    }
+    if (pos !== -1) return pos + effectiveContext.length;
 
-    // Try last 2 context + first removal
-    if (contextBefore.length >= 2) {
-      const reducedPattern = [...contextBefore.slice(-2), removals[0]];
+    if (effectiveContext.length >= 2) {
+      const reducedPattern = [...effectiveContext.slice(-2), removals[0]];
       pos = trimmedMatch(sourceLines, reducedPattern, startFrom);
-      if (pos !== -1) {
-        return pos + 2;
-      }
+      if (pos !== -1) return pos + 2;
     }
 
-    // Try last 1 context + first removal
-    const minPattern = [contextBefore[contextBefore.length - 1], removals[0]];
+    const minPattern = [effectiveContext[effectiveContext.length - 1], removals[0]];
     pos = trimmedMatch(sourceLines, minPattern, startFrom);
-    if (pos !== -1) {
-      return pos + 1;
+    if (pos !== -1) return pos + 1;
+  }
+
+  return -1;
+}
+
+function getIndent(line: string): string {
+  const match = line.match(/^(\s*)/);
+  return match ? match[1] : '';
+}
+
+/** Apply indentation from reference line, preserving relative indent */
+function applyIndent(
+  newLine: string,
+  referenceLine: string,
+  baseIndent: string = ''
+): string {
+  const trimmed = newLine.trim();
+  if (trimmed === '') return '';
+
+  const refIndent = getIndent(referenceLine);
+  const newLineIndent = getIndent(newLine);
+
+  if (baseIndent) {
+    const relativeIndent = Math.max(0, newLineIndent.length - baseIndent.length);
+    return refIndent + ' '.repeat(relativeIndent) + trimmed;
+  }
+  return refIndent + trimmed;
+}
+
+/** Find segment position using context and removals */
+function findSegmentPosition(
+  sourceLines: string[],
+  segment: ChangeSegment,
+  startFrom: number
+): number {
+  const { contextBefore, removals } = segment;
+
+  const effectiveContext =
+    removals.length === 0
+      ? trimTrailingEmptyLines(contextBefore)
+      : contextBefore;
+
+  const fullPattern = [...effectiveContext, ...removals];
+  // For pure additions with empty/whitespace-only context within a block,
+  // insert at current position (right after previous segment)
+  if (fullPattern.length === 0) {
+    return removals.length === 0 ? startFrom : -1;
+  }
+
+  let pos = exactMatch(sourceLines, fullPattern, startFrom);
+  if (pos !== -1) return pos + effectiveContext.length;
+
+  pos = trimmedMatch(sourceLines, fullPattern, startFrom);
+  if (pos !== -1) return pos + effectiveContext.length;
+
+  if (fullPattern.length >= 3) {
+    pos = anchorMatch(sourceLines, fullPattern, startFrom);
+    if (pos !== -1) return pos + effectiveContext.length;
+  }
+
+  // For pure additions, try smaller context chunks
+  if (removals.length === 0 && effectiveContext.length > 0) {
+    for (const size of [10, 8, 6, 5, 4, 3, 2]) {
+      if (effectiveContext.length >= size) {
+        const lastN = effectiveContext.slice(-size);
+        pos = trimmedMatch(sourceLines, lastN, startFrom);
+        if (pos !== -1) return pos + size;
+      }
     }
   }
 
@@ -311,72 +405,109 @@ function findBlockPosition(
 }
 
 /**
- * Get leading whitespace from a line
- */
-function getIndent(line: string): string {
-  const match = line.match(/^(\s*)/);
-  return match ? match[1] : '';
-}
-
-/**
- * Apply indentation from reference line to new line
- * Preserves relative indentation within multi-line additions
- */
-function applyIndent(
-  newLine: string,
-  referenceLine: string,
-  baseIndent: string = ''
-): string {
-  const trimmed = newLine.trim();
-  if (trimmed === '') {
-    return '';
-  }
-
-  const refIndent = getIndent(referenceLine);
-  const newLineIndent = getIndent(newLine);
-
-  // Calculate relative indent from the base (first addition line)
-  if (baseIndent && newLineIndent.length > baseIndent.length) {
-    // This line has more indent than base - preserve the extra
-    const extraIndent = newLineIndent.substring(baseIndent.length);
-    return refIndent + extraIndent + trimmed;
-  }
-
-  return refIndent + trimmed;
-}
-
-/**
  * Apply diff to original content
- *
- * @param originalContent - The original file content
- * @param diffContent - The diff content with @@@@ blocks
- * @returns ApplyDiffResult with success status and result/error
  */
 export function applyDiff(
   originalContent: string,
   diffContent: string
 ): ApplyDiffResult {
   try {
-    // 1. Parse diff blocks
     const blocks = parseDiffBlocks(diffContent);
 
     if (blocks.length === 0) {
       return {
         success: false,
         result: originalContent,
-        error:
-          'No valid diff blocks found (blocks should be separated by @@@@)',
+        error: 'No valid diff blocks found (blocks should be separated by @@@@)',
       };
     }
 
     const sourceLines = originalContent.split('\n');
-
-    // 2. Find position for each block (search from beginning each time)
     const positionedBlocks: PositionedBlock[] = [];
+
+    // Find position for each block with improved matching strategy
+    let lastBlockEnd = 0; // Track end of last block for fallback
 
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
-      const position = findBlockPosition(sourceLines, block, 0);
+      const { contextBefore, removals, firstMiddleContext } = block;
+
+      // Build the pattern for matching
+      const effectiveContext =
+        removals.length === 0
+          ? trimTrailingEmptyLines(contextBefore)
+          : contextBefore;
+      const fullPattern = [...effectiveContext, ...removals];
+
+      let position = -1;
+
+      if (fullPattern.length > 0) {
+        // Find all matching positions
+        const allPositions = findAllMatches(sourceLines, fullPattern, 0);
+
+        if (allPositions.length === 1) {
+          // Unique match - use it directly
+          position = allPositions[0] + effectiveContext.length;
+        } else if (allPositions.length > 1) {
+          // Multiple matches - try to disambiguate using middle context
+          if (firstMiddleContext.length > 0) {
+            const longestMiddleLine = getLongestLine(firstMiddleContext);
+
+            if (longestMiddleLine) {
+              // Find positions of the longest middle line
+              const middleLinePositions = findLinePosition(
+                sourceLines,
+                longestMiddleLine,
+                0
+              );
+
+              // For each candidate position, check if middle line appears after it
+              // Sort candidates to prefer those after lastBlockEnd
+              const sortedCandidates = [...allPositions].sort((a, b) => {
+                const aAfter = a + effectiveContext.length >= lastBlockEnd ? 0 : 1;
+                const bAfter = b + effectiveContext.length >= lastBlockEnd ? 0 : 1;
+                return aAfter - bAfter || a - b;
+              });
+
+              for (const candidatePos of sortedCandidates) {
+                const changePos = candidatePos + effectiveContext.length;
+                const searchAfter = changePos + removals.length;
+
+                // Check if any middle line position is reasonably close after this candidate
+                for (const middlePos of middleLinePositions) {
+                  if (middlePos >= searchAfter && middlePos < searchAfter + 100) {
+                    // Found: this candidate has the middle context after it
+                    position = changePos;
+                    break;
+                  }
+                }
+                if (position !== -1) break;
+              }
+            }
+          }
+
+          // Still not unique? Use fallback: find first match after last block
+          if (position === -1) {
+            for (const candidatePos of allPositions) {
+              const changePos = candidatePos + effectiveContext.length;
+              if (changePos >= lastBlockEnd) {
+                position = changePos;
+                break;
+              }
+            }
+          }
+
+          // Last resort: use the first match
+          if (position === -1 && allPositions.length > 0) {
+            position = allPositions[0] + effectiveContext.length;
+          }
+        }
+      }
+
+      // If still not found, try original fallback strategies
+      if (position === -1) {
+        position = findBlockPosition(sourceLines, block, lastBlockEnd);
+      }
 
       if (position === -1) {
         const context = block.contextBefore.slice(0, 2).join('\n');
@@ -384,88 +515,117 @@ export function applyDiff(
         return {
           success: false,
           result: originalContent,
-          error: `Block ${
-            i + 1
-          }: Cannot find matching position.\nContext: ${context}\nRemovals: ${removal}`,
+          error: `Block ${i + 1}: Cannot find matching position.\nContext: ${context}\nRemovals: ${removal}`,
         };
       }
 
-      positionedBlocks.push({
-        block,
-        position,
-        originalIndex: i,
-      });
+      // Calculate total removals for this block
+      const totalRemovals = block.segments.reduce(
+        (sum, seg) => sum + seg.removals.length,
+        0
+      );
+      lastBlockEnd = position + totalRemovals;
+
+      positionedBlocks.push({ block, position, originalIndex: i });
     }
 
-    // 3. Sort by position
+    // Sort by position (should already be in order with new strategy, but ensure)
     positionedBlocks.sort((a, b) => a.position - b.position);
 
-    // 4. Check for overlapping blocks
+    // Check for overlapping blocks
     for (let i = 1; i < positionedBlocks.length; i++) {
       const prev = positionedBlocks[i - 1];
       const curr = positionedBlocks[i];
-      const prevEnd = prev.position + prev.block.removals.length;
+      const prevTotalRemovals = prev.block.segments.reduce(
+        (sum, seg) => sum + seg.removals.length,
+        0
+      );
+      const prevEnd = prev.position + prevTotalRemovals;
 
       if (curr.position < prevEnd) {
         return {
           success: false,
           result: originalContent,
-          error: `Overlapping blocks: Block ${
-            prev.originalIndex + 1
-          } (ends at line ${prevEnd}) overlaps with Block ${
-            curr.originalIndex + 1
-          } (starts at line ${curr.position})`,
+          error: `Overlapping blocks: Block ${prev.originalIndex + 1} overlaps with Block ${curr.originalIndex + 1}`,
         };
       }
     }
 
-    // 5. Apply changes in sorted order
-    // With the new parser, each block is a simple replacement/addition
-    // No need for complex wrap replacement logic
+    // Apply changes
     const resultLines: string[] = [];
     let sourceIdx = 0;
 
     for (const { block, position } of positionedBlocks) {
-      // Copy unchanged lines before this block
       while (sourceIdx < position) {
         resultLines.push(sourceLines[sourceIdx]);
         sourceIdx++;
       }
 
-      // Determine reference line for indentation
-      let refLine = '';
-      if (block.removals.length > 0 && sourceIdx < sourceLines.length) {
-        refLine = sourceLines[sourceIdx];
-      } else if (position > 0) {
-        refLine = sourceLines[position - 1];
-      }
+      let segmentSearchStart = sourceIdx;
 
-      const baseIndent =
-        block.additions.length > 0 ? getIndent(block.additions[0]) : '';
+      for (let segIdx = 0; segIdx < block.segments.length; segIdx++) {
+        const segment = block.segments[segIdx];
 
-      // Add all additions with corrected indentation
-      for (const addition of block.additions) {
-        if (addition.trim() === '') {
-          resultLines.push('');
+        let segmentPos: number;
+        if (segIdx === 0) {
+          segmentPos = position;
         } else {
-          resultLines.push(applyIndent(addition, refLine, baseIndent));
+          segmentPos = findSegmentPosition(sourceLines, segment, segmentSearchStart);
+          if (segmentPos === -1) {
+            segmentPos = findSegmentPosition(sourceLines, segment, sourceIdx);
+          }
         }
-      }
 
-      // Skip the removal lines
-      sourceIdx += block.removals.length;
+        if (segmentPos === -1) {
+          return {
+            success: false,
+            result: originalContent,
+            error: `Block segment: Cannot find position for segment ${segIdx + 1}`,
+          };
+        }
+
+        while (sourceIdx < segmentPos) {
+          resultLines.push(sourceLines[sourceIdx]);
+          sourceIdx++;
+        }
+
+        // Pure additions: trust diff's indentation; Replacements: adjust to match
+        const isPureAddition = segment.removals.length === 0;
+
+        if (isPureAddition) {
+          for (const addition of segment.additions) {
+            resultLines.push(addition);
+          }
+        } else {
+          const refLine = sourceIdx < sourceLines.length ? sourceLines[sourceIdx] : '';
+          let baseIndent = '';
+          for (const add of segment.additions) {
+            if (add.trim() !== '') {
+              baseIndent = getIndent(add);
+              break;
+            }
+          }
+
+          for (const addition of segment.additions) {
+            if (addition.trim() === '') {
+              resultLines.push('');
+            } else {
+              resultLines.push(applyIndent(addition, refLine, baseIndent));
+            }
+          }
+        }
+
+        sourceIdx += segment.removals.length;
+        segmentSearchStart = sourceIdx;
+      }
     }
 
-    // Copy remaining lines
     while (sourceIdx < sourceLines.length) {
       resultLines.push(sourceLines[sourceIdx]);
       sourceIdx++;
     }
 
-    return {
-      success: true,
-      result: resultLines.join('\n'),
-    };
+    return { success: true, result: resultLines.join('\n') };
   } catch (error) {
     return {
       success: false,
@@ -487,23 +647,18 @@ export function validateDiff(diffContent: string): {
     const blocks = parseDiffBlocks(diffContent);
 
     if (blocks.length === 0) {
-      return {
-        valid: false,
-        blockCount: 0,
-        error: 'No valid diff blocks found',
-      };
+      return { valid: false, blockCount: 0, error: 'No valid diff blocks found' };
     }
 
-    // Check each block has either removals or additions
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
-      if (block.removals.length === 0 && block.additions.length === 0) {
-        return {
-          valid: false,
-          blockCount: blocks.length,
-          error: `Block ${i + 1} has no changes`,
-        };
+      const hasChanges = block.segments.some(
+        seg => seg.removals.length > 0 || seg.additions.length > 0
+      );
+      if (!hasChanges) {
+        return { valid: false, blockCount: blocks.length, error: `Block ${i + 1} has no changes` };
       }
+
       if (block.contextBefore.length === 0 && block.removals.length === 0) {
         return {
           valid: false,
@@ -513,15 +668,8 @@ export function validateDiff(diffContent: string): {
       }
     }
 
-    return {
-      valid: true,
-      blockCount: blocks.length,
-    };
+    return { valid: true, blockCount: blocks.length };
   } catch (error) {
-    return {
-      valid: false,
-      blockCount: 0,
-      error: String(error),
-    };
+    return { valid: false, blockCount: 0, error: String(error) };
   }
 }
