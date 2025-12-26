@@ -13,15 +13,16 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
+import {
+  activateKeepAwake,
+  deactivateKeepAwake,
+} from '@sayem314/react-native-keep-awake';
 import { voiceChatService } from './service/VoiceChatService';
 import AudioWaveformComponent, {
   AudioWaveformRef,
 } from './component/AudioWaveformComponent';
 import { ColorScheme, useTheme } from '../theme';
-import {
-  invokeBedrockWithCallBack as invokeBedrockWithCallBack,
-  requestToken,
-} from '../api/bedrock-api';
+import { invokeBedrockWithCallBack, requestToken } from '../api/bedrock-api';
 import CustomMessageComponent from './component/CustomMessageComponent.tsx';
 import { CustomScrollToBottomComponent } from './component/CustomScrollToBottomComponent.tsx';
 import { EmptyChatComponent } from './component/EmptyChatComponent.tsx';
@@ -74,10 +75,34 @@ import {
 import HeaderTitle from './component/HeaderTitle.tsx';
 import { showInfo } from './util/ToastUtils.ts';
 import { HeaderOptions } from '@react-navigation/elements';
+import { webSearchOrchestrator } from '../websearch/services/WebSearchOrchestrator.ts';
+import { Citation } from '../types/Chat.ts';
+import {
+  setLatestHtmlCode,
+  clearLatestHtmlCode,
+  getLatestHtmlCode,
+  replaceHtmlWithPlaceholder,
+  replaceDiffWithPlaceholder,
+} from './util/DiffUtils.ts';
 
 const BOT_ID = 2;
+const APP_PROMPT_NAME = 'App';
 
-const createBotMessage = (mode: string) => {
+/**
+ * Find the latest htmlCode from AI messages
+ * Traverse all AI messages to find the first one with htmlCode
+ */
+const findLatestHtmlCode = (messages: SwiftChatMessage[]): string => {
+  const aiMessages = messages.filter(m => m.user._id === BOT_ID);
+  for (const msg of aiMessages) {
+    if (msg.htmlCode) {
+      return msg.htmlCode;
+    }
+  }
+  return '';
+};
+
+const createBotMessage = (mode: string, isAppMode: boolean = false) => {
   return {
     _id: uuid.v4(),
     text: mode === ChatMode.Text ? textPlaceholder : imagePlaceholder,
@@ -90,6 +115,7 @@ const createBotMessage = (mode: string) => {
           : getImageModel().modelName,
       modelTag: mode === ChatMode.Text ? getTextModel().modelTag : undefined,
     },
+    isLastHtml: isAppMode ? true : undefined,
   };
 };
 const imagePlaceholder = '![](bedrock://imgProgress)';
@@ -104,9 +130,11 @@ function ChatScreen(): React.JSX.Element {
   const initialSessionId = route.params?.sessionId;
   const tapIndex = route.params?.tapIndex;
   const mode = route.params?.mode ?? currentMode;
+  const editAppCode = route.params?.editAppCode;
+  const editAppName = route.params?.editAppName;
   const modeRef = useRef(mode);
   const isNovaSonic =
-    getTextModel().modelId.includes('nova-sonic') &&
+    getTextModel().modelId.includes('sonic') &&
     modeRef.current === ChatMode.Text;
 
   const [messages, setMessages] = useState<SwiftChatMessage[]>([]);
@@ -114,7 +142,6 @@ function ChatScreen(): React.JSX.Element {
   const [systemPrompt, setSystemPrompt] = useState<SystemPrompt | null>(
     isNovaSonic ? getCurrentVoiceSystemPrompt : getCurrentSystemPrompt
   );
-  const [showSystemPrompt, setShowSystemPrompt] = useState<boolean>(true);
   const [screenDimensions, setScreenDimensions] = useState(
     Dimensions.get('window')
   );
@@ -143,7 +170,10 @@ function ChatScreen(): React.JSX.Element {
   const containerHeightRef = useRef(0);
   const [isShowVoiceLoading, setIsShowVoiceLoading] = useState(false);
   const audioWaveformRef = useRef<AudioWaveformRef>(null);
+  const [searchPhase, setSearchPhase] = useState<string>('');
 
+  // App mode state
+  const isAppModeRef = useRef(false);
   const endVoiceConversationRef = useRef<(() => Promise<boolean>) | null>(null);
   const currentScrollOffsetRef = useRef(0);
   const isNewChatRef = useRef(!initialSessionId);
@@ -173,6 +203,18 @@ function ChatScreen(): React.JSX.Element {
     usageRef.current = usage;
   }, [chatStatus, messages, usage]);
 
+  // Keep screen awake during streaming output
+  useEffect(() => {
+    if (chatStatus === ChatStatus.Running) {
+      activateKeepAwake();
+    } else {
+      deactivateKeepAwake();
+    }
+    return () => {
+      deactivateKeepAwake();
+    };
+  }, [chatStatus]);
+
   useEffect(() => {
     drawerTypeRef.current = drawerType;
   }, [drawerType]);
@@ -191,7 +233,7 @@ function ChatScreen(): React.JSX.Element {
       },
       // Handle error
       message => {
-        if (getTextModel().modelId.includes('nova-sonic')) {
+        if (getTextModel().modelId.includes('sonic')) {
           handleVoiceChatTranscript('ASSISTANT', message);
           endVoiceConversationRef.current?.();
           saveCurrentMessages();
@@ -218,7 +260,7 @@ function ChatScreen(): React.JSX.Element {
 
       setMessages([]);
       bedrockMessages.current = [];
-      setShowSystemPrompt(true);
+      clearLatestHtmlCode();
       showKeyboard();
     }, [])
   );
@@ -240,8 +282,6 @@ function ChatScreen(): React.JSX.Element {
           }
           usage={usage}
           onDoubleTap={scrollToTop}
-          onShowSystemPrompt={() => setShowSystemPrompt(true)}
-          isShowSystemPrompt={showSystemPrompt}
         />
       ),
       // eslint-disable-next-line react/no-unstable-nested-components
@@ -268,7 +308,7 @@ function ChatScreen(): React.JSX.Element {
       ),
     };
     navigation.setOptions(headerOptions);
-  }, [usage, navigation, mode, systemPrompt, showSystemPrompt, isDark]);
+  }, [usage, navigation, mode, systemPrompt, isDark]);
 
   // sessionId changes (start new chat or click another session)
   useEffect(() => {
@@ -286,9 +326,6 @@ function ChatScreen(): React.JSX.Element {
           }
         }
         saveCurrentMessages();
-      }
-      if (modeRef.current === ChatMode.Image) {
-        setShowSystemPrompt(true);
       }
       if (modeRef.current !== mode) {
         // when change chat mode, clear system prompt and files
@@ -313,12 +350,22 @@ function ChatScreen(): React.JSX.Element {
       const msg = getMessagesBySessionId(initialSessionId);
       sessionIdRef.current = initialSessionId;
       setUsage((msg[0] as SwiftChatMessage).usage);
-      setSystemPrompt(null);
-      saveCurrentSystemPrompt(null);
-      saveCurrentVoiceSystemPrompt(null);
-      saveCurrentImageSystemPrompt(null);
-      //notify to unselect prompt
-      sendEventRef.current?.('unSelectSystemPrompt');
+      // restore htmlCode from history
+      const restoredHtmlCode = findLatestHtmlCode(msg as SwiftChatMessage[]);
+      setLatestHtmlCode(restoredHtmlCode);
+
+      // If session has htmlCode, auto-select App prompt
+      if (restoredHtmlCode) {
+        isAppModeRef.current = true;
+        sendEventRef.current?.('selectAppPrompt');
+      } else {
+        setSystemPrompt(null);
+        saveCurrentSystemPrompt(null);
+        saveCurrentVoiceSystemPrompt(null);
+        saveCurrentImageSystemPrompt(null);
+        //notify to unselect prompt
+        sendEventRef.current?.('unSelectSystemPrompt');
+      }
       getBedrockMessagesFromChatMessages(msg).then(currentMessage => {
         bedrockMessages.current = currentMessage;
       });
@@ -337,6 +384,25 @@ function ChatScreen(): React.JSX.Element {
     }
   }, [initialSessionId, mode, tapIndex]);
 
+  // editAppCode handler - for editing saved apps from AppGallery
+  useEffect(() => {
+    if (editAppCode) {
+      startNewChat.current();
+      setLatestHtmlCode(editAppCode);
+      isAppModeRef.current = true;
+      setTimeout(() => {
+        sendEventRef.current?.('selectAppPrompt');
+        // Pre-fill the input with app name hint
+        if (editAppName && textInputViewRef.current) {
+          const hintText = `Edit [${editAppName}]: `;
+          textInputViewRef.current.setNativeProps({ text: hintText });
+          inputTextRef.current = hintText;
+          setHasInputText(true);
+        }
+      }, 100);
+    }
+  }, [editAppCode, editAppName, navigation]);
+
   // deleteChat listener
   useEffect(() => {
     if (event?.event === 'deleteChat' && event.params) {
@@ -353,11 +419,62 @@ function ChatScreen(): React.JSX.Element {
     }
   }, [event]);
 
+  // htmlCodeGenerated listener for App mode - update message.htmlCode for persistence
+  useEffect(() => {
+    if (event?.event === 'htmlCodeGenerated' && event.params?.htmlCode) {
+      const { htmlCode } = event.params;
+      setMessages(prevMessages => {
+        // update isLastHtml for all messages
+        const newMessages = prevMessages.map((msg, index) => {
+          if (index === 0) {
+            return { ...msg, htmlCode: htmlCode, isLastHtml: true };
+          } else if (msg.isLastHtml) {
+            return { ...msg, isLastHtml: false };
+          }
+          return msg;
+        });
+        return newMessages;
+      });
+    }
+  }, [event]);
+
+  // diffApplied listener for App mode - update message.htmlCode and save diffCode
+  // Note: placeholder replacement is done in ChatStatus.Complete handler
+  useEffect(() => {
+    if (event?.event === 'diffApplied' && event.params?.htmlCode) {
+      const { htmlCode, diffCode } = event.params;
+      setMessages(prevMessages => {
+        // update isLastHtml for all messages
+        const newMessages = prevMessages.map((msg, index) => {
+          if (index === 0) {
+            return {
+              ...msg,
+              htmlCode: htmlCode,
+              diffCode: diffCode,
+              isLastHtml: true,
+            };
+          } else if (msg.isLastHtml) {
+            return { ...msg, isLastHtml: false };
+          }
+          return msg;
+        });
+        return newMessages;
+      });
+    }
+  }, [event]);
+
   // keyboard show listener for scroll to bottom
   useEffect(() => {
+    const handleKeyboardShow = () => {
+      // Only scroll to bottom if the chat input is focused
+      if (textInputViewRef.current?.isFocused()) {
+        scrollToBottom();
+      }
+    };
+
     const keyboardDidShowListener = Platform.select({
-      ios: Keyboard.addListener('keyboardWillShow', scrollToBottom),
-      android: Keyboard.addListener('keyboardDidShow', scrollToBottom),
+      ios: Keyboard.addListener('keyboardWillShow', handleKeyboardShow),
+      android: Keyboard.addListener('keyboardDidShow', handleKeyboardShow),
     });
 
     return () => {
@@ -397,6 +514,14 @@ function ChatScreen(): React.JSX.Element {
     if (chatStatus === ChatStatus.Complete) {
       if (messagesRef.current.length <= 1) {
         return;
+      }
+      // In App mode, replace HTML/diff with placeholder to save context tokens
+      const msg = messagesRef.current[0];
+      if (isAppModeRef.current && msg.htmlCode) {
+        msg.text = replaceHtmlWithPlaceholder(msg.text, msg.htmlCode);
+      }
+      if (isAppModeRef.current && msg.diffCode) {
+        msg.text = replaceDiffWithPlaceholder(msg.text, msg.diffCode);
       }
       saveCurrentMessages();
       getBedrockMessage(messagesRef.current[0]).then(currentMsg => {
@@ -543,6 +668,14 @@ function ChatScreen(): React.JSX.Element {
     }
   };
 
+  // Stable callback for reasoning toggle - avoids re-render of CustomMessageComponent
+  const handleReasoningToggle = useCallback(
+    (expanded: boolean, height: number, animated: boolean) => {
+      scrollUpByHeight(expanded, height, animated);
+    },
+    []
+  );
+
   // invoke bedrock api
   useEffect(() => {
     const lastMessage = messages[0];
@@ -559,114 +692,216 @@ function ChatScreen(): React.JSX.Element {
       if (modeRef.current === ChatMode.Image) {
         sendEventRef.current('onImageStart');
       }
-      controllerRef.current = new AbortController();
-      isCanceled.current = false;
-      const startRequestTime = new Date().getTime();
-      let latencyMs = 0;
-      let metrics: Metrics | undefined;
-      invokeBedrockWithCallBack(
-        bedrockMessages.current,
-        modeRef.current,
-        systemPromptRef.current,
-        () => isCanceled.current,
-        controllerRef.current,
-        (
-          msg: string,
-          complete: boolean,
-          needStop: boolean,
-          usageInfo?: Usage,
-          reasoning?: string
-        ) => {
-          if (chatStatusRef.current !== ChatStatus.Running) {
-            return;
-          }
-          if (latencyMs === 0) {
-            latencyMs = new Date().getTime() - startRequestTime;
-          }
-          const updateMessage = () => {
-            if (usageInfo) {
-              setUsage(prevUsage => ({
-                modelName: usageInfo.modelName,
-                inputTokens:
-                  (prevUsage?.inputTokens || 0) + usageInfo.inputTokens,
-                outputTokens:
-                  (prevUsage?.outputTokens || 0) + usageInfo.outputTokens,
-                totalTokens:
-                  (prevUsage?.totalTokens || 0) + usageInfo.totalTokens,
-              }));
-              updateTotalUsage(usageInfo);
-              const renderSec =
-                (new Date().getTime() - startRequestTime - latencyMs) / 1000;
-              const speed = usageInfo.outputTokens / renderSec;
-              if (!metrics && modeRef.current === ChatMode.Text) {
-                metrics = {
-                  latencyMs: (latencyMs / 1000).toFixed(2),
-                  speed: speed.toFixed(speed > 100 ? 1 : 2),
-                };
-              }
+
+      // Wrap in async function to support await
+      (async () => {
+        // Create AbortController before web search so it can be used throughout
+        controllerRef.current = new AbortController();
+        isCanceled.current = false;
+
+        // Get the last user message (the one after bot message)
+        const userMessage = messages.length > 1 ? messages[1]?.text : null;
+
+        let webSearchSystemPrompt;
+        let webSearchCitations: Citation[] | undefined;
+        // Execute web search only in text mode with user message
+        if (userMessage && modeRef.current === ChatMode.Text) {
+          try {
+            const webSearchResult = await webSearchOrchestrator.execute(
+              userMessage,
+              bedrockMessages.current,
+              (phase: string) => {
+                setSearchPhase(phase);
+              },
+              undefined,
+              controllerRef.current
+            );
+            if (webSearchResult) {
+              webSearchSystemPrompt = webSearchResult.systemPrompt;
+              webSearchCitations = webSearchResult.citations;
             }
-            const previousMessage = messagesRef.current[0];
-            if (
-              previousMessage.text !== msg ||
-              previousMessage.reasoning !== reasoning ||
-              (!previousMessage.metrics && metrics)
-            ) {
-              setMessages(prevMessages => {
-                const newMessages = [...prevMessages];
-                newMessages[0] = {
-                  ...prevMessages[0],
-                  text:
-                    isCanceled.current &&
-                    (previousMessage.text === textPlaceholder ||
-                      previousMessage.text === '')
-                      ? 'Canceled...'
-                      : msg,
-                  reasoning: reasoning,
-                  metrics: metrics,
-                };
-                return newMessages;
-              });
-            }
-          };
-          const setComplete = () => {
-            trigger(HapticFeedbackTypes.notificationSuccess);
-            setChatStatus(ChatStatus.Complete);
-          };
-          if (modeRef.current === ChatMode.Text) {
-            trigger(HapticFeedbackTypes.selection);
-            updateMessage();
-            if (complete) {
-              setComplete();
-            }
-          } else {
-            if (needStop) {
-              sendEventRef.current('onImageStop');
-            } else {
-              sendEventRef.current('onImageComplete');
-            }
-            setTimeout(() => {
-              updateMessage();
-              setComplete();
-            }, 1000);
-          }
-          if (needStop) {
-            isCanceled.current = true;
+          } catch (error) {
+            // For errors, log and continue without web search
+            console.log('❌ Web search error in ChatScreen:', error);
           }
         }
-      ).then();
+
+        // Check if aborted after web search completes
+        if (isCanceled.current) {
+          setChatStatus(ChatStatus.Init);
+          setSearchPhase('');
+          return;
+        }
+
+        // Clear searchPhase before starting AI response
+        setSearchPhase('');
+        const startRequestTime = new Date().getTime();
+        let latencyMs = 0;
+        let metrics: Metrics | undefined;
+
+        // Prioritize web search system prompt, otherwise use user-selected system prompt
+        const effectiveSystemPrompt =
+          webSearchSystemPrompt || systemPromptRef.current;
+
+        // In App mode, temporarily prepend htmlCode to last user message
+        const currentHtmlCode = getLatestHtmlCode();
+        const lastMsgContent = bedrockMessages.current[
+          bedrockMessages.current.length - 1
+        ]?.content[0] as { text?: string };
+        const originalText = lastMsgContent?.text;
+        if (isAppModeRef.current && currentHtmlCode && originalText) {
+          lastMsgContent.text = `Current app code:\n\`\`\`html\n${currentHtmlCode}\n\`\`\`\n\nUser request: ${originalText}`;
+        }
+
+        invokeBedrockWithCallBack(
+          bedrockMessages.current,
+          modeRef.current,
+          effectiveSystemPrompt,
+          () => isCanceled.current,
+          controllerRef.current,
+          (
+            msg: string,
+            complete: boolean,
+            needStop: boolean,
+            usageInfo?: Usage,
+            reasoning?: string
+          ) => {
+            if (chatStatusRef.current !== ChatStatus.Running) {
+              return;
+            }
+            if (latencyMs === 0) {
+              latencyMs = new Date().getTime() - startRequestTime;
+            }
+            const updateMessage = () => {
+              if (usageInfo) {
+                setUsage(prevUsage => ({
+                  modelName: usageInfo.modelName,
+                  inputTokens:
+                    (prevUsage?.inputTokens || 0) + usageInfo.inputTokens,
+                  outputTokens:
+                    (prevUsage?.outputTokens || 0) + usageInfo.outputTokens,
+                  totalTokens:
+                    (prevUsage?.totalTokens || 0) + usageInfo.totalTokens,
+                }));
+                updateTotalUsage(usageInfo);
+                const renderSec =
+                  (new Date().getTime() - startRequestTime - latencyMs) / 1000;
+                const speed = usageInfo.outputTokens / renderSec;
+                if (!metrics && modeRef.current === ChatMode.Text) {
+                  metrics = {
+                    latencyMs: (latencyMs / 1000).toFixed(2),
+                    speed: speed.toFixed(speed > 100 ? 1 : 2),
+                  };
+                }
+              }
+              const previousMessage = messagesRef.current[0];
+              if (
+                previousMessage.text !== msg ||
+                previousMessage.reasoning !== reasoning ||
+                (!previousMessage.metrics && metrics)
+              ) {
+                setMessages(prevMessages => {
+                  const newMessages = [...prevMessages];
+                  newMessages[0] = {
+                    ...prevMessages[0],
+                    text:
+                      isCanceled.current &&
+                      (previousMessage.text === textPlaceholder ||
+                        previousMessage.text === '')
+                        ? 'Canceled...'
+                        : msg,
+                    reasoning: reasoning,
+                    metrics: metrics,
+                    citations: webSearchCitations,
+                  };
+                  return newMessages;
+                });
+              }
+            };
+            const setComplete = () => {
+              trigger(HapticFeedbackTypes.notificationSuccess);
+              setChatStatus(ChatStatus.Complete);
+            };
+            if (modeRef.current === ChatMode.Text) {
+              trigger(HapticFeedbackTypes.selection);
+              updateMessage();
+              if (complete) {
+                setComplete();
+              }
+            } else {
+              if (needStop) {
+                sendEventRef.current('onImageStop');
+              } else {
+                sendEventRef.current('onImageComplete');
+              }
+              setTimeout(() => {
+                updateMessage();
+                setComplete();
+              }, 1000);
+            }
+            if (needStop) {
+              isCanceled.current = true;
+            }
+          }
+        ).then();
+
+        // Restore original text after sending
+        if (originalText && lastMsgContent) {
+          lastMsgContent.text = originalText;
+        }
+      })(); // Close async IIFE
     }
   }, [messages]);
 
+  // Shared function for regenerate and edit-submit
+  const regenerateFromUserMessage = useCallback(
+    (userMessageIndex: number, newText?: string) => {
+      setUserScrolled(false);
+      trigger(HapticFeedbackTypes.impactMedium);
+
+      // Get all history messages after the user message
+      const historyMessages = messagesRef.current.slice(userMessageIndex + 1);
+
+      // Update latestHtmlCode for app mode (only if found in history)
+      if (isAppModeRef.current) {
+        const foundHtmlCode = findLatestHtmlCode(historyMessages);
+        if (foundHtmlCode) {
+          setLatestHtmlCode(foundHtmlCode);
+        }
+      }
+
+      // Create the user message (updated if newText provided)
+      const userMessage: SwiftChatMessage = newText
+        ? { ...messagesRef.current[userMessageIndex], text: newText }
+        : messagesRef.current[userMessageIndex];
+
+      getBedrockMessagesFromChatMessages([
+        userMessage,
+        ...historyMessages,
+      ]).then(historyBedrockMessages => {
+        bedrockMessages.current = historyBedrockMessages;
+        setChatStatus(ChatStatus.Running);
+        setMessages(_previousMessages => [
+          createBotMessage(modeRef.current),
+          userMessage,
+          ...historyMessages,
+        ]);
+        scrollToBottom();
+      });
+    },
+    []
+  );
+
   // handle onSend
-  const onSend = useCallback((message: SwiftChatMessage[] = []) => {
+  const onSend = useCallback(async (message: SwiftChatMessage[] = []) => {
     // Reset user scroll state when sending a new message
     setUserScrolled(false);
-    setShowSystemPrompt(modeRef.current === ChatMode.Image);
     const files = selectedFilesRef.current;
     if (!isAllFileReady(files)) {
       showInfo('please wait for all videos to be ready');
       return;
     }
+
     if (message[0]?.text || files.length > 0) {
       if (!message[0]?.text) {
         if (modeRef.current === ChatMode.Text) {
@@ -692,12 +927,14 @@ function ChatScreen(): React.JSX.Element {
             systemPromptRef.current?.prompt + '\n' + message[0].text;
         }
       }
+
       if (selectedFilesRef.current.length > 0) {
         message[0].image = JSON.stringify(selectedFilesRef.current);
         setSelectedFiles([]);
       }
       trigger(HapticFeedbackTypes.impactMedium);
       scrollToBottom();
+
       getBedrockMessage(message[0]).then(currentMsg => {
         bedrockMessages.current.push(currentMsg);
         setChatStatus(ChatStatus.Running);
@@ -758,7 +995,7 @@ function ChatScreen(): React.JSX.Element {
     }
   };
 
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isNovaSonic);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -770,8 +1007,8 @@ function ChatScreen(): React.JSX.Element {
           Platform.OS === 'android'
             ? 0
             : screenHeight > screenWidth && screenWidth < 500
-            ? 32 // iphone in portrait
-            : 20
+            ? 24 // iphone in portrait
+            : 12
         }
         messages={messages}
         onSend={onSend}
@@ -857,6 +1094,20 @@ function ChatScreen(): React.JSX.Element {
             onSystemPromptUpdated={prompt => {
               const lastPromptIsVirtualTryOn = systemPrompt?.id === -7;
               setSystemPrompt(prompt);
+
+              // Update App mode state
+              const isAppMode = prompt?.name === APP_PROMPT_NAME;
+              isAppModeRef.current = isAppMode;
+              if (isAppMode) {
+                // Restore htmlCode from latest AI message when switching to App mode
+                // Only update if not already set (e.g., from history load)
+                if (!getLatestHtmlCode()) {
+                  setLatestHtmlCode(findLatestHtmlCode(messages));
+                }
+              } else {
+                clearLatestHtmlCode();
+              }
+
               if (modeRef.current === ChatMode.Image) {
                 saveCurrentImageSystemPrompt(prompt);
                 if (prompt?.id === -7) {
@@ -865,7 +1116,6 @@ function ChatScreen(): React.JSX.Element {
                     setSelectedFiles([lastVirtualTryOnImgFile]);
                   }
                 } else {
-                  //clear virtual try on image when prompt changes
                   if (selectedFiles.length > 0 && lastPromptIsVirtualTryOn) {
                     setSelectedFiles([]);
                   }
@@ -883,7 +1133,6 @@ function ChatScreen(): React.JSX.Element {
               endVoiceConversationRef.current?.();
             }}
             chatMode={modeRef.current}
-            isShowSystemPrompt={showSystemPrompt}
             hasInputText={hasInputText}
             chatStatus={chatStatus}
             systemPrompt={systemPrompt}
@@ -895,35 +1144,21 @@ function ChatScreen(): React.JSX.Element {
             msg => msg._id === props.currentMessage?._id
           );
 
+          const isLastAIMessage =
+            props.currentMessage?._id === messages[0]?._id &&
+            props.currentMessage?.user._id !== 1;
+
           return (
             <CustomMessageComponent
               {...props}
               chatStatus={chatStatus}
-              isLastAIMessage={
-                props.currentMessage?._id === messages[0]?._id &&
-                props.currentMessage?.user._id !== 1
-              }
-              onReasoningToggle={(expanded, height, animated) => {
-                scrollUpByHeight(expanded, height, animated);
-              }}
-              onRegenerate={() => {
-                setUserScrolled(false);
-                trigger(HapticFeedbackTypes.impactMedium);
-                const userMessageIndex = messageIndex + 1;
-                if (userMessageIndex < messages.length) {
-                  // Reset bedrockMessages to only include the user's message
-                  getBedrockMessage(messages[userMessageIndex]).then(
-                    userMsg => {
-                      bedrockMessages.current = [userMsg];
-                      setChatStatus(ChatStatus.Running);
-                      setMessages(previousMessages => [
-                        createBotMessage(modeRef.current),
-                        ...previousMessages.slice(userMessageIndex),
-                      ]);
-                    }
-                  );
-                }
-              }}
+              isLastAIMessage={isLastAIMessage}
+              searchPhase={isLastAIMessage ? searchPhase : ''}
+              onReasoningToggle={handleReasoningToggle}
+              messageIndex={messageIndex}
+              regenerateFromUserMessage={regenerateFromUserMessage}
+              flatListRef={flatListRef}
+              isAppMode={isAppModeRef.current}
             />
           );
         }}
@@ -956,10 +1191,8 @@ function ChatScreen(): React.JSX.Element {
         renderInputToolbar={props => (
           <InputToolbar
             {...props}
-            containerStyle={{
-              backgroundColor: colors.background,
-              borderTopColor: colors.chatScreenSplit,
-            }}
+            containerStyle={styles.inputToolbarContainer}
+            primaryStyle={styles.inputToolbarPrimary}
           />
         )}
         textInputProps={{
@@ -967,6 +1200,8 @@ function ChatScreen(): React.JSX.Element {
           ...{
             fontWeight: isMac ? '300' : 'normal',
             color: colors.text,
+            smartInsertDelete: false,
+            spellCheck: false,
             blurOnSubmit: isMac,
             onSubmitEditing: () => {
               if (
@@ -1020,7 +1255,7 @@ function ChatScreen(): React.JSX.Element {
   );
 }
 
-const createStyles = (colors: ColorScheme) =>
+const createStyles = (colors: ColorScheme, isNovaSonic: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -1033,12 +1268,24 @@ const createStyles = (colors: ColorScheme) =>
       justifyContent: 'flex-end',
     },
     textInputStyle: {
-      marginLeft: 14,
+      marginLeft: 10,
       lineHeight: 22,
     },
     composerTextInput: {
-      backgroundColor: colors.background,
+      backgroundColor: 'transparent',
       color: colors.text,
+    },
+    inputToolbarContainer: {
+      backgroundColor: colors.background,
+      borderTopWidth: 0,
+      paddingHorizontal: 10,
+      paddingTop: 0,
+      paddingBottom: isMac ? 10 : Platform.OS === 'android' ? 8 : 2,
+    },
+    inputToolbarPrimary: {
+      backgroundColor: isNovaSonic ? 'transparent' : colors.chatInputBackground,
+      borderRadius: 12,
+      paddingHorizontal: 0,
     },
   });
 

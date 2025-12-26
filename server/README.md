@@ -1,8 +1,8 @@
 ## SwiftChat Backend API
 
 The SwiftChat backend API is implemented using Python language and the FastAPI framework. It is packaged as a Docker
-image using [aws-lambda-adapter](https://github.com/awslabs/aws-lambda-web-adapter) and deployed to AWS App Runner or
-AWS Lambda for execution.
+image using [aws-lambda-adapter](https://github.com/awslabs/aws-lambda-web-adapter) and deployed to API Gateway with
+AWS Lambda for execution, supporting streaming responses for up to 15 minutes.
 
 ## API Reference
 

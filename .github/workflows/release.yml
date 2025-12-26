@@ -11,7 +11,7 @@ on:
         required: true
         type: string
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 env:
   NEW_VERSION: ${{ github.event.inputs.release_tag }}

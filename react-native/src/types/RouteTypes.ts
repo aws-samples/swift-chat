@@ -1,10 +1,25 @@
-import { ChatMode, SystemPrompt } from './Chat.ts';
+import { ChatMode, SavedApp, SystemPrompt } from './Chat.ts';
+import { NavigatorScreenParams } from '@react-navigation/native';
 
-export type RouteParamList = {
+// Drawer Navigator params (nested inside Stack)
+export type DrawerParamList = {
   Bedrock: {
     sessionId?: number;
     tapIndex?: number;
     mode?: ChatMode;
+  };
+  Settings: NonNullable<unknown>;
+};
+
+// Stack Navigator params (root)
+export type RouteParamList = {
+  Drawer: NavigatorScreenParams<DrawerParamList>;
+  Bedrock: {
+    sessionId?: number;
+    tapIndex?: number;
+    mode?: ChatMode;
+    editAppCode?: string;
+    editAppName?: string;
   };
   Settings: NonNullable<unknown>;
   TokenUsage: NonNullable<unknown>;
@@ -12,4 +27,10 @@ export type RouteParamList = {
     prompt?: SystemPrompt;
     promptType?: string | undefined;
   };
+  AppGallery: NonNullable<unknown>;
+  AppViewer: {
+    app: SavedApp;
+  };
+  CreateApp: NonNullable<unknown>;
+  ImageGallery: NonNullable<unknown>;
 };

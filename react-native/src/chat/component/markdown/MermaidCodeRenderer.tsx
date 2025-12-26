@@ -10,7 +10,7 @@ import React, {
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ColorScheme } from '../../../theme';
 import MermaidRenderer from './MermaidRenderer';
-import { CopyButton } from './CustomMarkdownRenderer';
+import CopyButton from './CopyButton';
 import { vs2015, github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Platform } from 'react-native';
 import { useAppContext } from '../../../history/AppProvider.tsx';
@@ -23,7 +23,6 @@ interface MermaidCodeRendererProps {
   text: string;
   colors: ColorScheme;
   isDark: boolean;
-  onCopy: () => void;
 }
 
 interface MermaidCodeRendererRef {
@@ -37,7 +36,7 @@ interface MermaidRendererRef {
 const MermaidCodeRenderer = forwardRef<
   MermaidCodeRendererRef,
   MermaidCodeRendererProps
->(({ text, colors, isDark, onCopy }, ref) => {
+>(({ text, colors, isDark }, ref) => {
   const [showCode, setShowCode] = useState(false);
   const [showNewMermaid, setShowNewMermaid] = useState(false);
   const [currentText, setCurrentText] = useState(text);
@@ -104,14 +103,13 @@ const MermaidCodeRenderer = forwardRef<
             </TouchableOpacity>
           </View>
         </View>
-        <CopyButton onCopy={onCopy} colors={colors} isDark={isDark} />
+        <CopyButton content={currentText} />
       </View>
 
       {showCode ? (
         <Suspense fallback={<Text style={styles.loading}>Loading...</Text>}>
           <CustomCodeHighlighter
             hljsStyle={hljsStyle}
-            key={`code-${currentText.length}`}
             scrollViewProps={{
               contentContainerStyle: {
                 padding: 12,

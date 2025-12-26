@@ -25,6 +25,7 @@ import SyntaxHighlighter, {
 import transform, { StyleTuple } from 'css-to-react-native';
 import { isMac } from '../../../App.tsx';
 import { trimNewlines } from 'trim-newlines';
+import ChunkedCodeView from './ChunkedCodeView';
 
 type ReactStyle = Record<string, CSSProperties>;
 type HighlighterStyleSheet = { [key: string]: TextStyle };
@@ -37,6 +38,8 @@ export interface CodeHighlighterProps extends SyntaxHighlighterProps {
    * @deprecated Use scrollViewProps.contentContainerStyle instead
    */
   containerStyle?: StyleProp<ViewStyle>;
+  /** Whether the content streaming is completed */
+  isCompleted?: boolean;
 }
 
 const getRNStylesFromHljsStyle = (
@@ -82,12 +85,15 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   hljsStyle,
   scrollViewProps,
   containerStyle,
+  isCompleted,
   ...rest
 }) => {
   const stylesheet: HighlighterStyleSheet = useMemo(
     () => getRNStylesFromHljsStyle(hljsStyle),
     [hljsStyle]
   );
+
+  const childrenString = String(children);
 
   const getStylesForNode = useCallback(
     (node: rendererNode): TextStyle[] => {
@@ -99,13 +105,13 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
     [stylesheet]
   );
 
-  // Calculate base text style once
+  // Calculate base text style once - used for both PlainTextCodeView and highlighted view
   const baseTextStyle = useMemo(
     () => [textStyle, { color: stylesheet.hljs?.color }],
     [textStyle, stylesheet.hljs?.color]
   );
 
-  // Cache of previously processed nodes
+  // Cache of previously processed nodes (must be before conditional return for hooks rules)
   const processedNodesCache = useRef<ReactNode[][]>([]);
   const prevNodesLength = useRef<number>(0);
 
@@ -159,7 +165,16 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
   const renderNode = useCallback(
     (nodes: rendererNode[]): ReactNode => {
       // Calculate margin bottom value once
-      const scale = rest.language === 'mermaid' ? 1.75 : isMac ? 3 : 2.75;
+      const scale =
+        rest.language === 'mermaid'
+          ? 1.75
+          : rest.language === 'html' || rest.language === 'diff'
+          ? isMac
+            ? 2
+            : 1.85
+          : isMac
+          ? 3
+          : 2.82;
       const marginBottomValue = -nodes.length * scale;
 
       // Optimization for streaming content - only process new nodes
@@ -209,13 +224,13 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
       nodes.reduce<ReactNode[]>((acc, node, index) => {
         const keyPrefixWithIndex = `${keyPrefix}_${index}`;
         if (node.children) {
-          const styles = StyleSheet.flatten([
+          const nodeStyles = StyleSheet.flatten([
             textStyle,
             { color: stylesheet.hljs?.color },
             getStylesForNode(node),
           ]);
           acc.push(
-            <Text style={styles} key={keyPrefixWithIndex}>
+            <Text style={nodeStyles} key={keyPrefixWithIndex}>
               {renderAndroidNode(node.children, `${keyPrefixWithIndex}_child`)}
             </Text>
           );
@@ -250,6 +265,25 @@ export const CustomCodeHighlighter: FunctionComponent<CodeHighlighterProps> = ({
     },
     [stylesheet, scrollViewProps, containerStyle, renderNode, renderAndroidNode]
   );
+
+  // Determine if we should show highlighting
+  // HTML never gets highlighted; for others, use isCompleted prop
+  const isHtml = rest.language === 'html';
+  const shouldHighlight = isHtml ? false : isCompleted;
+
+  // During streaming, render chunked plain text for performance
+  if (!shouldHighlight) {
+    return (
+      <ChunkedCodeView
+        code={childrenString}
+        textStyle={baseTextStyle}
+        backgroundColor={stylesheet.hljs?.backgroundColor as string}
+        scrollViewProps={scrollViewProps}
+        containerStyle={containerStyle}
+        isCompleted={isCompleted}
+      />
+    );
+  }
 
   return (
     <SyntaxHighlighter

@@ -8,7 +8,7 @@ def get_native_request_with_ref_image(client, prompt, ref_images, width, height)
     result = get_analyse_result(client, prompt, get_prompt())
     try:
         result_objet = json.loads(result)
-        seed = random.randint(0, 2147483647)
+        seed = random.randint(0, 2147483647)  # nosec B311
         if result_objet['target_task_type'] == 'BACKGROUND_REMOVAL':
             return {
                 "taskType": "BACKGROUND_REMOVAL",
@@ -118,7 +118,7 @@ def get_analyse_result(client, prompt, global_prompt, image=None):
 def get_native_request_with_virtual_try_on(client, prompt, ref_images, width, height):
     garment_image = ref_images[1]['source']['bytes']
     garment_class = get_garment_class(client, prompt, garment_image)
-    seed = random.randint(0, 2147483647)
+    seed = random.randint(0, 2147483647)  # nosec B311
 
     return {
         "taskType": "VIRTUAL_TRY_ON",

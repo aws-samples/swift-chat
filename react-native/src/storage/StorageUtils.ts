@@ -11,6 +11,7 @@ import {
   OpenAICompatConfig,
   ModelTag,
   FileInfo,
+  SavedApp,
 } from '../types/Chat.ts';
 import uuid from 'uuid';
 import {
@@ -75,6 +76,9 @@ const tokenInfoKey = keyPrefix + 'tokenInfo';
 const bedrockConfigModeKey = keyPrefix + 'bedrockConfigModeKey';
 const bedrockApiKeyTag = keyPrefix + 'bedrockApiKeyTag';
 const lastVirtualTryOnImgFileTag = keyPrefix + 'lastVirtualTryOnImgFileTag';
+const searchProviderKey = keyPrefix + 'searchProviderKey';
+const tavilyApiKeyTag = keyPrefix + 'tavilyApiKeyTag';
+const savedAppsKey = keyPrefix + 'savedAppsKey';
 
 let currentApiUrl: string | undefined;
 let currentApiKey: string | undefined;
@@ -91,11 +95,13 @@ let currentSystemPrompts: SystemPrompt[] | undefined;
 let currentOpenAIProxyEnabled: boolean | undefined;
 let currentThinkingEnabled: boolean | undefined;
 let currentReasoningExpanded: boolean | undefined;
+let currentSearchProvider: string | undefined;
 let currentModelOrder: Model[] | undefined;
 let currentBedrockConfigMode: string | undefined;
 let currentBedrockApiKey: string | undefined;
 let currentOpenAICompatibleConfig: OpenAICompatConfig[] | undefined;
 let currentVirtualTryOnImgFile: FileInfo | undefined;
+let currentTavilyApiKey: string | undefined;
 
 export function saveMessages(
   sessionId: number,
@@ -508,6 +514,39 @@ export function getSystemPrompts(type?: string): SystemPrompt[] {
       );
       saveAllSystemPrompts(currentSystemPrompts);
     }
+    if (currentSystemPrompts.some(p => p.id === -3)) {
+      currentSystemPrompts = currentSystemPrompts.filter(p => p.id !== -3);
+      saveAllSystemPrompts(currentSystemPrompts);
+    }
+    // Migration: Add or update App prompt to ensure it's always up-to-date
+    const defaultAppPrompt = getDefaultSystemPrompts().find(
+      p => p.name === 'App'
+    );
+    if (defaultAppPrompt) {
+      const existingApp = currentSystemPrompts.find(p => p.name === 'App');
+      if (existingApp) {
+        // Update existing App prompt with latest content, preserving id
+        if (existingApp.prompt !== defaultAppPrompt.prompt) {
+          currentSystemPrompts = currentSystemPrompts.map(p =>
+            p.name === 'App' ? { ...defaultAppPrompt, id: p.id } : p
+          );
+          saveAllSystemPrompts(currentSystemPrompts);
+        }
+      } else {
+        // No App prompt exists, check for OptimizeCode to replace or add new
+        const hasOptimizeCode = currentSystemPrompts.some(
+          p => p.name === 'OptimizeCode'
+        );
+        if (hasOptimizeCode) {
+          currentSystemPrompts = currentSystemPrompts.map(p =>
+            p.name === 'OptimizeCode' ? { ...defaultAppPrompt, id: p.id } : p
+          );
+        } else {
+          currentSystemPrompts = [...currentSystemPrompts, defaultAppPrompt];
+        }
+        saveAllSystemPrompts(currentSystemPrompts);
+      }
+    }
   } else {
     currentSystemPrompts = getDefaultSystemPrompts();
     saveAllSystemPrompts(currentSystemPrompts);
@@ -704,6 +743,33 @@ export function getLastVirtualTryOnImgFile(): FileInfo | null {
   }
 }
 
+export function saveSearchProvider(provider: string) {
+  currentSearchProvider = provider;
+  storage.set(searchProviderKey, provider);
+}
+
+export function getSearchProvider(): string {
+  if (currentSearchProvider) {
+    return currentSearchProvider;
+  }
+  currentSearchProvider = storage.getString(searchProviderKey) ?? 'disabled';
+  return currentSearchProvider;
+}
+
+export function saveTavilyApiKey(apiKey: string) {
+  currentTavilyApiKey = apiKey;
+  encryptStorage.set(tavilyApiKeyTag, apiKey);
+}
+
+export function getTavilyApiKey(): string {
+  if (currentTavilyApiKey) {
+    return currentTavilyApiKey;
+  } else {
+    currentTavilyApiKey = encryptStorage.getString(tavilyApiKeyTag) ?? '';
+    return currentTavilyApiKey;
+  }
+}
+
 // OpenAI Compatible configurations functions
 export function saveOpenAICompatConfigs(configs: OpenAICompatConfig[]) {
   currentOpenAICompatibleConfig = configs;
@@ -770,6 +836,114 @@ export function extractDomainFromUrl(url: string): string {
   } catch {
     return '';
   }
+}
+
+// Saved Apps functions
+// Store metadata separately from htmlCode to improve performance
+// Metadata list: savedAppsKey -> [{id, name, screenshotPath, createdAt}, ...]
+// HTML code: app_code_{id} -> htmlCode string
+
+export type AppMetadata = Omit<SavedApp, 'htmlCode'>;
+let cachedAppMetadata: AppMetadata[] | undefined;
+
+const getAppCodeKey = (appId: string) => `app_code_${appId}`;
+
+export function saveApp(app: SavedApp): void {
+  const { htmlCode, ...metadata } = app;
+
+  // Save htmlCode separately
+  storage.set(getAppCodeKey(app.id), htmlCode);
+
+  // Save metadata to list
+  const apps = getSavedApps();
+  const existingIndex = apps.findIndex(a => a.id === app.id);
+  if (existingIndex >= 0) {
+    apps[existingIndex] = metadata;
+  } else {
+    apps.unshift(metadata);
+  }
+  cachedAppMetadata = apps;
+  storage.set(savedAppsKey, JSON.stringify(apps));
+}
+
+export function getSavedApps(): AppMetadata[] {
+  if (cachedAppMetadata) {
+    return [...cachedAppMetadata];
+  }
+  const appsString = storage.getString(savedAppsKey) ?? '';
+  if (appsString.length > 0) {
+    cachedAppMetadata = JSON.parse(appsString) as AppMetadata[];
+    return [...cachedAppMetadata];
+  }
+  return [];
+}
+
+export function deleteApp(appId: string): void {
+  // Delete htmlCode
+  storage.delete(getAppCodeKey(appId));
+
+  // Delete from metadata list
+  const apps = getSavedApps().filter(a => a.id !== appId);
+  cachedAppMetadata = apps;
+  storage.set(savedAppsKey, JSON.stringify(apps));
+}
+
+export function getAppById(appId: string): SavedApp | undefined {
+  const metadata = getSavedApps().find(a => a.id === appId);
+  if (!metadata) {
+    return undefined;
+  }
+  // Load htmlCode on demand
+  const htmlCode = storage.getString(getAppCodeKey(appId)) ?? '';
+  return { ...metadata, htmlCode };
+}
+
+export function generateAppId(): string {
+  return uuid.v4();
+}
+
+export function pinApp(appId: string): void {
+  const apps = getSavedApps();
+  const index = apps.findIndex(a => a.id === appId);
+  if (index > 0) {
+    const [app] = apps.splice(index, 1);
+    apps.unshift(app);
+    cachedAppMetadata = apps;
+    storage.set(savedAppsKey, JSON.stringify(apps));
+  }
+}
+
+export function renameApp(appId: string, newName: string): void {
+  const apps = getSavedApps();
+  const app = apps.find(a => a.id === appId);
+  if (app) {
+    app.name = newName;
+    cachedAppMetadata = apps;
+    storage.set(savedAppsKey, JSON.stringify(apps));
+  }
+}
+
+// Clear all chat history and related data
+export function clearAllChatHistory(): void {
+  // Get all message sessions and delete them
+  const chatList = getMessageList();
+  chatList.forEach(chat => {
+    storage.delete(sessionIdPrefix + chat.id);
+  });
+
+  // Clear the message list
+  storage.delete(messageListKey);
+
+  // Clear current session ID
+  storage.delete(currentSessionIdKey);
+
+  // Clear saved apps metadata and their code
+  const apps = getSavedApps();
+  apps.forEach(app => {
+    storage.delete(getAppCodeKey(app.id));
+  });
+  storage.delete(savedAppsKey);
+  cachedAppMetadata = undefined;
 }
 
 // Generate OpenAI Compatible models from configs

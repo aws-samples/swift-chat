@@ -15,18 +15,41 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 ![](assets/promo.avif)
 
 ### 新功能 🔥
-
+- 🚀 支持创建应用，创建、编辑和分享极速 Web 应用（自 v2.7.0 起）。
+- 🚀 支持网络搜索，获取实时信息（自 v2.7.0 起）。
+- 🚀 更新 SwiftChat 服务器，支持 API Gateway + Lambda 部署，最长支持 15 分钟流式输出（自 v2.7.0 起）。
+- 🚀 支持图片画廊，浏览和管理生成的图片（自 v2.7.0 起）。
 - 🚀 支持流式渲染 Mermaid 图表（自 v2.6.0 起）。
-   <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-   <img src="assets/animations/mermaid.avif" width=48%>
-   <img src="assets/animations/mermaid_save.avif" width=48%>
-   </div>
 - 🚀 支持使用 Bedrock API Key 连接 Amazon Bedrock 模型（自 v2.5.0 起）。
-- 🚀 支持虚拟试衣功能，自动识别衣服、裤子、鞋子并试穿（自 v2.5.0 起）。
-- 🚀 支持 macOS 快捷键操作（自 v2.5.0 起）。
-    - 使用 `Shift + Enter`、`Control + Enter` 或 `Option + Enter` 添加换行。
-    - 使用 `⌘ + V` 从剪贴板添加图片（截图）、视频或文档。
-    - 使用 `⌘ + N` 打开多个 Mac 窗口进行并行操作。
+
+**创建应用**：生成、编辑、分享和预览极速 Web 应用
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/create_app.avif" width=24%>
+<img src="assets/animations/edit_and_save.avif" width=24%>
+<img src="assets/animations/gallery_edit_app.avif" width=24%>
+<img src="assets/animations/share_and_import.avif" width=24%>
+</div>
+
+**应用示例**：2048 游戏、五子棋、新闻阅读器和俄罗斯方块
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/app_2048.avif" width=24%>
+<img src="assets/animations/app_gomoku.avif" width=24%>
+<img src="assets/animations/app_news.avif" width=24%>
+<img src="assets/animations/app_tetris.avif" width=24%>
+</div>
+
+**网络搜索 & Mermaid**：实时信息检索和流式图表渲染
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/websearch_tavily.avif" width=24%>
+<img src="assets/animations/websearch_google.avif" width=24%>
+<img src="assets/animations/mermaid.avif" width=24%>
+<img src="assets/animations/mermaid_save.avif" width=24%>
+</div>
+
+> 注意：推荐使用 Tavily 以获得最佳效果。Google 搜索首次使用需要手动验证。百度和必应目前处于测试版本，搜索结果可能不准确。
 
 ## 📱 快速下载
 
@@ -35,10 +58,6 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 - iOS 版本：目前可通过 Xcode 本地构建使用
 
 ## Amazon Bedrock 入门指南
-
-### 前置条件
-
-点击 [Amazon Bedrock 模型访问](https://console.aws.amazon.com/bedrock/home#/modelaccess) 启用您的模型访问权限。
 
 ### 配置
 
@@ -58,14 +77,13 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 <details>
 <summary><b>🔧 配置 SwiftChat 服务器（点击展开）</b></summary>
 
+> **注意**：自 v2.7.0 起，我们建议重新部署 SwiftChat 服务器以获得更好的性能，支持 API Gateway + Lambda 实现最长 15 分钟的流式输出。您之前创建的 API Key 可以复用 - 只需在应用中更新服务器 URL 即可。
+
 ### 架构
 
-![](/assets/architecture.avif)
+![](/assets/architecture.png)
 
-默认情况下，我们使用 **AWS App Runner**，它通常用于托管 Python FastAPI 服务器，提供高性能、可扩展性和低延迟。
-
-或者，我们提供用 **AWS Lambda** 使用 Function URL 替代 App Runner
-的选项，以获得更具成本效益的解决方案，如此 [示例](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming)
+我们提供用 **API Gateway** 与 **AWS Lambda** 结合的方式，实现最长15分钟的流式传输，如此 [示例](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming)
 所示。
 
 ### 步骤 1：设置您的 API 密钥
@@ -100,9 +118,6 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
    - ECR 仓库名称（或使用默认值：`swift-chat-api`）
    - 镜像标签（请使用默认值：`latest`）
    - AWS 区域（填写你希望部署的区域，例如：`us-east-1`）
-   - 部署类型：
-     - 选项 1（默认）：**AppRunner** - 使用 amd64 架构
-     - 选项 2：**Lambda** - 使用 arm64 架构
 
 4. 脚本将构建并推送 Docker 镜像到您的 ECR 仓库。
 
@@ -110,22 +125,19 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 ### 步骤 3：部署堆栈并获取 API URL
 
-1. 下载您想使用的 CloudFormation 模板：
-   - App Runner：[SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template)
+1. 下载 CloudFormation 模板：
    - Lambda：[SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
 
 2. 前往 [CloudFormation 控制台](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI)，在**指定模板**下选择**上传模板文件**，然后上传您下载的模板文件。（确保您所在的区域与创建 API Key 的区域相同。）
 
 3. 点击 **下一步**，在"指定堆栈详细信息"页面，提供以下信息：
-    - **Stack name**：保持默认的 "SwiftChatAPI" 或根据需要更改
     - **ApiKeyParam**：输入您用于存储 API 密钥的参数名称（例如 "SwiftChatAPIKey"）
     - **ContainerImageUri**：输入步骤 2 输出的 ECR 镜像 URI
-    - 对于 App Runner，根据您的需求选择 **InstanceTypeParam**
 
 4. 点击 **下一步**，保持"配置堆栈选项"页面为默认，阅读功能并勾选底部的"我确认 AWS CloudFormation 可能会创建 IAM 资源"复选框。
 5. 点击 **下一步**，在"审核并创建"中检查您的配置并点击 **提交**。
 
-等待约 3-5 分钟完成部署，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到 **API URL**，类似于：`https://xxx.xxx.awsapprunner.com` 或 `https://xxx.lambda-url.xxx.on.aws`
+等待约 3-5 分钟完成部署，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到 **API URL**，类似于：`https://xxx.execute-api.us-east-1.amazonaws.com/v1`
 
 ### 步骤 4：打开应用并使用 API URL 和 API Key 进行设置
 
@@ -245,20 +257,20 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 <img src="assets/animations/video_summary.avif" width=24%>
 </div>
 
-**创意图像套件**：生成、虚拟试衣、风格复制、背景移除，由 Nova Canvas 提供支持
+**创意图像套件**：生成、虚拟试衣、背景移除和图片画廊，由 Nova Canvas 提供支持
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/gen_image.avif" width=24%>
-<img src="assets/animations/virtual_try_on.avif" width=24%>
-<img src="assets/animations/similar_style.avif" width=24%>
+<img src="assets/animations/virtual_try_on_demo.avif" width=24%>
 <img src="assets/animations/remove_background.avif" width=24%>
+<img src="assets/animations/image_gallery.avif" width=24%>
 </div>
 
 **系统提示词助手**：有用的预设系统提示词，具备完整管理功能（添加/编辑/排序/删除）
 
 ![](assets/animations/english_teacher.avif)
 
-**丰富的 Markdown 支持**：段落、代码块、表格、LaTeX 等
+**丰富的 Markdown 支持**：段落、代码块、表格、LaTeX、Mermaid 等
 
 ![](assets/markdown.avif)
 
@@ -341,6 +353,7 @@ https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
 - [x] 支持使用中文提示生成图像（确保在您选择的区域启用了 `Amazon Nova Lite`）
 - [x] 长按图像保存或分享
 - [x] 自动图像压缩以提高响应速度
+- [x] 图片画廊，浏览和管理所有生成的图片
 
 ### 用户体验
 
@@ -441,10 +454,14 @@ npm run ios
 
 ### 升级 API
 
-- **对于 AppRunner**：点击打开 [App Runner 服务](https://console.aws.amazon.com/apprunner/home#/services) 页面，找到并打开
-  `swiftchat-api`，点击右上角 **部署** 按钮。
-- **对于 Lambda**：点击打开 [Lambda 服务](https://console.aws.amazon.com/lambda/home#/functions) 页面，找到并打开以
-  `SwiftChatLambda-xxx` 开头的 Lambda，点击 **部署新镜像** 按钮并点击保存。
+1. 首先重新运行构建脚本以更新镜像：
+   ```bash
+   cd server/scripts
+   bash ./push-to-ecr.sh
+   ```
+
+2. 点击打开 [Lambda 服务](https://console.aws.amazon.com/lambda/home#/functions) 页面，找到并打开以
+   `SwiftChatAPILambda-xxx` 开头的 Lambda，点击 **部署新镜像** 按钮并点击保存。
 
 ## 安全
 

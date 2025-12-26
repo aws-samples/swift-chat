@@ -1,4 +1,10 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useState,
+} from 'react';
 import { EventData } from '../types/Chat.ts';
 
 export type DrawerType = 'permanent' | 'slide';
@@ -22,9 +28,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     params?: EventData;
   } | null>(null);
 
-  const sendEvent = (eventName: string, params?: EventData) => {
+  const sendEvent = useCallback((eventName: string, params?: EventData) => {
     setEvent({ event: eventName, params: params });
-  };
+  }, []);
   const [drawerType, setDrawerType] = useState<DrawerType>('permanent');
 
   return (

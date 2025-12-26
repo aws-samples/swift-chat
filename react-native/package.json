@@ -15,10 +15,14 @@
   },
   "dependencies": {
     "@bwjohns4/react-native-draggable-flatlist": "^4.0.1-patch",
+    "@mozilla/readability": "^0.6.0",
     "@react-native-clipboard/clipboard": "^1.14.1",
     "@react-navigation/drawer": "^7.1.1",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/native-stack": "^7.2.0",
+    "@sayem314/react-native-keep-awake": "^1.4.0",
+    "jsonrepair": "^3.13.1",
+    "linkedom": "^0.18.12",
     "react": "18.2.0",
     "react-native": "0.74.1",
     "react-native-code-highlighter": "^1.2.2",
@@ -47,7 +51,8 @@
     "react-native-svg": "^15.4.0",
     "react-native-toast-message": "^2.2.1",
     "react-native-webview": "^13.16.0",
-    "react-syntax-highlighter": "^15.5.0"
+    "react-syntax-highlighter": "^15.5.0",
+    "turndown": "^7.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
@@ -62,6 +67,7 @@
     "@types/react-native-table-component": "^1.2.8",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/react-test-renderer": "^18.0.0",
+    "@types/turndown": "^5.0.6",
     "@types/uuid": "3.4.0",
     "babel-jest": "^29.6.3",
     "core-js": "^3.37.1",
@@ -77,7 +83,8 @@
     "@react-native-clipboard/clipboard": {
       "react-native": "~0.74.1",
       "react-native-windows": "~0.74.1"
-    }
+    },
+    "prismjs": "^1.30.0"
   },
   "engines": {
     "node": ">=18"

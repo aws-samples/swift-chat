@@ -11,7 +11,6 @@ import re
 from pydantic import BaseModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated
-from urllib.request import urlopen, Request
 import time
 from image_nl_processor import get_native_request_with_ref_image, get_analyse_result, get_native_request_with_virtual_try_on
 import httpx
@@ -19,7 +18,7 @@ import httpx
 app = FastAPI()
 security = HTTPBearer()
 
-auth_token = ''
+auth_token = None
 CACHE_DURATION = 120000
 cache = {
     "latest_version": "",
@@ -70,7 +69,7 @@ class UpgradeRequest(BaseModel):
 
 def get_api_key_from_ssm(use_cache_token: bool):
     global auth_token
-    if use_cache_token and auth_token != '':
+    if use_cache_token and auth_token is not None:
         return auth_token
     ssm_client = boto3.client('ssm')
     api_key_name = os.environ['API_KEY_NAME']
@@ -341,19 +340,16 @@ def get_latest_version() -> str:
     timestamp = int(time.time() * 1000)
     if cache["last_check"] > 0 and timestamp - cache["last_check"] < CACHE_DURATION:
         return cache["latest_version"]
-    req = Request(
-        f"https://api.github.com/repos/aws-samples/swift-chat/tags",
-        headers={
-            'User-Agent': 'Mozilla/5.0'
-        }
-    )
     try:
-        with urlopen(req) as response:
-            content = response.read().decode('utf-8')
-            latest_version = json.loads(content)[0]['name']
-            cache["latest_version"] = latest_version
-            cache["last_check"] = timestamp
-            return json.loads(content)[0]['name']
+        response = httpx.get(
+            "https://api.github.com/repos/aws-samples/swift-chat/tags",
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        content = response.json()
+        latest_version = content[0]['name']
+        cache["latest_version"] = latest_version
+        cache["last_check"] = timestamp
+        return latest_version
     except Exception as error:
         print(f"Error occurred when get github tag: {error}")
     return '0.0.0'
@@ -361,7 +357,7 @@ def get_latest_version() -> str:
 
 def get_image(client, model_id, prompt, ref_image, width, height):
     try:
-        seed = random.randint(0, 2147483647)
+        seed = random.randint(0, 2147483647)  # nosec B311
         native_request = {}
         if model_id.startswith("amazon"):
             if ref_image is None:
@@ -417,4 +413,4 @@ def contains_chinese(text):
 
 if __name__ == "__main__":
     print("Starting webserver...")
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8080")))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8080")))  # nosec B104

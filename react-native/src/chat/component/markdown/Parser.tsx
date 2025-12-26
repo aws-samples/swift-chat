@@ -12,8 +12,19 @@ import { getValidURL } from 'react-native-marked/src/utils/url';
 import { getTableColAlignmentStyle } from 'react-native-marked/src/utils/table';
 import { CustomToken } from 'react-native-marked/src/lib/types.ts';
 
+// Extended renderer interface with isCompleted parameter for code blocks
+interface ExtendedRendererInterface extends RendererInterface {
+  code(
+    text: string,
+    language?: string,
+    containerStyle?: ViewStyle,
+    textStyle?: TextStyle,
+    isCompleted?: boolean
+  ): ReactNode;
+}
+
 class Parser {
-  private renderer: RendererInterface;
+  private renderer: ExtendedRendererInterface;
   private styles: MarkedStyles;
   private readonly headingStylesMap: Record<number, TextStyle | undefined>;
   private readonly baseUrl: string;
@@ -111,11 +122,17 @@ class Parser {
         return this.renderer.heading(children, styles, token.depth);
       }
       case 'code': {
+        // Check if code block is complete (has closing fence)
+        // A complete fenced code block ends with ``` or ~~~
+        const raw = token.raw;
+        const isCompleted =
+          raw.trimEnd().endsWith('```') || raw.trimEnd().endsWith('~~~');
         return this.renderer.code(
           token.text,
           token.lang,
           this.styles.code,
-          this.styles.em
+          this.styles.em,
+          isCompleted
         );
       }
       case 'hr': {

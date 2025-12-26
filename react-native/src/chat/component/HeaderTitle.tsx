@@ -8,16 +8,12 @@ interface HeaderTitleProps {
   title: string;
   usage?: Usage;
   onDoubleTap: () => void;
-  onShowSystemPrompt: () => void;
-  isShowSystemPrompt: boolean;
 }
 
 const HeaderTitle: React.FC<HeaderTitleProps> = ({
   title,
   usage,
   onDoubleTap,
-  onShowSystemPrompt,
-  isShowSystemPrompt,
 }) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -25,11 +21,7 @@ const HeaderTitle: React.FC<HeaderTitleProps> = ({
   const doubleTapRef = useRef();
 
   const handleSingleTap = () => {
-    if (!isShowSystemPrompt && !showUsage) {
-      onShowSystemPrompt();
-    } else {
-      setShowUsage(!showUsage);
-    }
+    setShowUsage(!showUsage);
   };
 
   return (

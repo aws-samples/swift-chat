@@ -23,6 +23,7 @@ export interface ColorScheme {
   selectedBackground: string;
   selectedBackgroundMac: string;
   inputBackground: string;
+  chatInputBackground: string;
   labelBackground: string;
   messageBackground: string;
   reasoningBackground: string;
@@ -47,6 +48,12 @@ export interface ColorScheme {
   fileItemBorder: string;
   addButtonBackground: string;
   chatScreenSplit: string;
+  citationBackground: string;
+  citationText: string;
+  citationListBackground: string;
+  citationBorder: string;
+  citationBadgeBackground: string;
+  citationBadgeText: string;
 }
 
 export const lightColors: ColorScheme = {
@@ -74,6 +81,7 @@ export const lightColors: ColorScheme = {
   selectedBackground: '#F5F5F5',
   selectedBackgroundMac: '#ECECEC',
   inputBackground: '#ffffff',
+  chatInputBackground: '#f2f2f7',
   labelBackground: '#ffffff',
   messageBackground: '#f2f2f2',
   reasoningBackground: '#f3f3f3',
@@ -98,6 +106,12 @@ export const lightColors: ColorScheme = {
   fileItemBorder: '#e0e0e0',
   addButtonBackground: '#f0f0f0',
   chatScreenSplit: '#c7c7c7',
+  citationBackground: '#E3F2FD',
+  citationText: '#1976D2',
+  citationListBackground: '#F5F5F5',
+  citationBorder: '#E0E0E0',
+  citationBadgeBackground: '#E8E8E8',
+  citationBadgeText: '#888888',
 };
 
 export const darkColors: ColorScheme = {
@@ -125,6 +139,7 @@ export const darkColors: ColorScheme = {
   selectedBackground: '#2a2a2a',
   selectedBackgroundMac: '#333333',
   inputBackground: '#000000',
+  chatInputBackground: '#1c1c1e',
   labelBackground: '#000000',
   messageBackground: '#2a2a2a',
   reasoningBackground: '#2a2a2a',
@@ -149,4 +164,10 @@ export const darkColors: ColorScheme = {
   fileItemBorder: '#cccccc',
   addButtonBackground: '#333333',
   chatScreenSplit: '#404040',
+  citationBackground: '#1E3A5F',
+  citationText: '#64B5F6',
+  citationListBackground: '#1E1E1E',
+  citationBorder: '#333333',
+  citationBadgeBackground: '#3A3A3A',
+  citationBadgeText: '#999999',
 };

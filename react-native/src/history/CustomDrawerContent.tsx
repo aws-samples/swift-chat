@@ -165,11 +165,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
               style={styles.settingsTouch}
               onPress={() => {
                 setDrawerToPermanent();
-                navigation.navigate('Bedrock', {
-                  sessionId: -1,
-                  tapIndex: -2,
-                  mode: ChatMode.Image,
-                });
+                navigation.navigate('ImageGallery');
               }}>
               <Image
                 source={
@@ -180,6 +176,22 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = ({
                 style={styles.settingsLeftImg}
               />
               <Text style={styles.settingsText}>Image</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.settingsTouch}
+              onPress={() => {
+                setDrawerToPermanent();
+                navigation.navigate('AppGallery');
+              }}>
+              <Image
+                source={
+                  isDark
+                    ? require('../assets/app_dark.png')
+                    : require('../assets/app.png')
+                }
+                style={styles.appLeftImg}
+              />
+              <Text style={styles.settingsText}>App</Text>
             </TouchableOpacity>
           </View>
         }
@@ -296,10 +308,9 @@ const createStyles = (colors: ColorScheme) =>
       height: 24,
       borderRadius: 12,
     },
-    settingsRightImg: {
-      width: 16,
-      height: 16,
-      marginRight: 8,
+    appLeftImg: {
+      width: 24,
+      height: 24,
     },
     flatList: {
       marginVertical: 4,

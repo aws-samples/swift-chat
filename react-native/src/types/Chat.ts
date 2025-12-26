@@ -1,6 +1,13 @@
 import { IMessage } from 'react-native-gifted-chat';
 import { User } from 'react-native-gifted-chat/lib/Models';
 
+export interface Citation {
+  number: number; // 引用编号 [1], [2], [3]...
+  title: string; // 链接标题
+  url: string; // 链接地址
+  excerpt?: string; // 简介/摘要
+}
+
 export type Chat = {
   id: number;
   title: string;
@@ -17,6 +24,15 @@ export enum ChatStatus {
 export interface EventData {
   id?: number;
   prompt?: SystemPrompt;
+  // WebView search events
+  url?: string;
+  script?: string;
+  data?: string;
+  error?: string;
+  code?: number;
+  // App mode events
+  htmlCode?: string;
+  diffCode?: string;
 }
 
 export type Model = {
@@ -123,6 +139,10 @@ export interface SwiftChatMessage extends IMessage {
   reasoning?: string;
   user: SwiftChatUser;
   metrics?: Metrics;
+  citations?: Citation[];
+  htmlCode?: string;
+  diffCode?: string;
+  isLastHtml?: boolean;
 }
 
 interface SwiftChatUser extends User {
@@ -177,4 +197,12 @@ export type TokenResponse = {
 export interface Metrics {
   latencyMs: string;
   speed: string;
+}
+
+export interface SavedApp {
+  id: string;
+  name: string;
+  htmlCode: string;
+  screenshotPath?: string;
+  createdAt: number;
 }

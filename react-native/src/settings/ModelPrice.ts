@@ -114,6 +114,18 @@ export const ModelPrice: ModelPriceType = {
       inputTokenPrice: 0.00015,
       outputTokenPrice: 0.0006,
     },
+    'gpt-oss-20b': {
+      inputTokenPrice: 0.00007,
+      outputTokenPrice: 0.0003,
+    },
+    'gpt-oss-120b': {
+      inputTokenPrice: 0.00015,
+      outputTokenPrice: 0.0006,
+    },
+    'Minimax M2': {
+      inputTokenPrice: 0.0003,
+      outputTokenPrice: 0.0012,
+    },
     'Titan Text G1 - Lite': {
       inputTokenPrice: 0.00015,
       outputTokenPrice: 0.0002,
@@ -133,6 +145,10 @@ export const ModelPrice: ModelPriceType = {
     'Nova Lite': {
       inputTokenPrice: 0.00006,
       outputTokenPrice: 0.00024,
+    },
+    'Nova 2 Lite': {
+      inputTokenPrice: 0.0003,
+      outputTokenPrice: 0.0025,
     },
     'Nova Micro': {
       inputTokenPrice: 0.000035,
@@ -173,6 +189,22 @@ export const ModelPrice: ModelPriceType = {
     'Claude 3.7 Sonnet': {
       inputTokenPrice: 0.003,
       outputTokenPrice: 0.015,
+    },
+    'Claude Sonnet 4': {
+      inputTokenPrice: 0.003,
+      outputTokenPrice: 0.015,
+    },
+    'Claude Sonnet 4.5': {
+      inputTokenPrice: 0.003,
+      outputTokenPrice: 0.015,
+    },
+    'Claude Opus 4.5': {
+      inputTokenPrice: 0.005,
+      outputTokenPrice: 0.025,
+    },
+    'Claude Haiku 4.5': {
+      inputTokenPrice: 0.001,
+      outputTokenPrice: 0.005,
     },
     Command: {
       inputTokenPrice: 0.0015,

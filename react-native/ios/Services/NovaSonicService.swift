@@ -21,7 +21,7 @@ enum NovaSonicError: Error {
     case microphoneError(String)
 }
 
-class NovaSonicService {
+final class NovaSonicService: @unchecked Sendable {
     // AWS Configuration
     private var client: BedrockRuntimeClient?
     private var region: String
@@ -29,7 +29,7 @@ class NovaSonicService {
     private var secretKey: String
     private var sessionToken: String?
     private var apiKey: String?
-    private var modelId: String = "amazon.nova-sonic-v1:0"
+    private var modelId: String = "amazon.nova-2-sonic-v1:0"
     
     // Stream state
     private var isActive: Bool = false

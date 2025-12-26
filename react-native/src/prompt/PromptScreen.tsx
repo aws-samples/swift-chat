@@ -27,7 +27,7 @@ const MAX_NAME_LENGTH = 20;
 function PromptScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<PromptScreenRouteProp>();
-  const isNovaSonic = getTextModel().modelId.includes('nova-sonic');
+  const isNovaSonic = getTextModel().modelId.includes('sonic');
   const isAddMode = route.params.prompt === undefined;
   const promptType = route.params.promptType;
   const { colors, isDark } = useTheme();

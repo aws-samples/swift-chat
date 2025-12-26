@@ -324,18 +324,40 @@ const MermaidFullScreenViewer: React.FC<MermaidFullScreenViewerProps> = ({
             ''
           );
           const fileName = `mermaid_diagram_${Date.now()}.png`;
-          let filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
-          await RNFS.writeFile(filePath, base64Data, 'base64');
-          if (Platform.OS === 'android') {
-            filePath = 'file://' + filePath;
+          // On Mac, save directly to Downloads folder
+          if (isMac) {
+            try {
+              const downloadsPath = RNFS.DocumentDirectoryPath.replace(
+                '/Documents',
+                '/Downloads'
+              );
+              const filePath = `${downloadsPath}/${fileName}`;
+              await RNFS.writeFile(filePath, base64Data, 'base64');
+              Alert.alert(
+                'Success',
+                `Image saved to Downloads folder:\n${fileName}`
+              );
+            } catch (error) {
+              console.log('[MermaidFullScreenViewer] Save error:', error);
+              Alert.alert('Error', 'Failed to save image to Downloads folder');
+            }
+          } else {
+            // On mobile platforms, use share sheet
+            let filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+            await RNFS.writeFile(filePath, base64Data, 'base64');
+
+            if (Platform.OS === 'android') {
+              filePath = 'file://' + filePath;
+            }
+
+            const shareOptions = {
+              url: filePath,
+              type: 'image/png',
+              title: 'Save Mermaid Diagram',
+            };
+            await Share.open(shareOptions);
           }
-          const shareOptions = {
-            url: filePath,
-            type: 'image/png',
-            title: 'Save Mermaid Diagram',
-          };
-          await Share.open(shareOptions);
         } else if (message.type === 'capture_error') {
           Alert.alert('Error', `Failed to capture image: ${message.message}`);
         } else if (message.type === 'rendered') {

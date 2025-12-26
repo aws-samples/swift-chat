@@ -15,10 +15,15 @@ import Toast from 'react-native-toast-message';
 import TokenUsageScreen from './settings/TokenUsageScreen.tsx';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PromptScreen from './prompt/PromptScreen.tsx';
+import AppGalleryScreen from './app/AppGalleryScreen.tsx';
+import AppViewerScreen from './app/AppViewerScreen.tsx';
+import CreateAppScreen from './app/CreateAppScreen.tsx';
+import ImageGalleryScreen from './image/ImageGalleryScreen.tsx';
 import { isAndroid, isMacCatalyst } from './utils/PlatformUtils';
 import { ThemeProvider, useTheme } from './theme';
 import { configureErrorHandling } from './utils/ErrorUtils';
 import { migrateOpenAICompatConfig } from './storage/StorageUtils.ts';
+import { SearchWebView } from './websearch/components/SearchWebView';
 
 export const isMac = isMacCatalyst;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -59,6 +64,8 @@ const DrawerNavigator = () => {
       drawerContent={renderCustomDrawerContent}>
       <Drawer.Screen name="Bedrock" component={ChatScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="ImageGallery" component={ImageGalleryScreen} />
+      <Drawer.Screen name="AppGallery" component={AppGalleryScreen} />
     </Drawer.Navigator>
   );
 };
@@ -99,6 +106,37 @@ const AppNavigator = () => {
           headerTintColor: colors.text,
         }}
       />
+      <Stack.Screen
+        name="AppViewer"
+        component={AppViewerScreen}
+        options={({ route }) => {
+          const params = route.params as RouteParamList['AppViewer'];
+          return {
+            title: params?.app?.name ?? 'App',
+            contentStyle: {
+              height: isMac ? 66 : undefined,
+              backgroundColor: '#000000',
+            },
+            headerTitleAlign: 'center',
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+          };
+        }}
+      />
+      <Stack.Screen
+        name="CreateApp"
+        component={CreateAppScreen}
+        options={{
+          title: 'Create App',
+          contentStyle: {
+            height: isMac ? 66 : undefined,
+            backgroundColor: colors.background,
+          },
+          headerTitleAlign: 'center',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+        }}
+      />
     </Stack.Navigator>
   );
 };
@@ -117,6 +155,9 @@ const AppWithTheme = () => {
         }}>
         <AppNavigator />
       </NavigationContainer>
+
+      {/* WebView用于web search */}
+      <SearchWebView />
     </>
   );
 };

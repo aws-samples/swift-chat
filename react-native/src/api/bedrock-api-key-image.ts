@@ -319,7 +319,7 @@ async function invokeBedrockModel(
     }
     return '';
   } catch (error) {
-    console.log(`Error invoking model ${modelId}:`, error);
+    console.log('Error invoking model:', modelId, error);
     throw error;
   }
 }

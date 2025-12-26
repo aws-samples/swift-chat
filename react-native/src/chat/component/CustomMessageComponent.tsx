@@ -4,9 +4,11 @@ import React, {
   useMemo,
   useRef,
   useState,
+  RefObject,
 } from 'react';
 import {
   Dimensions,
+  FlatList,
   Image,
   NativeSyntheticEvent,
   Platform,
@@ -43,16 +45,24 @@ import {
   getReasoningExpanded,
   saveReasoningExpanded,
 } from '../../storage/StorageUtils.ts';
+import CitationList from './CitationList';
 
 interface CustomMessageProps extends MessageProps<SwiftChatMessage> {
   chatStatus: ChatStatus;
   isLastAIMessage?: boolean;
-  onRegenerate?: () => void;
+  searchPhase?: string;
   onReasoningToggle?: (
     expanded: boolean,
     height: number,
     animated: boolean
   ) => void;
+  messageIndex?: number;
+  regenerateFromUserMessage?: (
+    userMessageIndex: number,
+    newText?: string
+  ) => void;
+  flatListRef?: RefObject<FlatList<SwiftChatMessage>>;
+  isAppMode?: boolean;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -61,8 +71,12 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   currentMessage,
   chatStatus,
   isLastAIMessage,
-  onRegenerate,
+  searchPhase,
   onReasoningToggle,
+  messageIndex,
+  regenerateFromUserMessage,
+  flatListRef,
+  isAppMode,
 }) => {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -74,6 +88,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   const reasoningContainerRef = useRef<View>(null);
   const reasoningContainerHeightRef = useRef<number>(0);
   const [isEdit, setIsEdit] = useState(false);
+  const [editText, setEditText] = useState(currentMessage?.text || '');
 
   const [inputHeight, setInputHeight] = useState(0);
   const chatStatusRef = useRef(chatStatus);
@@ -86,6 +101,8 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     (currentMessage?.text === '...' || currentMessage?.text === '');
   const [forceShowButtons, setForceShowButtons] = useState(false);
   const isUser = useRef(currentMessage?.user?._id === 1);
+  // Force re-render key for Android citation badge layout fix
+  const [citationRenderKey, setCitationRenderKey] = useState(0);
   const { drawerType } = useAppContext();
   const chatScreenWidth =
     isMac && drawerType === 'permanent' ? screenWidth - 300 : screenWidth;
@@ -94,17 +111,76 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     (value: boolean) => {
       if (chatStatus !== ChatStatus.Running) {
         setIsEdit(value);
-        if (!value) {
+        if (value) {
+          // Reset editText when entering edit mode
+          setEditText(currentMessage?.text || '');
+          // Scroll to make the editing message visible above keyboard
+          if (
+            flatListRef?.current &&
+            messageIndex !== undefined &&
+            messageIndex >= 0
+          ) {
+            setTimeout(() => {
+              flatListRef.current?.scrollToIndex({
+                index: messageIndex,
+                animated: true,
+                viewPosition: 0,
+              });
+            }, 500);
+          }
+        } else {
           setInputTextSelection(undefined);
         }
       }
     },
-    [chatStatus]
+    [chatStatus, currentMessage?.text, flatListRef, messageIndex]
   );
 
-  // Use useEffect with setTimeout to ensure selection happens after TextInput is fully rendered
+  const handleLongPressEdit = useCallback(() => {
+    if (isUser.current && chatStatus !== ChatStatus.Running) {
+      trigger(HapticFeedbackTypes.impactMedium);
+      setIsEditValue(true);
+    }
+  }, [chatStatus, setIsEditValue]);
+
+  const handleEditSubmit = useCallback(() => {
+    if (editText.trim() && editText.trim() !== currentMessage?.text?.trim()) {
+      // For user message: messageIndex is the user message position
+      if (messageIndex !== undefined) {
+        regenerateFromUserMessage?.(messageIndex, editText.trim());
+      }
+      setIsEdit(false);
+      setInputTextSelection(undefined);
+    } else {
+      // If text unchanged, just exit edit mode
+      setIsEdit(false);
+      setInputTextSelection(undefined);
+    }
+  }, [editText, currentMessage?.text, messageIndex, regenerateFromUserMessage]);
+
+  const handleEditCancel = useCallback(() => {
+    setIsEdit(false);
+    setEditText(currentMessage?.text || '');
+    setInputTextSelection(undefined);
+  }, [currentMessage?.text]);
+
+  const handleRegenerate = useCallback(() => {
+    // For AI message: userMessageIndex = messageIndex + 1
+    if (messageIndex !== undefined) {
+      const userMessageIndex = messageIndex + 1;
+      regenerateFromUserMessage?.(userMessageIndex);
+    }
+  }, [messageIndex, regenerateFromUserMessage]);
+
+  // Focus TextInput and move cursor to end when entering edit mode
   useEffect(() => {
-    if (!isAndroid && isEdit && currentMessage?.text) {
+    if (isEdit && isUser.current) {
+      const timer = setTimeout(() => {
+        textInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    } else if (!isAndroid && isEdit && currentMessage?.text) {
+      // For non-user messages on iOS/Mac, select all text
       const timer = setTimeout(() => {
         textInputRef.current?.focus();
         setInputTextSelection({
@@ -199,8 +275,29 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
   }, []);
 
   const customMarkdownRenderer = useMemo(
-    () => new CustomMarkdownRenderer(handleImagePress, colors, isDark),
-    [handleImagePress, colors, isDark]
+    () =>
+      new CustomMarkdownRenderer(
+        handleImagePress,
+        colors,
+        isDark,
+        currentMessage?.citations || [],
+        onReasoningToggle,
+        currentMessage?.htmlCode,
+        currentMessage?.diffCode,
+        isAppMode,
+        currentMessage?.isLastHtml
+      ),
+    [
+      handleImagePress,
+      colors,
+      isDark,
+      currentMessage?.citations,
+      onReasoningToggle,
+      currentMessage?.htmlCode,
+      currentMessage?.diffCode,
+      isAppMode,
+      currentMessage?.isLastHtml,
+    ]
   );
 
   const customTokenizer = useMemo(() => new CustomTokenizer(), []);
@@ -370,6 +467,25 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     }
   }, [handleReasoningCopy, reasoningCopied]);
 
+  // Android: Force re-render citation badges after streaming completes
+  // to fix inline layout issues that occur during streaming
+  useEffect(() => {
+    if (
+      isAndroid &&
+      chatStatus !== ChatStatus.Running &&
+      chatStatusRef.current === ChatStatus.Running &&
+      currentMessage?.citations &&
+      currentMessage.citations.length > 0
+    ) {
+      // Delay slightly to ensure the streaming has fully stopped
+      const timer = setTimeout(() => {
+        setCitationRenderKey(prev => prev + 1);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    chatStatusRef.current = chatStatus;
+  }, [chatStatus, currentMessage?.citations]);
+
   const messageContent = useMemo(() => {
     if (!currentMessage) {
       return null;
@@ -378,6 +494,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     if (!isUser.current) {
       return (
         <Markdown
+          key={citationRenderKey}
           value={currentMessage.text}
           styles={customMarkedStyles}
           renderer={customMarkdownRenderer}
@@ -388,21 +505,28 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     }
 
     return (
-      <Text
+      <TouchableOpacity
+        activeOpacity={0.8}
+        delayLongPress={300}
+        onLongPress={handleLongPressEdit}
         style={{
-          ...styles.questionText,
-          ...{ maxWidth: (chatScreenWidth * 3) / 4 },
-        }}
-        selectable>
-        {currentMessage.text}
-      </Text>
+          ...styles.questionContainer,
+          maxWidth: (chatScreenWidth * 3) / 4,
+        }}>
+        <Text style={styles.questionText} selectable>
+          {currentMessage.text}
+        </Text>
+      </TouchableOpacity>
     );
   }, [
     currentMessage,
     customMarkdownRenderer,
     customTokenizer,
     chatScreenWidth,
+    styles.questionContainer,
     styles.questionText,
+    citationRenderKey,
+    handleLongPressEdit,
   ]);
 
   const messageActionButtons = useMemo(() => {
@@ -451,7 +575,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
 
           {showRefresh && (
             <TouchableOpacity
-              onPress={onRegenerate}
+              onPress={handleRegenerate}
               style={styles.actionButton}>
               <Image
                 source={require('../../assets/refresh.png')}
@@ -470,7 +594,7 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
     handleCopy,
     copied,
     isEdit,
-    onRegenerate,
+    handleRegenerate,
     setIsEditValue,
     showRefresh,
     currentMessage?.metrics,
@@ -499,12 +623,15 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
       <View style={styles.marked_box}>
         {hasReasoning && reasoningSection}
         {showLoading && (
-          <View style={styles.loading}>
+          <View style={styles.loadingContainer}>
             <ImageSpinner
               visible={true}
               size={18}
               source={require('../../assets/loading.png')}
             />
+            {searchPhase && (
+              <Text style={styles.searchPhaseText}>{searchPhase}</Text>
+            )}
           </View>
         )}
         {!isLoading && !isEdit && (
@@ -519,37 +646,70 @@ const CustomMessageComponent: React.FC<CustomMessageProps> = ({
           </TapGestureHandler>
         )}
         {isEdit && (
-          <TextInput
-            ref={textInputRef}
-            selection={inputTextSelection}
-            onSelectionChange={handleSelectionChange}
-            editable={Platform.OS === 'android'}
-            multiline
-            showSoftInputOnFocus={false}
-            onContentSizeChange={event => {
-              const { height } = event.nativeEvent.contentSize;
-              setInputHeight(height);
-            }}
-            style={{
-              ...styles.inputText,
-              ...{
-                fontWeight: isMac ? '300' : 'normal',
-                lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
-                paddingTop: Platform.OS === 'android' ? 7 : 3,
-                marginBottom:
-                  -inputHeight * (isAndroid ? 0 : isMac ? 0.115 : 0.138) +
-                  (isMac ? 10 : 8),
-              },
-              ...(isUser.current && {
-                flex: 1,
-                alignSelf: 'flex-end',
-                maxWidth: (chatScreenWidth * 3) / 4,
-              }),
-            }}
-            textAlignVertical="top">
-            {currentMessage.text}
-          </TextInput>
+          <View
+            style={[
+              isUser.current && styles.editContainer,
+              isUser.current && { maxWidth: (chatScreenWidth * 3) / 4 },
+            ]}>
+            <TextInput
+              ref={textInputRef}
+              selection={inputTextSelection}
+              onSelectionChange={handleSelectionChange}
+              editable={isUser.current ? true : Platform.OS === 'android'}
+              multiline
+              showSoftInputOnFocus={isUser.current ? true : false}
+              value={isUser.current ? editText : undefined}
+              onChangeText={isUser.current ? setEditText : undefined}
+              onContentSizeChange={event => {
+                const { height } = event.nativeEvent.contentSize;
+                setInputHeight(height);
+              }}
+              style={{
+                ...styles.inputText,
+                ...{
+                  fontWeight: isMac ? '300' : 'normal',
+                  lineHeight: isMac ? 26 : Platform.OS === 'android' ? 24 : 28,
+                  paddingTop: Platform.OS === 'android' ? 7 : 3,
+                  marginBottom: isUser.current
+                    ? 0
+                    : -inputHeight * (isAndroid ? 0 : isMac ? 0.115 : 0.138) +
+                      (isMac ? 10 : 8),
+                },
+                ...(isUser.current && {
+                  backgroundColor: colors.messageBackground,
+                  borderRadius: 22,
+                  paddingHorizontal: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }),
+              }}
+              textAlignVertical="top">
+              {isUser.current ? undefined : currentMessage.text}
+            </TextInput>
+            {isUser.current && (
+              <View style={styles.editButtonsContainer}>
+                <TouchableOpacity
+                  onPress={handleEditCancel}
+                  style={styles.editCancelButton}>
+                  <Text style={styles.editCancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleEditSubmit}
+                  style={[
+                    styles.editSubmitButton,
+                    !editText.trim() && styles.editSubmitButtonDisabled,
+                  ]}>
+                  <Text style={styles.editSubmitButtonText}>Send</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         )}
+        {!isUser.current &&
+          chatStatus !== ChatStatus.Running &&
+          currentMessage.citations && (
+            <CitationList citations={currentMessage.citations} />
+          )}
         {((isLastAIMessage && chatStatus !== ChatStatus.Running) ||
           forceShowButtons) &&
           messageActionButtons}
@@ -601,16 +761,20 @@ const createStyles = (colors: ColorScheme) =>
       fontWeight: '500',
       color: colors.text,
     },
-    questionText: {
-      flex: 1,
+    questionContainer: {
       alignSelf: 'flex-end',
       backgroundColor: colors.messageBackground,
       borderRadius: 22,
       overflow: 'hidden',
       marginVertical: 8,
       paddingHorizontal: 16,
-      lineHeight: 24,
       paddingVertical: 10,
+    },
+    editContainer: {
+      alignSelf: 'flex-end',
+    },
+    questionText: {
+      lineHeight: 24,
       fontSize: 16,
       color: colors.text,
     },
@@ -656,9 +820,16 @@ const createStyles = (colors: ColorScheme) =>
       paddingHorizontal: 8,
       paddingVertical: 4,
     },
-    loading: {
+    loadingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
       marginTop: 12,
       marginBottom: 10,
+    },
+    searchPhaseText: {
+      marginLeft: 8,
+      fontSize: 14,
+      color: colors.textTertiary,
     },
     actionButtonsContainer: {
       flexDirection: 'row',
@@ -688,6 +859,36 @@ const createStyles = (colors: ColorScheme) =>
       width: 16,
       height: 16,
     },
+    editButtonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      marginTop: 8,
+      gap: 8,
+    },
+    editCancelButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 16,
+      backgroundColor: colors.borderLight,
+    },
+    editCancelButtonText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    editSubmitButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 16,
+      backgroundColor: colors.primary,
+    },
+    editSubmitButtonDisabled: {
+      opacity: 0.5,
+    },
+    editSubmitButtonText: {
+      fontSize: 14,
+      color: '#FFFFFF',
+      fontWeight: '500',
+    },
   });
 
 const customMarkedStyles: MarkedStyles = {
@@ -707,9 +908,12 @@ export default React.memo(CustomMessageComponent, (prevProps, nextProps) => {
     prevProps.currentMessage?.image === nextProps.currentMessage?.image &&
     prevProps.currentMessage?.reasoning ===
       nextProps.currentMessage?.reasoning &&
+    prevProps.currentMessage?.htmlCode === nextProps.currentMessage?.htmlCode &&
+    prevProps.currentMessage?.isLastHtml ===
+      nextProps.currentMessage?.isLastHtml &&
     prevProps.chatStatus === nextProps.chatStatus &&
     prevProps.isLastAIMessage === nextProps.isLastAIMessage &&
-    prevProps.onRegenerate === nextProps.onRegenerate &&
-    prevProps.onReasoningToggle === nextProps.onReasoningToggle
+    prevProps.searchPhase === nextProps.searchPhase &&
+    prevProps.messageIndex === nextProps.messageIndex
   );
 });

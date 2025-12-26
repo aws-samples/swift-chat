@@ -16,17 +16,41 @@ across Android, iOS, and macOS platforms.
 ![](assets/promo.avif)
 
 ### What's New 🔥
+- 🚀 Support Create App to create, edit and share instant web apps (From v2.7.0).
+- 🚀 Support Web Search for real-time information retrieval (From v2.7.0).
+- 🚀 Update SwiftChat Server with API Gateway + Lambda deployment supporting 15-minute streaming output (From v2.7.0).
+- 🚀 Support Image Gallery for browsing and managing generated images (From v2.7.0).
 - 🚀 Support streaming rendering of Mermaid charts (From v2.6.0).
-   <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-   <img src="assets/animations/mermaid_en.avif" width=48%>
-   <img src="assets/animations/mermaid_save_en.avif" width=48%>
-   </div>
 - 🚀 Support using Bedrock API Key for Amazon Bedrock models (From v2.5.0).
-- 🚀 Support virtual try-on, automatically recognize clothes, pants, shoes and try them on (From v2.5.0).
-- 🚀 Support shortcuts for macOS (From v2.5.0).
-    - Use `Shift + Enter`, `Control + Enter` or `Option + Enter` to add a line break.
-    - Use `⌘ + V` to add images (Screenshot), videos, or documents from your clipboard.
-    - Use `⌘ + N` to opening multiple Mac windows for parallel operations.
+
+**Create App**: Generate, Edit, Share and Preview Instant Web Apps
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/create_app.avif" width=24%>
+<img src="assets/animations/edit_and_save.avif" width=24%>
+<img src="assets/animations/gallery_edit_app.avif" width=24%>
+<img src="assets/animations/share_and_import.avif" width=24%>
+</div>
+
+**App Examples**: 2048 Game, Gomoku, News Reader and Tetris
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/app_2048.avif" width=24%>
+<img src="assets/animations/app_gomoku.avif" width=24%>
+<img src="assets/animations/app_news.avif" width=24%>
+<img src="assets/animations/app_tetris.avif" width=24%>
+</div>
+
+**Web Search & Mermaid**: Real-time Information Retrieval and Streaming Chart Rendering
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/websearch_tavily.avif" width=24%>
+<img src="assets/animations/websearch_google.avif" width=24%>
+<img src="assets/animations/mermaid_en.avif" width=24%>
+<img src="assets/animations/mermaid_save_en.avif" width=24%>
+</div>
+
+> Note: Tavily is recommended for best results. Google Search requires manual verification on first use. Baidu and Bing are currently in beta and may return inaccurate results.
 
 ## 📱 Quick Download
 
@@ -35,11 +59,6 @@ across Android, iOS, and macOS platforms.
 - For iOS: Currently available through local build with Xcode
 
 ## Getting Started with Amazon Bedrock
-
-### Prerequisites
-
-Click [Amazon Bedrock Model access](https://console.aws.amazon.com/bedrock/home#/modelaccess) to enable your models
-access.
 
 ### Configuration
 
@@ -62,16 +81,13 @@ You can choose one of the following two methods for configuration
 <details>
 <summary><b>🔧 Configure SwiftChat Server (Click to expand)</b></summary>
 
+> **Note**: From v2.7.0, we recommend redeploying the SwiftChat Server for better performance with API Gateway + Lambda supporting 15-minute streaming output. Your existing API Key can be reused - you only need to update the Server URL in the app.
+
 ### Architecture
 
-![](/assets/architecture.avif)
+![](/assets/architecture.png)
 
-By default, we use **AWS App Runner**, which is commonly used to host Python FastAPI servers, offering high performance,
-scalability and low latency.
-
-Alternatively, we provide the option to replace App Runner with **AWS Lambda** using Function URL for a more
-cost-effective
-solution, as shown in
+We use **API Gateway** combined with **AWS Lambda** to enable streaming responses for up to 15 minutes, as shown in
 this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming).
 
 ### Step 1: Set up your API Key
@@ -107,9 +123,6 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
    - ECR repository name (or use default: `swift-chat-api`)
    - Image tag (please use default: `latest`)
    - AWS region (the region you want to deploy, e.g.,: `us-east-1`)
-   - Deployment type:
-     - Option 1 (default): **AppRunner** - uses amd64 architecture
-     - Option 2: **Lambda** - uses arm64 architecture
 
 4. The script will build and push the Docker image to your ECR repository.
 
@@ -117,24 +130,21 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 ### Step 3: Deploy stack and get your API URL
 
-1. Download the CloudFormation template you want to use:
-   - For App Runner: [SwiftChatAppRunner.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatAppRunner.template)
-   - For Lambda: [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
+1. Download the CloudFormation template:
+   - Lambda: [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
 
 2. Go to [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI) and select **Upload a template file** under **Specify template**, then upload the template file you downloaded. (Make sure you are in the same region where your API Key was created.)
 
 3. Click **Next**, On the "Specify stack details" page, provide the following information:
-    - **Stack name**: Keep the default "SwiftChatAPI" or change if needed
     - **ApiKeyParam**: Enter the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey")
     - **ContainerImageUri**: Enter the ECR image URI from Step 2 output
-    - For App Runner, choose an **InstanceTypeParam** based on your needs
 
 4. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 5. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
 
 Wait about 3–5 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
-can find the **API URL** which looks like: `https://xxx.xxx.awsapprunner.com` or `https://xxx.lambda-url.xxx.on.aws`
+can find the **API URL** which looks like: `https://xxx.execute-api.us-east-1.amazonaws.com/v1`
 
 ### Step 4: Open the App and setup with API URL and API Key
 
@@ -258,20 +268,20 @@ can enable the **Use Proxy** option to forward your requests.
 <img src="assets/animations/video_summary.avif" width=24%>
 </div>
 
-**Creative Image Suite**: Generation, Virtual try-on, Style Replication, Background Removal with Nova Canvas
+**Creative Image Suite**: Generation, Virtual try-on, Background Removal and Image Gallery with Nova Canvas
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/gen_image.avif" width=24%>
 <img src="assets/animations/virtual_try_on_demo.avif" width=24%>
-<img src="assets/animations/similar_style.avif" width=24%>
 <img src="assets/animations/remove_background.avif" width=24%>
+<img src="assets/animations/image_gallery.avif" width=24%>
 </div>
 
 **System Prompt Assistant**: Useful Preset System Prompts with Full Management Capabilities (Add/Edit/Sort/Delete)
 
 ![](assets/animations/english_teacher.avif)
 
-**Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX and More
+**Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX, Mermaid and More
 
 ![](assets/markdown.avif)
 
@@ -358,6 +368,7 @@ We feature streamlined chat History, Settings pages, and intuitive Usage statist
 - [x] Support image generation with Chinese prompts (Make sure `Amazon Nova Lite` is enabled in your selected region)
 - [x] Long press images to save or share
 - [x] Automatic image compression to improve response speed
+- [x] Image Gallery for browsing and managing all generated images
 
 ### User Experience
 
@@ -464,10 +475,14 @@ the [release notes](https://github.com/aws-samples/swift-chat/releases) to see i
 
 ### Upgrade API
 
-- **For AppRunner**: Click and open [App Runner Services](https://console.aws.amazon.com/apprunner/home#/services) page,
-  find and open `swiftchat-api`, click top right **Deploy** button.
-- **For Lambda**: Click and open [Lambda Services](https://console.aws.amazon.com/lambda/home#/functions), find and open
-  your Lambda which start with `SwiftChatLambda-xxx`, click the **Deploy new image** button and click Save.
+1. First, re-run the build script to update the image:
+   ```bash
+   cd server/scripts
+   bash ./push-to-ecr.sh
+   ```
+
+2. Click and open [Lambda Services](https://console.aws.amazon.com/lambda/home#/functions), find and open
+   your Lambda which starts with `SwiftChatAPILambda-xxx`, click the **Deploy new image** button and click Save.
 
 ## Security
 
