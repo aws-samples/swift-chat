@@ -16,11 +16,41 @@ across Android, iOS, and macOS platforms.
 ![](assets/promo.avif)
 
 ### What's New 🔥
+- 🚀 Support Create App to create, edit and share instant web apps (From v2.7.0).
 - 🚀 Support Web Search for real-time information retrieval (From v2.7.0).
-- 🚀 Support Create App to generate and preview mini web applications (From v2.7.0).
+- 🚀 Update SwiftChat Server with API Gateway + Lambda deployment supporting 15-minute streaming output (From v2.7.0).
 - 🚀 Support Image Gallery for browsing and managing generated images (From v2.7.0).
 - 🚀 Support streaming rendering of Mermaid charts (From v2.6.0).
 - 🚀 Support using Bedrock API Key for Amazon Bedrock models (From v2.5.0).
+
+**Create App**: Generate, Edit, Share and Preview Instant Web Apps
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/create_app.avif" width=24%>
+<img src="assets/animations/edit_and_save.avif" width=24%>
+<img src="assets/animations/gallery_edit_app.avif" width=24%>
+<img src="assets/animations/share_and_import.avif" width=24%>
+</div>
+
+**App Examples**: 2048 Game, Gomoku, News Reader and Tetris
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/app_2048.avif" width=24%>
+<img src="assets/animations/app_gomoku.avif" width=24%>
+<img src="assets/animations/app_news.avif" width=24%>
+<img src="assets/animations/app_tetris.avif" width=24%>
+</div>
+
+**Web Search & Mermaid**: Real-time Information Retrieval and Streaming Chart Rendering
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/websearch_tavily.avif" width=24%>
+<img src="assets/animations/websearch_google.avif" width=24%>
+<img src="assets/animations/mermaid_en.avif" width=24%>
+<img src="assets/animations/mermaid_save_en.avif" width=24%>
+</div>
+
+> Note: Tavily is recommended for best results. Google Search requires manual verification on first use. Baidu and Bing are currently in beta and may return inaccurate results.
 
 ## 📱 Quick Download
 
@@ -50,6 +80,8 @@ You can choose one of the following two methods for configuration
 
 <details>
 <summary><b>🔧 Configure SwiftChat Server (Click to expand)</b></summary>
+
+> **Note**: From v2.7.0, we recommend redeploying the SwiftChat Server for better performance with API Gateway + Lambda supporting 15-minute streaming output. Your existing API Key can be reused - you only need to update the Server URL in the app.
 
 ### Architecture
 
@@ -236,13 +268,13 @@ can enable the **Use Proxy** option to forward your requests.
 <img src="assets/animations/video_summary.avif" width=24%>
 </div>
 
-**Creative Image Suite**: Generation, Virtual try-on, Style Replication, Background Removal with Nova Canvas
+**Creative Image Suite**: Generation, Virtual try-on, Background Removal and Image Gallery with Nova Canvas
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/gen_image.avif" width=24%>
 <img src="assets/animations/virtual_try_on_demo.avif" width=24%>
-<img src="assets/animations/similar_style.avif" width=24%>
 <img src="assets/animations/remove_background.avif" width=24%>
+<img src="assets/animations/image_gallery.avif" width=24%>
 </div>
 
 **System Prompt Assistant**: Useful Preset System Prompts with Full Management Capabilities (Add/Edit/Sort/Delete)
@@ -252,11 +284,6 @@ can enable the **Use Proxy** option to forward your requests.
 **Rich Markdown Support**: Paragraph, Code Blocks, Tables, LaTeX, Mermaid and More
 
 ![](assets/markdown.avif)
-
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-   <img src="assets/animations/mermaid_en.avif" width=48%>
-   <img src="assets/animations/mermaid_save_en.avif" width=48%>
-</div>
 
 We redesigned the UI with optimized font sizes and line spacing for a more elegant and clean presentation.
 All of these features are also seamlessly displayed on Android and macOS with native UI
@@ -341,6 +368,7 @@ We feature streamlined chat History, Settings pages, and intuitive Usage statist
 - [x] Support image generation with Chinese prompts (Make sure `Amazon Nova Lite` is enabled in your selected region)
 - [x] Long press images to save or share
 - [x] Automatic image compression to improve response speed
+- [x] Image Gallery for browsing and managing all generated images
 
 ### User Experience
 

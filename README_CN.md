@@ -15,11 +15,41 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 ![](assets/promo.avif)
 
 ### 新功能 🔥
+- 🚀 支持创建应用，创建、编辑和分享极速 Web 应用（自 v2.7.0 起）。
 - 🚀 支持网络搜索，获取实时信息（自 v2.7.0 起）。
-- 🚀 支持创建应用，生成并预览迷你 Web 应用（自 v2.7.0 起）。
+- 🚀 更新 SwiftChat 服务器，支持 API Gateway + Lambda 部署，最长支持 15 分钟流式输出（自 v2.7.0 起）。
 - 🚀 支持图片画廊，浏览和管理生成的图片（自 v2.7.0 起）。
 - 🚀 支持流式渲染 Mermaid 图表（自 v2.6.0 起）。
 - 🚀 支持使用 Bedrock API Key 连接 Amazon Bedrock 模型（自 v2.5.0 起）。
+
+**创建应用**：生成、编辑、分享和预览极速 Web 应用
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/create_app.avif" width=24%>
+<img src="assets/animations/edit_and_save.avif" width=24%>
+<img src="assets/animations/gallery_edit_app.avif" width=24%>
+<img src="assets/animations/share_and_import.avif" width=24%>
+</div>
+
+**应用示例**：2048 游戏、五子棋、新闻阅读器和俄罗斯方块
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/app_2048.avif" width=24%>
+<img src="assets/animations/app_gomoku.avif" width=24%>
+<img src="assets/animations/app_news.avif" width=24%>
+<img src="assets/animations/app_tetris.avif" width=24%>
+</div>
+
+**网络搜索 & Mermaid**：实时信息检索和流式图表渲染
+
+<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
+<img src="assets/animations/websearch_tavily.avif" width=24%>
+<img src="assets/animations/websearch_google.avif" width=24%>
+<img src="assets/animations/mermaid.avif" width=24%>
+<img src="assets/animations/mermaid_save.avif" width=24%>
+</div>
+
+> 注意：推荐使用 Tavily 以获得最佳效果。Google 搜索首次使用需要手动验证。百度和必应目前处于测试版本，搜索结果可能不准确。
 
 ## 📱 快速下载
 
@@ -46,6 +76,8 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 
 <details>
 <summary><b>🔧 配置 SwiftChat 服务器（点击展开）</b></summary>
+
+> **注意**：自 v2.7.0 起，我们建议重新部署 SwiftChat 服务器以获得更好的性能，支持 API Gateway + Lambda 实现最长 15 分钟的流式输出。您之前创建的 API Key 可以复用 - 只需在应用中更新服务器 URL 即可。
 
 ### 架构
 
@@ -225,13 +257,13 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 <img src="assets/animations/video_summary.avif" width=24%>
 </div>
 
-**创意图像套件**：生成、虚拟试衣、风格复制、背景移除，由 Nova Canvas 提供支持
+**创意图像套件**：生成、虚拟试衣、背景移除和图片画廊，由 Nova Canvas 提供支持
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/gen_image.avif" width=24%>
 <img src="assets/animations/virtual_try_on_demo.avif" width=24%>
-<img src="assets/animations/similar_style.avif" width=24%>
 <img src="assets/animations/remove_background.avif" width=24%>
+<img src="assets/animations/image_gallery.avif" width=24%>
 </div>
 
 **系统提示词助手**：有用的预设系统提示词，具备完整管理功能（添加/编辑/排序/删除）
@@ -241,11 +273,6 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 **丰富的 Markdown 支持**：段落、代码块、表格、LaTeX、Mermaid 等
 
 ![](assets/markdown.avif)
-
-<div style="display: flex; flex-direction: 'row'; background-color: #888888;">
-   <img src="assets/animations/mermaid.avif" width=48%>
-   <img src="assets/animations/mermaid_save.avif" width=48%>
-</div>
 
 我们重新设计了 UI，优化了字体大小和行间距，提供更优雅、清洁的展示效果。
 所有这些功能也在 Android 和 macOS 上以原生 UI 无缝显示
@@ -326,6 +353,7 @@ https://github.com/user-attachments/assets/c70fc2b4-8960-4a5e-b4f8-420fcd5eafd4
 - [x] 支持使用中文提示生成图像（确保在您选择的区域启用了 `Amazon Nova Lite`）
 - [x] 长按图像保存或分享
 - [x] 自动图像压缩以提高响应速度
+- [x] 图片画廊，浏览和管理所有生成的图片
 
 ### 用户体验
 
