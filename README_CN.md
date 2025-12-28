@@ -1,16 +1,16 @@
-# SwiftChat — 跨平台 AI 聊天应用
+# SwiftChat — 跨平台 AI 助手
 
-> 🚀 您的个人 AI 助手 — 快速、私有、易于使用
+> 🚀 您的个人 AI 工作空间 — 聊天、创建应用等
 
 [![GitHub Release](https://img.shields.io/github/v/release/aws-samples/swift-chat)](https://github.com/aws-samples/swift-chat/releases)
 [![License](https://img.shields.io/badge/license-MIT--0-green)](LICENSE)
 
 [English](/README.md)
 
-SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https://reactnative.dev/)
+SwiftChat 是一款快速响应的 AI 助手，采用 [React Native](https://reactnative.dev/)
 开发，并依托 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 提供强大支持，同时兼容 Ollama、DeepSeek、OpenAI 和 OpenAI
 兼容的其他模型供应商。凭借其极简设计理念与坚实的隐私保护措施，该应用在 Android、iOS 和 macOS 平台上实现了实时流式对话、AI
-图像生成和语音对话助手功能。
+图像生成、极速 Web 应用创建和语音对话功能。
 
 ![](assets/promo.avif)
 
@@ -31,7 +31,7 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 <img src="assets/animations/share_and_import.avif" width=24%>
 </div>
 
-**应用示例**：2048 游戏、五子棋、新闻阅读器和俄罗斯方块
+**应用示例**：2048 游戏、五子棋、俄罗斯方块和新闻阅读器
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/app_2048.avif" width=24%>
@@ -234,7 +234,9 @@ SwiftChat 是一款快速响应的 AI 聊天应用，采用 [React Native](https
 ## 主要功能
 
 - 与 AI 进行实时流式聊天
-- 丰富的 Markdown 支持：表格、代码块、LaTeX, Mermaid图标等
+- 极速 Web 应用创建、编辑和分享
+- 网络搜索实时信息检索
+- 丰富的 Markdown 支持：表格、代码块、LaTeX、Mermaid 图表等
 - 带进度显示的 AI 图像生成
 - 多模态支持（图像、视频和文档）
 - 对话历史列表查看和管理

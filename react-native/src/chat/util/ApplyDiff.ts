@@ -287,36 +287,6 @@ function findAllMatches(
   return positions;
 }
 
-/** Get the longest line from an array (most likely to be unique) */
-function getLongestLine(lines: string[]): string | null {
-  if (lines.length === 0) {
-    return null;
-  }
-
-  let longest = lines[0];
-  for (const line of lines) {
-    if (line.trim().length > longest.trim().length) {
-      longest = line;
-    }
-  }
-  return longest.trim().length > 0 ? longest : null;
-}
-
-/** Find line position in source */
-function findLinePosition(
-  sourceLines: string[],
-  line: string,
-  startFrom: number = 0
-): number[] {
-  const positions: number[] = [];
-  const trimmedLine = line.trim();
-  for (let i = startFrom; i < sourceLines.length; i++) {
-    if (sourceLines[i].trim() === trimmedLine) {
-      positions.push(i);
-    }
-  }
-  return positions;
-}
 
 /**
  * Find block position using three-layer fallback strategy
@@ -576,44 +546,28 @@ export function applyDiff(
         } else if (allPositions.length > 1) {
           // Multiple matches - try to disambiguate using middle context
           if (firstMiddleContext.length > 0) {
-            const longestMiddleLine = getLongestLine(firstMiddleContext);
+            // Sort candidates to prefer those after lastBlockEnd
+            const sortedCandidates = [...allPositions].sort((a, b) => {
+              const aAfter =
+                a + effectiveContext.length >= lastBlockEnd ? 0 : 1;
+              const bAfter =
+                b + effectiveContext.length >= lastBlockEnd ? 0 : 1;
+              return aAfter - bAfter || a - b;
+            });
 
-            if (longestMiddleLine) {
-              // Find positions of the longest middle line
-              const middleLinePositions = findLinePosition(
+            for (const candidatePos of sortedCandidates) {
+              const changePos = candidatePos + effectiveContext.length;
+              const searchAfter = changePos + removals.length;
+
+              // Check if middle context matches after this candidate
+              const middlePositions = findAllMatches(
                 sourceLines,
-                longestMiddleLine,
-                0
+                firstMiddleContext,
+                searchAfter
               );
-
-              // For each candidate position, check if middle line appears after it
-              // Sort candidates to prefer those after lastBlockEnd
-              const sortedCandidates = [...allPositions].sort((a, b) => {
-                const aAfter =
-                  a + effectiveContext.length >= lastBlockEnd ? 0 : 1;
-                const bAfter =
-                  b + effectiveContext.length >= lastBlockEnd ? 0 : 1;
-                return aAfter - bAfter || a - b;
-              });
-
-              for (const candidatePos of sortedCandidates) {
-                const changePos = candidatePos + effectiveContext.length;
-                const searchAfter = changePos + removals.length;
-
-                // Check if any middle line position is reasonably close after this candidate
-                for (const middlePos of middleLinePositions) {
-                  if (
-                    middlePos >= searchAfter &&
-                    middlePos < searchAfter + 100
-                  ) {
-                    // Found: this candidate has the middle context after it
-                    position = changePos;
-                    break;
-                  }
-                }
-                if (position !== -1) {
-                  break;
-                }
+              if (middlePositions.length > 0 && middlePositions[0] < searchAfter + 100) {
+                position = changePos;
+                break;
               }
             }
           }
@@ -639,6 +593,20 @@ export function applyDiff(
       // If still not found, try original fallback strategies
       if (position === -1) {
         position = findBlockPosition(sourceLines, block, lastBlockEnd);
+      }
+
+      // Fallback: use firstMiddleContext to reverse-locate position
+      // When context is wrong but middle context exists, find middle context position
+      // and calculate insertion point by going back removals.length lines
+      if (position === -1 && firstMiddleContext.length > 0) {
+        const middlePositions = findAllMatches(
+          sourceLines,
+          firstMiddleContext,
+          lastBlockEnd
+        );
+        if (middlePositions.length >= 1) {
+          position = middlePositions[0] - removals.length;
+        }
       }
 
       if (position === -1) {
