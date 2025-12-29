@@ -2,7 +2,7 @@
 export const HTML_CODE_PLACEHOLDER = '[HTML_OUTPUT_OMITTED]';
 
 // Placeholder for diff code block - diff has been applied, no need to send again
-export const DIFF_CODE_PLACEHOLDER = '[DIFF_CHANGES_OMITTED]';
+export const DIFF_CODE_PLACEHOLDER = '[PREVIOUS_DIFF_APPLIED]';
 
 // Global storage for latest HTML code in App mode
 let latestHtmlCode: string = '';

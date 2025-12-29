@@ -363,6 +363,7 @@ function AppGalleryScreen(): React.JSX.Element {
         navigation.navigate('Bedrock', {
           editAppCode: app.htmlCode,
           editAppName: app.name,
+          editTimestamp: Date.now(),
         });
       }
     }

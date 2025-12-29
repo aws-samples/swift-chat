@@ -1,17 +1,17 @@
-# SwiftChat — A Cross-platform AI Chat App
+# SwiftChat — A Cross-platform AI Assistant
 
-> 🚀 Your Personal AI Assistant — Fast, Private, and Easy to use
+> 🚀 Your Personal AI Workspace — Chat, Create Apps, and More
 
 [![GitHub Release](https://img.shields.io/github/v/release/aws-samples/swift-chat)](https://github.com/aws-samples/swift-chat/releases)
 [![License](https://img.shields.io/badge/license-MIT--0-green)](LICENSE)
 
 [中文](/README_CN.md)
 
-SwiftChat is a fast and responsive AI chat application developed with [React Native](https://reactnative.dev/) and
+SwiftChat is a fast and responsive AI assistant developed with [React Native](https://reactnative.dev/) and
 powered by [Amazon Bedrock](https://aws.amazon.com/bedrock/), with compatibility extending to other model providers such
 as Ollama, DeepSeek, OpenAI and OpenAI Compatible. With its minimalist design philosophy and robust privacy protection,
-it delivers real-time streaming conversations, AI image generation and voice conversation assistant capabilities
-across Android, iOS, and macOS platforms.
+it delivers real-time streaming conversations, AI image generation, instant web app creation and voice conversation
+capabilities across Android, iOS, and macOS platforms.
 
 ![](assets/promo.avif)
 
@@ -32,7 +32,7 @@ across Android, iOS, and macOS platforms.
 <img src="assets/animations/share_and_import.avif" width=24%>
 </div>
 
-**App Examples**: 2048 Game, Gomoku, News Reader and Tetris
+**App Examples**: 2048 Game, Gomoku, Tetris and News Reader
 
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/app_2048.avif" width=24%>
@@ -245,6 +245,8 @@ can enable the **Use Proxy** option to forward your requests.
 ## Key Features
 
 - Real-time streaming chat with AI
+- Instant web app creation, editing and sharing
+- Web search for real-time information retrieval
 - Rich Markdown Support: Tables, Code Blocks, LaTeX, Mermaid Chart and More
 - AI image generation with progress
 - Multimodal support (images, videos & documents)
