@@ -37,8 +37,8 @@ capabilities across Android, iOS, and macOS platforms.
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/app_2048.avif" width=24%>
 <img src="assets/animations/app_gomoku.avif" width=24%>
-<img src="assets/animations/app_news.avif" width=24%>
 <img src="assets/animations/app_tetris.avif" width=24%>
+<img src="assets/animations/app_news.avif" width=24%>
 </div>
 
 **Web Search & Mermaid**: Real-time Information Retrieval and Streaming Chart Rendering

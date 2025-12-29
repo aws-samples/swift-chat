@@ -36,8 +36,8 @@ SwiftChat 是一款快速响应的 AI 助手，采用 [React Native](https://rea
 <div style="display: flex; flex-direction: 'row'; background-color: #888888;">
 <img src="assets/animations/app_2048.avif" width=24%>
 <img src="assets/animations/app_gomoku.avif" width=24%>
-<img src="assets/animations/app_news.avif" width=24%>
 <img src="assets/animations/app_tetris.avif" width=24%>
+<img src="assets/animations/app_news.avif" width=24%>
 </div>
 
 **网络搜索 & Mermaid**：实时信息检索和流式图表渲染
