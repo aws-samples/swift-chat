@@ -16,7 +16,7 @@ capabilities across Android, iOS, and macOS platforms.
 ![](assets/promo.avif)
 
 ### What's New 🔥
-- 🚀 Support Create App to create, edit and share instant web apps (From v2.7.0).
+- 🚀 Support create or edit instant web apps with one prompt (From v2.7.0).
 - 🚀 Support Web Search for real-time information retrieval (From v2.7.0).
 - 🚀 Update SwiftChat Server with API Gateway + Lambda deployment supporting 15-minute streaming output (From v2.7.0).
 - 🚀 Support Image Gallery for browsing and managing generated images (From v2.7.0).
