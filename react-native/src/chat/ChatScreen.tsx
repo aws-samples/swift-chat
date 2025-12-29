@@ -102,6 +102,14 @@ const findLatestHtmlCode = (messages: SwiftChatMessage[]): string => {
   return '';
 };
 
+/**
+ * Check if any AI message has diffCode (for detecting failed diff apply case)
+ */
+const hasAnyDiffCode = (messages: SwiftChatMessage[]): boolean => {
+  const aiMessages = messages.filter(m => m.user._id === BOT_ID);
+  return aiMessages.some(msg => msg.diffCode);
+};
+
 const createBotMessage = (mode: string, isAppMode: boolean = false) => {
   return {
     _id: uuid.v4(),
@@ -132,6 +140,7 @@ function ChatScreen(): React.JSX.Element {
   const mode = route.params?.mode ?? currentMode;
   const editAppCode = route.params?.editAppCode;
   const editAppName = route.params?.editAppName;
+  const editTimestamp = route.params?.editTimestamp;
   const modeRef = useRef(mode);
   const isNovaSonic =
     getTextModel().modelId.includes('sonic') &&
@@ -261,6 +270,7 @@ function ChatScreen(): React.JSX.Element {
       setMessages([]);
       bedrockMessages.current = [];
       clearLatestHtmlCode();
+      setUsage(undefined);
       showKeyboard();
     }, [])
   );
@@ -354,8 +364,7 @@ function ChatScreen(): React.JSX.Element {
       const restoredHtmlCode = findLatestHtmlCode(msg as SwiftChatMessage[]);
       setLatestHtmlCode(restoredHtmlCode);
 
-      // If session has htmlCode, auto-select App prompt
-      if (restoredHtmlCode) {
+      if (restoredHtmlCode || hasAnyDiffCode(msg as SwiftChatMessage[])) {
         isAppModeRef.current = true;
         sendEventRef.current?.('selectAppPrompt');
       } else {
@@ -386,8 +395,9 @@ function ChatScreen(): React.JSX.Element {
 
   // editAppCode handler - for editing saved apps from AppGallery
   useEffect(() => {
-    if (editAppCode) {
+    if (editAppCode && editTimestamp) {
       startNewChat.current();
+      setUsage(undefined);
       setLatestHtmlCode(editAppCode);
       isAppModeRef.current = true;
       setTimeout(() => {
@@ -401,7 +411,7 @@ function ChatScreen(): React.JSX.Element {
         }
       }, 100);
     }
-  }, [editAppCode, editAppName, navigation]);
+  }, [editAppCode, editAppName, editTimestamp]);
 
   // deleteChat listener
   useEffect(() => {
@@ -441,7 +451,7 @@ function ChatScreen(): React.JSX.Element {
   // diffApplied listener for App mode - update message.htmlCode and save diffCode
   // Note: placeholder replacement is done in ChatStatus.Complete handler
   useEffect(() => {
-    if (event?.event === 'diffApplied' && event.params?.htmlCode) {
+    if (event?.event === 'diffApplied' && event.params?.diffCode) {
       const { htmlCode, diffCode } = event.params;
       setMessages(prevMessages => {
         // update isLastHtml for all messages
@@ -520,7 +530,7 @@ function ChatScreen(): React.JSX.Element {
       if (isAppModeRef.current && msg.htmlCode) {
         msg.text = replaceHtmlWithPlaceholder(msg.text, msg.htmlCode);
       }
-      if (isAppModeRef.current && msg.diffCode) {
+      if (isAppModeRef.current && msg.diffCode && msg.htmlCode) {
         msg.text = replaceDiffWithPlaceholder(msg.text, msg.diffCode);
       }
       saveCurrentMessages();

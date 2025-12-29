@@ -84,7 +84,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
       undefined
     );
     const [hasLoadedCode, setHasLoadedCode] = useState(
-      () => !messageHtmlCode && !isCompleted
+      () => (!messageHtmlCode && !isCompleted) || Boolean(messageDiffCode)
     );
     const [webViewLoaded, setWebViewLoaded] = useState(false);
     const htmlRendererRef = useRef<HtmlPreviewRendererRef>(null);
@@ -134,6 +134,7 @@ const HtmlCodeRenderer = forwardRef<HtmlCodeRendererRef, HtmlCodeRendererProps>(
               setShowPreview(true);
               sendEvent('diffApplied', { htmlCode: result, diffCode: text });
             } else {
+              sendEvent('diffApplied', { htmlCode: undefined, diffCode: text });
               showInfo('Diff apply failed, please regenerate');
             }
           }

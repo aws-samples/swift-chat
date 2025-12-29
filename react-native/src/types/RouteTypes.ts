@@ -20,6 +20,7 @@ export type RouteParamList = {
     mode?: ChatMode;
     editAppCode?: string;
     editAppName?: string;
+    editTimestamp?: number;
   };
   Settings: NonNullable<unknown>;
   TokenUsage: NonNullable<unknown>;

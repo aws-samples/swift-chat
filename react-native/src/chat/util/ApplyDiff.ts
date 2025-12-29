@@ -287,7 +287,6 @@ function findAllMatches(
   return positions;
 }
 
-
 /**
  * Find block position using three-layer fallback strategy
  */
@@ -358,7 +357,10 @@ function findBlockPosition(
   }
 
   // Last resort: removals only
-  if (removals.length >= 2) {
+  if (
+    removals.length >= 2 ||
+    (removals.length === 1 && removals[0].trim().length >= 5)
+  ) {
     pos = trimmedMatch(sourceLines, removals, startFrom);
     if (pos !== -1) {
       return pos;
@@ -565,7 +567,10 @@ export function applyDiff(
                 firstMiddleContext,
                 searchAfter
               );
-              if (middlePositions.length > 0 && middlePositions[0] < searchAfter + 100) {
+              if (
+                middlePositions.length > 0 &&
+                middlePositions[0] < searchAfter + 100
+              ) {
                 position = changePos;
                 break;
               }
