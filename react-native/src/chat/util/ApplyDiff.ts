@@ -682,13 +682,14 @@ export function applyDiff(
       // Fallback: use firstMiddleContext to reverse-locate position
       // When context is wrong but middle context exists, find middle context position
       // and calculate insertion point by going back removals.length lines
+      // Only accept unique match to avoid ambiguity (consistent with trailingContext strategy)
       if (position === -1 && firstMiddleContext.length > 0) {
         const middlePositions = findAllMatches(
           sourceLines,
           firstMiddleContext,
           lastBlockEnd
         );
-        if (middlePositions.length >= 1) {
+        if (middlePositions.length === 1) {
           position = middlePositions[0] - removals.length;
         }
       }
