@@ -433,10 +433,7 @@ function findBlockPosition(
   if (trailingContext.length > 0) {
     // Trim leading empty lines from trailingContext
     let trimmedTrailing = trailingContext;
-    while (
-      trimmedTrailing.length > 0 &&
-      trimmedTrailing[0].trim() === ''
-    ) {
+    while (trimmedTrailing.length > 0 && trimmedTrailing[0].trim() === '') {
       trimmedTrailing = trimmedTrailing.slice(1);
     }
 
