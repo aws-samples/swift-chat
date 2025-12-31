@@ -77,30 +77,13 @@ SwiftChat 是一款快速响应的 AI 助手，采用 [React Native](https://rea
 <details>
 <summary><b>🔧 配置 SwiftChat 服务器（点击展开）</b></summary>
 
-> **注意**：自 v2.7.0 起，我们建议重新部署 SwiftChat 服务器以获得更好的性能，支持 API Gateway + Lambda 实现最长 15 分钟的流式输出。您之前创建的 API Key 可以复用 - 只需在应用中更新服务器 URL 即可。
-
 ### 架构
 
 ![](/assets/architecture.png)
 
-我们提供用 **API Gateway** 与 **AWS Lambda** 结合的方式，实现最长15分钟的流式传输，如此 [示例](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming)
-所示。
+我们使用 **API Gateway** 与 **AWS Lambda** 结合的方式，实现最长 15 分钟的流式传输。所有请求通过 API Gateway 的 API Key 验证后才会转发到 Lambda，确保后端服务的安全访问。
 
-### 步骤 1：设置您的 API 密钥
-
-1. 登录您的 AWS 控制台并右键点击 [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) 在新标签页中打开。
-2. 检查您是否在 [支持的区域](#支持的区域)，然后点击 **创建参数** 按钮。
-3. 填入以下参数，其他选项保持默认：
-
-    - **名称**：输入参数名称（例如 "SwiftChatAPIKey"，将在步骤 3 中用作 `ApiKeyParam`）。
-
-    - **类型**：选择 `SecureString`
-
-    - **值**：输入任何不含空格的字符串（这将是步骤 4 中您的 `API Key`）
-
-4. 点击 **创建参数**。
-
-### 步骤 2：构建并推送容器镜像到 ECR
+### 步骤 1：构建并推送容器镜像到 ECR
 
 1. 克隆此仓库：
    ```bash
@@ -123,43 +106,30 @@ SwiftChat 是一款快速响应的 AI 助手，采用 [React Native](https://rea
 
 5. **重要**：复制脚本输出末尾显示的镜像 URI。您将在下一步中需要它。
 
-### 步骤 3：部署堆栈并获取 API URL
+### 步骤 2：部署堆栈并获取 API URL 和 API Key
 
 1. 下载 CloudFormation 模板：
    - Lambda：[SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
 
-2. 前往 [CloudFormation 控制台](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI)，在**指定模板**下选择**上传模板文件**，然后上传您下载的模板文件。（确保您所在的区域与创建 API Key 的区域相同。）
+2. 前往 [CloudFormation 控制台](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChat)，在**指定模板**下选择**上传模板文件**，然后上传您下载的模板文件。
 
 3. 点击 **下一步**，在"指定堆栈详细信息"页面，提供以下信息：
-    - **ApiKeyParam**：输入您用于存储 API 密钥的参数名称（例如 "SwiftChatAPIKey"）
-    - **ContainerImageUri**：输入步骤 2 输出的 ECR 镜像 URI
+    - **ContainerImageUri**：输入步骤 1 输出的 ECR 镜像 URI
 
 4. 点击 **下一步**，保持"配置堆栈选项"页面为默认，阅读功能并勾选底部的"我确认 AWS CloudFormation 可能会创建 IAM 资源"复选框。
 5. 点击 **下一步**，在"审核并创建"中检查您的配置并点击 **提交**。
 
-等待约 3-5 分钟完成部署，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡，您可以找到 **API URL**，类似于：`https://xxx.execute-api.us-east-1.amazonaws.com/v1`
+6. 等待约 1-2 分钟完成部署，然后点击 CloudFormation 堆栈并转到 **输出** 选项卡：
+   - **APIURL**：您的 API URL（例如：`https://xxx.execute-api.us-east-1.amazonaws.com/v1`）
+   - **ApiKeyConsole**：点击此 URL 打开 API Gateway API Keys 控制台，找到名为 `<StackName>-api-key` 的密钥并复制 API Key 值
 
-### 步骤 4：打开应用并使用 API URL 和 API Key 进行设置
+### 步骤 3：打开应用并使用 API URL 和 API Key 进行设置
 
 1. 启动应用，打开抽屉菜单，点击 **设置**。
-2. 粘贴 `API URL` 和 `API Key`（您在 Parameter Store 中输入的 **值**）到 Amazon Bedrock -> SwiftChat Server 下，然后选择您的区域。
+2. 粘贴 `API URL` 和 `API Key` 到 Amazon Bedrock -> SwiftChat Server 下，然后选择您的区域。
 3. 点击右上角 ✓ 图标保存配置并开始聊天。
 
 恭喜 🎉 您的 SwiftChat 应用已准备就绪！
-
-### 支持的区域
-
-- 美国东部（弗吉尼亚北部）：us-east-1
-- 美国西部（俄勒冈）：us-west-2
-- 亚太地区（孟买）：ap-south-1
-- 亚太地区（新加坡）：ap-southeast-1
-- 亚太地区（悉尼）：ap-southeast-2
-- 亚太地区（东京）：ap-northeast-1
-- 加拿大（中部）：ca-central-1
-- 欧洲（法兰克福）：eu-central-1
-- 欧洲（伦敦）：eu-west-2
-- 欧洲（巴黎）：eu-west-3
-- 南美洲（圣保罗）：sa-east-1
 
 </details>
 

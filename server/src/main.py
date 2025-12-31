@@ -1,7 +1,7 @@
 import base64
 from typing import List
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, Request as FastAPIRequest
+from fastapi import FastAPI, HTTPException, Request as FastAPIRequest
 from fastapi.responses import StreamingResponse, PlainTextResponse
 import boto3
 import json
@@ -9,16 +9,12 @@ import random
 import os
 import re
 from pydantic import BaseModel
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import Annotated
 import time
 from image_nl_processor import get_native_request_with_ref_image, get_analyse_result, get_native_request_with_virtual_try_on
 import httpx
 
 app = FastAPI()
-security = HTTPBearer()
 
-auth_token = None
 CACHE_DURATION = 120000
 cache = {
     "latest_version": "",
@@ -65,35 +61,6 @@ class TokenRequest(BaseModel):
 class UpgradeRequest(BaseModel):
     os: str
     version: str
-
-
-def get_api_key_from_ssm(use_cache_token: bool):
-    global auth_token
-    if use_cache_token and auth_token is not None:
-        return auth_token
-    ssm_client = boto3.client('ssm')
-    api_key_name = os.environ['API_KEY_NAME']
-    try:
-        response = ssm_client.get_parameter(
-            Name=api_key_name,
-            WithDecryption=True
-        )
-        auth_token = response['Parameter']['Value']
-        return auth_token
-    except Exception as error:
-        raise HTTPException(status_code=401,
-                            detail=f"Error: Please create your API Key in Parameter Store, {str(error)}")
-
-
-def verify_api_key(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-                   use_cache_token: bool = True):
-    if credentials.credentials != get_api_key_from_ssm(use_cache_token):
-        raise HTTPException(status_code=401, detail="Invalid API Key")
-    return credentials.credentials
-
-
-def verify_and_refresh_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
-    return verify_api_key(credentials, use_cache_token=False)
 
 
 async def create_bedrock_command(request: ConverseRequest) -> tuple[boto3.client, dict]:
@@ -144,8 +111,7 @@ async def create_bedrock_command(request: ConverseRequest) -> tuple[boto3.client
 
 
 @app.post("/api/converse/v3")
-async def converse_v3(request: ConverseRequest,
-                      _: Annotated[str, Depends(verify_api_key)]):
+async def converse_v3(request: ConverseRequest):
     try:
         client, command = await create_bedrock_command(request)
 
@@ -164,8 +130,7 @@ async def converse_v3(request: ConverseRequest,
 
 
 @app.post("/api/converse/v2")
-async def converse_v2(request: ConverseRequest,
-                      _: Annotated[str, Depends(verify_api_key)]):
+async def converse_v2(request: ConverseRequest):
     try:
         client, command = await create_bedrock_command(request)
 
@@ -184,8 +149,7 @@ async def converse_v2(request: ConverseRequest,
 
 
 @app.post("/api/image")
-async def gen_image(request: ImageRequest,
-                    _: Annotated[str, Depends(verify_api_key)]):
+async def gen_image(request: ImageRequest):
     model_id = request.modelId
     prompt = request.prompt
     ref_images = request.refImages
@@ -200,8 +164,7 @@ async def gen_image(request: ImageRequest,
 
 
 @app.post("/api/token")
-async def get_token(request: TokenRequest,
-                    _: Annotated[str, Depends(verify_api_key)]):
+async def get_token(request: TokenRequest):
     region = request.region
     try:
         client_role_arn = os.environ.get('CLIENT_ROLE_ARN')
@@ -227,8 +190,7 @@ async def get_token(request: TokenRequest,
 
 
 @app.post("/api/models")
-async def get_models(request: ModelsRequest,
-                     _: Annotated[str, Depends(verify_api_key)]):
+async def get_models(request: ModelsRequest):
     region = request.region
     client = boto3.client("bedrock",
                           region_name=region)
@@ -273,8 +235,7 @@ async def get_models(request: ModelsRequest,
 
 
 @app.post("/api/upgrade")
-async def upgrade(request: UpgradeRequest,
-                  _: Annotated[str, Depends(verify_and_refresh_token)]):
+async def upgrade(request: UpgradeRequest):
     new_version = get_latest_version()
     total_number = calculate_version_total(request.version)
     need_upgrade = False

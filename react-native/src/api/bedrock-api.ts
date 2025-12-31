@@ -131,11 +131,7 @@ export const invokeBedrockWithCallBack = async (
 
     const options = {
       method: 'POST',
-      headers: {
-        accept: '*/*',
-        'content-type': 'application/json',
-        Authorization: 'Bearer ' + getApiKey(),
-      },
+      headers: getAuthHeaders('application/json'),
       body: JSON.stringify(bodyObject),
       signal: controller.signal,
       reactNative: { textStreaming: true },
@@ -332,11 +328,7 @@ export const requestAllModels = async (): Promise<AllModel> => {
   };
   const options = {
     method: 'POST',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      Authorization: 'Bearer ' + getApiKey(),
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(bodyObject),
     reactNative: { textStreaming: true },
   };
@@ -379,11 +371,7 @@ export const requestToken = async (): Promise<TokenResponse | null> => {
 
   const options = {
     method: 'POST',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      Authorization: 'Bearer ' + getApiKey(),
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(bodyObject),
     reactNative: { textStreaming: true },
   };
@@ -411,11 +399,7 @@ export const requestUpgradeInfo = async (
   const url = getApiPrefix() + '/upgrade';
   const options = {
     method: 'POST',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      Authorization: 'Bearer ' + getApiKey(),
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       os: os,
       version: version,
@@ -457,11 +441,7 @@ export const genImage = async (
   };
   const options = {
     method: 'POST',
-    headers: {
-      accept: '*/*',
-      'content-type': 'application/json',
-      Authorization: 'Bearer ' + getApiKey(),
-    },
+    headers: getAuthHeaders('application/json'),
     body: JSON.stringify(bodyObject),
     signal: controller.signal,
     reactNative: { textStreaming: true },
@@ -568,6 +548,24 @@ function getApiPrefix(): string {
   } else {
     return getApiUrl() + '/api';
   }
+}
+
+function getAuthHeaders(
+  contentType: string = 'application/json'
+): Record<string, string> {
+  const apiUrl = getApiUrl();
+  const isApiGateway =
+    apiUrl.includes('.execute-api.') && apiUrl.includes('.amazonaws.com');
+  const headers: Record<string, string> = {
+    accept: contentType === 'application/json' ? 'application/json' : '*/*',
+    'content-type': contentType,
+  };
+  if (isApiGateway) {
+    headers['x-api-key'] = getApiKey();
+  } else {
+    headers.Authorization = 'Bearer ' + getApiKey();
+  }
+  return headers;
 }
 
 export const isEnableThinking = (): boolean => {

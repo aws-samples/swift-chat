@@ -1,13 +1,5 @@
 {
   "Parameters": {
-    "ApiKeyParam": {
-      "Type": "String",
-      "AllowedPattern": ".+",
-      "ConstraintDescription": "ApiKeyParam cannot be empty",
-      "Description": "API Key Parameter name for authentication",
-      "MinLength": 1,
-      "NoEcho": false
-    },
     "ContainerImageUri": {
       "Type": "String",
       "Description": "The ECR image URI for the Lambda function (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com/swift-chat-api:latest)"
@@ -106,34 +98,6 @@
               "Resource": "*"
             },
             {
-              "Action": [
-                "ssm:DescribeParameters",
-                "ssm:GetParameter",
-                "ssm:GetParameterHistory",
-                "ssm:GetParameters"
-              ],
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:aws:ssm:",
-                    {
-                      "Ref": "AWS::Region"
-                    },
-                    ":",
-                    {
-                      "Ref": "AWS::AccountId"
-                    },
-                    ":parameter/",
-                    {
-                      "Ref": "ApiKeyParam"
-                    }
-                  ]
-                ]
-              }
-            },
-            {
               "Action": "sts:AssumeRole",
               "Effect": "Allow",
               "Resource": {
@@ -170,9 +134,6 @@
         },
         "Environment": {
           "Variables": {
-            "API_KEY_NAME": {
-              "Ref": "ApiKeyParam"
-            },
             "AWS_LWA_INVOKE_MODE": "RESPONSE_STREAM",
             "CLIENT_ROLE_ARN": {
               "Fn::GetAtt": [
@@ -240,6 +201,7 @@
         },
         "HttpMethod": "ANY",
         "AuthorizationType": "NONE",
+        "ApiKeyRequired": true,
         "Integration": {
           "Type": "AWS_PROXY",
           "IntegrationHttpMethod": "POST",
@@ -268,6 +230,7 @@
         },
         "HttpMethod": "ANY",
         "AuthorizationType": "NONE",
+        "ApiKeyRequired": true,
         "Integration": {
           "Type": "AWS_PROXY",
           "IntegrationHttpMethod": "POST",
@@ -353,6 +316,55 @@
         "aws:cdk:path": "SwiftChatAPILambda/ApiGatewayLambdaRole"
       }
     },
+    "SwiftChatApiKey": {
+      "Type": "AWS::ApiGateway::ApiKey",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-api-key"
+        },
+        "Description": "API Key for SwiftChat API",
+        "Enabled": true,
+        "StageKeys": [
+          {
+            "RestApiId": {
+              "Ref": "SwiftChatApi"
+            },
+            "StageName": "v1"
+          }
+        ]
+      },
+      "DependsOn": ["SwiftChatApiStage"]
+    },
+    "SwiftChatUsagePlan": {
+      "Type": "AWS::ApiGateway::UsagePlan",
+      "Properties": {
+        "UsagePlanName": {
+          "Fn::Sub": "SwiftChatUsagePlan-${AWS::StackName}"
+        },
+        "Description": "Usage plan for SwiftChat API",
+        "ApiStages": [
+          {
+            "ApiId": {
+              "Ref": "SwiftChatApi"
+            },
+            "Stage": "v1"
+          }
+        ]
+      },
+      "DependsOn": ["SwiftChatApiStage"]
+    },
+    "SwiftChatUsagePlanKey": {
+      "Type": "AWS::ApiGateway::UsagePlanKey",
+      "Properties": {
+        "KeyId": {
+          "Ref": "SwiftChatApiKey"
+        },
+        "KeyType": "API_KEY",
+        "UsagePlanId": {
+          "Ref": "SwiftChatUsagePlan"
+        }
+      }
+    },
     "CDKMetadata": {
       "Type": "AWS::CDK::Metadata",
       "Properties": {
@@ -369,6 +381,12 @@
       "Description": "API URL for SwiftChat App",
       "Value": {
         "Fn::Sub": "https://${SwiftChatApi}.execute-api.${AWS::Region}.amazonaws.com/v1"
+      }
+    },
+    "ApiKeyConsole": {
+      "Description": "Open this URL to get your API Key, find and copy the key named <StackName>-api-key",
+      "Value": {
+        "Fn::Sub": "https://console.aws.amazon.com/apigateway/main/api-keys"
       }
     }
   },

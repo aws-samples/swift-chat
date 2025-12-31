@@ -29,6 +29,28 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
+# Check if buildx with docker-container driver is available (required for cross-platform builds on x86)
+if [[ "$(uname -m)" == "x86_64" ]]; then
+    if ! docker buildx ls 2>/dev/null | grep -q "docker-container"; then
+        echo "⚠️  WARNING: Docker buildx with docker-container driver not found."
+        echo "   This is required for building arm64 images on x86 machines."
+        echo ""
+        echo "   To fix this, run:"
+        echo "     docker buildx create --use --name multiarch --driver docker-container"
+        echo ""
+        read -p "Do you want to create it now? (y/n): " CREATE_BUILDER
+        if [[ "$CREATE_BUILDER" =~ ^[Yy]$ ]]; then
+            docker buildx create --use --name multiarch --driver docker-container
+            echo "✅ Buildx builder created."
+        else
+            echo "Aborted."
+            exit 1
+        fi
+    else
+        echo "✅ Docker buildx is ready for cross-platform builds."
+    fi
+fi
+
 # Check if AWS CLI is available
 if ! command -v aws &> /dev/null; then
     echo "❌ ERROR: AWS CLI is not installed or not in PATH."
@@ -70,7 +92,8 @@ echo "  Image Tag: $TAG"
 echo "  AWS Region: $AWS_REGION"
 echo "  Architecture: $ARCH"
 echo ""
-read -p "Continue with these settings? (y/n): " CONFIRM
+read -p "Continue with these settings? [y]/n (Press Enter to continue): " CONFIRM
+CONFIRM=${CONFIRM:-y}
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
     echo "Aborted."
     exit 1
@@ -89,7 +112,8 @@ echo "   Required IAM permissions: ecr:CreateRepository, ecr:GetAuthorizationTok
 echo "   ecr:BatchCheckLayerAvailability, ecr:InitiateLayerUpload, ecr:UploadLayerPart,"
 echo "   ecr:CompleteLayerUpload, ecr:PutImage, ecr-public:GetAuthorizationToken"
 echo ""
-read -p "Do you acknowledge and want to proceed? (y/n): " ACK_CONFIRM
+read -p "Do you acknowledge and want to proceed? [y]/n (Press Enter to continue): " ACK_CONFIRM
+ACK_CONFIRM=${ACK_CONFIRM:-y}
 if [[ ! "$ACK_CONFIRM" =~ ^[Yy]$ ]]; then
     echo "Aborted."
     exit 1
