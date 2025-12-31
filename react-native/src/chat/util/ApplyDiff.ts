@@ -27,6 +27,7 @@ interface DiffBlock {
   contextBefore: string[]; // First segment's context (for positioning)
   removals: string[]; // First segment's removals (for positioning)
   firstMiddleContext: string[]; // First middle context block (after first change, for unique matching)
+  trailingContext: string[]; // Context after the last change (for reverse positioning)
 }
 
 /** Positioned block with its location in source file */
@@ -106,12 +107,16 @@ function parseDiffBlocks(diffContent: string): DiffBlock[] {
       }
 
       // Save last segment
+      let trailingContext: string[] = [];
       if (currentRemovals.length > 0 || currentAdditions.length > 0) {
         segments.push({
           contextBefore: currentContext,
           removals: currentRemovals,
           additions: currentAdditions,
         });
+      } else if (inChange === false && currentContext.length > 0) {
+        // No more changes, remaining context is trailing context
+        trailingContext = currentContext;
       }
 
       if (segments.length > 0) {
@@ -124,6 +129,7 @@ function parseDiffBlocks(diffContent: string): DiffBlock[] {
           contextBefore: segments[0].contextBefore,
           removals: segments[0].removals,
           firstMiddleContext,
+          trailingContext,
         });
       }
     } else {
@@ -341,6 +347,23 @@ function findBlockPosition(
     }
   }
 
+  // For pure additions with short context, try removing leading context lines
+  // (AI sometimes generates wrong leading context but correct trailing context)
+  // Only accept if we find a UNIQUE match to avoid ambiguity
+  if (removals.length === 0 && effectiveContext.length >= 2) {
+    for (let skip = 1; skip < effectiveContext.length; skip++) {
+      const partialContext = effectiveContext.slice(skip);
+      // Require at least 1 line with meaningful content
+      if (partialContext.some(line => line.trim().length >= 5)) {
+        const matches = findAllMatches(sourceLines, partialContext, startFrom);
+        if (matches.length === 1) {
+          // Unique match found
+          return matches[0] + partialContext.length;
+        }
+      }
+    }
+  }
+
   // Fallback: reduced context + removals
   if (effectiveContext.length > 0 && removals.length > 0) {
     for (const contextSize of [2, 1]) {
@@ -402,6 +425,65 @@ function findBlockPosition(
   );
   if (pos !== -1) {
     return pos;
+  }
+
+  // Fallback: use trailingContext for reverse positioning
+  // (AI sometimes generates completely wrong leading context but correct trailing context)
+  const { trailingContext } = block;
+  if (trailingContext.length > 0) {
+    // Trim leading empty lines from trailingContext
+    let trimmedTrailing = trailingContext;
+    while (
+      trimmedTrailing.length > 0 &&
+      trimmedTrailing[0].trim() === ''
+    ) {
+      trimmedTrailing = trimmedTrailing.slice(1);
+    }
+
+    if (trimmedTrailing.length > 0) {
+      // Strategy 1: Try full trailingContext match (unique only)
+      let trailingMatches = findAllMatches(
+        sourceLines,
+        trimmedTrailing,
+        startFrom
+      );
+      if (trailingMatches.length === 1) {
+        return trailingMatches[0];
+      }
+
+      // Strategy 2: Try progressively smaller trailing context (from end)
+      // Use last N lines which are usually more unique
+      for (const size of [3, 2, 1]) {
+        if (trimmedTrailing.length > size) {
+          const lastN = trimmedTrailing.slice(-size);
+          // Require meaningful content
+          if (lastN.some(line => line.trim().length >= 5)) {
+            trailingMatches = findAllMatches(sourceLines, lastN, startFrom);
+            if (trailingMatches.length === 1) {
+              // Adjust position: we matched lastN, need to find where full trailing starts
+              return trailingMatches[0] - (trimmedTrailing.length - size);
+            }
+          }
+        }
+      }
+
+      // Strategy 3: Try removing leading lines from trailingContext
+      // (AI might include wrong leading lines but correct trailing lines)
+      for (let skip = 1; skip < trimmedTrailing.length; skip++) {
+        const partialTrailing = trimmedTrailing.slice(skip);
+        if (partialTrailing.some(line => line.trim().length >= 5)) {
+          trailingMatches = findAllMatches(
+            sourceLines,
+            partialTrailing,
+            startFrom
+          );
+          if (trailingMatches.length === 1) {
+            // Adjust position: we matched partial, insertion is before it
+            return trailingMatches[0];
+          }
+        }
+      }
+    }
   }
 
   return -1;
