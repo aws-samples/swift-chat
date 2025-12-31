@@ -81,31 +81,13 @@ You can choose one of the following two methods for configuration
 <details>
 <summary><b>🔧 Configure SwiftChat Server (Click to expand)</b></summary>
 
-> **Note**: From v2.7.0, we recommend redeploying the SwiftChat Server for better performance with API Gateway + Lambda supporting 15-minute streaming output. Your existing API Key can be reused - you only need to update the Server URL in the app.
-
 ### Architecture
 
 ![](/assets/architecture.png)
 
-We use **API Gateway** combined with **AWS Lambda** to enable streaming responses for up to 15 minutes, as shown in
-this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examples/fastapi-response-streaming).
+We use **API Gateway** combined with **AWS Lambda** to enable streaming responses for up to 15 minutes. All requests are authenticated via API Gateway's API Key validation before being forwarded to Lambda, ensuring secure access to backend services.
 
-### Step 1: Set up your API Key
-
-1. Sign in to your AWS console and
-   right-click [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters/) to open it in a new tab.
-2. Check whether you are in the [supported region](#supported-region), then click on the **Create parameter** button.
-3. Fill in the parameters below, leaving other options as default:
-
-    - **Name**: Enter a parameter name (e.g., "SwiftChatAPIKey", will be used as `ApiKeyParam` in Step 3).
-
-    - **Type**: Select `SecureString`
-
-    - **Value**: Enter any string without spaces.(this will be your `API Key` in Step 4)
-
-4. Click **Create parameter**.
-
-### Step 2: Build and push container images to ECR
+### Step 1: Build and push container images to ECR
 
 1. Clone this repository:
    ```bash
@@ -128,46 +110,31 @@ this [example](https://github.com/awslabs/aws-lambda-web-adapter/tree/main/examp
 
 5. **Important**: Copy the image URI displayed at the end of the script output. You'll need this in the next step.
 
-### Step 3: Deploy stack and get your API URL
+### Step 2: Deploy stack and get your API URL and API Key
 
 1. Download the CloudFormation template:
    - Lambda: [SwiftChatLambda.template](https://github.com/aws-samples/swift-chat/blob/main/server/template/SwiftChatLambda.template)
 
-2. Go to [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChatAPI) and select **Upload a template file** under **Specify template**, then upload the template file you downloaded. (Make sure you are in the same region where your API Key was created.)
+2. Go to [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template?stackName=SwiftChat) and select **Upload a template file** under **Specify template**, then upload the template file you downloaded.
 
 3. Click **Next**, On the "Specify stack details" page, provide the following information:
-    - **ApiKeyParam**: Enter the parameter name you used for storing the API key (e.g., "SwiftChatAPIKey")
-    - **ContainerImageUri**: Enter the ECR image URI from Step 2 output
+    - **ContainerImageUri**: Enter the ECR image URI from Step 1 output
 
 4. Click **Next**, Keep the "Configure stack options" page as default, Read the Capabilities and Check the "I
    acknowledge that AWS CloudFormation might create IAM resources" checkbox at the bottom.
 5. Click **Next**, In the "Review and create" Review your configuration and click **Submit**.
 
-Wait about 3–5 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab, you
-can find the **API URL** which looks like: `https://xxx.execute-api.us-east-1.amazonaws.com/v1`
+6. Wait about 1-2 minutes for the deployment to finish, then click the CloudFormation stack and go to **Outputs** tab:
+   - **APIURL**: Your API URL (e.g., `https://xxx.execute-api.us-east-1.amazonaws.com/v1`)
+   - **ApiKeyConsole**: Click this URL to open the API Gateway API Keys console, find the key named `SwiftChat-api-key` and copy the API Key value
 
-### Step 4: Open the App and setup with API URL and API Key
+### Step 3: Open the App and setup with API URL and API Key
 
 1. Launch the App, open the drawer menu, and tap **Settings**.
-2. Paste the `API URL` and `API Key`(The **Value** you typed in Parameter Store) Under Amazon Bedrock -> SwiftChat
-   Server, then select your Region.
+2. Paste the `API URL` and `API Key` under Amazon Bedrock -> SwiftChat Server, then select your Region.
 3. Click the top right ✓ icon to save your configuration and start your chat.
 
 Congratulations 🎉 Your SwiftChat App is ready to use!
-
-### Supported Region
-
-- US East (N. Virginia): us-east-1
-- US West (Oregon): us-west-2
-- Asia Pacific (Mumbai): ap-south-1
-- Asia Pacific (Singapore): ap-southeast-1
-- Asia Pacific (Sydney): ap-southeast-2
-- Asia Pacific (Tokyo): ap-northeast-1
-- Canada (Central): ca-central-1
-- Europe (Frankfurt): eu-central-1
-- Europe (London): eu-west-2
-- Europe (Paris): eu-west-3
-- South America (São Paulo): sa-east-1
 
 </details>
 
