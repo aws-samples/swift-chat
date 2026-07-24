@@ -12,8 +12,10 @@ const liteRTEmitter = LiteRTModule
   ? new NativeEventEmitter(LiteRTModule)
   : null;
 
+// Served from the solution CloudFront distribution (mirror of the HuggingFace
+// origin), which is far more reliable to reach than huggingface.co.
 const LITERT_MODEL_URL =
-  'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm';
+  'https://d23qo6nogd5qe7.cloudfront.net/summit26/model/gemma-4-E2B-it.litertlm';
 const LITERT_MODEL_DIR = `${RNFS.LibraryDirectoryPath}/Application Support/LiteRT/Models`;
 const LITERT_MODEL_PATH = `${LITERT_MODEL_DIR}/gemma-4-E2B-it.litertlm`;
 

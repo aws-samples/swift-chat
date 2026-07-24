@@ -266,6 +266,19 @@ cfn_dump_failure() {
 STACK_STATUS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$REGION" \
   --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "DOES_NOT_EXIST")
 
+# If a previous operation is still running (e.g. a concurrent deploy, or a slow
+# CloudFront create/update), wait for it to settle before deciding create/update.
+# Otherwise we'd fall through to step 4 while the ApiKey/Outputs don't exist yet.
+if [[ "$STACK_STATUS" == *_IN_PROGRESS ]]; then
+  echo "  Stack is $STACK_STATUS — waiting for the in-progress operation to finish..."
+  case "$STACK_STATUS" in
+    CREATE_*|ROLLBACK_*) wait_stack "CREATE_COMPLETE" || cfn_dump_failure ;;
+    *)                   wait_stack "UPDATE_COMPLETE" || cfn_dump_failure ;;
+  esac
+  STACK_STATUS=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$REGION" \
+    --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+fi
+
 if [ "$STACK_STATUS" = "DOES_NOT_EXIST" ]; then
   aws cloudformation create-stack \
     --stack-name "$STACK_NAME" --region "$REGION" \
@@ -274,12 +287,19 @@ if [ "$STACK_STATUS" = "DOES_NOT_EXIST" ]; then
     --capabilities CAPABILITY_IAM >/dev/null
   wait_stack "CREATE_COMPLETE" || cfn_dump_failure
 else
-  if aws cloudformation update-stack \
-       --stack-name "$STACK_NAME" --region "$REGION" \
-       --template-body "file://$TEMPLATE" \
-       --parameters "ParameterKey=ContainerImageUri,ParameterValue=$IMAGE_URI" \
-       --capabilities CAPABILITY_IAM >/dev/null 2>&1; then
+  # Capture stderr: "No updates are to be performed" is expected when only the
+  # Lambda image changed (handled by the force-refresh below) — treat it as a
+  # no-op. Any other update-stack error is real and must abort, not be swallowed.
+  UPDATE_ERR=$(aws cloudformation update-stack \
+    --stack-name "$STACK_NAME" --region "$REGION" \
+    --template-body "file://$TEMPLATE" \
+    --parameters "ParameterKey=ContainerImageUri,ParameterValue=$IMAGE_URI" \
+    --capabilities CAPABILITY_IAM 2>&1 >/dev/null) && UPDATE_RC=0 || UPDATE_RC=$?
+  if [ "$UPDATE_RC" -eq 0 ]; then
     wait_stack "UPDATE_COMPLETE" || cfn_dump_failure
+  elif ! echo "$UPDATE_ERR" | grep -qi "No updates are to be performed"; then
+    echo "$UPDATE_ERR" >&2
+    exit 1
   fi
 fi
 
@@ -302,7 +322,14 @@ KEY_ID=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region 
   --query 'Stacks[0].Outputs[?OutputKey==`ApiKeyId`].OutputValue' --output text 2>/dev/null || echo "")
 if [ -z "$KEY_ID" ] || [ "$KEY_ID" = "None" ]; then
   KEY_ID=$(aws apigateway get-api-keys --region "$REGION" \
-    --query "items[?name=='${STACK_NAME}-api-key'].id | [0]" --output text)
+    --query "items[?name=='${STACK_NAME}-api-key'].id | [0]" --output text 2>/dev/null || echo "")
+fi
+if [ -z "$KEY_ID" ] || [ "$KEY_ID" = "None" ]; then
+  echo "${C_RED}ERROR: could not resolve the API key id for stack '$STACK_NAME'.${C_RESET}" >&2
+  echo "  The stack deployed, but the '${STACK_NAME}-api-key' API key was not found yet." >&2
+  echo "  Re-run this script (it will update in place), or open:" >&2
+  echo "    https://${REGION}.console.aws.amazon.com/apigateway/main/api-keys?region=${REGION}" >&2
+  exit 1
 fi
 API_KEY=$(aws apigateway get-api-key --api-key "$KEY_ID" --include-value --region "$REGION" \
   --query 'value' --output text)

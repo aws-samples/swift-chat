@@ -58,6 +58,9 @@ export const BedrockThinkingModels = [
   'Claude Haiku 4.5',
   'Claude Fable 5',
   'Claude Mythos 5',
+  'GPT-5.6 Sol',
+  'GPT-5.6 Terra',
+  'GPT-5.6 Luna',
 ];
 export const BedrockVoiceModels = ['Nova Sonic'];
 

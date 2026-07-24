@@ -117,6 +117,17 @@ export interface ImageContent {
   image: ImageInfo;
 }
 
+export const getImageMediaType = (format: string): string => {
+  const normalized = (format || '').toLowerCase();
+  if (normalized === 'jpg' || normalized === 'jpeg') {
+    return 'image/jpeg';
+  }
+  if (normalized === 'png' || normalized === 'webp' || normalized === 'gif') {
+    return `image/${normalized}`;
+  }
+  return 'image/png';
+};
+
 export interface ImageInfo {
   format: string;
   source: {

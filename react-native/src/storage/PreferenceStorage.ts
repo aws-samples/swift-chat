@@ -6,11 +6,13 @@ const hapticEnabledKey = keyPrefix + 'hapticEnabled';
 const openAIProxyEnabledKey = keyPrefix + 'openAIProxyEnabledKey';
 const thinkingEnabledKey = keyPrefix + 'thinkingEnabledKey';
 const reasoningExpandedKey = keyPrefix + 'reasoningExpandedKey';
+const reasoningEffortKey = keyPrefix + 'reasoningEffortKey';
 const lastVirtualTryOnImgFileTag = keyPrefix + 'lastVirtualTryOnImgFileTag';
 
 let currentOpenAIProxyEnabled: boolean | undefined;
 let currentThinkingEnabled: boolean | undefined;
 let currentReasoningExpanded: boolean | undefined;
+let currentReasoningEffort: string | undefined;
 let currentVirtualTryOnImgFile: FileInfo | undefined;
 
 export function saveHapticEnabled(enabled: boolean) {
@@ -62,6 +64,20 @@ export function getReasoningExpanded() {
     currentReasoningExpanded = storage.getBoolean(reasoningExpandedKey) ?? true;
     return currentReasoningExpanded;
   }
+}
+
+// Reasoning effort tier for GPT-5.6 (none/low/medium/high/xhigh/max).
+export function saveReasoningEffort(effort: string) {
+  currentReasoningEffort = effort;
+  storage.set(reasoningEffortKey, effort);
+}
+
+export function getReasoningEffort(): string {
+  if (currentReasoningEffort !== undefined) {
+    return currentReasoningEffort;
+  }
+  currentReasoningEffort = storage.getString(reasoningEffortKey) ?? 'medium';
+  return currentReasoningEffort;
 }
 
 // Virtual try-on last base image file

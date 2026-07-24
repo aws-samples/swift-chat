@@ -94,7 +94,6 @@ export const invokeBedrockWithAPIKey = async (
       }
       const reader = body.getReader();
       const decoder = new TextDecoder();
-      let appendTimes = 0;
       while (true) {
         if (shouldStop()) {
           await reader.cancel();
@@ -126,10 +125,6 @@ export const invokeBedrockWithAPIKey = async (
                 }
                 if (bedrockChunk.text) {
                   completeMessage += bedrockChunk.text ?? '';
-                  appendTimes++;
-                  if (appendTimes > 500 && appendTimes % 2 === 0) {
-                    continue;
-                  }
                   callback(
                     completeMessage,
                     false,

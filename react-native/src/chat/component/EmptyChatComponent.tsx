@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../history/AppProvider';
 import {
+  Keyboard,
   Text,
   Platform,
+  Pressable,
   StyleSheet,
   TouchableOpacity,
-  View,
 } from 'react-native';
 import ImageSpinner from '../../imagegen/components/ImageSpinner';
 import { ChatMode } from '../../types/Chat.ts';
@@ -47,7 +48,7 @@ export const EmptyChatComponent = ({
   const styles = createStyles(colors);
 
   return (
-    <View style={styles.emptyChatContainer}>
+    <Pressable style={styles.emptyChatContainer} onPress={Keyboard.dismiss}>
       <TouchableOpacity
         onPress={() => {
           navigation.navigate('Settings', {});
@@ -63,7 +64,7 @@ export const EmptyChatComponent = ({
           <Text style={styles.greetingText}>Hi, I'm {modelName}</Text>
         )}
       </TouchableOpacity>
-    </View>
+    </Pressable>
   );
 };
 

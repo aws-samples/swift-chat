@@ -59,6 +59,9 @@ export const isMantleMode = (apiMode?: ApiMode): boolean =>
 // Friendly display names for GPT-5.x ids that the bedrock-runtime
 // list_foundation_models call does not return (mantle-only models).
 const GPT_DISPLAY_NAMES: Record<string, string> = {
+  'openai.gpt-5.6-sol': 'GPT-5.6 Sol',
+  'openai.gpt-5.6-terra': 'GPT-5.6 Terra',
+  'openai.gpt-5.6-luna': 'GPT-5.6 Luna',
   'openai.gpt-5.5': 'GPT-5.5',
   'openai.gpt-5.4': 'GPT-5.4',
 };
@@ -75,7 +78,10 @@ export const buildMantleOnlyModels = (
 ): { models: Model[]; openAiIdSet: Set<string> } => {
   const openAiIdSet = new Set(mantleModelIds.map(id => id.toLowerCase()));
   const models: Model[] = mantleModelIds
-    .filter(id => /^openai\.gpt-5(\.\d+)?$/.test(id))
+    // Match stable GPT-5.x ids: bare (gpt-5.4/5.5) or a named 5.6 family
+    // variant (gpt-5.6-sol/terra/luna). Exclude dated snapshots like
+    // "gpt-5.5-2026-04-23" so the same model isn't listed twice.
+    .filter(id => /^openai\.gpt-5\.\d+(-[a-z]+)?$/.test(id) && !/\d{4}-\d{2}-\d{2}/.test(id))
     .map(id => ({
       modelId: id,
       modelName: GPT_DISPLAY_NAMES[id] ?? id.replace('openai.', '').toUpperCase(),

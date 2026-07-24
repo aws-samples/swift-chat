@@ -383,6 +383,49 @@
         }
       }
     },
+    "SwiftChatCloudFront": {
+      "Type": "AWS::CloudFront::Distribution",
+      "DependsOn": ["SwiftChatApiStage"],
+      "Properties": {
+        "DistributionConfig": {
+          "Enabled": true,
+          "Comment": "CloudFront in front of SwiftChat API Gateway (streaming, caching disabled)",
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Origins": [
+            {
+              "Id": "ApiGatewayOrigin",
+              "DomainName": {
+                "Fn::Sub": "${SwiftChatApi}.execute-api.${AWS::Region}.amazonaws.com"
+              },
+              "OriginPath": "/v1",
+              "CustomOriginConfig": {
+                "OriginProtocolPolicy": "https-only",
+                "OriginSSLProtocols": ["TLSv1.2"],
+                "OriginReadTimeout": 60,
+                "OriginKeepaliveTimeout": 60
+              }
+            }
+          ],
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "ApiGatewayOrigin",
+            "ViewerProtocolPolicy": "redirect-to-https",
+            "AllowedMethods": [
+              "GET",
+              "HEAD",
+              "OPTIONS",
+              "PUT",
+              "POST",
+              "PATCH",
+              "DELETE"
+            ],
+            "Compress": false,
+            "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+            "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+          }
+        }
+      }
+    },
     "CDKMetadata": {
       "Type": "AWS::CDK::Metadata",
       "Properties": {
@@ -396,9 +439,9 @@
   },
   "Outputs": {
     "APIURL": {
-      "Description": "API URL for SwiftChat App",
+      "Description": "API URL for SwiftChat App (CloudFront in front of API Gateway)",
       "Value": {
-        "Fn::Sub": "https://${SwiftChatApi}.execute-api.${AWS::Region}.amazonaws.com/v1"
+        "Fn::Sub": "https://${SwiftChatCloudFront.DomainName}"
       }
     },
     "ApiKeyId": {
