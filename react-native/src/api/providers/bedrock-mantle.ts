@@ -10,6 +10,7 @@ import {
 import { BedrockThinkingModels } from '../../storage/Constants.ts';
 import {
   BedrockMessage,
+  getImageMediaType,
   ImageContent,
   OpenAIMessage,
   TextContent,
@@ -487,13 +488,13 @@ const getAnthropicMessages = (messages: BedrockMessage[]) =>
       if ('text' in content) {
         return { type: 'text' as const, text: (content as TextContent).text };
       }
-      const base64Data = (content as ImageContent).image.source.bytes;
+      const image = (content as ImageContent).image;
       return {
         type: 'image' as const,
         source: {
           type: 'base64' as const,
-          media_type: 'image/png' as const,
-          data: base64Data,
+          media_type: getImageMediaType(image.format),
+          data: image.source.bytes,
         },
       };
     }),
@@ -528,10 +529,12 @@ const getResponsesInput = (
               text: (content as TextContent).text,
             };
           }
-          const base64Data = (content as ImageContent).image.source.bytes;
+          const image = (content as ImageContent).image;
           return {
             type: 'input_image' as const,
-            image_url: `data:image/png;base64,${base64Data}`,
+            image_url: `data:${getImageMediaType(image.format)};base64,${
+              image.source.bytes
+            }`,
           };
         }),
       };
@@ -563,10 +566,14 @@ const getOpenAIMessages = (
               text: (content as TextContent).text,
             };
           }
-          const base64Data = (content as ImageContent).image.source.bytes;
+          const image = (content as ImageContent).image;
           return {
             type: 'image_url' as const,
-            image_url: { url: `data:image/png;base64,${base64Data}` },
+            image_url: {
+              url: `data:${getImageMediaType(image.format)};base64,${
+                image.source.bytes
+              }`,
+            },
           };
         }),
       };

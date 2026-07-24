@@ -10,6 +10,7 @@ import {
 import { DeepSeekThinkingModels } from '../../storage/Constants.ts';
 import {
   BedrockMessage,
+  getImageMediaType,
   ImageContent,
   OpenAIMessage,
   TextContent,
@@ -293,11 +294,13 @@ function getOpenAIMessages(
                 text: (content as TextContent).text,
               };
             } else {
-              const base64Data = (content as ImageContent).image.source.bytes;
+              const image = (content as ImageContent).image;
               return {
                 type: 'image_url' as const,
                 image_url: {
-                  url: `data:image/png;base64,${base64Data}`,
+                  url: `data:${getImageMediaType(image.format)};base64,${
+                    image.source.bytes
+                  }`,
                 },
               };
             }
