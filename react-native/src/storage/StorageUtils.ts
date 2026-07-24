@@ -110,6 +110,8 @@ export {
   getThinkingEnabled,
   saveReasoningExpanded,
   getReasoningExpanded,
+  saveReasoningEffort,
+  getReasoningEffort,
   saveLastVirtualTryOnImgFile,
   getLastVirtualTryOnImgFile,
 } from './PreferenceStorage.ts';

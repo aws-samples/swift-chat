@@ -5,6 +5,7 @@ import {
   getRegion,
   getTextModel,
   getThinkingEnabled,
+  getReasoningEffort,
 } from '../../storage/StorageUtils.ts';
 import { BedrockThinkingModels } from '../../storage/Constants.ts';
 import {
@@ -67,7 +68,6 @@ export const invokeBedrockMantle = async (
     }
     const reader = respBody.getReader();
     const decoder = new TextDecoder();
-    let appendTimes = 0;
     let markedComplete = false;
     while (true) {
       if (shouldStop()) {
@@ -103,11 +103,9 @@ export const invokeBedrockMantle = async (
         }
         if (parsed.text) {
           completeMessage += parsed.text;
-          appendTimes++;
-          // Throttle UI updates on very long outputs (every other emit past 500).
-          if (!(appendTimes > 500 && appendTimes % 2 === 0)) {
-            emit(false, false);
-          }
+          // Emit on every chunk so streaming stays smooth (no merging of two
+          // chunks into one UI update).
+          emit(false, false);
         }
         // Output finished — unblock the UI now. mantle may delay the terminal
         // response.completed event by tens of seconds while finalizing usage;
@@ -213,7 +211,11 @@ const buildRequestBody = (
       input: getResponsesInput(messages, prompt),
       stream: true,
     };
-    if (thinkingEnabledForModel()) {
+    if (modelId.includes('gpt-5.6')) {
+      // GPT-5.6 has no thinking on/off toggle — the reasoning effort tier drives
+      // it directly (effort 'none' = no thinking). 'minimal' is unsupported.
+      body.reasoning = { effort: getReasoningEffort(), summary: 'auto' };
+    } else if (thinkingEnabledForModel()) {
       body.reasoning = { effort: 'medium', summary: 'auto' };
     }
     return body;
@@ -497,11 +499,51 @@ const getAnthropicMessages = (messages: BedrockMessage[]) =>
     }),
   }));
 
-// OpenAI Responses: input is the same shape as Chat Completions messages.
+// OpenAI Responses API input items. Unlike Chat Completions, content parts use
+// `input_text` / `input_image` (and `image_url` is a bare data-URL string, not
+// an object). Reusing the Chat Completions shape here makes mantle reject image
+// messages with "Invalid 'input': value did not match any expected variant".
+type ResponsesContentPart =
+  | { type: 'input_text'; text: string }
+  | { type: 'input_image'; image_url: string };
+type ResponsesInputItem = {
+  role: string;
+  content: string | ResponsesContentPart[];
+};
+
 const getResponsesInput = (
   messages: BedrockMessage[],
   prompt: SystemPrompt | null
-): OpenAIMessage[] => getOpenAIMessages(messages, prompt);
+): ResponsesInputItem[] => [
+  ...(prompt ? [{ role: 'system', content: prompt.prompt }] : []),
+  ...messages.map(message => {
+    const hasImage = message.content.some(content => 'image' in content);
+    if (hasImage) {
+      return {
+        role: message.role,
+        content: message.content.map((content): ResponsesContentPart => {
+          if ('text' in content) {
+            return {
+              type: 'input_text' as const,
+              text: (content as TextContent).text,
+            };
+          }
+          const base64Data = (content as ImageContent).image.source.bytes;
+          return {
+            type: 'input_image' as const,
+            image_url: `data:image/png;base64,${base64Data}`,
+          };
+        }),
+      };
+    }
+    return {
+      role: message.role,
+      content: message.content
+        .map(content => (content as TextContent).text)
+        .join('\n'),
+    };
+  }),
+];
 
 // OpenAI Chat Completions message shape (mirrors open-api.ts).
 const getOpenAIMessages = (

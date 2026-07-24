@@ -33,6 +33,8 @@ import {
   getRegion,
   getTextModel,
   getThinkingEnabled,
+  getReasoningEffort,
+  saveReasoningEffort,
   getVoiceId,
   isNewStabilityImageModel,
   saveAllModels,
@@ -135,6 +137,7 @@ function SettingsScreen(): React.JSX.Element {
   const controllerRef = useRef<AbortController | null>(null);
   const [selectedTab, setSelectedTab] = useState('bedrock');
   const [thinkingEnabled, setThinkingEnabled] = useState(getThinkingEnabled);
+  const [reasoningEffort, setReasoningEffort] = useState(getReasoningEffort);
   const [voiceId, setVoiceId] = useState(getVoiceId);
   const [bedrockConfigMode, setBedrockConfigMode] =
     useState(getBedrockConfigMode);
@@ -690,6 +693,7 @@ function SettingsScreen(): React.JSX.Element {
           placeholder="Select a model"
         />
         {selectedTextModel &&
+          !selectedTextModel.modelId.includes('gpt-5.6') &&
           (BedrockThinkingModels.includes(selectedTextModel.modelName) ||
             DeepSeekThinkingModels.includes(selectedTextModel.modelName)) && (
             <View style={styles.thinkingSwitchContainer}>
@@ -700,6 +704,28 @@ function SettingsScreen(): React.JSX.Element {
                 onValueChange={toggleThinking}
               />
             </View>
+          )}
+        {selectedTextModel &&
+          selectedTextModel.modelId.includes('gpt-5.6') && (
+            <CustomDropdown
+              label="Reasoning Effort"
+              data={[
+                { label: 'None', value: 'none' },
+                { label: 'Low', value: 'low' },
+                { label: 'Medium', value: 'medium' },
+                { label: 'High', value: 'high' },
+                { label: 'X-High', value: 'xhigh' },
+                { label: 'Max', value: 'max' },
+              ]}
+              value={reasoningEffort}
+              onChange={(item: DropdownItem) => {
+                if (item.value !== '' && item.value !== reasoningEffort) {
+                  setReasoningEffort(item.value);
+                  saveReasoningEffort(item.value);
+                }
+              }}
+              placeholder="Select reasoning effort"
+            />
           )}
 
         {selectedTextModel &&

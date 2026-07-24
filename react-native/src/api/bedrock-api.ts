@@ -177,7 +177,6 @@ export const invokeBedrockServerWithCallBack = async (
       }
       const reader = body.getReader();
       const decoder = new TextDecoder();
-      let appendTimes = 0;
       while (true) {
         if (shouldStop()) {
           await reader.cancel();
@@ -202,10 +201,6 @@ export const invokeBedrockServerWithCallBack = async (
                 }
                 if (bedrockChunk.text) {
                   completeMessage += bedrockChunk.text ?? '';
-                  appendTimes++;
-                  if (appendTimes > 500 && appendTimes % 2 === 0) {
-                    continue;
-                  }
                   callback(completeMessage, false, false, undefined, completeReasoning);
                 }
                 if (bedrockChunk.usage) {
@@ -525,8 +520,12 @@ export function getAuthHeaders(
   contentType: string = 'application/json'
 ): Record<string, string> {
   const apiUrl = getApiUrl();
+  // SwiftChat's own deployment uses an API Gateway key (x-api-key). The URL is
+  // either the direct API Gateway endpoint or a CloudFront distribution placed
+  // in front of it — both expect x-api-key. Everything else uses a Bearer token.
   const isApiGateway =
-    apiUrl.includes('.execute-api.') && apiUrl.includes('.amazonaws.com');
+    (apiUrl.includes('.execute-api.') && apiUrl.includes('.amazonaws.com')) ||
+    apiUrl.includes('.cloudfront.net');
   const headers: Record<string, string> = {
     accept: contentType === 'application/json' ? 'application/json' : '*/*',
     'content-type': contentType,
