@@ -9,7 +9,7 @@
 
 AI Assistant is a fast and responsive cross-platform app developed with [React Native](https://reactnative.dev/) and
 powered by [Amazon Bedrock](https://aws.amazon.com/bedrock/), with compatibility extending to other model providers such
-as Ollama, DeepSeek, OpenAI and OpenAI Compatible. With its minimalist design philosophy and robust privacy protection,
+as Ollama, llmman, DeepSeek, OpenAI and OpenAI Compatible. With its minimalist design philosophy and robust privacy protection,
 it delivers real-time streaming conversations, AI image generation, instant web app creation and voice conversation
 capabilities across Android, iOS, and macOS platforms.
 
@@ -134,6 +134,30 @@ Congratulations 🎉 Your AI Assistant App is ready to use!
 
 </details>
 
+### llmman
+
+<details>
+<summary><b>🔧 Configure llmman (Click to expand)</b></summary>
+
+[llmman](https://github.com/llmmanorg/llmman) is a local model runner that serves the Ollama API (alongside OpenAI-
+and Anthropic-compatible ones) on port 17434, so it works through the **Ollama** tab.
+
+1. Install llmman and start the server:
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/llmmanorg/llmman/main/install.sh | sh
+    llmman pull gemma4
+    llmman serve
+    ```
+2. Navigate to the **Settings Page** and select the **Ollama** tab.
+3. Enter your llmman Server URL. For example:
+    ```bash
+    http://localhost:17434
+    ```
+4. Leave the API Key empty (llmman does not require one).
+5. Select your desired llmman models from the **Chat Model** dropdown list.
+
+</details>
+
 ### DeepSeek
 
 <details>
@@ -208,7 +232,7 @@ can enable the **Use Proxy** option to forward your requests.
 - Tablet-optimized for iPad and Android tablets
 - Fast launch and responsive performance
 - Multiple AI models
-  supported ([Amazon Bedrock](https://aws.amazon.com/bedrock/), [Ollama](https://github.com/ollama/ollama), [DeepSeek](https://www.deepseek.com/), [OpenAI](https://openai.com/)
+  supported ([Amazon Bedrock](https://aws.amazon.com/bedrock/), [Ollama](https://github.com/ollama/ollama), [llmman](https://github.com/llmmanorg/llmman), [DeepSeek](https://www.deepseek.com/), [OpenAI](https://openai.com/)
   and [OpenAI Compatible](#openai-compatible) Models)
 - Fully Customizable System Prompt Assistant
 
